@@ -106,7 +106,7 @@ const LoginScreen: React.FC = () => {
         />
 
         {/* Error Message */}
-        {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+        {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
 
         {/* Login Button */}
         <TouchableOpacity style={styles.loginButton} onPress={handleLoginPress}>
