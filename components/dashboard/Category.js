@@ -28,11 +28,19 @@ export default function Category() {
   };
 
   if (loading) {
-    return <ActivityIndicator size="large" color={Colors.PRIMARY} />; // Show loading indicator
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={Colors.PRIMARY} /> {/* Show loading indicator */}
+      </View>
+    );
   }
 
   if (!categoryList.length) {
-    return <Text>No categories available</Text>; // Show message if no categories are available
+    return (
+      <View style={styles.centered}>
+        <Text>No categories available</Text> {/* Show message if no categories are available */}
+      </View>
+    );
   }
 
   return (
@@ -72,3 +80,11 @@ export default function Category() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
