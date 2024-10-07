@@ -1,59 +1,124 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
+import { StyleSheet, Text, View } from 'react-native';
+import React, { useContext } from 'react';
 import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { AuthProvider, AuthContext } from '../context/AuthContext';
 
-import { useColorScheme } from '@/components/useColorScheme';
+const _layout = () => {
+  const authContext = useContext(AuthContext);
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
+  if (!authContext) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Error: AuthContext is not provided</Text>
+      </View>
+    );
   }
 
-  return <RootLayoutNav />;
-}
+  const { token, isLoading } = authContext;
 
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen
+        name="index"
+        options={{
+          title: 'Home',
+        }}
+      />
+      <Stack.Screen
+        name="register/index"
+        options={{
+          title: 'Register',
+        }}
+      />
+      <Stack.Screen
+        name="login/index"
+        options={{
+          title: 'Login Modal',
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="(tabs)"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="client/index"
+        options={{
+          title: 'client',
+        }}
+      />
+      <Stack.Screen
+        name="clinics/index"
+        options={{
+          title: 'Clinics',
+        }}
+      />
+      <Stack.Screen
+        name="clinics/[name]"
+        options={{
+          title: 'Clinic Details',
+        }}
+      />
+        <Stack.Screen
+        name="hospital/book-appointment/[id]"
+        options={{
+          title: 'Book Appointment',
+        }}
+      />
+      <Stack.Screen
+        name="hospital/index"
+        options={{
+          title: 'hospital-details',
+        }}
+      />
+        <Stack.Screen
+        name="hospital/[id]"
+        options={{
+          title: 'Hospital Details',
+        }}
+      />
+      <Stack.Screen
+        name="student/index"
+        options={{
+          title: 'student',
+        }}
+      />
+      <Stack.Screen
+        name="doctor/index"
+        options={{
+          title: 'doctor',
+        }}
+      />
+      <Stack.Screen
+        name="[missing]"
+        options={{
+          title: '404',
+        }}
+      />
+    </Stack>
   );
-}
+};
+
+const LayoutWithAuthProvider = () => (
+  <AuthProvider>
+    <_layout />
+  </AuthProvider>
+);
+
+export default LayoutWithAuthProvider;
+
+const styles = StyleSheet.create({});
