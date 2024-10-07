@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import GlobalApi from '../../Services/GlobalApi'; // Import GlobalApi
 
 // Get screen dimensions for responsive layout
 const { width, height } = Dimensions.get('window');
@@ -25,45 +25,41 @@ const LoginScreen: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter(); // Initialize the useRouter hook
 
+  const handleLoginPress = async () => {
+    if (email === '' || password === '') {
+      setErrorMessage('Please enter both email and password.');
+    } else {
+      try {
+        const response = await GlobalApi.loginUser(email, password);
 
-const handleLoginPress = async () => {
-  if (email === '' || password === '') {
-    setErrorMessage('Please enter both email and password.');
-  } else {
-    try {
-      const response = await axios.post('http://localhost:3000/api/login', {
-        email,
-        password,
-      });
+        // Handle successful login
+        setErrorMessage(null);
+        const { token, userId, userType, doctorId, firstName, lastName, email: userEmail } = response.data;
 
-      // Handle successful login
-      setErrorMessage(null);
-      const { token, userId, userType, doctorId, firstName, lastName, email: userEmail } = response.data;
+        // Save the token, userId, userType, doctorId, firstName, lastName, and email in AsyncStorage
+        await AsyncStorage.setItem('authToken', token);
+        await AsyncStorage.setItem('userId', userId);
+        await AsyncStorage.setItem('userType', userType);
+        await AsyncStorage.setItem('doctorId', doctorId);
+        await AsyncStorage.setItem('firstName', firstName);
+        await AsyncStorage.setItem('lastName', lastName);
+        await AsyncStorage.setItem('email', userEmail); // Save email
 
-      // Save the token, userId, userType, doctorId, firstName, lastName, and email in AsyncStorage
-      await AsyncStorage.setItem('authToken', token);
-      await AsyncStorage.setItem('userId', userId);
-      await AsyncStorage.setItem('userType', userType);
-      await AsyncStorage.setItem('doctorId', doctorId);
-      await AsyncStorage.setItem('firstName', firstName);
-      await AsyncStorage.setItem('lastName', lastName);
-      await AsyncStorage.setItem('email', userEmail); // Save email
-      
-
-      // Navigate based on userType to the correct tab-based route
-      if (userType === 'professional') {
-        router.push('/professional/tabs' as const); // Add 'as const' to ensure proper typing
-      } else if (userType === 'client') {
-        router.push('/client/tabs' as const); // Add 'as const'
-      } else if (userType === 'student') {
-        router.push('/student/tabs' as const); // Add 'as const'
+        // Navigate based on userType to the correct tab-based route
+        if (userType === 'professional') {
+          router.push('/professional/tabs' as const); // Add 'as const' to ensure proper typing
+        } else if (userType === 'client') {
+          router.push('/client/tabs' as const); // Add 'as const'
+        } else if (userType === 'student') {
+          router.push('/student/tabs' as const); // Add 'as const'
+        }
+      } catch (error) {
+        console.error('Error during login:', error);
+        setErrorMessage('Invalid email or password. Please try again.');
       }
-    } catch (error) {
-      console.error('Error during login:', error);
-      setErrorMessage('Invalid email or password. Please try again.');
     }
-  }
-};
+  };
+
   // Google sign-in handler (dummy for UI)
   const handleGoogleSignIn = () => {
     // To be implemented

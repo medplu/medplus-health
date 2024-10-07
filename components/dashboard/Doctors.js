@@ -17,7 +17,7 @@ const Doctors = () => {
 
   const getDoctors = async () => {
     try {
-      const resp = await axios.get('http://localhost:3000/api/professionals');
+      const resp = await axios.get('https://medplus-app.onrender.com/api/professionals');
       if (resp?.data) {
         setDoctorList(resp.data);
       } else {
@@ -33,7 +33,7 @@ const Doctors = () => {
 
   const handleBookDoctor = async (doctorId) => {
     try {
-      const resp = await axios.post(`http://localhost:3000/api/bookings`, { doctorId });
+      const resp = await axios.post(`https://medplus-app.onrender.com/api/bookings`, { doctorId });
       if (resp.status === 200) {
         Alert.alert('Booking Successful', 'You have successfully booked the doctor.');
       } else {
