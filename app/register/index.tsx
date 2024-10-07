@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  ScrollView,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
@@ -116,170 +117,172 @@ const SignupScreen: React.FC = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.logoContainer}>
-        <Image
-          source={require('../../assets/images/medical-symbol.png')}
-          style={styles.logo}
-        />
-      </View>
-      <View style={styles.formContainer}>
-        <Text style={styles.heading}>Create an Account</Text>
-        <Text style={styles.subHeading}>Sign up to get started</Text>
-
-        {!isVerifying ? (
-          <>
-            {/* First Name Input */}
-            <TextInput
-              style={styles.input}
-              placeholder="First Name"
-              value={firstName}
-              onChangeText={setFirstName}
-              placeholderTextColor="#888"
-            />
-
-            {/* Last Name Input */}
-            <TextInput
-              style={styles.input}
-              placeholder="Last Name"
-              value={lastName}
-              onChangeText={setLastName}
-              placeholderTextColor="#888"
-            />
-
-            {/* Email Input */}
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholderTextColor="#888"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            {/* Password Input */}
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              placeholderTextColor="#888"
-              secureTextEntry
-            />
-
-            {/* Confirm Password Input */}
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholderTextColor="#888"
-              secureTextEntry
-            />
-
-            {/* Gender Selector */}
-            <View style={styles.genderContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.genderButton,
-                  gender === 'Male' && styles.selectedGender,
-                ]}
-                onPress={() => setGender('Male')}
-              >
-                <Text style={styles.genderText}>Male</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.genderButton,
-                  gender === 'Female' && styles.selectedGender,
-                ]}
-                onPress={() => setGender('Female')}
-              >
-                <Text style={styles.genderText}>Female</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.genderButton,
-                  gender === 'Other' && styles.selectedGender,
-                ]}
-                onPress={() => setGender('Other')}
-              >
-                <Text style={styles.genderText}>Other</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* User Type Selector */}
-            <View style={styles.accountTypeContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.accountTypeButton,
-                  userType === 'client' && styles.selectedAccountType,
-                ]}
-                onPress={() => setUserType('client')}
-              >
-                <Text style={styles.accountTypeText}>Client</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.accountTypeButton,
-                  userType === 'professional' && styles.selectedAccountType,
-                ]}
-                onPress={() => setUserType('professional')}
-              >
-                <Text style={styles.accountTypeText}>Professional</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.accountTypeButton,
-                  userType === 'student' && styles.selectedAccountType,
-                ]}
-                onPress={() => setUserType('student')}
-              >
-                <Text style={styles.accountTypeText}>Student</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Error and Success Messages */}
-            {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-            {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
-
-            {/* Signup Button */}
-            <TouchableOpacity style={styles.signupButton} onPress={handleSignupPress}>
-              <Text style={styles.signupButtonText}>Sign Up</Text>
-            </TouchableOpacity>
-             {/* Login Link */}
-        <View style={styles.signupContainer}>
-          <Text style={styles.signupText}>Already have an account? </Text>
-          <TouchableOpacity  onPress={() => router.push('/login')}>
-            <Text style={styles.signupLink}>Login</Text>
-          </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../../assets/images/medical-symbol.png')}
+            style={styles.logo}
+          />
         </View>
-          </>
-        ) : (
-          <>
-            <Text style={styles.subHeading}>Enter the verification code sent to your email</Text>
+        <View style={styles.formContainer}>
+          <Text style={styles.heading}>Create an Account</Text>
+          <Text style={styles.subHeading}>Sign up to get started</Text>
 
-            {/* Verification Code Input */}
-            <TextInput
-              style={styles.input}
-              placeholder="Verification Code"
-              value={verificationCode}
-              onChangeText={setVerificationCode}
-              placeholderTextColor="#888"
-              keyboardType="numeric"
-            />
+          {!isVerifying ? (
+            <>
+              {/* First Name Input */}
+              <TextInput
+                style={styles.input}
+                placeholder="First Name"
+                value={firstName}
+                onChangeText={setFirstName}
+                placeholderTextColor="#888"
+              />
 
-            {/* Error and Success Messages */}
-            {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-            {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
+              {/* Last Name Input */}
+              <TextInput
+                style={styles.input}
+                placeholder="Last Name"
+                value={lastName}
+                onChangeText={setLastName}
+                placeholderTextColor="#888"
+              />
 
-            {/* Verify Button */}
-            <TouchableOpacity style={styles.signupButton} onPress={handleVerificationPress}>
-              <Text style={styles.signupButtonText}>Verify</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
+              {/* Email Input */}
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholderTextColor="#888"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+
+              {/* Password Input */}
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholderTextColor="#888"
+                secureTextEntry
+              />
+
+              {/* Confirm Password Input */}
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholderTextColor="#888"
+                secureTextEntry
+              />
+
+              {/* Gender Selector */}
+              <View style={styles.genderContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.genderButton,
+                    gender === 'Male' && styles.selectedGender,
+                  ]}
+                  onPress={() => setGender('Male')}
+                >
+                  <Text style={styles.genderText}>Male</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.genderButton,
+                    gender === 'Female' && styles.selectedGender,
+                  ]}
+                  onPress={() => setGender('Female')}
+                >
+                  <Text style={styles.genderText}>Female</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.genderButton,
+                    gender === 'Other' && styles.selectedGender,
+                  ]}
+                  onPress={() => setGender('Other')}
+                >
+                  <Text style={styles.genderText}>Other</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* User Type Selector */}
+              <View style={styles.accountTypeContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.accountTypeButton,
+                    userType === 'client' && styles.selectedAccountType,
+                  ]}
+                  onPress={() => setUserType('client')}
+                >
+                  <Text style={styles.accountTypeText}>Client</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.accountTypeButton,
+                    userType === 'professional' && styles.selectedAccountType,
+                  ]}
+                  onPress={() => setUserType('professional')}
+                >
+                  <Text style={styles.accountTypeText}>Professional</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.accountTypeButton,
+                    userType === 'student' && styles.selectedAccountType,
+                  ]}
+                  onPress={() => setUserType('student')}
+                >
+                  <Text style={styles.accountTypeText}>Student</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Error and Success Messages */}
+              {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+              {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
+
+              {/* Signup Button */}
+              <TouchableOpacity style={styles.signupButton} onPress={handleSignupPress}>
+                <Text style={styles.signupButtonText}>Sign Up</Text>
+              </TouchableOpacity>
+              {/* Login Link */}
+              <View style={styles.signupContainer}>
+                <Text style={styles.signupText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => router.push('/login')}>
+                  <Text style={styles.signupLink}>Login</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.subHeading}>Enter the verification code sent to your email</Text>
+
+              {/* Verification Code Input */}
+              <TextInput
+                style={styles.input}
+                placeholder="Verification Code"
+                value={verificationCode}
+                onChangeText={setVerificationCode}
+                placeholderTextColor="#888"
+                keyboardType="numeric"
+              />
+
+              {/* Error and Success Messages */}
+              {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+              {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
+
+              {/* Verify Button */}
+              <TouchableOpacity style={styles.signupButton} onPress={handleVerificationPress}>
+                <Text style={styles.signupButtonText}>Verify</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -287,9 +290,13 @@ const SignupScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 16,
     backgroundColor: '#fff',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
   },
   logoContainer: {
     alignItems: 'center',
