@@ -40,12 +40,16 @@ const registerClinic = (userId, data) => AxiosInstance.post(`/clinics/register/$
 // New function to book a doctor
 const bookDoctor = (doctorId) => AxiosInstance.post('/bookings', { doctorId });
 
+// New login function
+const loginUser = (email, password) => AxiosInstance.post('/login', { email, password });
+
+
 export default {
     getSlider,
     getCategories, // Updated function
     getClinics, // Updated function
     getClinicsByCategory, // Updated function
-   
+    loginUser,
     getDoctorsByCategory,
     createAppointement,
     getAllClinics,
