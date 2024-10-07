@@ -3,23 +3,53 @@ import React from 'react';
 import { Link } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import Toast from 'react-native-toast-message';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const index = () => {
+const Index = () => {
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <StatusBar style="light" />
-      <Text>HomePage</Text>
-      <Link href="/register" asChild>
-        <Button title="open the register page" />
-      </Link>
-      <Link href='/one' asChild>
-      <Button title='open the first tab' />
-      </Link>
+    <LinearGradient
+      colors={['#ffffff', '#f0f0f0']}
+      style={styles.container}
+    >
+      <StatusBar style="dark" />
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome to MedPlus</Text>
+        <Text style={styles.subtitle}>Your health, our priority</Text>
+      </View>
+      <View style={styles.footer}>
+        <Link href="/register" asChild>
+          <Button title="Register" color="#00796B" />
+        </Link>
+      </View>
       <Toast position="bottom" bottomOffset={20} />
-    </View>
+    </LinearGradient>
   );
 };
 
-export default index;
+export default Index;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#666',
+  },
+  footer: {
+    paddingBottom: 30,
+  },
+});
