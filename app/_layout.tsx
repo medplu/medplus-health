@@ -16,15 +16,11 @@ const Layout = () => {
 
   const { token, isLoading } = authContext;
 
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
-  return (
+  return isLoading ? (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Loading...</Text>
+    </View>
+  ) : (
     <Stack
       screenOptions={{
         headerShown: false,
