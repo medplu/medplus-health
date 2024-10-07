@@ -15,17 +15,17 @@ export default function ClientTabs() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
-          // Define icon based on the route name
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline'; // Use filled and outline versions
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          }
+          // Define icon based on the route name using ternary operators
+          iconName = route.name === 'Home'
+            ? (focused ? 'home' : 'home-outline')
+            : route.name === 'Profile'
+            ? (focused ? 'person' : 'person-outline')
+            : route.name === 'Settings'
+            ? (focused ? 'settings' : 'settings-outline')
+            : undefined;
 
           // Return the icon component
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return iconName ? <Ionicons name={iconName} size={size} color={color} /> : null;
         },
         tabBarActiveTintColor: 'tomato', // Active icon color
         tabBarInactiveTintColor: 'gray', // Inactive icon color
