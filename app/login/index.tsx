@@ -36,14 +36,18 @@ const LoginScreen: React.FC = () => {
         setErrorMessage(null);
         const { token, userId, userType, doctorId, firstName, lastName, email: userEmail } = response.data;
 
-        // Save the token, userId, userType, doctorId, firstName, lastName, and email in AsyncStorage
+        // Save the token, userId, userType, firstName, lastName, and email in AsyncStorage
         await AsyncStorage.setItem('authToken', token);
         await AsyncStorage.setItem('userId', userId);
         await AsyncStorage.setItem('userType', userType);
-        await AsyncStorage.setItem('doctorId', doctorId);
         await AsyncStorage.setItem('firstName', firstName);
         await AsyncStorage.setItem('lastName', lastName);
         await AsyncStorage.setItem('email', userEmail); // Save email
+
+        // Conditionally save doctorId if it is defined
+        if (doctorId) {
+          await AsyncStorage.setItem('doctorId', doctorId);
+        }
 
         // Navigate based on userType to the correct tab-based route
         if (userType === 'professional') {
