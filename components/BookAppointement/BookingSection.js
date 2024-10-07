@@ -6,7 +6,7 @@ import GlobalApi from '../../Services/GlobalApi';
 import Colors from '../Shared/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 import AwesomeAlert from 'react-native-awesome-alerts'; // Import AwesomeAlert
-import PaystackPayment from '../../components/PaystackPayment'; // Import PaystackPayment
+import PaystackPayment from '../../components/PaystackPayment'
 
 const BookingSection = ({ clinic }) => {
   const [next7Days, setNext7Days] = useState([]);

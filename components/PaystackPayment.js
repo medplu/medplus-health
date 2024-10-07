@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Button, ToastAndroid } from 'react-native'; // Import necessary components from react-native
+import { View, Button, Platform, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Paystack } from 'react-native-paystack-webview'; // Import Paystack from react-native-paystack-webview
+import { Paystack } from 'react-native-paystack-webview';
 
 const PaystackPayment = ({ amount, onSuccess, onError }) => {
   const [userEmail, setUserEmail] = useState('');
@@ -23,31 +23,47 @@ const PaystackPayment = ({ amount, onSuccess, onError }) => {
   }, []);
 
   const handlePayment = () => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Starting payment process...', ToastAndroid.SHORT);
+    } else {
+      console.log('Starting payment process...');
+    }
     setShowPaystack(true);
   };
 
   return (
     <View>
       <Button title="Pay with Paystack" onPress={handlePayment} />
-      {showPaystack && (
+      {showPaystack && (Platform.OS === 'android' || Platform.OS === 'ios') ? (
         <Paystack
-          paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0" // Your public key
+          paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0" // Replace with your public key
           amount={amount * 100} // Multiply amount by 100 to convert to the smallest currency unit
           billingEmail={userEmail}
           activityIndicatorColor="green"
           onCancel={() => {
-            // Handle if the user closes the payment window
             setShowPaystack(false);
             onError('Payment window closed');
+            if (Platform.OS === 'android') {
+              ToastAndroid.show('Payment canceled!', ToastAndroid.SHORT);
+            } else {
+              console.log('Payment canceled!');
+            }
           }}
           onSuccess={(response) => {
-            // Handle successful payment here
             setShowPaystack(false);
             onSuccess(response);
-            ToastAndroid.show('Payment successful!', ToastAndroid.SHORT); // Show success message
+            if (Platform.OS === 'android') {
+              ToastAndroid.show('Payment successful!', ToastAndroid.SHORT);
+            } else {
+              console.log('Payment successful!');
+            }
           }}
           autoStart={true}
         />
+      ) : (
+        showPaystack && (
+          <Text>Paystack payment is not supported on this platform.</Text>
+        )
       )}
     </View>
   );

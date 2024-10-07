@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
 
-const _layout = () => {
+const Layout = () => {
   const authContext = useContext(AuthContext);
 
   if (!authContext) {
@@ -73,7 +73,7 @@ const _layout = () => {
           title: 'Clinic Details',
         }}
       />
-        <Stack.Screen
+      <Stack.Screen
         name="hospital/book-appointment/[id]"
         options={{
           title: 'Book Appointment',
@@ -85,7 +85,7 @@ const _layout = () => {
           title: 'hospital-details',
         }}
       />
-        <Stack.Screen
+      <Stack.Screen
         name="hospital/[id]"
         options={{
           title: 'Hospital Details',
@@ -115,7 +115,7 @@ const _layout = () => {
 
 const LayoutWithAuthProvider = () => (
   <AuthProvider>
-    <_layout />
+    <Layout />
   </AuthProvider>
 );
 
