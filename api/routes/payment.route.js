@@ -13,6 +13,6 @@ router.post("/create-payment", createPayment);
 router.get("/payment-details", getPayment);
 
 // Webhook endpoint for Paystack notifications
-router.post('/api/payments/webhook', handlePaymentWebhook);
+router.post('/payments/webhook', handlePaymentWebhook);
 
 module.exports = router;
