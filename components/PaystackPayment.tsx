@@ -23,7 +23,7 @@ export default function PaystackPayment() {
             billingEmail="medpluscollaborate@gmail.com"
             billingName="Munga"          
             amount={25000}
-            currency='USD'           
+            currency='NGN'           
             onCancel={(e) => {
               console.log('Payment Cancelled:', e);
               setModalVisible(false);
