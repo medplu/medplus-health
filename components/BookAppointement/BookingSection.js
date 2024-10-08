@@ -112,7 +112,7 @@ const BookingSection = ({ clinic }) => {
       }
     };
     try {
-      // Send appointment data to the backend after payment success
+   
       await GlobalApi.createAppointement(data);
       setAlertMessage('Your appointment has been successfully booked.');
       setAlertType('success');
@@ -206,10 +206,10 @@ const BookingSection = ({ clinic }) => {
       {isPaymentModalVisible && (
         <PaystackPayment
     paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-    amount={25000.00} // Dynamic amount, can be passed based on the appointment
-    billingEmail={user.email} // Pass the user's email
-    onCancel={handlePaymentError} // Pass the error handler
-    onSuccess={handlePaymentSuccess} // Pass the success handler
+    amount={25000.00}
+    billingEmail={user.email}
+    onCancel={handlePaymentError} 
+    onSuccess={handlePaymentSuccess} 
     autoStart={true}
   />
       )}
