@@ -96,7 +96,7 @@ const BookingSection = ({ clinic }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:3000/api/payment/start-payment', {
+      const response = await axios.post('https://medplus-app.onrender.com/api/payment/start-payment', {
         amount: 25000, // Amount in kobo
         email: user.email,
         full_name: `${user.firstName} ${user.lastName}`,
@@ -112,7 +112,7 @@ const BookingSection = ({ clinic }) => {
 
   const handlePaymentSuccess = async (reference) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/payment/create-payment', { reference });
+      const response = await axios.post('https://medplus-app.onrender.com/api/payment/create-payment', { reference });
 
       if (response.data.status === 'success') {
         const fullName = `${user.firstName} ${user.lastName}`;
