@@ -1,8 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
-import React, { useContext } from 'react';
+import React, { useContext, forwardRef } from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
 import Toast from 'react-native-toast-message';
+
+const ForwardedToast = forwardRef((props, ref) => (
+  <Toast {...props} ref={ref} />
+));
 
 const Layout = () => {
   const authContext = useContext(AuthContext);
@@ -108,7 +112,7 @@ const Layout = () => {
           }}
         />
       </Stack>
-      <Toast ref={(ref) => Toast.setRef(ref)} />
+      <ForwardedToast />
     </>
   );
 };
