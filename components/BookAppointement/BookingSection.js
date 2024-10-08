@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert } from 'react-native';
 import SubHeading from '../dashboard/SubHeading';
 import moment from 'moment';
 import GlobalApi from '../../Services/GlobalApi';
@@ -97,7 +97,7 @@ const BookingSection = ({ clinic }) => {
     setIsPaymentModalVisible(true);
   };
 
-  const handlePaymentSuccess = (response) => {
+  const handlePaymentSuccess = async (response) => {
     const fullName = `${user.firstName} ${user.lastName}`;
     setIsSubmitting(true);
     const data = {
@@ -111,28 +111,27 @@ const BookingSection = ({ clinic }) => {
         PaymentInfo: response,
       }
     };
-    GlobalApi.createAppointement(data)
-      .then(() => {
-        setAlertMessage('Your appointment has been successfully booked.');
-        setAlertType('success');
-        setShowAlert(true);
-        setSelectedDate(next7Days[0]?.date);
-        setSelectedTime(null);
-        setNotes('');
-      })
-      .catch(error => {
-        setAlertMessage('There was an error booking your appointment. Please try again.');
-        setAlertType('error');
-        setShowAlert(true);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-        setIsPaymentModalVisible(false);
-      });
+    try {
+      // Send appointment data to the backend after payment success
+      await GlobalApi.createAppointement(data);
+      setAlertMessage('Your appointment has been successfully booked.');
+      setAlertType('success');
+      setShowAlert(true);
+      setSelectedDate(next7Days[0]?.date);
+      setSelectedTime(null);
+      setNotes('');
+    } catch (error) {
+      setAlertMessage('There was an error booking your appointment. Please try again.');
+      setAlertType('error');
+      setShowAlert(true);
+    } finally {
+      setIsSubmitting(false);
+      setIsPaymentModalVisible(false);
+    }
   };
 
   const handlePaymentError = (error) => {
-    setAlertMessage(error);
+    setAlertMessage('Payment failed. Please try again.');
     setAlertType('error');
     setShowAlert(true);
     setIsPaymentModalVisible(false);
@@ -206,11 +205,13 @@ const BookingSection = ({ clinic }) => {
       </TouchableOpacity>
       {isPaymentModalVisible && (
         <PaystackPayment
-          isVisible={isPaymentModalVisible}
-          onClose={() => setIsPaymentModalVisible(false)}
-          onSuccess={handlePaymentSuccess}
-          onError={handlePaymentError}
-        />
+    paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+    amount={25000.00} // Dynamic amount, can be passed based on the appointment
+    billingEmail={user.email} // Pass the user's email
+    onCancel={handlePaymentError} // Pass the error handler
+    onSuccess={handlePaymentSuccess} // Pass the success handler
+    autoStart={true}
+  />
       )}
       <AwesomeAlert
         show={showAlert}
@@ -230,14 +231,12 @@ const BookingSection = ({ clinic }) => {
 
 const styles = StyleSheet.create({
   dayButton: {
-    borderWidth: 1,
-    borderRadius: 99,
-    padding: 5,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    marginRight: 10,
-    borderColor: Colors.gray
-  }
+    backgroundColor: Colors.ligh_gray,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginHorizontal: 5,
+    borderRadius: 8,
+  },
 });
 
 export default BookingSection;
