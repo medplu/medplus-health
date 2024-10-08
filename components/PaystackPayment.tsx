@@ -1,9 +1,8 @@
-import React, { useRef, useState } from 'react';
-import { Paystack, paystackProps } from 'react-native-paystack-webview';
+import React, { useState } from 'react';
+import { Paystack } from 'react-native-paystack-webview';
 import { View, TouchableOpacity, Text, Modal, StyleSheet } from 'react-native';
 
 export default function PaystackPayment() {
-  const paystackWebViewRef = useRef<paystackProps.PayStackRef>();
   const [modalVisible, setModalVisible] = useState(false);
 
   return (
@@ -19,21 +18,19 @@ export default function PaystackPayment() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalView}>
-          <Text style={{ color: 'white', marginBottom: 20 }}>Payment Modal</Text>
-          
           <Paystack
             paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
             billingEmail="paystackwebview@something.com"
             amount={'25000.00'}
             onCancel={(e) => {
-              // handle response here
+              console.log('Payment Cancelled:', e);
               setModalVisible(false);
             }}
             onSuccess={(res) => {
-              // handle response here
+              console.log('Payment Successful:', res);
               setModalVisible(false);
             }}
-            ref={paystackWebViewRef as any}
+            autoStart={true}  // Automatically opens the WebView on modal open
           />
         </View>
       </Modal>
