@@ -1,7 +1,7 @@
 // app/client/tabs.tsx
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons'; // Import icons
+import { Ionicons } from '@expo/vector-icons'; 
 import HomeScreen from './HomeScreen';
 import SettingsScreen from './SettingsScreen';
 import ProfileScreen from './ProfileScreen';
@@ -15,7 +15,6 @@ export default function ClientTabs() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
-          // Define icon based on the route name using ternary operators
           iconName = route.name === 'Home'
             ? (focused ? 'home' : 'home-outline')
             : route.name === 'Profile'
@@ -24,17 +23,16 @@ export default function ClientTabs() {
             ? (focused ? 'settings' : 'settings-outline')
             : undefined;
 
-          // Return the icon component
           return iconName ? <Ionicons name={iconName} size={size} color={color} /> : null;
         },
-        tabBarActiveTintColor: 'tomato', // Active icon color
-        tabBarInactiveTintColor: 'gray', // Inactive icon color
+        tabBarActiveTintColor: 'tomato', 
+        tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
-          backgroundColor: 'white', // Background color of the tab bar
-          borderTopColor: 'transparent', // Remove the top border
-          height: 60, // Height of the tab bar
+          backgroundColor: 'white',
+          borderTopColor: 'transparent',
+          height: 60,
         },
-        headerShown: false, // Remove the header
+        headerShown: false,
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />

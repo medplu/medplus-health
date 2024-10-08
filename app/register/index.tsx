@@ -15,7 +15,6 @@ import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 
-// Get screen dimensions for responsive layout
 const { width } = Dimensions.get('window');
 
 const SignupScreen: React.FC = () => {
@@ -26,14 +25,13 @@ const SignupScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | null>(null);
   const [userType, setUserType] = useState<'client' | 'professional' | 'student' | null>(null);
-  const [verificationCode, setVerificationCode] = useState(''); // State for verification code
+  const [verificationCode, setVerificationCode] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false); // State for verification process
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const router = useRouter(); // Initialize the useRouter hook
+  const router = useRouter();
 
-  // Handle signup press
   const handleSignupPress = async () => {
     if (firstName === '' || lastName === '' || email === '' || password === '' || confirmPassword === '' || !gender || !userType) {
       setErrorMessage('Please fill all fields.');
@@ -45,8 +43,7 @@ const SignupScreen: React.FC = () => {
     }
 
     try {
-      // Send POST request to the backend server
-      const response = await axios.post('http://localhost:3000/api/register', {
+      const response = await axios.post('https://medplus-app.onrender.com/api/register', {
         firstName,
         lastName,
         email,
@@ -55,12 +52,10 @@ const SignupScreen: React.FC = () => {
         userType,
       });
 
-      // Handle successful signup
       setErrorMessage(null);
       setSuccessMessage('Signup successful! Please check your email for verification.');
-      setIsVerifying(true); // Set verifying state to true
+      setIsVerifying(true);
 
-      // Do NOT reset the email to ensure it's available for verification
       setFirstName('');
       setLastName('');
       setPassword('');
@@ -73,7 +68,6 @@ const SignupScreen: React.FC = () => {
     }
   };
 
-  // Handle verification press
   const handleVerificationPress = async () => {
     if (verificationCode === '') {
       setErrorMessage('Please enter the verification code.');
@@ -81,24 +75,17 @@ const SignupScreen: React.FC = () => {
     }
 
     try {
-      // Send POST request to the backend server for verification
-      const response = await axios.post('http://localhost:3000/api/verify-email', {
-        email, // The email should remain in the state
+      const response = await axios.post('https://medplus-app.onrender.com/api/verify-email', {
+        email,
         verificationCode,
       });
 
-      // Extract token and userType from the response
       const { token, userType } = response.data;
 
-      // Handle successful verification
       setErrorMessage(null);
       setSuccessMessage('Email verified successfully!');
-      setIsVerifying(false); // Reset verifying state
+      setIsVerifying(false);
 
-      // Store the token if needed (e.g., in local storage or state)
-      // localStorage.setItem('token', token);
-
-      // Navigate based on userType
       if (userType === 'professional') {
         router.push('/professional');
       } else if (userType === 'client') {
@@ -130,7 +117,6 @@ const SignupScreen: React.FC = () => {
 
           {!isVerifying ? (
             <>
-              {/* First Name Input */}
               <TextInput
                 style={styles.input}
                 placeholder="First Name"
@@ -139,7 +125,6 @@ const SignupScreen: React.FC = () => {
                 placeholderTextColor="#888"
               />
 
-              {/* Last Name Input */}
               <TextInput
                 style={styles.input}
                 placeholder="Last Name"
@@ -148,7 +133,6 @@ const SignupScreen: React.FC = () => {
                 placeholderTextColor="#888"
               />
 
-              {/* Email Input */}
               <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -159,7 +143,6 @@ const SignupScreen: React.FC = () => {
                 autoCapitalize="none"
               />
 
-              {/* Password Input */}
               <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -169,7 +152,6 @@ const SignupScreen: React.FC = () => {
                 secureTextEntry
               />
 
-              {/* Confirm Password Input */}
               <TextInput
                 style={styles.input}
                 placeholder="Confirm Password"
@@ -179,7 +161,6 @@ const SignupScreen: React.FC = () => {
                 secureTextEntry
               />
 
-              {/* Gender Selector */}
               <View style={styles.genderContainer}>
                 <TouchableOpacity
                   style={[
@@ -210,7 +191,6 @@ const SignupScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
 
-              {/* User Type Selector */}
               <View style={styles.accountTypeContainer}>
                 <TouchableOpacity
                   style={[
@@ -241,15 +221,12 @@ const SignupScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
 
-              {/* Error and Success Messages */}
               {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
               {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
 
-              {/* Signup Button */}
               <TouchableOpacity style={styles.signupButton} onPress={handleSignupPress}>
                 <Text style={styles.signupButtonText}>Sign Up</Text>
               </TouchableOpacity>
-              {/* Login Link */}
               <View style={styles.signupContainer}>
                 <Text style={styles.signupText}>Already have an account? </Text>
                 <TouchableOpacity onPress={() => router.push('/login')}>
@@ -261,7 +238,6 @@ const SignupScreen: React.FC = () => {
             <>
               <Text style={styles.subHeading}>Enter the verification code sent to your email</Text>
 
-              {/* Verification Code Input */}
               <TextInput
                 style={styles.input}
                 placeholder="Verification Code"
@@ -271,11 +247,9 @@ const SignupScreen: React.FC = () => {
                 keyboardType="numeric"
               />
 
-              {/* Error and Success Messages */}
               {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
               {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
 
-              {/* Verify Button */}
               <TouchableOpacity style={styles.signupButton} onPress={handleVerificationPress}>
                 <Text style={styles.signupButtonText}>Verify</Text>
               </TouchableOpacity>

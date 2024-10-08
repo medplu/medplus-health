@@ -49,7 +49,7 @@ export default function ProfileScreen() {
 
     const fetchUserProfile = async (id: string) => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/users/${id}`);
+        const response = await axios.get(`https://medplus-app.onrender.com/api/users/${id}`);
         if (response.status === 200) {
           const { firstName, lastName, profileImage, gender, email } = response.data.user;
           setForm({ firstName, lastName, profileImage, gender, email });
@@ -76,7 +76,7 @@ export default function ProfileScreen() {
     }
 
     try {
-      const response = await axios.put(`http://localhost:3000/api/users/update-profile/${userId}`, form);
+      const response = await axios.put(`https://medplus-app.onrender.com/api/users/update-profile/${userId}`, form);
       if (response.status === 200) {
         Alert.alert('Success', 'Profile updated successfully');
       }
