@@ -32,12 +32,12 @@ const PaystackPayment = ({ amount, onSuccess, onError }) => {
   };
 
   return (
-    <View>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Button title="Pay with Paystack" onPress={handlePayment} />
       {showPaystack && (Platform.OS === 'android' || Platform.OS === 'ios') ? (
         <Paystack
-          paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0" // Replace with your public key
-          amount={amount * 100} // Multiply amount by 100 to convert to the smallest currency unit
+          paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+          amount={amount * 100} 
           billingEmail={userEmail}
           activityIndicatorColor="green"
           onCancel={() => {
