@@ -4,35 +4,48 @@ import SubHeading from '../dashboard/SubHeading';
 import moment from 'moment';
 import GlobalApi from '../../Services/GlobalApi';
 import Colors from '../Shared/Colors';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
-import AwesomeAlert from 'react-native-awesome-alerts'; // Import AwesomeAlert
-import PaystackPayment from '../../components/PaystackPayment'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AwesomeAlert from 'react-native-awesome-alerts';
+import PaystackPayment from '../../components/PaystackPayment';
+import * as SplashScreen from 'expo-splash-screen';
+import { useFonts } from 'expo-font';
+
+SplashScreen.preventAutoHideAsync();
 
 const BookingSection = ({ clinic }) => {
+  const [fontsLoaded] = useFonts({
+    'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
   const [next7Days, setNext7Days] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeList, setTimeList] = useState([]);
   const [selectedTime, setSelectedTime] = useState(null);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [user, setUser] = useState({ firstName: '', lastName: '', email: '' }); // Initialize user state
+  const [user, setUser] = useState({ firstName: '', lastName: '', email: '' });
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-  const [alertType, setAlertType] = useState('success'); // 'success' or 'error'
+  const [alertType, setAlertType] = useState('success');
   const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
 
   useEffect(() => {
     getDays();
     getTime();
-    getUserData(); // Fetch user data from AsyncStorage
+    getUserData();
   }, []);
 
   const getUserData = async () => {
     try {
       const firstName = await AsyncStorage.getItem('firstName');
       const lastName = await AsyncStorage.getItem('lastName');
-      const email = await AsyncStorage.getItem('email'); // Assuming email is also stored
-
+      const email = await AsyncStorage.getItem('email');
       setUser({ firstName, lastName, email });
     } catch (error) {
       console.error('Failed to load user data', error);
@@ -46,8 +59,8 @@ const BookingSection = ({ clinic }) => {
       const date = moment().add(i, 'days');
       nextSevenDays.push({
         date: date,
-        day: date.format('ddd'), // Mon Tue
-        formattedDate: date.format('Do MMM') // 1 Jan
+        day: date.format('ddd'),
+        formattedDate: date.format('Do MMM')
       });
     }
     setNext7Days(nextSevenDays);
@@ -63,7 +76,6 @@ const BookingSection = ({ clinic }) => {
         time: i + ":30 AM"
       });
     }
-
     for (let i = 1; i <= 5; i++) {
       timeList.push({
         time: i + ":00 PM"
@@ -76,26 +88,17 @@ const BookingSection = ({ clinic }) => {
   };
 
   const handleBookAppointment = () => {
-    // Perform validation
-    console.log('Selected Date:', selectedDate);
-    console.log('Selected Time:', selectedTime);
-    console.log('Clinic ID:', clinic._id);
-    console.log('Notes:', notes);
-  
     if (!selectedDate || !selectedTime || !clinic._id || !notes) {
       setAlertMessage('Please fill in all the required fields.');
       setAlertType('error');
       setShowAlert(true);
       return;
     }
-  
-    // Show payment modal
     setIsPaymentModalVisible(true);
   };
 
   const handlePaymentSuccess = (response) => {
     const fullName = `${user.firstName} ${user.lastName}`;
-
     setIsSubmitting(true);
     const data = {
       data: {
@@ -105,25 +108,19 @@ const BookingSection = ({ clinic }) => {
         Time: selectedTime,
         clinic: clinic.id,
         Note: notes,
-        PaymentInfo: response, // Include payment information
+        PaymentInfo: response,
       }
     };
-
-    console.log('This Booked Appointment Data is sent to Strapi --> ', data);
     GlobalApi.createAppointement(data)
       .then(() => {
-        console.log('🟢 Booked Data sent Successfully');
         setAlertMessage('Your appointment has been successfully booked.');
         setAlertType('success');
         setShowAlert(true);
-
-        // Reset the form fields
         setSelectedDate(next7Days[0]?.date);
         setSelectedTime(null);
         setNotes('');
       })
       .catch(error => {
-        console.log('🔴Error while sending data to backend = ', error);
         setAlertMessage('There was an error booking your appointment. Please try again.');
         setAlertType('error');
         setShowAlert(true);
@@ -141,13 +138,14 @@ const BookingSection = ({ clinic }) => {
     setIsPaymentModalVisible(false);
   };
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <View>
       <Text style={{ fontSize: 18, color: Colors.gray, marginBottom: 10 }}>Book Appointment</Text>
-
       <SubHeading subHeadingTitle={'Day'} seeAll={false} />
-
-      {/* Date */}
       <FlatList
         data={next7Days}
         horizontal={true}
@@ -158,19 +156,16 @@ const BookingSection = ({ clinic }) => {
             onPress={() => setSelectedDate(item.date)}
             style={[styles.dayButton, selectedDate == item.date ? { backgroundColor: Colors.primary } : null]}
           >
-            <Text style={[{ fontFamily: 'Inter-Black' }, selectedDate == item.date ? { color: Colors.white } : null]}>
+            <Text style={[{ fontFamily: 'SourceSans3-Bold' }, selectedDate == item.date ? { color: Colors.white } : null]}>
               {item.day}
             </Text>
-            <Text style={[{ fontFamily: 'Inter-Black-Semi' }, selectedDate == item.date ? { color: Colors.white } : null]}>
+            <Text style={[{ fontFamily: 'SourceSans3-Bold' }, selectedDate == item.date ? { color: Colors.white } : null]}>
               {item.formattedDate}
             </Text>
           </TouchableOpacity>
         )}
       />
-
       <SubHeading subHeadingTitle={'Time'} seeAll={false} />
-
-      {/* Time */}
       <FlatList
         horizontal
         data={timeList}
@@ -180,7 +175,7 @@ const BookingSection = ({ clinic }) => {
             onPress={() => setSelectedTime(item.time)}
             style={[styles.dayButton, { paddingVertical: 16 }, selectedTime == item.time ? { backgroundColor: Colors.primary } : null]}
           >
-            <Text style={[{ fontFamily: 'Inter-Black-Semi' }, selectedTime == item.time ? { color: Colors.white } : null]}>
+            <Text style={[{ fontFamily: 'SourceSans3-Bold' }, selectedTime == item.time ? { color: Colors.white } : null]}>
               {item.time}
             </Text>
           </TouchableOpacity>
@@ -188,19 +183,14 @@ const BookingSection = ({ clinic }) => {
         showsHorizontalScrollIndicator={false}
         style={{ marginBottom: 15 }}
       />
-
       <SubHeading subHeadingTitle={'Note'} seeAll={false} />
-
-      {/* Notes */}
       <TextInput
         onChangeText={(val) => setNotes(val)}
         numberOfLines={3}
         placeholder='Write Note Here'
-        value={notes} // Bind the value to the state
+        value={notes}
         style={{ backgroundColor: Colors.ligh_gray, padding: 10, borderRadius: 10, borderColor: Colors.secondary, borderWidth: 1 }}
       />
-
-      {/* Make Appointment Button */}
       <TouchableOpacity
         onPress={handleBookAppointment}
         disabled={isSubmitting}
@@ -209,13 +199,11 @@ const BookingSection = ({ clinic }) => {
         {isSubmitting ? (
           <ActivityIndicator size="small" color={Colors.white} />
         ) : (
-          <Text style={{ fontSize: 20, textAlign: 'center', color: Colors.white, fontFamily: 'Inter-Black-Semi', fontSize: 17 }}>
+          <Text style={{ fontSize: 20, textAlign: 'center', color: Colors.white, fontFamily: 'SourceSans3-Bold', fontSize: 17 }}>
             Make Appointment
           </Text>
         )}
       </TouchableOpacity>
-
-      {/* Paystack Payment Modal */}
       {isPaymentModalVisible && (
         <PaystackPayment
           isVisible={isPaymentModalVisible}
@@ -224,8 +212,6 @@ const BookingSection = ({ clinic }) => {
           onError={handlePaymentError}
         />
       )}
-
-      {/* Awesome Alert */}
       <AwesomeAlert
         show={showAlert}
         showProgress={false}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router'; // Use useLocalSearchParams instead of useSearchParams
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import SharedHeader from '../../components/common/SharedHeader';
 import Colors from '../../components/Shared/Colors';
@@ -27,8 +27,8 @@ interface Clinic {
 
 export default function HospitalDetails() {
   const [clinic, setClinic] = useState<Clinic | null>(null);
-  const router = useRouter(); // Initialize useRouter
-  const { clinicId } = useLocalSearchParams(); // Use useLocalSearchParams to get the query params
+  const router = useRouter();
+  const { clinicId } = useLocalSearchParams();
 
   useEffect(() => {
     const fetchClinicData = async () => {
@@ -79,10 +79,7 @@ export default function HospitalDetails() {
       <TouchableOpacity
         onPress={async () => {
           try {
-            // Store clinic data in AsyncStorage
             await AsyncStorage.setItem('clinicData', JSON.stringify(clinic));
-
-            // Navigate to the next screen with the clinic ID
             router.push(`/hospital/book-appointment/${clinic._id}`);
           } catch (error) {
             console.error('Failed to store clinic data', error);

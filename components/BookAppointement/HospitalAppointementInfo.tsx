@@ -42,7 +42,7 @@ const HospitalAppointementInfo: React.FC<HospitalAppointementInfoProps> = ({ cli
       <Text style={styles.title}>{clinic.name}</Text>
 
       <FlatList
-        data={[{ name: clinic.category }]} // Assuming category is a single string
+        data={[{ name: clinic.category }]}
         horizontal={true}
         renderItem={({ item }) => (
           <Text style={styles.category}>{item.name}</Text>
@@ -52,16 +52,14 @@ const HospitalAppointementInfo: React.FC<HospitalAppointementInfoProps> = ({ cli
 
       <HorizontalLine />
 
-      {/* Address */}
       <View style={styles.infoRow}>
         <EvilIcons name="location" size={24} color="black" />
         <Text style={styles.infoText}>{clinic.address}</Text>
       </View>
 
-      {/* Operating Hours */}
       <View style={styles.infoRow}>
         <AntDesign name="clockcircle" size={16} color={Colors.primary} />
-        <Text style={styles.infoText}>Mon - Sun | 11 AM - 8 PM</Text> {/* Hardcoded operating hours */}
+        <Text style={styles.infoText}>Mon - Sun | 11 AM - 8 PM</Text>
       </View>
 
       <ActionButton />
@@ -70,7 +68,6 @@ const HospitalAppointementInfo: React.FC<HospitalAppointementInfoProps> = ({ cli
 
       <SubHeading subHeadingTitle={'About'} />
 
-      {/* Description */}
       <Text style={styles.description}>{truncatedDesc}</Text>
 
       <TouchableOpacity onPress={() => setShowFullDesc(prev => !prev)}>
