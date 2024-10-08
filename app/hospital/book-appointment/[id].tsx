@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, FlatList } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import HospitalAppointementInfo from '../../../components/BookAppointement/HospitalAppointementInfo';
@@ -55,13 +55,22 @@ const BookAppointment = () => {
     );
   }
 
-  return (
-    <ScrollView style={{ padding: 20 }}>
+  const renderItem = () => (
+    <View>
       <HospitalAppointementInfo clinic={clinic} />
-      <BookingSection clinic={clinic} /> 
+      <BookingSection clinic={clinic} />
       <ActionButton />
       <HorizontalLine />
-    </ScrollView>
+    </View>
+  );
+
+  return (
+    <FlatList
+      data={[{ key: 'content' }]}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.key}
+      contentContainerStyle={{ padding: 20 }}
+    />
   );
 }
 
