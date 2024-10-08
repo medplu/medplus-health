@@ -3,17 +3,21 @@ import { View, FlatList, Text, Image, StyleSheet } from 'react-native';
 import GlobalApi from '../../Services/GlobalApi';
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
+import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import AppLoading from 'expo-app-loading';
+
+SplashScreen.preventAutoHideAsync();
 
 const Clinics = () => {
   const [fontsLoaded] = useFonts({
     'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
   });
 
-  if (!fontsLoaded) {
-    return <AppLoading />;
-  }
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
 
   const [clinicList, setClinicList] = useState([]);
   const [loading, setLoading] = useState(true);
