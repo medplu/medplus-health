@@ -1,14 +1,14 @@
 import { View, Text, Image, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router'; // Import useRouter for navigation
+import { useRouter } from 'expo-router';
 import SubHeading from './SubHeading';
 import Colors from '../Shared/Colors';
 import GlobalApi from '../../Services/GlobalApi';
 
 export default function Category() {
   const [categoryList, setCategoryList] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
-  const router = useRouter(); // Get the router
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     getCategories();
@@ -17,13 +17,11 @@ export default function Category() {
   const getCategories = async () => {
     try {
       const resp = await GlobalApi.getCategories();
-      console.log(resp.data);
-      setCategoryList(resp.data || []); // Ensure categoryList is always an array
+      setCategoryList(resp.data || []);
     } catch (error) {
-      console.error(error);
-      setCategoryList([]); // Set categoryList to an empty array on error
+      setCategoryList([]);
     } finally {
-      setLoading(false); // Set loading to false after fetching data
+      setLoading(false);
     }
   };
 
@@ -32,11 +30,11 @@ export default function Category() {
       <SubHeading subHeadingTitle={""} />
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.PRIMARY} /> {/* Show loading indicator */}
+          <ActivityIndicator size="large" color={Colors.PRIMARY} />
         </View>
       ) : !categoryList.length ? (
         <View style={styles.centered}>
-          <Text>No categories available</Text> {/* Show message if no categories are available */}
+          <Text>No categories available</Text>
         </View>
       ) : (
         <FlatList
@@ -53,7 +51,7 @@ export default function Category() {
             index < 4 ? (
               <TouchableOpacity 
                 style={{ alignItems: 'center' }} 
-                onPress={() => router.push(`/clinics/${item.name}`)} // Use router.push for navigation
+                onPress={() => router.push(`/clinics/${item.name}`)}
               >
                 <View style={{
                   backgroundColor: Colors.SECONDARY,
@@ -62,12 +60,12 @@ export default function Category() {
                 }}>
                   <Image
                     source={{
-                      uri: item.icon // Use item.icon for the icon URL
+                      uri: item.icon
                     }}
                     style={{ width: 30, height: 30 }}
                   />
                 </View>
-                <Text>{item.name}</Text> {/* Use item.name for the category name */}
+                <Text>{item.name}</Text>
               </TouchableOpacity>
             ) : null
           )}

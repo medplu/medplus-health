@@ -6,24 +6,21 @@ import {
   GoogleAuthProvider,
   signInWithPopup
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore"; // Import Firestore functions
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export const signUp = async (email, password, accountType, additionalData = {}) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Define user data to be stored in Firestore
     const userData = {
       email: user.email,
-      accountType: accountType || null, // Account type will be null for other users
-      ...additionalData, // Spread additional data depending on the user type
+      accountType: accountType || null,
+      ...additionalData,
     };
 
-    // Store additional user information in Firestore
     await setDoc(doc(db, "users", user.uid), userData);
 
-    // Verify that the user data has been saved correctly
     const userDoc = await getDoc(doc(db, "users", user.uid));
     if (userDoc.exists()) {
       console.log("User data:", userDoc.data());
@@ -32,7 +29,7 @@ export const signUp = async (email, password, accountType, additionalData = {}) 
     }
   } catch (error) {
     console.error("Error signing up: ", error);
-    throw error; // re-throw error for UI to catch if needed
+    throw error;
   }
 };
 
