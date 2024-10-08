@@ -10,18 +10,17 @@ import Clinics from '../../components/dashboard/Clinics';
 import Colors from '../../components/Shared/Colors';
 
 const Home = () => {
-  const data = [{ key: 'dummy' }]; // Dummy data to render FlatList
+  const data = [{ key: 'dummy' }]; 
 
   return (
     <FlatList
       data={data}
-      renderItem={null} // No need to render any item
+      renderItem={null} 
       ListHeaderComponent={
         <>
           <SearchBar />
           <Category />
-          <Doctors />
-          
+          <Doctors />          
           <Clinics />
         </>
       }

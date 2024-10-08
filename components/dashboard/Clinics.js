@@ -3,8 +3,18 @@ import { View, FlatList, Text, Image, StyleSheet } from 'react-native';
 import GlobalApi from '../../Services/GlobalApi';
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
+import { useFonts } from 'expo-font';
+import AppLoading from 'expo-app-loading';
 
 const Clinics = () => {
+  const [fontsLoaded] = useFonts({
+    'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
+  });
+
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  }
+
   const [clinicList, setClinicList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,38 +22,31 @@ const Clinics = () => {
   useEffect(() => {
     fetchClinics();
   }, []);
-  
+
   const fetchClinics = async () => {
     try {
-      // Fetch the response
       const resp = await GlobalApi.getClinics();
-      console.log('Response from backend:', resp); // Log the entire response for debugging
-  
-      // Validate response status and structure
+      console.log('Response from backend:', resp);
+
       if (resp.status === 200 && Array.isArray(resp.data)) {
-        setClinicList(resp.data); // Set clinic list from the 'data' array
-        console.log('Clinic list set:', resp.data); // Log the clinic data
+        setClinicList(resp.data);
+        console.log('Clinic list set:', resp.data);
       } else {
-        console.error('Unexpected response structure or status:', resp); // Log if data is not found or is not an array
+        console.error('Unexpected response structure or status:', resp);
         setError('Failed to fetch clinic data');
       }
     } catch (error) {
-      // Handle errors during the API request
       setError('Error fetching clinics');
-      
-      // Check if error contains a response (Axios-specific)
       if (error.response) {
-        console.error('Error response:', error.response); // Log error response from server
+        console.error('Error response:', error.response);
       } else {
-        console.error('Error fetching clinics:', error); // Log any other errors (network issues, etc.)
+        console.error('Error fetching clinics:', error);
       }
     } finally {
-      // Always stop loading after the request is processed
       setLoading(false);
     }
   };
-  
-  
+
   const renderClinicItem = ({ item }) => {
     const imageUrl = item.image || null;
 
@@ -107,7 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   clinicName: {
-    fontFamily: 'Inter-Black-Semi',
+    fontFamily: 'SourceSans3-Bold',
     fontSize: 16,
     marginTop: 10,
   },
@@ -124,7 +127,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   clinicDoctorsTitle: {
-    fontFamily: 'Inter-Black-Semi',
+    fontFamily: 'SourceSans3-Bold',
     fontSize: 14,
     marginTop: 10,
   },
@@ -132,7 +135,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   doctorName: {
-    fontFamily: 'Inter-Black-Semi',
+    fontFamily: 'SourceSans3-Bold',
     fontSize: 14,
   },
   doctorSpecialties: {

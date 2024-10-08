@@ -4,8 +4,17 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native'; 
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
-
+import { useFonts } from 'expo-font';
+import AppLoading from 'expo-app-loading';
 const Doctors = () => {
+  const [fontsLoaded] = useFonts({
+    'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
+  });
+
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  }
+
   const [doctorList, setDoctorList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -125,7 +134,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   doctorName: {
-    fontFamily: 'Inter-Black-Semi',
+    fontFamily: 'SourceSans3-Bold',
     fontSize: 16,
     marginTop: 10,
   },
