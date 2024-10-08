@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Button, Platform, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Paystack } from 'react-native-paystack-webview';
+import Toast from 'react-native-toast-message';
 
 const PaystackPayment = ({ amount, onSuccess, onError }) => {
   const [userEmail, setUserEmail] = useState('');
@@ -23,11 +24,10 @@ const PaystackPayment = ({ amount, onSuccess, onError }) => {
   }, []);
 
   const handlePayment = () => {
-    if (Platform.OS === 'android') {
-      ToastAndroid.show('Starting payment process...', ToastAndroid.SHORT);
-    } else {
-      console.log('Starting payment process...');
-    }
+    Toast.show({
+      type: 'info',
+      text1: 'Starting payment process...',
+    });
     setShowPaystack(true);
   };
 
@@ -43,20 +43,18 @@ const PaystackPayment = ({ amount, onSuccess, onError }) => {
           onCancel={() => {
             setShowPaystack(false);
             onError('Payment window closed');
-            if (Platform.OS === 'android') {
-              ToastAndroid.show('Payment canceled!', ToastAndroid.SHORT);
-            } else {
-              console.log('Payment canceled!');
-            }
+            Toast.show({
+              type: 'error',
+              text1: 'Payment canceled!',
+            });
           }}
           onSuccess={(response) => {
             setShowPaystack(false);
             onSuccess(response);
-            if (Platform.OS === 'android') {
-              ToastAndroid.show('Payment successful!', ToastAndroid.SHORT);
-            } else {
-              console.log('Payment successful!');
-            }
+            Toast.show({
+              type: 'success',
+              text1: 'Payment successful!',
+            });
           }}
           autoStart={true}
         />
