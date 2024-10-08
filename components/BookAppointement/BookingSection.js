@@ -112,7 +112,7 @@ const BookingSection = ({ clinic }) => {
       }
     };
     try {
-   
+      
       await GlobalApi.createAppointement(data);
       setAlertMessage('Your appointment has been successfully booked.');
       setAlertType('success');
@@ -205,10 +205,11 @@ const BookingSection = ({ clinic }) => {
       </TouchableOpacity>
       {isPaymentModalVisible && (
         <PaystackPayment
-        onSuccess={handlePaymentSuccess} // Pass the success handler
-        onError={handlePaymentError} // Pass the error handler
-          autoStart={true}
-  />
+          isVisible={isPaymentModalVisible}
+          onClose={() => setIsPaymentModalVisible(false)}
+          onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
+        />
       )}
       <AwesomeAlert
         show={showAlert}
