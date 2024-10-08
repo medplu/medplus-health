@@ -2,7 +2,7 @@ import { Button, StyleSheet, Text, View } from 'react-native';
 import React from 'react';
 import { Link } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import Toast from 'react-native-toast-message';
+
 import { LinearGradient } from 'expo-linear-gradient';
 
 const Index = () => {
@@ -21,7 +21,7 @@ const Index = () => {
           <Button title="Register" color="#00796B" />
         </Link>
       </View>
-      <Toast position="bottom" bottomOffset={20} />
+ 
     </LinearGradient>
   );
 };
