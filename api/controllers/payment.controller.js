@@ -1,8 +1,11 @@
 const PaymentService = require('../service/payment.service');
+const PaymentModel = require('../models/payment.model'); 
+// const AppointmentModel = require('../models/AppointmentModel'); 
+const ClinicAppointmentModel = require('../models/appointment.model'); 
 const paymentInstance = new PaymentService();
 
 exports.startPayment = async (req, res) => {
-    const { amount, email, full_name } = req.body;
+    const { amount, email, full_name, userId, clinicId, date, time } = req.body;
 
     if (!amount || !email || !full_name) {
         return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Amount, email, and full name are required.' });
@@ -44,7 +47,7 @@ exports.getPayment = async (req, res) => {
 
     try {
         console.log('getPayment called with body:', req.body);
-        const response = await paymentInstance.paymentReciept(req.body);
+        const response = await paymentInstance.paymentReceipt(req.body);
         if (!response) {
             return res.status(404).json({ status: 'Failed', message: 'Payment not found.' });
         }
@@ -53,4 +56,44 @@ exports.getPayment = async (req, res) => {
         console.error('Error in getPayment:', error);
         res.status(500).json({ status: 'Failed', message: error.message });
     }
+};
+
+exports.handlePaymentWebhook = async (req, res) => {
+    const event = req.body;
+
+    if (event.event === 'charge.success') {
+        const { id, status, email, metadata } = event.data;
+
+        try {
+            const existingPayment = await PaymentModel.findOne({ reference: id });
+            if (!existingPayment) {
+             
+                const payment = new PaymentModel({
+                    full_name: metadata.full_name,
+                    email,
+                    amount: metadata.amount,
+                    reference: id,
+                    status,
+                    metadata,
+                });
+                await payment.save();
+
+               
+                const clinicAppointment = new ClinicAppointmentModel({
+                    userId: metadata.userId,
+                    clinicId: metadata.clinicId, 
+                    date: metadata.date,
+                    time: metadata.time,
+                    paymentId: payment._id, 
+                });
+                await clinicAppointment.save(); 
+            }
+        } catch (error) {
+            console.error('Error processing payment webhook:', error);
+            return res.status(500).send('Internal Server Error');
+        }
+    }
+
+
+    res.status(200).send('Webhook received');
 };

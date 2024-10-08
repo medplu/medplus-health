@@ -1,5 +1,5 @@
 const express = require("express");
-const { startPayment, createPayment, getPayment } = require("../controllers/payment.controller");
+const { startPayment, createPayment, getPayment,  handlePaymentWebhook } = require("../controllers/payment.controller");
 
 const router = express.Router();
 
@@ -11,5 +11,8 @@ router.post("/create-payment", createPayment);
 
 // Get payment details by reference
 router.get("/payment-details", getPayment);
+
+// Webhook endpoint for Paystack notifications
+router.post('/api/payments/webhook', handlePaymentWebhook);
 
 module.exports = router;

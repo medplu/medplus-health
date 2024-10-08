@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Linking } from 'react-native';
 import SubHeading from '../dashboard/SubHeading';
 import axios from 'axios';
 import Colors from '../Shared/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AwesomeAlert from 'react-native-awesome-alerts';
-import { WebView } from 'react-native-webview';
 
 const BookingSection = ({ clinic }) => {
   const [next7Days, setNext7Days] = useState([]);
@@ -18,7 +17,6 @@ const BookingSection = ({ clinic }) => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('success');
-  const [paymentUrl, setPaymentUrl] = useState('');
 
   useEffect(() => {
     getDays();
@@ -67,33 +65,56 @@ const BookingSection = ({ clinic }) => {
 
   const handleBookAppointment = async () => {
     if (!selectedDate || !selectedTime || !clinic._id || !notes) {
-        setAlertMessage('Please fill in all the required fields.');
-        setAlertType('error');
-        setShowAlert(true);
-        return;
+      setAlertMessage('Please fill in all the required fields.');
+      setAlertType('error');
+      setShowAlert(true);
+      return;
     }
+
+    // Log the data to verify
+    console.log('Booking Data:', {
+      amount: 25000,
+      email: user.email,
+      full_name: `${user.firstName} ${user.lastName}`,
+      selectedDate,
+      selectedTime,
+      clinicId: clinic._id,
+      notes,
+    });
 
     try {
-        const response = await axios.post('https://medplus-app.onrender.com/api/payment/start-payment', {
-            amount: 25000,
-            email: user.email,
-            full_name: `${user.firstName} ${user.lastName}`,
-        });
+      const response = await axios.post('https://medplus-app.onrender.com/api/payment/start-payment', {
+        amount: 25000,
+        email: user.email,
+        full_name: `${user.firstName} ${user.lastName}`,
+        date: selectedDate,
+        time: selectedTime,
+        clinicId: clinic._id,
+        note: notes,
+      });
 
-        const authorizationUrl = response.data.data.data.authorization_url; // Correct access
-        setPaymentUrl(authorizationUrl); // Set the payment URL to render WebView
+      const authorizationUrl = response.data.data.data.authorization_url; // Correct access
+      await Linking.openURL(authorizationUrl);
     } catch (error) {
-        console.error('Failed to initiate payment:', error);
-        setAlertMessage('Failed to initiate payment. Please try again.');
-        setAlertType('error');
-        setShowAlert(true);
+      console.error('Failed to initiate payment:', error);
+      setAlertMessage('Failed to initiate payment. Please try again.');
+      setAlertType('error');
+      setShowAlert(true);
     }
-};
-
+  };
 
   const handlePaymentSuccess = async (reference) => {
+    // Log the reference to verify
+    console.log('Payment Reference:', reference);
+
     try {
-      const response = await axios.post('https://medplus-app.onrender.com/api/payment/create-payment', { reference });
+      const response = await axios.post('https://medplus-app.onrender.com/api/payment/create-payment', {
+        reference,
+        date: selectedDate,
+        time: selectedTime,
+        clinicId: clinic._id,
+        note: notes,
+      });
 
       if (response.data.status === 'success') {
         const fullName = `${user.firstName} ${user.lastName}`;
@@ -196,22 +217,7 @@ const BookingSection = ({ clinic }) => {
           </Text>
         )}
       </TouchableOpacity>
-      {paymentUrl ? (
-        <WebView
-    source={{ uri: paymentUrl }}
-    startInLoadingState={true}
-    renderLoading={() => <ActivityIndicator size="large" color={Colors.primary} />}
-    onNavigationStateChange={(navState) => {
-        const currentUrl = navState.url;
-        console.log('Current URL:', currentUrl); // Log current URL for debugging
-        if (currentUrl.includes('reference=')) {
-            const reference = currentUrl.split('reference=')[1];
-            handlePaymentSuccess(reference); // Call success handler
-        }
-    }}
-    onError={(error) => handlePaymentError(error)}
-/>
-      ) : null}
+
       <AwesomeAlert
         show={showAlert}
         showProgress={false}
@@ -224,9 +230,6 @@ const BookingSection = ({ clinic }) => {
         confirmButtonColor={Colors.primary}
         onConfirmPressed={() => {
           setShowAlert(false);
-          if (alertType === 'success') {
-            
-          }
         }}
       />
     </View>
