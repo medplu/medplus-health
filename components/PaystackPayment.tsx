@@ -19,10 +19,11 @@ export default function PaystackPayment() {
       >
         <View style={styles.modalView}>
           <Paystack
-            paystackKey="pk_test_e8c64d3af2e18ee1b4e63b82d920a9b2b5041fdf"
-            billingEmail="greggambugua@gmail.com"
+            paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+            billingEmail="medpluscollaborate@gmail.com"
             billingName="Munga"          
-            amount={25000}           
+            amount={25000}
+            currency='USD'           
             onCancel={(e) => {
               console.log('Payment Cancelled:', e);
               setModalVisible(false);
