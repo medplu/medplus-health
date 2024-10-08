@@ -2,11 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert } from 'react-native';
 import SubHeading from '../dashboard/SubHeading';
 import moment from 'moment';
-import GlobalApi from '../../Services/GlobalApi';
+import axios from 'axios';
 import Colors from '../Shared/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AwesomeAlert from 'react-native-awesome-alerts';
-import PaystackPayment from '../../components/PaystackPayment';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 
@@ -33,7 +32,7 @@ const BookingSection = ({ clinic }) => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('success');
-  const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState('');
 
   useEffect(() => {
     getDays();
@@ -87,46 +86,66 @@ const BookingSection = ({ clinic }) => {
     setTimeList(timeList);
   };
 
-  const handleBookAppointment = () => {
+  const handleBookAppointment = async () => {
     if (!selectedDate || !selectedTime || !clinic._id || !notes) {
       setAlertMessage('Please fill in all the required fields.');
       setAlertType('error');
       setShowAlert(true);
       return;
     }
-    setIsPaymentModalVisible(true);
+
+    try {
+      const response = await axios.post('/api/payments/start-payment', {
+        amount: 25000, // Amount in kobo
+        email: user.email,
+        full_name: `${user.firstName} ${user.lastName}`,
+      });
+
+      setPaymentUrl(response.data.data.authorization_url);
+    } catch (error) {
+      setAlertMessage('Failed to initiate payment. Please try again.');
+      setAlertType('error');
+      setShowAlert(true);
+    }
   };
 
-  const handlePaymentSuccess = async (response) => {
-    const fullName = `${user.firstName} ${user.lastName}`;
-    setIsSubmitting(true);
-    const data = {
-      data: {
-        UserName: fullName,
-        Email: user.email,
-        Date: selectedDate,
-        Time: selectedTime,
-        clinic: clinic.id,
-        Note: notes,
-        PaymentInfo: response,
-      }
-    };
+  const handlePaymentSuccess = async (reference) => {
     try {
-      
-      await GlobalApi.createAppointement(data);
-      setAlertMessage('Your appointment has been successfully booked.');
-      setAlertType('success');
-      setShowAlert(true);
-      setSelectedDate(next7Days[0]?.date);
-      setSelectedTime(null);
-      setNotes('');
+      const response = await axios.post('/api/payments/create-payment', { reference });
+
+      if (response.data.status === 'success') {
+        const fullName = `${user.firstName} ${user.lastName}`;
+        setIsSubmitting(true);
+        const data = {
+          data: {
+            UserName: fullName,
+            Email: user.email,
+            Date: selectedDate,
+            Time: selectedTime,
+            clinic: clinic.id,
+            Note: notes,
+            PaymentInfo: response.data,
+          }
+        };
+
+        await GlobalApi.createAppointement(data);
+        setAlertMessage('Your appointment has been successfully booked.');
+        setAlertType('success');
+        setShowAlert(true);
+        setSelectedDate(next7Days[0]?.date);
+        setSelectedTime(null);
+        setNotes('');
+      } else {
+        setAlertMessage('Payment verification failed. Please try again.');
+        setAlertType('error');
+        setShowAlert(true);
+      }
     } catch (error) {
       setAlertMessage('There was an error booking your appointment. Please try again.');
       setAlertType('error');
       setShowAlert(true);
     } finally {
       setIsSubmitting(false);
-      setIsPaymentModalVisible(false);
     }
   };
 
@@ -134,7 +153,6 @@ const BookingSection = ({ clinic }) => {
     setAlertMessage('Payment failed. Please try again.');
     setAlertType('error');
     setShowAlert(true);
-    setIsPaymentModalVisible(false);
   };
 
   if (!fontsLoaded) {
@@ -203,11 +221,15 @@ const BookingSection = ({ clinic }) => {
           </Text>
         )}
       </TouchableOpacity>
-      {isPaymentModalVisible && (
-        <PaystackPayment
-          isVisible={isPaymentModalVisible}
-          onClose={() => setIsPaymentModalVisible(false)}
-          onSuccess={handlePaymentSuccess}
+      {paymentUrl && (
+        <WebView
+          source={{ uri: paymentUrl }}
+          onNavigationStateChange={(navState) => {
+            if (navState.url.includes('callback_url')) {
+              const reference = navState.url.split('reference=')[1];
+              handlePaymentSuccess(reference);
+            }
+          }}
           onError={handlePaymentError}
         />
       )}
