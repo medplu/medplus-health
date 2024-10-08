@@ -1,25 +1,29 @@
-
 import React from 'react';
-import  { Paystack }  from 'react-native-paystack-webview';
+import { Paystack } from 'react-native-paystack-webview';
 import { View } from 'react-native';
 
-export default function PaystackPayment() {
+interface PaystackPaymentProps {
+  amount: number;
+  billingEmail: string;
+  onSuccess: (res: any) => void;
+  onError: (e: any) => void;
+}
+
+const PaystackPayment: React.FC<PaystackPaymentProps> = ({ amount, billingEmail, onSuccess, onError }) => {
   return (
     <View style={{ flex: 1 }}>
-      <Paystack  
+      <Paystack
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-        amount={25000.00}        
-        billingEmail="medpluscollaborate@gmail.com"
+        amount={amount}
+        billingEmail={billingEmail}
+        onCancel={(e) => onError(e)}
+        onSuccess={(res) => onSuccess(res)}
         currency='KES'
         activityIndicatorColor="green"
-        onCancel={(e) => {
-          // handle response here
-        }}
-        onSuccess={(res) => {
-          // handle response here
-        }}
         autoStart={true}
       />
     </View>
   );
-}
+};
+
+export default PaystackPayment;

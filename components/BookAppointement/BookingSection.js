@@ -205,8 +205,8 @@ const BookingSection = ({ clinic }) => {
       </TouchableOpacity>
       {isPaymentModalVisible && (
         <PaystackPayment
-          onCancel={handlePaymentError} 
-          onSuccess={handlePaymentSuccess} 
+        onSuccess={handlePaymentSuccess} // Pass the success handler
+        onError={handlePaymentError} // Pass the error handler
           autoStart={true}
   />
       )}
