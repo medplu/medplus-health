@@ -20,8 +20,8 @@ export default function PaystackPayment() {
         <View style={styles.modalView}>
           <Paystack
             paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-            billingEmail="paystackwebview@something.com"
-            amount={'25000.00'}
+            billingEmail="medpluscollaborate@gmail.com"
+            amount={25000.00}
             currency='NGN'
             onCancel={(e) => {
               console.log('Payment Cancelled:', e);
