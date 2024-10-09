@@ -4,7 +4,7 @@ const PaymentService = require('../service/payment.service');
 const paymentInstance = new PaymentService();
 
 exports.createAppointmentAndStartPayment = async (req, res) => {
-    const { userId, clinicId, date, time, amount, email, full_name } = req.body;
+    const { userId, clinicId, date, time, amount, email, full_name, notes } = req.body;
 
     if (!userId || !clinicId || !date || !time || !amount || !email || !full_name) {
         return res.status(400).json({ status: 'Failed', message: 'Invalid input data. All fields are required.' });
@@ -17,7 +17,8 @@ exports.createAppointmentAndStartPayment = async (req, res) => {
             clinicId,
             date,
             time,
-            paymentId: null, // Initially set to null, will be updated after payment
+            notes: notes || '', // Include notes if provided
+            status: 'pending',
         });
         await appointment.save();
 
@@ -44,7 +45,6 @@ exports.createAppointmentAndStartPayment = async (req, res) => {
     }
 };
 
-
 exports.handlePaymentWebhook = async (req, res) => {
     const event = req.body;
 
@@ -64,6 +64,7 @@ exports.handlePaymentWebhook = async (req, res) => {
 
             // Update the appointment status to "confirmed"
             appointment.paymentId = reference; // Save the payment reference
+            appointment.status = 'confirmed';
             await appointment.save();
 
             console.log('Appointment confirmed successfully');

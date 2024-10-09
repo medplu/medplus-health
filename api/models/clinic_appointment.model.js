@@ -22,11 +22,13 @@ const clinicAppointmentSchema = new mongoose.Schema({
     paymentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Payment', // Updated reference to match the model name
-        required: true,
+        required: false, // Make paymentId optional
     },
 }, {
     timestamps: true // Automatically creates `createdAt` and `updatedAt` fields
 });
 
-// Export the model with the name 'ClinicAppointment'
-module.exports = mongoose.model('ClinicAppointment', clinicAppointmentSchema);
+// Check if the model already exists before defining it
+const ClinicAppointment = mongoose.models.ClinicAppointment || mongoose.model('ClinicAppointment', clinicAppointmentSchema);
+
+module.exports = ClinicAppointment;
