@@ -14,7 +14,7 @@ exports.startPayment = async (req, res) => {
         console.log('startPayment called with body:', req.body);
 
         const paymentData = {
-            amount: amount * 100, // Convert to smallest currency unit
+            amount,
             email,
             metadata: {
                 full_name,
