@@ -56,18 +56,27 @@ exports.getPayment = async (req, res) => {
         console.error('Error in getPayment:', error);
         res.status(500).json({ status: 'Failed', message: error.message });
     }
-};
-
-exports.handlePaymentWebhook = async (req, res) => {
+};exports.handlePaymentWebhook = async (req, res) => {
     const event = req.body;
+
+    // Log the entire event data to verify its contents
+    console.log('Webhook event data:', event);
 
     if (event.event === 'charge.success') {
         const { id, status, email, metadata } = event.data;
 
+        // Log the metadata to verify its contents
+        console.log('Webhook metadata:', metadata);
+
+        // Check if required fields are present in metadata
+        if (!metadata || !metadata.full_name || !metadata.amount || !metadata.userId || !metadata.clinicId || !metadata.date || !metadata.time) {
+            console.error('Missing required metadata fields');
+            return res.status(400).send('Bad Request: Missing required metadata fields');
+        }
+
         try {
             const existingPayment = await PaymentModel.findOne({ reference: id });
             if (!existingPayment) {
-             
                 const payment = new PaymentModel({
                     full_name: metadata.full_name,
                     email,
@@ -78,7 +87,6 @@ exports.handlePaymentWebhook = async (req, res) => {
                 });
                 await payment.save();
 
-               
                 const clinicAppointment = new ClinicAppointmentModel({
                     userId: metadata.userId,
                     clinicId: metadata.clinicId, 
@@ -93,7 +101,6 @@ exports.handlePaymentWebhook = async (req, res) => {
             return res.status(500).send('Internal Server Error');
         }
     }
-
 
     res.status(200).send('Webhook received');
 };
