@@ -1,19 +1,33 @@
 const PaymentService = require('../service/payment.service');
 const PaymentModel = require('../models/payment.model'); 
-// const AppointmentModel = require('../models/AppointmentModel'); 
+ 
 const ClinicAppointmentModel = require('../models/appointment.model'); 
 const paymentInstance = new PaymentService();
-
 exports.startPayment = async (req, res) => {
     const { amount, email, full_name, userId, clinicId, date, time } = req.body;
 
-    if (!amount || !email || !full_name) {
-        return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Amount, email, and full name are required.' });
+    if (!amount || !email || !full_name || !userId || !clinicId || !date || !time) {
+        return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Amount, email, full name, userId, clinicId, date, and time are required.' });
     }
 
     try {
         console.log('startPayment called with body:', req.body);
-        const response = await paymentInstance.startPayment(req.body);
+
+     
+        const paymentData = {
+            amount,
+            email,
+            metadata: {
+                full_name,
+                amount,
+                userId,
+                clinicId,
+                date,
+                time,
+            },
+        };
+
+        const response = await paymentInstance.startPayment(paymentData);
         res.status(200).json({ status: 'Success', data: response });
     } catch (error) {
         console.error('Error in startPayment:', error);
@@ -60,16 +74,15 @@ exports.getPayment = async (req, res) => {
 exports.handlePaymentWebhook = async (req, res) => {
     const event = req.body;
 
-    // Log the entire event data to verify its contents
+   
     console.log('Webhook event data:', event);
 
     if (event.event === 'charge.success') {
         const { id, status, email, metadata } = event.data;
 
-        // Log the metadata to verify its contents
+      
         console.log('Webhook metadata:', metadata);
 
-        // Check if required fields are present in metadata
         if (!metadata || !metadata.full_name || !metadata.amount || !metadata.userId || !metadata.clinicId || !metadata.date || !metadata.time) {
             console.error('Missing required metadata fields');
             return res.status(400).send('Bad Request: Missing required metadata fields');

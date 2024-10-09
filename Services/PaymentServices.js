@@ -2,14 +2,18 @@ import axios from 'axios';
 
 const PAYMENT_BASE_URL = 'https://medplus-app.onrender.com/api/payment';
 
-export const initiatePayment = async (amount, email, fullName) => {
+export const initiatePayment = async (amount, email, fullName, userId, clinicId, date, time) => {
   try {
     const response = await axios.post(`${PAYMENT_BASE_URL}/start-payment`, {
       amount,
       email,
       full_name: fullName,
+      userId,
+      clinicId,
+      date,
+      time,
     });
-    return response.data.data.data.authorization_url; // Return the authorization URL
+    return response.data.data.data.authorization_url; 
   } catch (error) {
     throw new Error('Failed to initiate payment');
   }
@@ -18,7 +22,7 @@ export const initiatePayment = async (amount, email, fullName) => {
 export const verifyPayment = async (reference) => {
   try {
     const response = await axios.post(`${PAYMENT_BASE_URL}/create-payment`, { reference });
-    return response.data; // Return the full response for further handling
+    return response.data; 
   } catch (error) {
     throw new Error('Payment verification failed');
   }
