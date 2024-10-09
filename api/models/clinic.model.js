@@ -1,53 +1,39 @@
+// models/clinic_appointment.model.js
 const mongoose = require('mongoose');
 
-// Define the subdocument schema for doctors
-const doctorSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  specialties: {
-    type: [String],
-    required: true,
-  },
-  experience: {
-    type: String,
-    required: true,
-  },
-});
-
-// Define the main schema for clinics
-const clinicSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  contactInfo: {
-    type: String,
-    required: true,
-  },
-  address: {
-    type: String,
-    required: true,
-  },
-  image: {
-    type: String,
-    required: false,
-  },
-  category: {
-    type: String,
-    required: true,
-  },
-  doctors: [doctorSchema], // Use the subdocument schema for doctors
-  professional: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Professional',
-    required: true,
-  },
+const clinicAppointmentSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', // Reference to the User model
+        required: true,
+    },
+    clinicId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Clinic', // Reference to the Clinic model
+        required: true,
+    },
+    date: {
+        type: Date,
+        required: true,
+    },
+    time: {
+        type: String,
+        required: true,
+    },
+    notes: {
+        type: String,
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'confirmed'],
+        default: 'pending',
+    },
+    paymentId: {
+        type: String,
+        required: false, // Make paymentId optional
+    },
 }, {
-  timestamps: true,
+    timestamps: true // Automatically creates `createdAt` and `updatedAt` fields
 });
 
-const Clinic = mongoose.model('Clinic', clinicSchema);
-
-module.exports = Clinic;
+module.exports = mongoose.model('ClinicAppointment', clinicAppointmentSchema);

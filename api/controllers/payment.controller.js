@@ -2,7 +2,6 @@ const PaymentService = require('../service/payment.service');
 
 const ClinicAppointmentModel = require('../models/clinic_appointment.model'); // Ensure correct model import
 const paymentInstance = new PaymentService();
-
 exports.startPayment = async (req, res) => {
     const { amount, email, full_name, userId, clinicId, date, time, notes } = req.body;
 
@@ -46,7 +45,6 @@ exports.startPayment = async (req, res) => {
         });
     }
 };
-
 exports.createPayment = async (req, res) => {
     const { reference } = req.query;
 
@@ -91,7 +89,6 @@ exports.getPayment = async (req, res) => {
         });
     }
 };
-
 exports.handlePaymentWebhook = async (req, res) => {
     const event = req.body;
 
