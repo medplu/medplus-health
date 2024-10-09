@@ -29,7 +29,8 @@ exports.startPayment = async (req, res) => {
         console.log('Form data being sent:', paymentData);
 
         const response = await paymentInstance.startPayment(paymentData);
-        res.status(200).json({ status: 'Success', data: response });
+        console.log('Response from payment gateway:', response.data);
+        res.status(200).json({ status: 'Success', data: response.data });
     } catch (error) {
         console.error('Error in startPayment:', error);
         res.status(500).json({ status: 'Failed', message: error.message });
