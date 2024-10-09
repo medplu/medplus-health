@@ -1,9 +1,10 @@
 const PaymentService = require('../service/payment.service');
-const ClinicAppointment = require('../models/clinic.model'); // Ensure correct model import
+const PaymentModel = require('../models/payment.model');
+const ClinicAppointmentModel = require('../models/appointment.model');
 const paymentInstance = new PaymentService();
 
 exports.startPayment = async (req, res) => {
-    const { amount, email, full_name, userId, clinicId, date, time, notes } = req.body;
+    const { amount, email, full_name, userId, clinicId, date, time } = req.body;
 
     if (!amount || !email || !full_name || !userId || !clinicId || !date || !time) {
         return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Amount, email, full name, userId, clinicId, date, and time are required.' });
@@ -12,44 +13,25 @@ exports.startPayment = async (req, res) => {
     try {
         console.log('startPayment called with body:', req.body);
 
-        // Create the appointment with status "pending"
-        const appointment = new ClinicAppointment({
-            userId,
-            clinicId,
-            date,
-            time,
-            notes,
-            status: 'pending',
-        });
-        await appointment.save();
-
         const paymentData = {
             amount,
             email,
             metadata: {
                 full_name,
-                bookingId: appointment._id, // Pass the appointment ID as bookingId
+                amount,
+                userId,
+                clinicId,
+                date,
+                time,
             },
         };
 
         console.log('Form data being sent:', paymentData);
 
         const response = await paymentInstance.startPayment(paymentData);
-
-        // Log the full response for debugging
-        console.log('Payment service response:', response.data);
-
-        // Check if authorization_url is present
-        if (!response.data.data || !response.data.data.authorization_url) {
-            return res.status(500).json({ 
-                status: 'Failed', 
-                message: 'Failed to initiate payment. Missing authorization URL in the response.',
-            });
-        }
-
-        // Return the authorization_url to the frontend
-        res.status(200).json({ status: 'Success', authorization_url: response.data.data.authorization_url });
+        res.status(200).json({ status: 'Success', data: response });
     } catch (error) {
+        // Enhanced error handling
         console.error('Error in startPayment:', error.response ? error.response.data : error.message);
         res.status(500).json({ 
             status: 'Failed', 
@@ -71,6 +53,7 @@ exports.createPayment = async (req, res) => {
         const response = await paymentInstance.createPayment(req.query);
         res.status(201).json({ status: 'Success', data: response });
     } catch (error) {
+        // Enhanced error handling
         console.error('Error in createPayment:', error.response ? error.response.data : error.message);
         res.status(500).json({ 
             status: 'Failed', 
@@ -95,6 +78,7 @@ exports.getPayment = async (req, res) => {
         }
         res.status(200).json({ status: 'Success', data: response });
     } catch (error) {
+        // Enhanced error handling
         console.error('Error in getPayment:', error.response ? error.response.data : error.message);
         res.status(500).json({ 
             status: 'Failed', 
@@ -109,24 +93,61 @@ exports.handlePaymentWebhook = async (req, res) => {
 
     console.log('Webhook event data:', event);
 
+    // Check if the event is a successful charge
     if (event.event === 'charge.success') {
-        const { reference, metadata } = event.data;
+        const { reference, status, customer, metadata } = event.data;
 
         console.log('Webhook event data:', event.data);
+        console.log('Webhook metadata:', metadata);
+
+        // Ensure required fields are present in the metadata
+        if (!metadata || !metadata.full_name || !metadata.amount || !metadata.userId || !metadata.clinicId || !metadata.date || !metadata.time) {
+            console.error('Missing required metadata fields');
+            return res.status(400).send('Bad Request: Missing required metadata fields');
+        }
 
         try {
-            // Retrieve the appointment using the booking ID from metadata
-            const appointment = await ClinicAppointment.findById(metadata.bookingId);
-            if (!appointment) {
-                return res.status(404).send('Appointment not found.');
+            // Check if the payment already exists
+            const existingPayment = await PaymentModel.findOne({ reference });
+            if (!existingPayment) {
+                // Check for duplicate appointment
+                const existingAppointment = await ClinicAppointmentModel.findOne({
+                    clinicId: metadata.clinicId,
+                    userId: metadata.userId,
+                    date: metadata.date,
+                    time: metadata.time
+                });
+
+                if (existingAppointment) {
+                    console.warn('Duplicate appointment detected for clinic:', metadata.clinicId, 'user:', metadata.userId, 'date:', metadata.date, 'time:', metadata.time);
+                    return res.status(409).send('Conflict: Appointment already exists for the selected time and clinic.');
+                }
+
+                // Create new payment record
+                const payment = new PaymentModel({
+                    full_name: metadata.full_name,
+                    email: customer.email,
+                    amount: metadata.amount,
+                    reference,
+                    status,
+                    metadata,
+                });
+                await payment.save();
+
+                // Create new appointment record
+                const clinicAppointment = new ClinicAppointmentModel({
+                    userId: metadata.userId,
+                    clinicId: metadata.clinicId,
+                    date: metadata.date,
+                    time: metadata.time,
+                    paymentId: payment._id, 
+                });
+                await clinicAppointment.save();
+
+                console.log('Payment and appointment created successfully');
+            } else {
+                console.log('Payment already processed for reference:', reference);
             }
-
-            // Update the appointment status to "confirmed"
-            appointment.paymentId = reference; // Save the payment reference
-            appointment.status = 'confirmed';
-            await appointment.save();
-
-            console.log('Appointment confirmed successfully');
         } catch (error) {
             console.error('Error processing payment webhook:', error.response ? error.response.data : error.message);
             return res.status(500).send('Internal Server Error while processing payment webhook.');
@@ -135,5 +156,6 @@ exports.handlePaymentWebhook = async (req, res) => {
         console.warn('Unhandled event type:', event.event);
     }
 
+    // Respond to Paystack that the webhook was received successfully
     res.status(200).send('Webhook received');
 };
