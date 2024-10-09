@@ -13,7 +13,6 @@ exports.startPayment = async (req, res) => {
     try {
         console.log('startPayment called with body:', req.body);
 
-     
         const paymentData = {
             amount,
             email,
@@ -34,7 +33,6 @@ exports.startPayment = async (req, res) => {
         res.status(500).json({ status: 'Failed', message: error.message });
     }
 };
-
 exports.createPayment = async (req, res) => {
     const { reference } = req.query;
 
@@ -74,13 +72,11 @@ exports.getPayment = async (req, res) => {
 exports.handlePaymentWebhook = async (req, res) => {
     const event = req.body;
 
-   
     console.log('Webhook event data:', event);
 
     if (event.event === 'charge.success') {
-        const { id, status, email, metadata } = event.data;
+        const { reference, status, customer, metadata } = event.data;
 
-      
         console.log('Webhook metadata:', metadata);
 
         if (!metadata || !metadata.full_name || !metadata.amount || !metadata.userId || !metadata.clinicId || !metadata.date || !metadata.time) {
@@ -89,13 +85,13 @@ exports.handlePaymentWebhook = async (req, res) => {
         }
 
         try {
-            const existingPayment = await PaymentModel.findOne({ reference: id });
+            const existingPayment = await PaymentModel.findOne({ reference });
             if (!existingPayment) {
                 const payment = new PaymentModel({
                     full_name: metadata.full_name,
-                    email,
+                    email: customer.email,
                     amount: metadata.amount,
-                    reference: id,
+                    reference,
                     status,
                     metadata,
                 });

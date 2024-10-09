@@ -13,7 +13,7 @@ const BookingSection = ({ clinic }) => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [user, setUser] = useState({ firstName: '', lastName: '', email: '' });
+  const [user, setUser] = useState({ firstName: '', lastName: '', email: '', userId: '' });
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('success');
@@ -29,7 +29,9 @@ const BookingSection = ({ clinic }) => {
       const firstName = await AsyncStorage.getItem('firstName');
       const lastName = await AsyncStorage.getItem('lastName');
       const email = await AsyncStorage.getItem('email');
-      setUser({ firstName, lastName, email });
+      const userId = await AsyncStorage.getItem('userId'); // Extract userId
+      console.log(userId)
+      setUser({ firstName, lastName, email, userId });
     } catch (error) {
       console.error('Failed to load user data', error);
     }
@@ -80,6 +82,7 @@ const BookingSection = ({ clinic }) => {
       selectedTime,
       clinicId: clinic._id,
       notes,
+      userId: user.userId, // Include userId in the log
     });
 
     try {
@@ -91,6 +94,7 @@ const BookingSection = ({ clinic }) => {
         time: selectedTime,
         clinicId: clinic._id,
         note: notes,
+        userId: user.userId, // Include userId in the payload
       });
 
       const authorizationUrl = response.data.data.data.authorization_url; // Correct access
