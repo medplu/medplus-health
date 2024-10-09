@@ -1,5 +1,5 @@
 const PaymentService = require('../service/payment.service');
-const ClinicAppointment = require('../models/clinic_appointment.model'); // Ensure correct model import
+const ClinicAppointment = require('../models/clinic.model'); // Ensure correct model import
 const paymentInstance = new PaymentService();
 
 exports.startPayment = async (req, res) => {

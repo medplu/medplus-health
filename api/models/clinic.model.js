@@ -1,3 +1,4 @@
+// models/clinic_appointment.model.js
 const mongoose = require('mongoose');
 
 const clinicAppointmentSchema = new mongoose.Schema({
@@ -9,7 +10,7 @@ const clinicAppointmentSchema = new mongoose.Schema({
     clinicId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Clinic', // Reference to the Clinic model
-        required: true,
+       
     },
     date: {
         type: Date,
@@ -19,16 +20,20 @@ const clinicAppointmentSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    notes: {
+        type: String,
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'confirmed'],
+        default: 'pending',
+    },
     paymentId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Payment', // Updated reference to match the model name
+        type: String,
         required: false, // Make paymentId optional
     },
 }, {
     timestamps: true // Automatically creates `createdAt` and `updatedAt` fields
 });
 
-// Check if the model already exists before defining it
-const ClinicAppointment = mongoose.models.ClinicAppointment || mongoose.model('ClinicAppointment', clinicAppointmentSchema);
-
-module.exports = ClinicAppointment;
+module.exports = mongoose.model('ClinicAppointment', clinicAppointmentSchema);
