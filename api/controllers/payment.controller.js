@@ -77,15 +77,16 @@ exports.handlePaymentWebhook = async (req, res) => {
     if (event.event === 'charge.success') {
         const { reference, status, customer, metadata } = event.data;
 
+        console.log('Webhook event data:', event.data);
         console.log('Webhook metadata:', metadata);
 
         // Log each field in metadata to verify their presence
-        console.log('Metadata full_name:', metadata.full_name);
-        console.log('Metadata amount:', metadata.amount);
-        console.log('Metadata userId:', metadata.userId);
-        console.log('Metadata clinicId:', metadata.clinicId);
-        console.log('Metadata date:', metadata.date);
-        console.log('Metadata time:', metadata.time);
+        console.log('Metadata full_name:', metadata ? metadata.full_name : 'undefined');
+        console.log('Metadata amount:', metadata ? metadata.amount : 'undefined');
+        console.log('Metadata userId:', metadata ? metadata.userId : 'undefined');
+        console.log('Metadata clinicId:', metadata ? metadata.clinicId : 'undefined');
+        console.log('Metadata date:', metadata ? metadata.date : 'undefined');
+        console.log('Metadata time:', metadata ? metadata.time : 'undefined');
 
         if (!metadata || !metadata.full_name || !metadata.amount || !metadata.userId || !metadata.clinicId || !metadata.date || !metadata.time) {
             console.error('Missing required metadata fields');
