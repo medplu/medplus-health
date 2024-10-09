@@ -1,10 +1,10 @@
 const PaymentService = require('../service/payment.service');
-const PaymentModel = require('../models/payment.model');
-const ClinicAppointmentModel = require('../models/appointment.model');
+
+const ClinicAppointmentModel = require('../models/clinic_appointment.model'); // Ensure correct model import
 const paymentInstance = new PaymentService();
 
 exports.startPayment = async (req, res) => {
-    const { amount, email, full_name, userId, clinicId, date, time } = req.body;
+    const { amount, email, full_name, userId, clinicId, date, time, notes } = req.body;
 
     if (!amount || !email || !full_name || !userId || !clinicId || !date || !time) {
         return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Amount, email, full name, userId, clinicId, date, and time are required.' });
@@ -13,26 +13,37 @@ exports.startPayment = async (req, res) => {
     try {
         console.log('startPayment called with body:', req.body);
 
+        // Create the appointment with status "pending"
+        const appointment = new ClinicAppointmentModel({
+            userId,
+            clinicId,
+            date,
+            time,
+            notes,
+            status: 'pending',
+        });
+        await appointment.save();
+
         const paymentData = {
             amount,
             email,
             metadata: {
                 full_name,
-                amount,
-                userId,
-                clinicId,
-                date,
-                time,
+                bookingId: appointment._id, // Pass the appointment ID as bookingId
             },
         };
 
         console.log('Form data being sent:', paymentData);
 
         const response = await paymentInstance.startPayment(paymentData);
-        res.status(200).json({ status: 'Success', data: response });
+        res.status(200).json({ status: 'Success', data: response.data.data });
     } catch (error) {
-        console.error('Error in startPayment:', error);
-        res.status(500).json({ status: 'Failed', message: error.message });
+        console.error('Error in startPayment:', error.response ? error.response.data : error.message);
+        res.status(500).json({ 
+            status: 'Failed', 
+            message: 'Payment initialization failed. Please try again later.',
+            error: error.response ? error.response.data : error.message
+        });
     }
 };
 
@@ -48,8 +59,12 @@ exports.createPayment = async (req, res) => {
         const response = await paymentInstance.createPayment(req.query);
         res.status(201).json({ status: 'Success', data: response });
     } catch (error) {
-        console.error('Error in createPayment:', error);
-        res.status(500).json({ status: 'Failed', message: error.message });
+        console.error('Error in createPayment:', error.response ? error.response.data : error.message);
+        res.status(500).json({ 
+            status: 'Failed', 
+            message: 'Payment creation failed. Please try again later.',
+            error: error.response ? error.response.data : error.message
+        });
     }
 };
 
@@ -68,8 +83,12 @@ exports.getPayment = async (req, res) => {
         }
         res.status(200).json({ status: 'Success', data: response });
     } catch (error) {
-        console.error('Error in getPayment:', error);
-        res.status(500).json({ status: 'Failed', message: error.message });
+        console.error('Error in getPayment:', error.response ? error.response.data : error.message);
+        res.status(500).json({ 
+            status: 'Failed', 
+            message: 'Failed to retrieve payment details. Please try again later.',
+            error: error.response ? error.response.data : error.message
+        });
     }
 };
 
@@ -79,50 +98,29 @@ exports.handlePaymentWebhook = async (req, res) => {
     console.log('Webhook event data:', event);
 
     if (event.event === 'charge.success') {
-        const { reference, status, customer, metadata } = event.data;
+        const { reference, metadata } = event.data;
 
         console.log('Webhook event data:', event.data);
-        console.log('Webhook metadata:', metadata);
-
-        // Log each field in metadata to verify their presence
-        console.log('Metadata full_name:', metadata ? metadata.full_name : 'undefined');
-        console.log('Metadata amount:', metadata ? metadata.amount : 'undefined');
-        console.log('Metadata userId:', metadata ? metadata.userId : 'undefined');
-        console.log('Metadata clinicId:', metadata ? metadata.clinicId : 'undefined');
-        console.log('Metadata date:', metadata ? metadata.date : 'undefined');
-        console.log('Metadata time:', metadata ? metadata.time : 'undefined');
-
-        if (!metadata || !metadata.full_name || !metadata.amount || !metadata.userId || !metadata.clinicId || !metadata.date || !metadata.time) {
-            console.error('Missing required metadata fields');
-            return res.status(400).send('Bad Request: Missing required metadata fields');
-        }
 
         try {
-            const existingPayment = await PaymentModel.findOne({ reference });
-            if (!existingPayment) {
-                const payment = new PaymentModel({
-                    full_name: metadata.full_name,
-                    email: customer.email,
-                    amount: metadata.amount,
-                    reference,
-                    status,
-                    metadata,
-                });
-                await payment.save();
-
-                const clinicAppointment = new ClinicAppointmentModel({
-                    userId: metadata.userId,
-                    clinicId: metadata.clinicId, 
-                    date: metadata.date,
-                    time: metadata.time,
-                    paymentId: payment._id, 
-                });
-                await clinicAppointment.save(); 
+            // Retrieve the appointment using the booking ID from metadata
+            const appointment = await ClinicAppointmentModel.findById(metadata.bookingId);
+            if (!appointment) {
+                return res.status(404).send('Appointment not found.');
             }
+
+            // Update the appointment status to "confirmed"
+            appointment.paymentId = reference; // Save the payment reference
+            appointment.status = 'confirmed';
+            await appointment.save();
+
+            console.log('Appointment confirmed successfully');
         } catch (error) {
-            console.error('Error processing payment webhook:', error);
-            return res.status(500).send('Internal Server Error');
+            console.error('Error processing payment webhook:', error.response ? error.response.data : error.message);
+            return res.status(500).send('Internal Server Error while processing payment webhook.');
         }
+    } else {
+        console.warn('Unhandled event type:', event.event);
     }
 
     res.status(200).send('Webhook received');

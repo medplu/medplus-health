@@ -93,11 +93,11 @@ const BookingSection = ({ clinic }) => {
         date: selectedDate,
         time: selectedTime,
         clinicId: clinic._id,
-        note: notes,
+        notes,
         userId: user.userId, // Include userId in the payload
       });
 
-      const authorizationUrl = response.data.data.data.authorization_url; // Correct access
+      const authorizationUrl = response.data.data.authorization_url; // Correct access
       await Linking.openURL(authorizationUrl);
     } catch (error) {
       console.error('Failed to initiate payment:', error);
@@ -105,64 +105,6 @@ const BookingSection = ({ clinic }) => {
       setAlertType('error');
       setShowAlert(true);
     }
-  };
-
-  const handlePaymentSuccess = async (reference) => {
-    // Log the reference to verify
-    console.log('Payment Reference:', reference);
-
-    try {
-      const response = await axios.post('https://medplus-app.onrender.com/api/payment/create-payment', {
-        reference,
-        date: selectedDate,
-        time: selectedTime,
-        clinicId: clinic._id,
-        note: notes,
-      });
-
-      if (response.data.status === 'success') {
-        const fullName = `${user.firstName} ${user.lastName}`;
-        setIsSubmitting(true);
-        const data = {
-          data: {
-            UserName: fullName,
-            Email: user.email,
-            Date: selectedDate,
-            Time: selectedTime,
-            clinic: clinic.id,
-            Note: notes,
-            PaymentInfo: response.data,
-          },
-        };
-
-        await axios.post('https://medplus-app.onrender.com/api/appointments', data);
-        setAlertMessage('Your appointment has been successfully booked.');
-        setAlertType('success');
-        setShowAlert(true);
-        setSelectedDate(next7Days[0]?.date);
-        setSelectedTime(null);
-        setNotes('');
-      } else {
-        console.error('Payment verification failed:', response.data);
-        setAlertMessage('Payment verification failed. Please try again.');
-        setAlertType('error');
-        setShowAlert(true);
-      }
-    } catch (error) {
-      console.error('Error booking appointment:', error);
-      setAlertMessage('There was an error booking your appointment. Please try again.');
-      setAlertType('error');
-      setShowAlert(true);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePaymentError = (error) => {
-    console.error('Payment failed:', error);
-    setAlertMessage('Payment failed. Please try again.');
-    setAlertType('error');
-    setShowAlert(true);
   };
 
   return (

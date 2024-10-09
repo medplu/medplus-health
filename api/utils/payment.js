@@ -1,12 +1,17 @@
 const axios = require('axios');
 
 const paystack = () => {
-    const MySecretKey = 'Bearer sk_test_e4027d1a804639d19d2c24abf9389f22637d9a19';  // Replace 'YOUR_PAYSTACK_SECRET_KEY' with your actual Paystack secret key
+    const MySecretKey = 'Bearer sk_test_bd491bc07f705e9724f50d3d7b059de890e06716';  // Replace 'YOUR_PAYSTACK_SECRET_KEY' with your actual Paystack secret key
 
     // Log the secret key to ensure it is set correctly (remove this in production)
     console.log('Using Paystack Key:', MySecretKey);
-
+    
     const initializePayment = async (form, mycallback) => {
+        // Ensure the metadata is stringified separately
+        if (form.metadata && typeof form.metadata === 'object') {
+            form.metadata = JSON.stringify(form.metadata);
+        }
+    
         const options = {
             url: 'https://api.paystack.co/transaction/initialize',
             headers: {
@@ -14,9 +19,9 @@ const paystack = () => {
                 'content-type': 'application/json',
                 'cache-control': 'no-cache'
             },
-            data: JSON.stringify(form)  // Ensure the form data is stringified
+            data: JSON.stringify(form)  // Ensure the form data itself is stringified
         };
-
+    
         try {
             const response = await axios.post(options.url, options.data, { headers: options.headers });
             return mycallback(null, response.data);
@@ -25,6 +30,7 @@ const paystack = () => {
             return mycallback(error, null);
         }
     };
+    
 
 
     const verifyPayment = async (ref, mycallback) => {
