@@ -79,6 +79,14 @@ exports.handlePaymentWebhook = async (req, res) => {
 
         console.log('Webhook metadata:', metadata);
 
+        // Log each field in metadata to verify their presence
+        console.log('Metadata full_name:', metadata.full_name);
+        console.log('Metadata amount:', metadata.amount);
+        console.log('Metadata userId:', metadata.userId);
+        console.log('Metadata clinicId:', metadata.clinicId);
+        console.log('Metadata date:', metadata.date);
+        console.log('Metadata time:', metadata.time);
+
         if (!metadata || !metadata.full_name || !metadata.amount || !metadata.userId || !metadata.clinicId || !metadata.date || !metadata.time) {
             console.error('Missing required metadata fields');
             return res.status(400).send('Bad Request: Missing required metadata fields');
