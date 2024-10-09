@@ -240,5 +240,5 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 });
-
+}
 export default BookingSection;
