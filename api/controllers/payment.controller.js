@@ -56,7 +56,8 @@ exports.getPayment = async (req, res) => {
         console.error('Error in getPayment:', error);
         res.status(500).json({ status: 'Failed', message: error.message });
     }
-};exports.handlePaymentWebhook = async (req, res) => {
+};
+exports.handlePaymentWebhook = async (req, res) => {
     const event = req.body;
 
     // Log the entire event data to verify its contents
