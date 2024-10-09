@@ -1,8 +1,8 @@
 const PaymentService = require('../service/payment.service');
-const PaymentModel = require('../models/payment.model'); 
- 
-const ClinicAppointmentModel = require('../models/appointment.model'); 
+const PaymentModel = require('../models/payment.model');
+const ClinicAppointmentModel = require('../models/appointment.model');
 const paymentInstance = new PaymentService();
+
 exports.startPayment = async (req, res) => {
     const { amount, email, full_name, userId, clinicId, date, time } = req.body;
 
@@ -14,7 +14,7 @@ exports.startPayment = async (req, res) => {
         console.log('startPayment called with body:', req.body);
 
         const paymentData = {
-            amount,
+            amount: amount * 100, // Convert to smallest currency unit
             email,
             metadata: {
                 full_name,
@@ -26,6 +26,8 @@ exports.startPayment = async (req, res) => {
             },
         };
 
+        console.log('Form data being sent:', paymentData);
+
         const response = await paymentInstance.startPayment(paymentData);
         res.status(200).json({ status: 'Success', data: response });
     } catch (error) {
@@ -33,6 +35,7 @@ exports.startPayment = async (req, res) => {
         res.status(500).json({ status: 'Failed', message: error.message });
     }
 };
+
 exports.createPayment = async (req, res) => {
     const { reference } = req.query;
 
@@ -69,6 +72,7 @@ exports.getPayment = async (req, res) => {
         res.status(500).json({ status: 'Failed', message: error.message });
     }
 };
+
 exports.handlePaymentWebhook = async (req, res) => {
     const event = req.body;
 
