@@ -3,7 +3,6 @@ const PaymentModel = require('../models/payment.model');
 const ClinicAppointmentModel = require('../models/appointment.model');
 const paymentInstance = new PaymentService();
 
-
 exports.startPayment = async (req, res) => {
     const { amount, email, full_name, userId, clinicId, date, time } = req.body;
 
@@ -30,14 +29,7 @@ exports.startPayment = async (req, res) => {
         console.log('Form data being sent:', paymentData);
 
         const response = await paymentInstance.startPayment(paymentData);
-        console.log('Response from payment gateway:', response);
-
-        // Ensure the response contains the expected data structure
-        if (response && response.data && response.data.authorization_url) {
-            res.status(200).json({ status: 'Success', data: response.data });
-        } else {
-            throw new Error('Invalid response structure from payment gateway');
-        }
+        res.status(200).json({ status: 'Success', data: response });
     } catch (error) {
         console.error('Error in startPayment:', error);
         res.status(500).json({ status: 'Failed', message: error.message });
