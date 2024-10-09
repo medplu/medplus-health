@@ -11,34 +11,51 @@ class PaymentService {
                 form.metadata = {
                     full_name: form.full_name
                 };
-                form.amount *= 100;
+                form.amount *= 100; // Convert to the smallest currency unit
 
                 console.log('Form data being sent:', form);  // Log the form data
 
+                // Call to the payment initialization function
                 initializePayment(form, (error, body) => {
                     if (error) {
-                        return reject(error.message);
+                        console.error('Error in startPayment - PaymentService.js:', error);
+                        return reject({
+                            message: 'Error initializing payment',
+                            source: 'PaymentService.js - startPayment',
+                            details: error.message
+                        });
                     }
 
-                    // Log the body for debugging
-                    console.log('Response body:', body);  
+                    console.log('Response body:', body); // Log response for debugging
 
                     try {
-                        // If body is an object, no need to parse it
                         const response = typeof body === 'string' ? JSON.parse(body) : body;
 
-                        // Check if the response is an object and has the expected structure
-                        if (typeof response === 'object' && response !== null) {
+                        // Check for the expected authorization URL
+                        if (response && response.data && response.data.authorization_url) {
                             return resolve(response);
                         } else {
-                            return reject('Unexpected response format');
+                            // Log the missing URL scenario
+                            console.error('Missing authorization URL in response:', response);
+                            return reject({
+                                message: 'Missing authorization URL in payment response',
+                                source: 'PaymentService.js - startPayment',
+                                details: 'Response structure does not contain authorization_url',
+                                response: response  // Log the full response for analysis
+                            });
                         }
                     } catch (parseError) {
-                        return reject('Error parsing response: ' + parseError.message);
+                        console.error('Error parsing payment response:', parseError);
+                        return reject({
+                            message: 'Error parsing payment response',
+                            source: 'PaymentService.js - startPayment',
+                            details: parseError.message
+                        });
                     }
                 });
             } catch (error) {
-                error.source = 'Start Payment Service';
+                console.error('Error in startPayment - PaymentService.js:', error);
+                error.source = 'PaymentService.js - startPayment';
                 return reject(error);
             }
         });
@@ -47,21 +64,28 @@ class PaymentService {
     createPayment(req) {
         const ref = req.reference;
         if (ref === null) {
-            return Promise.reject({ code: 400, msg: 'No reference passed in query' });
+            return Promise.reject({
+                code: 400,
+                msg: 'No reference passed in query',
+                source: 'PaymentService.js - createPayment'
+            });
         }
         return new Promise(async (resolve, reject) => {
             try {
                 verifyPayment(ref, (error, body) => {
                     if (error) {
-                        return reject(error.message);
+                        console.error('Error in createPayment - PaymentService.js:', error);
+                        return reject({
+                            message: 'Error verifying payment',
+                            source: 'PaymentService.js - createPayment',
+                            details: error.message
+                        });
                     }
 
-                    // Log the body for debugging
-                    console.log('Response body:', body); 
+                    console.log('Response body:', body); // Log response for debugging
 
                     try {
                         const response = typeof body === 'string' ? JSON.parse(body) : body;
-
                         const { reference, amount, status } = response.data;
                         const { email } = response.data.customer;
                         const full_name = response.data.metadata.full_name;
@@ -70,11 +94,17 @@ class PaymentService {
 
                         return resolve(payment);
                     } catch (parseError) {
-                        return reject('Error parsing response: ' + parseError.message);
+                        console.error('Error parsing payment verification response:', parseError);
+                        return reject({
+                            message: 'Error parsing payment verification response',
+                            source: 'PaymentService.js - createPayment',
+                            details: parseError.message
+                        });
                     }
                 });
             } catch (error) {
-                error.source = 'Create Payment Service';
+                console.error('Error in createPayment - PaymentService.js:', error);
+                error.source = 'PaymentService.js - createPayment';
                 return reject(error);
             }
         });
@@ -87,7 +117,8 @@ class PaymentService {
                 const transaction = await Payment.findOne({ reference: reference });
                 return resolve(transaction);
             } catch (error) {
-                error.source = 'Payment Receipt';
+                console.error('Error in paymentReceipt - PaymentService.js:', error);
+                error.source = 'PaymentService.js - paymentReceipt';
                 return reject(error);
             }
         });
