@@ -67,72 +67,53 @@ const BookingSection = ({ clinic }) => {
 
   const handleBookAppointment = async () => {
     if (!selectedDate || !selectedTime || !clinic._id || !notes) {
-      setAlertMessage('Please fill in all the required fields.');
-      setAlertType('error');
-      setShowAlert(true);
-      return;
+        setAlertMessage('Please fill in all the required fields.');
+        setAlertType('error');
+        setShowAlert(true);
+        return;
     }
 
     // Log the data to verify
     console.log('Booking Data:', {
-      amount: 25000,
-      email: user.email,
-      full_name: `${user.firstName} ${user.lastName}`,
-      selectedDate,
-      selectedTime,
-      clinicId: clinic._id,
-      notes,
-      userId: user.userId, // Include userId in the log
+        amount: 25000,
+        email: user.email,
+        full_name: `${user.firstName} ${user.lastName}`,
+        selectedDate,
+        selectedTime,
+        clinicId: clinic._id,
+        notes,
+        userId: user.userId, // Include userId in the log
     });
-    const handleBookAppointment = async () => {
-      if (!selectedDate || !selectedTime || !clinic._id || !notes) {
-          setAlertMessage('Please fill in all the required fields.');
-          setAlertType('error');
-          setShowAlert(true);
-          return;
-      }
-  
-      // Log the data to verify
-      console.log('Booking Data:', {
-          amount: 25000,
-          email: user.email,
-          full_name: `${user.firstName} ${user.lastName}`,
-          selectedDate,
-          selectedTime,
-          clinicId: clinic._id,
-          notes,
-          userId: user.userId, // Include userId in the log
-      });
-  
-      try {
-          const response = await axios.post('https://medplus-app.onrender.com/api/payment/start-payment', {
-              amount: 25000,
-              email: user.email,
-              full_name: `${user.firstName} ${user.lastName}`,
-              date: selectedDate,
-              time: selectedTime,
-              clinicId: clinic._id,
-              notes,
-              userId: user.userId, // Include userId in the payload
-          });
-  
-          // Ensure the response contains the authorization_url
-          if (response.data.status === 'Success' && response.data.authorization_url) {
-              const authorizationUrl = response.data.authorization_url; // Correct access
-              await Linking.openURL(authorizationUrl);
-          } else {
-              console.error('Failed to retrieve authorization URL:', response.data.message);
-              setAlertMessage('Failed to retrieve authorization URL. Please try again.');
-              setAlertType('error');
-              setShowAlert(true);
-          }
-      } catch (error) {
-          console.error('Failed to initiate payment:', error);
-          setAlertMessage('Failed to initiate payment. Please try again.');
-          setAlertType('error');
-          setShowAlert(true);
-      }
-  };
+
+    try {
+        const response = await axios.post('https://medplus-app.onrender.com/api/payment/start-payment', {
+            amount: 25000,
+            email: user.email,
+            full_name: `${user.firstName} ${user.lastName}`,
+            date: selectedDate,
+            time: selectedTime,
+            clinicId: clinic._id,
+            notes,
+            userId: user.userId, // Include userId in the payload
+        });
+
+        // Ensure the response contains the authorization_url
+        if (response.data.status === 'Success' && response.data.data && response.data.data.data && response.data.data.data.authorization_url) {
+            const authorizationUrl = response.data.data.data.authorization_url; // Correct access
+            await Linking.openURL(authorizationUrl);
+        } else {
+            console.error('Failed to retrieve authorization URL:', response.data.message);
+            setAlertMessage('Failed to retrieve authorization URL. Please try again.');
+            setAlertType('error');
+            setShowAlert(true);
+        }
+    } catch (error) {
+        console.error('Failed to initiate payment:', error);
+        setAlertMessage('Failed to initiate payment. Please try again.');
+        setAlertType('error');
+        setShowAlert(true);
+    }
+};
   return (
     <View>
       <Text style={{ fontSize: 18, color: Colors.gray, marginBottom: 10 }}>Book Appointment</Text>
@@ -240,5 +221,5 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 });
-}
+
 export default BookingSection;
