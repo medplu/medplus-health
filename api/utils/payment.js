@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const paystack = () => {
-    const MySecretKey = 'Bearer sk_test_bd491bc07f705e9724f50d3d7b059de890e06716';  // Replace 'YOUR_PAYSTACK_SECRET_KEY' with your actual Paystack secret key
+    const MySecretKey = 'Bearer sk_test_e4027d1a804639d19d2c24abf9389f22637d9a19';  // Replace 'YOUR_PAYSTACK_SECRET_KEY' with your actual Paystack secret key
 
     // Log the secret key to ensure it is set correctly (remove this in production)
     console.log('Using Paystack Key:', MySecretKey);
