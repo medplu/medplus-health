@@ -35,7 +35,20 @@ exports.startPayment = async (req, res) => {
         console.log('Form data being sent:', paymentData);
 
         const response = await paymentInstance.startPayment(paymentData);
-        res.status(200).json({ status: 'Success', data: response.data.data });
+
+        // Log the full response for debugging
+        console.log('Payment service response:', response.data);
+
+        // Check if authorization_url is present
+        if (!response.data.data || !response.data.data.authorization_url) {
+            return res.status(500).json({ 
+                status: 'Failed', 
+                message: 'Failed to initiate payment. Missing authorization URL in the response.',
+            });
+        }
+
+        // Return the authorization_url to the frontend
+        res.status(200).json({ status: 'Success', authorization_url: response.data.data.authorization_url });
     } catch (error) {
         console.error('Error in startPayment:', error.response ? error.response.data : error.message);
         res.status(500).json({ 
