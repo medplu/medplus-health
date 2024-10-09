@@ -9,9 +9,9 @@ class PaymentService {
             try {
                 const form = _.pick(data, ['amount', 'email', 'full_name']);
                 form.metadata = {
-                    full_name: form.full_name
+                    full_name: form.full_name,
+                    bookingId: data.metadata.bookingId // Ensure bookingId is included in metadata
                 };
-                form.amount *= 100; // Convert to the smallest currency unit
 
                 console.log('Form data being sent:', form);  // Log the form data
 
