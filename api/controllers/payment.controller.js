@@ -1,7 +1,7 @@
 const PaymentService = require('../service/payment.service');
-
-const ClinicAppointmentModel = require('../models/clinic_appointment.model'); // Ensure correct model import
+const ClinicAppointment = require('../models/clinic_appointment.model'); // Ensure correct model import
 const paymentInstance = new PaymentService();
+
 exports.startPayment = async (req, res) => {
     const { amount, email, full_name, userId, clinicId, date, time, notes } = req.body;
 
@@ -13,7 +13,7 @@ exports.startPayment = async (req, res) => {
         console.log('startPayment called with body:', req.body);
 
         // Create the appointment with status "pending"
-        const appointment = new ClinicAppointmentModel({
+        const appointment = new ClinicAppointment({
             userId,
             clinicId,
             date,
@@ -45,6 +45,7 @@ exports.startPayment = async (req, res) => {
         });
     }
 };
+
 exports.createPayment = async (req, res) => {
     const { reference } = req.query;
 
@@ -89,6 +90,7 @@ exports.getPayment = async (req, res) => {
         });
     }
 };
+
 exports.handlePaymentWebhook = async (req, res) => {
     const event = req.body;
 
@@ -101,7 +103,7 @@ exports.handlePaymentWebhook = async (req, res) => {
 
         try {
             // Retrieve the appointment using the booking ID from metadata
-            const appointment = await ClinicAppointmentModel.findById(metadata.bookingId);
+            const appointment = await ClinicAppointment.findById(metadata.bookingId);
             if (!appointment) {
                 return res.status(404).send('Appointment not found.');
             }
