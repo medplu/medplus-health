@@ -16,6 +16,7 @@ exports.startPayment = async (req, res) => {
         const paymentData = {
             amount,
             email,
+            full_name,
             metadata: {
                 full_name,
                 amount,
