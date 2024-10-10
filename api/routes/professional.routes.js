@@ -20,4 +20,7 @@ router.get('/professionals/:userId/slots', professionalController.getAvailableSl
 // Route to update or create consultation fee for a professional by userId
 router.put('/professionals/update-consultation-fee/:userId', professionalController.createOrUpdateConsultationFee);
 
+// Route to fetch professionals by category
+router.get('/professionals/category/:category', professionalController.getProfessionalsByCategory);
+
 module.exports = router;

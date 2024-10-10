@@ -25,7 +25,7 @@ const professionalSchema = new Schema({
         ref: 'User',  // Reference to the base User model
         required: true
     },
-    specialty: {
+    category: {
         type: String,
     },
     yearsOfExperience: {
