@@ -41,7 +41,7 @@ const DashboardScreen: React.FC = () => {
   };
 
   // Connect to WebSocket server
-  const socket: Socket = io('http://localhost:3000');
+  const socket: Socket = io('https://medplus-app.onrender.com');
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -52,11 +52,11 @@ const DashboardScreen: React.FC = () => {
         }
 
         // Fetch upcoming appointments
-        const upcomingResponse = await fetch(`http://localhost:3000/api/appointments/doctor/${doctorId}`);
+        const upcomingResponse = await fetch(`https://medplus-app.onrender.com/api/appointments/doctor/${doctorId}`);
         const upcomingData: Appointment[] = await upcomingResponse.json();
 
         // Fetch all appointments
-        const allResponse = await fetch(`http://localhost:3000/api/appointments/doctor/${doctorId}/all`);
+        const allResponse = await fetch(`https://medplus-app.onrender.com/api/appointments/doctor/${doctorId}/all`);
         const allData: Appointment[] = await allResponse.json();
 
         // Filter for upcoming appointments
@@ -96,7 +96,7 @@ const DashboardScreen: React.FC = () => {
 
   const confirmAppointment = async (appointmentId: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/appointments/confirm/${appointmentId}`, {
+      const response = await fetch(`https://medplus-app.onrender.com/api/appointments/confirm/${appointmentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

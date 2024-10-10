@@ -53,7 +53,7 @@ const SettingsScreen: React.FC = () => {
           }));
         }
 
-        const response = await axios.get(`http://localhost:3000/api/professionals/${id}`);
+        const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${id}`);
         if (response.status === 200) {
           const { available, consultationFee } = response.data.professional;
           setForm((prevForm) => ({
@@ -88,7 +88,7 @@ const SettingsScreen: React.FC = () => {
     }
 
     try {
-      const response = await axios.put(`http://localhost:3000/api/professionals/update-availability/${userId}`, {
+      const response = await axios.put(`https://medplus-app.onrender.com/api/professionals/update-availability/${userId}`, {
         availability,
       });
 
@@ -117,7 +117,7 @@ const SettingsScreen: React.FC = () => {
     }
 
     try {
-      const response = await axios.put(`http://localhost:3000/api/professionals/update-consultation-fee/${userId}`, {
+      const response = await axios.put(`https://medplus-app.onrender.com/api/professionals/update-consultation-fee/${userId}`, {
         consultationFee: parseFloat(form.consultationFee),
       });
 

@@ -83,7 +83,7 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
 
   const fetchDoctorDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/professionals/${doctorId}`);
+      const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
       setDoctor(response.data);
     } catch (err) {
       setError('Error fetching doctor details');
@@ -130,7 +130,7 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
         time: selectedTime,
       };
 
-      const response = await axios.post('http://localhost:3000/api/appointments', appointmentData, {
+      const response = await axios.post('https://medplus-app.onrender.com/api/appointments', appointmentData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -172,7 +172,7 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
   
     try {
       // Mock payment request to an API or payment gateway
-      const paymentResponse = await axios.post('http://localhost:3000/api/payment/', {
+      const paymentResponse = await axios.post('https://medplus-app.onrender.com/api/payment/', {
         amount: 50, // Example amount to charge for the appointment
         userId: await AsyncStorage.getItem('userId'),
         doctorId: doctorId,

@@ -46,6 +46,7 @@ exports.register = async (req, res) => {
                 lastName: newUser.lastName,
                 email: newUser.email,
                 user: newUser._id,  // Associate with the base User model
+                category: newUser.category,
             });
             await newProfessional.save();
         } else if (userType === 'student') {

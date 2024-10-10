@@ -25,6 +25,7 @@ const SignupScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | null>(null);
   const [userType, setUserType] = useState<'client' | 'professional' | 'student' | null>(null);
+  const [category, setCategory] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -41,6 +42,10 @@ const SignupScreen: React.FC = () => {
       setErrorMessage('Passwords do not match.');
       return;
     }
+    if (userType === 'professional' && category === '') {
+      setErrorMessage('Please enter a category.');
+      return;
+    }
 
     try {
       const response = await axios.post('https://medplus-app.onrender.com/api/register', {
@@ -50,6 +55,7 @@ const SignupScreen: React.FC = () => {
         password,
         gender,
         userType,
+        category: userType === 'professional' ? category : undefined,
       });
 
       setErrorMessage(null);
@@ -62,6 +68,7 @@ const SignupScreen: React.FC = () => {
       setConfirmPassword('');
       setGender(null);
       setUserType(null);
+      setCategory(''); // Reset category
     } catch (error) {
       console.error('Error during signup:', error);
       setErrorMessage('Signup failed. Please try again.');
@@ -221,6 +228,16 @@ const SignupScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
 
+              {userType === 'professional' && (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Category"
+                  value={category}
+                  onChangeText={setCategory}
+                  placeholderTextColor="#888"
+                />
+              )}
+
               {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
               {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
 
@@ -262,6 +279,7 @@ const SignupScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+ 
   container: {
     flex: 1,
     backgroundColor: '#fff',
