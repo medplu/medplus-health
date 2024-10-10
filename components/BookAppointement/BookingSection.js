@@ -75,7 +75,7 @@ const BookingSection = ({ clinic }) => {
 
     try {
         // Step 1: Create the appointment
-        const appointmentResponse = await axios.post('https://medplus-app.onrender.com/api/appointments', {
+        const appointmentResponse = await axios.post('https://medplus-app.onrender.com/api/clinic/appointments', {
             userId: user.userId,
             clinicId: clinic._id,
             date: selectedDate,
