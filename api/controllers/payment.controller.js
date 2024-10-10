@@ -17,6 +17,11 @@ exports.startPayment = async (req, res) => {
             amount,
             email,
             full_name,
+            userId,
+            clinicId,
+            date,
+            time,
+            appointmentId,
             metadata: {
                 full_name,
                 amount,
