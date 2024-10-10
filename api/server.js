@@ -58,7 +58,11 @@ const appointmentRoutes = require('./routes/appointment.routes');
 // Import the clinic routes
 const clinicRoutes = require('./routes/clinic.route');
 
+// Import the category routes
 const categoryRoutes = require('./routes/category.routes');
+
+// Import the clinic appointment routes
+const clinicAppointmentRoutes = require('./routes/clinic_appointment.routes');
 
 // Use the user routes
 app.use('/api', userRoutes);
@@ -66,11 +70,8 @@ app.use('/api', userRoutes);
 // Use the professional routes
 app.use('/api', professionalRoutes);
 
-
-
 // Use the category routes
 app.use('/api/categories', categoryRoutes);
-
 
 // Use the payment routes
 app.use('/api/payment', paymentRoutes); // Corrected route path
@@ -80,6 +81,9 @@ app.use('/api', appointmentRoutes);
 
 // Use the clinic routes
 app.use('/api/clinics', clinicRoutes);
+
+// Use the clinic appointment routes
+app.use('/api', clinicAppointmentRoutes);
 
 // Handle WebSocket connections
 io.on("connection", (socket) => {
