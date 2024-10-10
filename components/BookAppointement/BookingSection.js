@@ -189,6 +189,7 @@ const BookingSection = ({ clinic }) => {
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
         amount={'25000.00'}
         billingEmail={user.email}
+        currency='KES'
         activityIndicatorColor={Colors.primary}
         onCancel={handlePaymentCancel}
         onSuccess={handlePaymentSuccess}
