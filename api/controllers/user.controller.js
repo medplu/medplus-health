@@ -18,75 +18,74 @@ const transporter = nodemailer.createTransport({
 
 exports.register = async (req, res) => {
     try {
-        const { userType, ...userData } = req.body;  // Destructure userType from request body
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit code
-        userData.verificationCode = verificationCode;
-        userData.isVerified = false;
-
-        // Hash the password before saving
-        const salt = await bcrypt.genSalt(10);
-        userData.password = await bcrypt.hash(userData.password, salt);
-
-        // Step 1: Save the user in the base User model
-        const newUser = new User({ ...userData, userType });
-        await newUser.save();
-
-        // Step 2: Based on the userType, save in the specific model (Client, Professional, or Student)
-        if (userType === 'client') {
-            const newClient = new Client({
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                email: newUser.email,
-                user: newUser._id,  // Associate with the base User model
-            });
-            await newClient.save();
-        } else if (userType === 'professional') {
-            const newProfessional = new Professional({
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                email: newUser.email,
-                user: newUser._id,  // Associate with the base User model
-                category: newUser.category,
-            });
-            await newProfessional.save();
-        } else if (userType === 'student') {
-            const newStudent = new Student({
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                email: newUser.email,
-                user: newUser._id,  // Associate with the base User model
-            });
-            await newStudent.save();
-        } else {
-            return res.status(400).json({ error: 'Invalid user type' });
-        }
-
-        // Step 3: Send verification email
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: newUser.email,
-            subject: 'Email Verification',
-            text: `Your verification code is: ${verificationCode}`,
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.log("Error sending email", error);
-                return res.status(500).json({ error: 'Error sending verification email' });
-            }
-            console.log('Email sent: ' + info.response);
-            res.status(200).json({ message: 'Signup successful! Please check your email for the verification code.' });
+      const { userType, category, ...userData } = req.body;  // Destructure userType and category from request body
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit code
+      userData.verificationCode = verificationCode;
+      userData.isVerified = false;
+  
+      // Hash the password before saving
+      const salt = await bcrypt.genSalt(10);
+      userData.password = await bcrypt.hash(userData.password, salt);
+  
+      // Step 1: Save the user in the base User model
+      const newUser = new User({ ...userData, userType });
+      await newUser.save();
+  
+      // Step 2: Based on the userType, save in the specific model (Client, Professional, or Student)
+      if (userType === 'client') {
+        const newClient = new Client({
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          email: newUser.email,
+          user: newUser._id,  // Associate with the base User model
         });
-    } catch (error) {
-        if (error.code === 11000) {
-            res.status(400).json({ error: 'Email already registered' });
-        } else {
-            console.log("Error creating user", error);
-            res.status(500).json({ error: 'Internal server error' });
+        await newClient.save();
+      } else if (userType === 'professional') {
+        const newProfessional = new Professional({
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          email: newUser.email,
+          user: newUser._id,  // Associate with the base User model
+          category, // Save the category field
+        });
+        await newProfessional.save();
+      } else if (userType === 'student') {
+        const newStudent = new Student({
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          email: newUser.email,
+          user: newUser._id,  // Associate with the base User model
+        });
+        await newStudent.save();
+      } else {
+        return res.status(400).json({ error: 'Invalid user type' });
+      }
+  
+      // Step 3: Send verification email
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: newUser.email,
+        subject: 'Email Verification',
+        text: `Your verification code is: ${verificationCode}`,
+      };
+  
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log("Error sending email", error);
+          return res.status(500).json({ error: 'Error sending verification email' });
         }
+        console.log('Email sent: ' + info.response);
+        res.status(200).json({ message: 'Signup successful! Please check your email for the verification code.' });
+      });
+    } catch (error) {
+      if (error.code === 11000) {
+        res.status(400).json({ error: 'Email already registered' });
+      } else {
+        console.log("Error creating user", error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
     }
-};
-
+  };
 // Email verification logic
 exports.verifyEmail = async (req, res) => {
     try {

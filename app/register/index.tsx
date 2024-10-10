@@ -32,7 +32,6 @@ const SignupScreen: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const router = useRouter();
-
   const handleSignupPress = async () => {
     if (firstName === '' || lastName === '' || email === '' || password === '' || confirmPassword === '' || !gender || !userType) {
       setErrorMessage('Please fill all fields.');
@@ -105,7 +104,7 @@ const SignupScreen: React.FC = () => {
       setErrorMessage('Verification failed. Please try again.');
     }
   };
-
+  
   return (
     <KeyboardAvoidingView
       style={styles.container}
