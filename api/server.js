@@ -83,7 +83,7 @@ app.use('/api', appointmentRoutes);
 app.use('/api/clinics', clinicRoutes);
 
 // Use the clinic appointment routes
-app.use('/api', clinicAppointmentRoutes);
+app.use('/api/clinic', clinicAppointmentRoutes);
 
 // Handle WebSocket connections
 io.on("connection", (socket) => {
