@@ -8,15 +8,15 @@ class PaymentService {
         return new Promise(async (resolve, reject) => {
             try {
                 // Picking relevant fields from data
-                const form = _.pick(data, ['amount', 'email', 'full_name']);
+                const form = _.pick(data, ['amount', 'email', 'full_name', 'userId', 'clinicId', 'date', 'time']);
 
                 // Add more metadata if required by your application logic
                 form.metadata = {
                     full_name: form.full_name,
-                    userId: data.userId, // Assuming userId exists in data
-                    clinicId: data.clinicId, // Assuming clinicId exists
-                    date: data.date, // Assuming date exists
-                    time: data.time  // Assuming time exists
+                    userId: form.userId,
+                    clinicId: form.clinicId,
+                    date: form.date,
+                    time: form.time
                 };
 
                 // Convert the amount to the expected format (if required by payment gateway)
