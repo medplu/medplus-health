@@ -11,7 +11,7 @@ const paystack = () => {
         if (form.metadata && typeof form.metadata === 'object') {
             form.metadata = JSON.stringify(form.metadata);
         }
-
+       
         // Log the form data to ensure it is correct
         console.log('Form data being sent to Paystack:', form);
     
