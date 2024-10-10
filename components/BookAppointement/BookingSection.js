@@ -186,7 +186,7 @@ const BookingSection = ({ clinic }) => {
       </TouchableOpacity>
 
       <Paystack
-        paystackKey="your-public-key-here"
+        paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
         amount={'25000.00'}
         billingEmail={user.email}
         activityIndicatorColor={Colors.primary}
