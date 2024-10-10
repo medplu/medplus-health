@@ -73,20 +73,21 @@ const BookingSection = ({ clinic }) => {
         return;
     }
 
-    // Log the data to verify
-    console.log('Booking Data:', {
-        amount: 25000,
-        email: user.email,
-        full_name: `${user.firstName} ${user.lastName}`,
-        selectedDate,
-        selectedTime,
-        clinicId: clinic._id,
-        notes,
-        userId: user.userId, // Include userId in the log
-    });
-
     try {
-        const response = await axios.post('https://medplus-app.onrender.com/api/payment/start-payment', {
+        // Step 1: Create the appointment
+        const appointmentResponse = await axios.post('https://medplus-app.onrender.com/api/appointments', {
+            userId: user.userId,
+            clinicId: clinic._id,
+            date: selectedDate,
+            time: selectedTime,
+            notes,
+            status: 'pending'
+        });
+
+        const appointmentId = appointmentResponse.data._id;
+
+        // Step 2: Initiate the payment process
+        const paymentResponse = await axios.post('https://medplus-app.onrender.com/api/payment/start-payment', {
             amount: 25000,
             email: user.email,
             full_name: `${user.firstName} ${user.lastName}`,
@@ -94,22 +95,23 @@ const BookingSection = ({ clinic }) => {
             time: selectedTime,
             clinicId: clinic._id,
             notes,
-            userId: user.userId, // Include userId in the payload
+            userId: user.userId,
+            appointmentId // Include the appointmentId in the payment payload
         });
 
         // Ensure the response contains the authorization_url
-        if (response.data.status === 'Success' && response.data.data && response.data.data.data && response.data.data.data.authorization_url) {
-            const authorizationUrl = response.data.data.data.authorization_url; // Correct access
+        if (paymentResponse.data.status === 'Success' && paymentResponse.data.data && paymentResponse.data.data.data && paymentResponse.data.data.data.authorization_url) {
+            const authorizationUrl = paymentResponse.data.data.data.authorization_url; // Correct access
             await Linking.openURL(authorizationUrl);
         } else {
-            console.error('Failed to retrieve authorization URL:', response.data.message);
+            console.error('Failed to retrieve authorization URL:', paymentResponse.data.message);
             setAlertMessage('Failed to retrieve authorization URL. Please try again.');
             setAlertType('error');
             setShowAlert(true);
         }
     } catch (error) {
-        console.error('Failed to initiate payment:', error);
-        setAlertMessage('Failed to initiate payment. Please try again.');
+        console.error('Failed to book appointment or initiate payment:', error);
+        setAlertMessage('Failed to book appointment or initiate payment. Please try again.');
         setAlertType('error');
         setShowAlert(true);
     }
