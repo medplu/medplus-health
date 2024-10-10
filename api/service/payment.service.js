@@ -7,37 +7,53 @@ class PaymentService {
     startPayment(data) {
         return new Promise(async (resolve, reject) => {
             try {
+                // Picking relevant fields from data
                 const form = _.pick(data, ['amount', 'email', 'full_name']);
+
+                // Add more metadata if required by your application logic
                 form.metadata = {
-                    full_name: form.full_name
+                    full_name: form.full_name,
+                    userId: data.userId, // Assuming userId exists in data
+                    clinicId: data.clinicId, // Assuming clinicId exists
+                    date: data.date, // Assuming date exists
+                    time: data.time  // Assuming time exists
                 };
+
+                // Convert the amount to the expected format (if required by payment gateway)
                 form.amount *= 100;
 
-                console.log('Form data being sent:', form);  // Log the form data
+                // Log the form data for debugging
+                console.log('Form data being sent:', form);
 
+                // Call initializePayment with the form data
                 initializePayment(form, (error, body) => {
                     if (error) {
-                        return reject(error.message);
+                        console.error('Error initializing payment:', error); // Log error
+                        return reject(`Payment initialization error: ${error.message}`);
                     }
 
-                    // Log the body for debugging
-                    console.log('Response body:', body);  
+                    // Log the body response for debugging
+                    console.log('Response body:', body);
 
                     try {
-                        // If body is an object, no need to parse it
+                        // Parse body only if it's a string
                         const response = typeof body === 'string' ? JSON.parse(body) : body;
 
-                        // Check if the response is an object and has the expected structure
+                        // Check if response is a valid object
                         if (typeof response === 'object' && response !== null) {
                             return resolve(response);
                         } else {
-                            return reject('Unexpected response format');
+                            console.error('Unexpected response format:', response);  // Log error
+                            return reject('Unexpected response format received');
                         }
                     } catch (parseError) {
+                        console.error('Error parsing response:', parseError);  // Log parsing error
                         return reject('Error parsing response: ' + parseError.message);
                     }
                 });
             } catch (error) {
+                // Log unexpected errors that occur in the try block
+                console.error('Unexpected error in startPayment:', error);
                 error.source = 'Start Payment Service';
                 return reject(error);
             }
@@ -57,7 +73,7 @@ class PaymentService {
                     }
 
                     // Log the body for debugging
-                    console.log('Response body:', body); 
+                    console.log('Response body:', body);
 
                     try {
                         const response = typeof body === 'string' ? JSON.parse(body) : body;
