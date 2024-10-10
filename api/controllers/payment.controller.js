@@ -4,10 +4,9 @@ const ClinicAppointmentModel = require('../models/appointment.model');
 const paymentInstance = new PaymentService();
 
 exports.startPayment = async (req, res) => {
-    const { amount, email, full_name, userId, clinicId, date, time, appointmentId
-    } = req.body;
+    const { amount, email, full_name, userId, clinicId, date, time, appointmentId } = req.body;
 
-    if (!amount || !email || !full_name || !userId || !clinicId || !date || !time  || !appointmentId ) {
+    if (!amount || !email || !full_name || !userId || !clinicId || !date || !time || !appointmentId) {
         return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Amount, email, full name, userId, clinicId, date, and time are required.' });
     }
 
@@ -34,15 +33,14 @@ exports.startPayment = async (req, res) => {
         res.status(200).json({ status: 'Success', data: response });
     } catch (error) {
         // Enhanced error handling
-        console.error('Error in startPayment:', error.response ? error.response.data : error.message);
+        console.error('Error in startPayment:', error); // Log the actual error object
         res.status(500).json({ 
             status: 'Failed', 
             message: 'Payment initialization failed. Please try again later.',
-            error: error.response ? error.response.data : error.message
+            error: error.response ? error.response.data : error.message || error.toString()
         });
     }
 };
-
 exports.createPayment = async (req, res) => {
     const { reference } = req.query;
 
