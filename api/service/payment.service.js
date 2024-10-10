@@ -8,7 +8,7 @@ class PaymentService {
         return new Promise(async (resolve, reject) => {
             try {
                 // Validate input data
-                const requiredFields = ['amount', 'email', 'full_name', 'userId', 'clinicId', 'date', 'time'];
+                const requiredFields = ['amount', 'email', 'full_name', 'userId', 'clinicId', 'date', 'time', ' appointmentId'];
                 for (const field of requiredFields) {
                     if (!data[field]) {
                         return reject(`Missing required field: ${field}`);
@@ -24,7 +24,8 @@ class PaymentService {
                     userId: form.userId,
                     clinicId: form.clinicId,
                     date: form.date,
-                    time: form.time
+                    time: form.time,
+                    appointmentId: form.appointmentId,
                 };
     
                 // Convert the amount to the expected format (if required by payment gateway)
