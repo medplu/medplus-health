@@ -11,6 +11,9 @@ const paystack = () => {
         if (form.metadata && typeof form.metadata === 'object') {
             form.metadata = JSON.stringify(form.metadata);
         }
+
+        // Log the form data to ensure it is correct
+        console.log('Form data being sent to Paystack:', form);
     
         const options = {
             url: 'https://api.paystack.co/transaction/initialize',
@@ -24,14 +27,14 @@ const paystack = () => {
     
         try {
             const response = await axios.post(options.url, options.data, { headers: options.headers });
+            // Log the response from Paystack
+            console.log('Response from Paystack:', response.data);
             return mycallback(null, response.data);
         } catch (error) {
             console.error('Error initializing payment:', error.response ? error.response.data : error.message);
             return mycallback(error, null);
         }
     };
-    
-
 
     const verifyPayment = async (ref, mycallback) => {
         const options = {
