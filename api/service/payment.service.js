@@ -7,9 +7,17 @@ class PaymentService {
     startPayment(data) {
         return new Promise(async (resolve, reject) => {
             try {
+                // Validate input data
+                const requiredFields = ['amount', 'email', 'full_name', 'userId', 'clinicId', 'date', 'time'];
+                for (const field of requiredFields) {
+                    if (!data[field]) {
+                        return reject(`Missing required field: ${field}`);
+                    }
+                }
+    
                 // Picking relevant fields from data
-                const form = _.pick(data, ['amount', 'email', 'full_name', 'userId', 'clinicId', 'date', 'time']);
-
+                const form = _.pick(data, requiredFields);
+    
                 // Add more metadata if required by your application logic
                 form.metadata = {
                     full_name: form.full_name,
@@ -18,27 +26,27 @@ class PaymentService {
                     date: form.date,
                     time: form.time
                 };
-
+    
                 // Convert the amount to the expected format (if required by payment gateway)
                 form.amount *= 100;
-
+    
                 // Log the form data for debugging
                 console.log('Form data being sent:', form);
-
+    
                 // Call initializePayment with the form data
                 initializePayment(form, (error, body) => {
                     if (error) {
                         console.error('Error initializing payment:', error); // Log error
                         return reject(`Payment initialization error: ${error.message}`);
                     }
-
+    
                     // Log the body response for debugging
                     console.log('Response body:', body);
-
+    
                     try {
                         // Parse body only if it's a string
                         const response = typeof body === 'string' ? JSON.parse(body) : body;
-
+    
                         // Check if response is a valid object
                         if (typeof response === 'object' && response !== null) {
                             return resolve(response);
