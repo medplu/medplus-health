@@ -5,4 +5,7 @@ const clinicAppointmentController = require('../controllers/clinic_appointment.c
 // Route to create a new appointment
 router.post('/appointments', clinicAppointmentController.createAppointment);
 
+// Route to update appointment status
+router.put('/appointments/:id', clinicAppointmentController.updateAppointmentStatus);
+
 module.exports = router;
