@@ -1,39 +1,49 @@
-// models/clinic_appointment.model.js
 const mongoose = require('mongoose');
 
-const clinicAppointmentSchema = new mongoose.Schema({
-    userId: {
+const doctorSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    specialties: {
+        type: [String],
+        required: true,
+    },
+    experience: {
+        type: String,
+        required: true,
+    },
+});
+
+const clinicSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    contactInfo: {
+        type: String,
+        required: true,
+    },
+    address: {
+        type: String,
+        required: true,
+    },
+    image: {
+        type: String,
+        required: true,
+    },
+    category: {
+        type: String,
+        required: true,
+    },
+    doctors: [doctorSchema],
+    professional: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference to the User model
+        ref: 'Professional',
         required: true,
-    },
-    clinicId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Clinic', // Reference to the Clinic model
-       
-    },
-    date: {
-        type: Date,
-        required: true,
-    },
-    time: {
-        type: String,
-        required: true,
-    },
-    notes: {
-        type: String,
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'confirmed'],
-        default: 'pending',
-    },
-    paymentId: {
-        type: String,
-        required: false, // Make paymentId optional
     },
 }, {
     timestamps: true // Automatically creates `createdAt` and `updatedAt` fields
 });
 
-module.exports = mongoose.model('ClinicAppointment', clinicAppointmentSchema);
+module.exports = mongoose.model('Clinic', clinicSchema);
