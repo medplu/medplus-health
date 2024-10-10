@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const PAYMENT_BASE_URL = 'https://medplus-app.onrender.com/api/payment';
 
-export const initiatePayment = async (amount, email, fullName, userId, clinicId, date, time) => {
+export const initiatePayment = async (amount, email, fullName, userId, clinicId, date, time, appointmentId) => {
   try {
     const response = await axios.post(`${PAYMENT_BASE_URL}/start-payment`, {
       amount,
@@ -12,6 +12,7 @@ export const initiatePayment = async (amount, email, fullName, userId, clinicId,
       clinicId,
       date,
       time,
+      appointmentId
     });
     return response.data.data.data.authorization_url; 
   } catch (error) {

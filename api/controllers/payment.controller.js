@@ -4,9 +4,10 @@ const ClinicAppointmentModel = require('../models/appointment.model');
 const paymentInstance = new PaymentService();
 
 exports.startPayment = async (req, res) => {
-    const { amount, email, full_name, userId, clinicId, date, time } = req.body;
+    const { amount, email, full_name, userId, clinicId, date, time, appointmentId
+    } = req.body;
 
-    if (!amount || !email || !full_name || !userId || !clinicId || !date || !time) {
+    if (!amount || !email || !full_name || !userId || !clinicId || !date || !time  || !appointmentId ) {
         return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Amount, email, full name, userId, clinicId, date, and time are required.' });
     }
 
@@ -23,6 +24,7 @@ exports.startPayment = async (req, res) => {
                 clinicId,
                 date,
                 time,
+                appointmentId,
             },
         };
 
