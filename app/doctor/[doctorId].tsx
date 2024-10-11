@@ -21,7 +21,6 @@ type Doctor = {
 
 type Day = {
   date: moment.Moment;
-  day: string;
   formattedDate: string;
 };
 
@@ -32,9 +31,8 @@ type TimeSlot = {
 const DoctorProfile = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
-  
-  // Extracting doctorId from route params
-  const { doctorId } = route.params; 
+
+  const { doctorId } = route.params;
   const [loading, setIsLoading] = useState(true);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,14 +43,13 @@ const DoctorProfile = () => {
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [patientName, setPatientName] = useState<string>('');
   const [showPatientNameInput, setShowPatientNameInput] = useState<boolean>(false);
-  const [isPaymentRequired, setIsPaymentRequired] = useState<boolean>(true); 
-  const [paymentInProgress, setPaymentInProgress] = useState<boolean>(false); 
-  const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); 
+  const [paymentInProgress, setPaymentInProgress] = useState<boolean>(false);
+  const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     fetchDoctorDetails();
-    getTime();
     getDays();
+    getTime();
   }, [doctorId]);
 
   const getDays = () => {
@@ -61,8 +58,7 @@ const DoctorProfile = () => {
       const date = moment().add(i, 'days');
       nextSevenDays.push({
         date: date,
-        day: '',
-        formattedDate: date.format('Do MMM')
+        formattedDate: date.format('Do MMM'),
       });
     }
     setNext7Days(nextSevenDays);
@@ -71,22 +67,19 @@ const DoctorProfile = () => {
   const getTime = () => {
     const timeList: TimeSlot[] = [];
     for (let i = 7; i <= 11; i++) {
-      timeList.push({ time: i + ":00 AM" });
-      timeList.push({ time: i + ":30 AM" });
+      timeList.push({ time: i + ':00 AM' });
+      timeList.push({ time: i + ':30 AM' });
     }
     for (let i = 1; i <= 5; i++) {
-      timeList.push({ time: i + ":00 PM" });
-      timeList.push({ time: i + ":30 PM" });
+      timeList.push({ time: i + ':00 PM' });
+      timeList.push({ time: i + ':30 PM' });
     }
     setTimeList(timeList);
   };
 
-  const monthYear = next7Days.length > 0 ? moment(next7Days[0].date).format('MMMM YYYY') : '';
-
   const fetchDoctorDetails = async () => {
     try {
       const response = await GlobalApi.getDoctorById(doctorId);
-      console.log(doctorId);
       setDoctor(response.data);
     } catch (err) {
       setError('Error fetching doctor details');
@@ -157,22 +150,14 @@ const DoctorProfile = () => {
     }
   };
 
-  if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
-
-  if (error) {
-    return <Text>{error}</Text>;
-  }
-
   const handlePayment = async () => {
     if (!patientName) {
       Alert.alert('Error', 'Please enter the patient\'s name.');
       return;
     }
-  
+
     setPaymentInProgress(true);
-  
+
     try {
       const paymentResponse = await axios.post('https://medplus-app.onrender.com/api/payment/', {
         amount: 50, // Example amount to charge for the appointment
@@ -180,7 +165,7 @@ const DoctorProfile = () => {
         doctorId: doctorId,
         patientName: patientName,
       });
-  
+
       if (paymentResponse.status === 200) {
         Alert.alert('Payment Success', 'Payment was successful!');
         setPaymentSuccess(true);
@@ -196,10 +181,29 @@ const DoctorProfile = () => {
     }
   };
 
+  const renderDateButton = (item: Day) => (
+    <TouchableOpacity
+      onPress={() => handleDateSelect(item.date)}
+      style={[styles.dateButton, selectedDate?.isSame(item.date) && styles.selectedDateButton]}
+      accessible={true}
+      accessibilityLabel={`Select date ${item.formattedDate}`}
+    >
+      <Text style={styles.dateButtonText}>{item.formattedDate}</Text>
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
+
+  if (error) {
+    return <Text>{error}</Text>;
+  }
+
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <FontAwesome name="arrow-left" size={24} color="black" />
+        <FontAwesome name="arrow-left" size={20} color="black" />
       </TouchableOpacity>
       <Image
         source={{ uri: doctor?.image?.url || 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg' }}
@@ -208,29 +212,12 @@ const DoctorProfile = () => {
       <Text style={styles.doctorName}>{`${doctor?.firstName ?? ''} ${doctor?.lastName ?? ''}`}</Text>
       <Text style={styles.doctorEmail}>{doctor?.email ?? ''}</Text>
       <Text style={styles.sectionTitle}>Pick a Day</Text>
-      <Text style={styles.sectTitle}>{monthYear}</Text>
       <FlatList
         data={next7Days}
         horizontal={true}
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.date.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => handleDateSelect(item.date)}
-            style={[
-              styles.dateButton,
-              selectedDate?.isSame(item.date, 'day') ? { backgroundColor: '#1f6f78' } : null,
-              item.date.isSame(moment(), 'day') ? { borderColor: '#93e4c1', borderWidth: 2 } : null 
-            ]}
-          >
-            <Text style={[styles.dayInitial, selectedDate?.isSame(item.date, 'day') ? { color: 'black' } : null]}>
-              {item.date.format('ddd').toUpperCase()}
-            </Text>
-            <Text style={[styles.dateText, selectedDate?.isSame(item.date, 'day') ? { color: 'black' } : null]}>
-              {item.date.format('D')}
-            </Text>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => renderDateButton(item)}
       />
       <Text style={styles.sectionTitle}>Pick a Time</Text>
       <FlatList
@@ -240,15 +227,16 @@ const DoctorProfile = () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => setSelectedTime(item.time)}
-            style={[styles.timeSlotButton, selectedTime === item.time ? { backgroundColor: '#1f6f78' } : null]}
+            style={[styles.timeSlotButton, selectedTime === item.time && { backgroundColor: '#1f6f78' }]}
+            accessible={true}
+            accessibilityLabel={`Select time ${item.time}`}
           >
-            <Text style={[styles.timeSlotText, selectedTime === item.time ? { color: '#fff' } : null]}>
+            <Text style={[styles.timeSlotText, selectedTime === item.time && { color: '#fff' }]}>
               {item.time}
             </Text>
           </TouchableOpacity>
         )}
         showsHorizontalScrollIndicator={false}
-        style={{ marginBottom: 15 }}
       />
       <TouchableOpacity onPress={handleShowPatientNameInput} style={styles.bookButton}>
         <Text style={styles.bookButtonText}>Book Appointment</Text>
@@ -261,14 +249,21 @@ const DoctorProfile = () => {
             value={patientName}
             onChangeText={setPatientName}
           />
-          <TouchableOpacity onPress={handlePayment} style={styles.bookButton}>
-            <Text style={styles.bookButtonText}>Proceed to Payment</Text>
+          <TouchableOpacity onPress={handleBookAppointment} style={styles.confirmButton}>
+            <Text style={styles.confirmButtonText}>Confirm Booking</Text>
           </TouchableOpacity>
         </View>
+      )}
+      {paymentInProgress && <ActivityIndicator size="small" color="#0000ff" />}
+      {paymentSuccess && (
+        <TouchableOpacity onPress={handlePayment} style={styles.paymentButton}>
+          <Text style={styles.paymentButtonText}>Proceed to Payment</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -294,7 +289,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  
   profileImage: {
     width: '40%', // Use percentage for responsiveness
     height: undefined, // Auto adjust height to keep the ratio
@@ -304,7 +298,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   timeSlotText: {
-    // Add styles for timeSlotText if needed
+    color: '#333',
+    fontSize: 16,
   },
   doctorName: {
     fontSize: 24,
@@ -353,12 +348,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 5, // Adjust as needed
   },
-  sectTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 10, // Adjust as needed
-    textAlign: 'center',
-  },
   dateButton: {
     backgroundColor: '#ddd',
     borderRadius: 50,
@@ -368,21 +357,25 @@ const styles = StyleSheet.create({
     width: 100, // Adjust the width as needed
     height: 40, // Adjust the height as needed
   },
-  dayInitial: {
-    fontSize: 12,
+  dateButtonText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  selectedDateButton: {
+    backgroundColor: '#1f6f78',
+  },
+  confirmButton: {
+    padding: 15,
+    backgroundColor: '#1f6f78',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginVertical: 10, // Adjusted for spacing
+    width: '100%', // Make the button take full width
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 2, // Adjust as needed
-  },
-  dateText: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  reviewText: {
-    fontSize: 16,
-    marginBottom: 10,
-    textAlign: 'center',
-    color: '#333',
   },
 });
 
