@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, ScrollView } from 'react-native';
 import SubHeading from '../dashboard/SubHeading';
 import axios from 'axios';
 import Colors from '../Shared/Colors';
@@ -131,12 +131,10 @@ const BookingSection = ({ clinic, navigation }) => {
 
   return (
     <View>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <FontAwesome name="arrow-left" size={20} color="black" />
-      </TouchableOpacity>
+     
       <Text style={{ fontSize: 18, color: Colors.gray, marginBottom: 10 }}>Book Appointment</Text>
       <SubHeading subHeadingTitle="Day" seeAll={false} />
-      <View style={{ flexDirection: 'row', marginBottom: 10 }}>
+      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
         {next7Days.map((day, index) => (
           <TouchableOpacity
             key={index}
@@ -151,9 +149,9 @@ const BookingSection = ({ clinic, navigation }) => {
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
       <SubHeading subHeadingTitle="Time" seeAll={false} />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
+      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
         {timeList.map((slot, index) => (
           <TouchableOpacity
             key={index}
@@ -168,7 +166,7 @@ const BookingSection = ({ clinic, navigation }) => {
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
       <TextInput
         style={styles.textInput}
         placeholder="Enter additional notes (optional)"
