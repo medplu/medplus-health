@@ -14,6 +14,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
+import { Picker } from '@react-native-picker/picker';
 
 const { width } = Dimensions.get('window');
 
@@ -228,13 +229,16 @@ const SignupScreen: React.FC = () => {
               </View>
 
               {userType === 'professional' && (
-                <TextInput
+                <Picker
+                  selectedValue={category}
                   style={styles.input}
-                  placeholder="Category"
-                  value={category}
-                  onChangeText={setCategory}
-                  placeholderTextColor="#888"
-                />
+                  onValueChange={(itemValue) => setCategory(itemValue)}
+                >
+                  <Picker.Item label="Select Category" value="" />
+                  <Picker.Item label="Doctor" value="doctor" />
+                  <Picker.Item label="Dentist" value="dentist" />
+                  <Picker.Item label="Pharmacist" value="pharmacist" />
+                </Picker>
               )}
 
               {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
@@ -278,7 +282,6 @@ const SignupScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
- 
   container: {
     flex: 1,
     backgroundColor: '#fff',
