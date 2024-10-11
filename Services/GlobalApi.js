@@ -45,7 +45,7 @@ const bookDoctor = (doctorId) => AxiosInstance.post('/bookings', { doctorId });
 const loginUser = (email, password) => AxiosInstance.post('/login', { email, password });
 
 // New function to fetch a single doctor by doctorId
-const getDoctorById = (doctorId) => AxiosInstance.get(`/api/professionals/${doctorId}`);
+const getDoctorById = (doctorId) => AxiosInstance.get(`/professionals/${doctorId}`);
 
 export default {
     getSlider,
