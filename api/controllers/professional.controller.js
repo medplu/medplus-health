@@ -124,7 +124,7 @@ exports.createOrUpdateSlots = async (req, res) => {
 // Controller action to fetch professionals by category
 exports.getProfessionalsByCategory = async (req, res) => {
     const { category } = req.params;
-    const allowedCategories = ['doctor', 'dentist', 'pharmacist']; // Define allowed categories
+    const allowedCategories = ['Kidney', 'Heart', 'Brain', 'Cancer', 'Skin', 'Bone', ]; // Define allowed categories
 
     // Validate the category
     if (!allowedCategories.includes(category)) {

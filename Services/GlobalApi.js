@@ -44,6 +44,9 @@ const bookDoctor = (doctorId) => AxiosInstance.post('/bookings', { doctorId });
 // New login function
 const loginUser = (email, password) => AxiosInstance.post('/login', { email, password });
 
+// New function to fetch a single doctor by doctorId
+const getDoctorById = (doctorId) => AxiosInstance.get(`/api/professionals/${doctorId}`);
+
 export default {
     getSlider,
     getCategories, // Updated function
@@ -60,5 +63,6 @@ export default {
     googleOAuthCallback, // Export the new function
     saveDoctor, // Export the new function
     registerClinic, // Export the new function
-    bookDoctor // Export the new bookDoctor function
+    bookDoctor, // Export the new bookDoctor function
+    getDoctorById // Export the new function
 };

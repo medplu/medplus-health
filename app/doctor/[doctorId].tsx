@@ -5,7 +5,7 @@ import axios from 'axios';
 import { FontAwesome } from '@expo/vector-icons';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import GlobalApi from '../../Services/GlobalApi';
 type RouteParams = {
   doctorId: string;
 };
@@ -83,7 +83,7 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
 
   const fetchDoctorDetails = async () => {
     try {
-      const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
+      const response = await GlobalApi.getDoctorById(doctorId);
       setDoctor(response.data);
     } catch (err) {
       setError('Error fetching doctor details');
@@ -91,6 +91,7 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
       setIsLoading(false);
     }
   };
+
 
   const handleDateSelect = (date: moment.Moment) => {
     setSelectedDate(date);
