@@ -68,7 +68,7 @@ const clinicAppointmentRoutes = require('./routes/clinic_appointment.routes');
 app.use('/api', userRoutes);
 
 // Use the professional routes
-app.use('/api', professionalRoutes);
+app.use('/', professionalRoutes);
 
 // Use the category routes
 app.use('/api/categories', categoryRoutes);
