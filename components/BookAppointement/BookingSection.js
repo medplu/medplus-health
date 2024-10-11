@@ -5,9 +5,10 @@ import axios from 'axios';
 import Colors from '../Shared/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AwesomeAlert from 'react-native-awesome-alerts';
-import { Paystack, paystackProps } from 'react-native-paystack-webview';
+import { Paystack } from 'react-native-paystack-webview';
+import { FontAwesome } from '@expo/vector-icons'; // Import FontAwesome
 
-const BookingSection = ({ clinic }) => {
+const BookingSection = ({ clinic, navigation }) => {
   const [next7Days, setNext7Days] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeList, setTimeList] = useState([]);
@@ -130,6 +131,9 @@ const BookingSection = ({ clinic }) => {
 
   return (
     <View>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <FontAwesome name="arrow-left" size={20} color="black" />
+      </TouchableOpacity>
       <Text style={{ fontSize: 18, color: Colors.gray, marginBottom: 10 }}>Book Appointment</Text>
       <SubHeading subHeadingTitle="Day" seeAll={false} />
       <View style={{ flexDirection: 'row', marginBottom: 10 }}>

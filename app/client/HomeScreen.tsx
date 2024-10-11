@@ -1,7 +1,6 @@
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import React from 'react';
 
-import Header from '../../components/dashboard/Header';
 import SearchBar from '../../components/dashboard/SearchBar';
 import Category from '../../components/dashboard/Category';
 import Doctors from '../../components/dashboard/Doctors';
@@ -9,12 +8,10 @@ import Clinics from '../../components/dashboard/Clinics';
 import Colors from '../../components/Shared/Colors';
 
 export default function Home() {
-  const data = [{ key: 'header' }, { key: 'searchBar' }, { key: 'category' }, { key: 'doctors' }, { key: 'clinics' }];
+  const data = [{ key: 'searchBar' }, { key: 'category' }, { key: 'doctors' }, { key: 'clinics' }];
 
   const renderItem = ({ item }) => {
-    if (item.key === 'header') {
-      return <Header />;
-    } else if (item.key === 'searchBar') {
+    if (item.key === 'searchBar') {
       return <SearchBar />;
     } else if (item.key === 'category') {
       return <Category />;

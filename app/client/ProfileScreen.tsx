@@ -125,25 +125,25 @@ export default function ProfileScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="First Name"
-                  value={form.firstName}
+                  value={form.firstName || ''}
                   onChangeText={(value) => handleInputChange('firstName', value)}
                 />
                 <TextInput
                   style={styles.input}
                   placeholder="Last Name"
-                  value={form.lastName}
+                  value={form.lastName || ''}
                   onChangeText={(value) => handleInputChange('lastName', value)}
                 />
                 <TextInput
                   style={styles.input}
                   placeholder="Profile Image URL"
-                  value={form.profileImage}
+                  value={form.profileImage || ''}
                   onChangeText={(value) => handleInputChange('profileImage', value)}
                 />
                 <TextInput
                   style={styles.input}
                   placeholder="Gender"
-                  value={form.gender}
+                  value={form.gender || ''}
                   onChangeText={(value) => handleInputChange('gender', value)}
                 />
                 <Button title="Update Profile" onPress={handleUpdateProfile} />

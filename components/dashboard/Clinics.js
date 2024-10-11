@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, Text, Image, StyleSheet } from 'react-native';
+import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import GlobalApi from '../../Services/GlobalApi';
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 
 SplashScreen.preventAutoHideAsync();
 
 const Clinics = () => {
+  const router = useRouter();
   const [fontsLoaded] = useFonts({
     'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
   });
@@ -50,30 +54,35 @@ const Clinics = () => {
       setLoading(false);
     }
   };
+  const handlePress = async (item) => {
+    try {
+      await AsyncStorage.setItem(`clinic_${item._id}`, JSON.stringify(item));
+      router.push({
+        pathname: `/hospital/book-appointment/${item._id}`,
+        params: { clinicId: item._id }
+      });
+    } catch (error) {
+      console.error('Failed to store clinic data', error);
+    }
+  };
 
   const renderClinicItem = ({ item }) => {
     const imageUrl = item.image || null;
 
     return (
-      <View style={styles.clinicItem}>
+      <TouchableOpacity style={styles.clinicItem} onPress={() => handlePress(item)}>
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={styles.clinicImage} />
         ) : (
           <Text style={styles.noImageText}>No Image</Text>
         )}
-        <Text style={styles.clinicName}>{item.name}</Text>
-        <Text style={styles.clinicAddress}>{item.address}</Text>
+        <View style={styles.nameCategoryContainer}>
+          <Text style={styles.clinicName}>{item.name}</Text>
+          <Text style={styles.clinicCategory}>{item.category}</Text>
+        </View>
         <Text style={styles.clinicContact}>{item.contactInfo}</Text>
-        <Text style={styles.clinicCategory}>{item.category}</Text>
-        <Text style={styles.clinicDoctorsTitle}>Doctors:</Text>
-        {item.doctors.map(doctor => (
-          <View key={doctor._id} style={styles.doctorItem}>
-            <Text style={styles.doctorName}>{doctor.name}</Text>
-            <Text style={styles.doctorSpecialties}>{doctor.specialties.join(', ')}</Text>
-            <Text style={styles.doctorExperience}>{doctor.experience}</Text>
-          </View>
-        ))}
-      </View>
+        <Text style={styles.clinicAddress}>{item.address}</Text>
+      </TouchableOpacity>
     );
   };
 
@@ -113,40 +122,27 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 10,
   },
+  nameCategoryContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
   clinicName: {
     fontFamily: 'SourceSans3-Bold',
     fontSize: 16,
-    marginTop: 10,
   },
-  clinicAddress: {
+  clinicCategory: {
+    fontFamily: 'SourceSans3-Bold',
+    fontSize: 16,
     color: Colors.GRAY,
-    marginTop: 5,
   },
   clinicContact: {
     color: Colors.GRAY,
     marginTop: 5,
   },
-  clinicCategory: {
+  clinicAddress: {
     color: Colors.GRAY,
     marginTop: 5,
-  },
-  clinicDoctorsTitle: {
-    fontFamily: 'SourceSans3-Bold',
-    fontSize: 14,
-    marginTop: 10,
-  },
-  doctorItem: {
-    marginTop: 5,
-  },
-  doctorName: {
-    fontFamily: 'SourceSans3-Bold',
-    fontSize: 14,
-  },
-  doctorSpecialties: {
-    color: Colors.GRAY,
-  },
-  doctorExperience: {
-    color: Colors.GRAY,
   },
   noImageText: {
     textAlign: 'center',

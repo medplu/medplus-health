@@ -3,6 +3,8 @@ import React, { useContext, forwardRef } from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
 import Toast from 'react-native-toast-message';
+import Header from '../components/dashboard/Header';
+import SharedHeader from '../components/Shared/SharedHeader';
 
 const ForwardedToast = forwardRef((props, ref) => (
   <Toast {...props} ref={ref} />
@@ -28,14 +30,14 @@ const Layout = () => {
   ) : (
     <>
       <Stack
-        screenOptions={{
-          headerShown: false,
+         screenOptions={{
+          header: () => <SharedHeader />, // Set the Header component as the default header
         }}
       >
         <Stack.Screen
           name="index"
           options={{
-            title: 'Home',
+            title: '',
           }}
         />
         <Stack.Screen
@@ -72,25 +74,25 @@ const Layout = () => {
         <Stack.Screen
           name="clinics/[name]"
           options={{
-            title: 'Clinic Details',
+            title: '',
           }}
         />
         <Stack.Screen
           name="hospital/book-appointment/[id]"
           options={{
-            title: 'Book Appointment',
+            title: '',
           }}
         />
         <Stack.Screen
           name="hospital/index"
           options={{
-            title: 'hospital-details',
+            title: '',
           }}
         />
         <Stack.Screen
           name="hospital/[id]"
           options={{
-            title: 'Hospital Details',
+            title: '',
           }}
         />
         <Stack.Screen

@@ -1,7 +1,7 @@
 import { View, Text, ActivityIndicator } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import SharedHeader from '../../components/Shared/SharedHeader';
+
 import ClinicDoctorTab from '../../components/clinicdoctorsscreen/ClinicDoctorTab';
 import ClinicListBig from '../../components/clinicdoctorsscreen/ClinicListBig';
 import DoctorList from '../../components/clinicdoctorsscreen/DoctorList'; // Import DoctorList component
@@ -68,7 +68,7 @@ export default function ClinicDoctorsList() {
 
   return (
     <View style={{ padding: 20 }}>
-      <SharedHeader title={categoryName} />
+      
       <ClinicDoctorTab activeTab={(value: string) => setActiveTab(value)} />
       {isLoading ? (
         <ActivityIndicator size={'large'} color={Colors.PRIMARY} style={{ marginTop: '50%'}} />

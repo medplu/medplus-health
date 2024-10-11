@@ -1,23 +1,66 @@
-import { View, Text, Image, TouchableOpacity } from 'react-native';
-import React from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 export default function Header() {
-    const profileImageUrl = 'https://example.com/profile.jpg'; // Replace with actual profile image URL
-    const fullName = 'User'; // Replace with actual user name
+  const [user, setUser] = useState({ firstName: '', lastName: '', profileImage: '' });
+  const navigation = useNavigation();
 
-    return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Image source={{ uri: profileImageUrl }} style={{ width: 50, height: 50, borderRadius: 25 }} />
-                <View>
-                    <Text style={{ fontFamily: 'Inter-Black' }}>Hello, 👋</Text>
-                    <Text style={{ fontSize: 18, fontFamily: 'Inter-Black-Bold' }}>{fullName}</Text>
-                </View>
-            </View>
-            <TouchableOpacity>
-                <MaterialIcons name="notifications" size={28} color="black" />
-            </TouchableOpacity>
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        const response = await axios.get(`https://medplus-app.onrender.com/api/users/${userId}`);
+        setUser(response.data.user);
+      } catch (error) {
+        console.error('Failed to fetch user data', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.profileContainer}>
+        <Image source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }} style={styles.profileImage} />
+        <View>
+          <Text style={styles.greetingText}>Hello, 👋</Text>
+          <Text style={styles.userName}>{`${user.firstName} ${user.lastName}`}</Text>
         </View>
-    );
+      </View>
+      <TouchableOpacity onPress={() => navigation.navigate('Notifications')}>
+        <MaterialIcons name="notifications" size={28} color="black" />
+      </TouchableOpacity>
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  greetingText: {
+    fontFamily: 'Inter-Black',
+  },
+  userName: {
+    fontSize: 18,
+    fontFamily: 'Inter-Black-Bold',
+  },
+});
