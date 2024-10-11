@@ -1,16 +1,33 @@
-import { StyleSheet, Text, View, Image, ActivityIndicator, TouchableOpacity, FlatList, Alert, TextInput } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  ActivityIndicator,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+  TextInput
+} from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { FontAwesome } from '@expo/vector-icons';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlobalApi from '../../Services/GlobalApi';
+import { Paystack } from 'react-native-paystack-webview';
+import Colors from '../../components/Shared/Colors';
 
 type RouteParams = {
   doctorId: string;
 };
-
+interface User {
+  firstName: string;
+  lastName: string;
+  email: string;
+  userId: string;
+}
 type Doctor = {
   _id: string;
   firstName: string;
@@ -29,9 +46,10 @@ type TimeSlot = {
 };
 
 const DoctorProfile = () => {
+  const paystackWebViewRef = useRef(null);
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
-
+  const [user, setUser] = useState<User>({ firstName: '', lastName: '', email: '', userId: '' });
   const { doctorId } = route.params;
   const [loading, setIsLoading] = useState(true);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
@@ -43,14 +61,28 @@ const DoctorProfile = () => {
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [patientName, setPatientName] = useState<string>('');
   const [showPatientNameInput, setShowPatientNameInput] = useState<boolean>(false);
-  const [paymentInProgress, setPaymentInProgress] = useState<boolean>(false);
+  const [paymentVisible, setPaymentVisible] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
+  const [amount, setAmount] = useState<number>(50); 
 
   useEffect(() => {
     fetchDoctorDetails();
     getDays();
     getTime();
+    getUserData();
   }, [doctorId]);
+
+  const getUserData = async () => {
+    try {
+      const firstName = await AsyncStorage.getItem('firstName');
+      const lastName = await AsyncStorage.getItem('lastName');
+      const email = await AsyncStorage.getItem('email');
+      const userId = await AsyncStorage.getItem('userId');
+      setUser({ firstName: firstName || '', lastName: lastName || '', email: email || '', userId: userId || '' });
+    } catch (error) {
+      console.error('Failed to load user data', error);
+    }
+  };
 
   const getDays = () => {
     const nextSevenDays: Day[] = [];
@@ -139,6 +171,9 @@ const DoctorProfile = () => {
         setSelectedTime(null);
         setPatientName('');
         setShowPatientNameInput(false);
+        setPaymentVisible(true); // Show payment interface after booking
+        // Start Paystack transaction
+        paystackWebViewRef.current?.startTransaction();
       } else {
         Alert.alert('Error', 'Failed to book appointment.');
         setBookingInProgress(false);
@@ -150,35 +185,14 @@ const DoctorProfile = () => {
     }
   };
 
-  const handlePayment = async () => {
-    if (!patientName) {
-      Alert.alert('Error', 'Please enter the patient\'s name.');
-      return;
-    }
+  const handlePaymentSuccess = () => {
+    setPaymentSuccess(true);
+    Alert.alert('Payment Success', 'Payment was successful!');
+    setPaymentVisible(false); // Hide payment modal after success
+  };
 
-    setPaymentInProgress(true);
-
-    try {
-      const paymentResponse = await axios.post('https://medplus-app.onrender.com/api/payment/', {
-        amount: 50, // Example amount to charge for the appointment
-        userId: await AsyncStorage.getItem('userId'),
-        doctorId: doctorId,
-        patientName: patientName,
-      });
-
-      if (paymentResponse.status === 200) {
-        Alert.alert('Payment Success', 'Payment was successful!');
-        setPaymentSuccess(true);
-      } else {
-        Alert.alert('Payment Failed', 'Payment could not be processed. Please try again.');
-        setPaymentSuccess(false);
-      }
-    } catch (error) {
-      console.error('Payment Error:', error);
-      Alert.alert('Error', 'An error occurred during the payment process.');
-    } finally {
-      setPaymentInProgress(false);
-    }
+  const handlePaymentClose = () => {
+    setPaymentVisible(false); // Hide payment modal if closed
   };
 
   const renderDateButton = (item: Day) => (
@@ -254,11 +268,19 @@ const DoctorProfile = () => {
           </TouchableOpacity>
         </View>
       )}
-      {paymentInProgress && <ActivityIndicator size="small" color="#0000ff" />}
-      {paymentSuccess && (
-        <TouchableOpacity onPress={handlePayment} style={styles.paymentButton}>
-          <Text style={styles.paymentButtonText}>Proceed to Payment</Text>
-        </TouchableOpacity>
+
+      {/* Paystack Payment Modal */}
+      {paymentVisible && (
+        <Paystack
+          paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+          amount={'25000.00'}
+          billingEmail={user.email}
+          currency='KES'
+          activityIndicatorColor={Colors.primary}
+          onCancel={handlePaymentClose}
+          onSuccess={handlePaymentSuccess}
+          ref={paystackWebViewRef}
+        />
       )}
     </View>
   );
