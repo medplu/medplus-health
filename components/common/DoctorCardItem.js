@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -9,15 +9,30 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const DoctorCardItem = ({ doctor }) => {
     const { firstName, lastName, category, availability, _id } = doctor;
     const router = useRouter();
+    const [userId, setUserId] = useState(null);
 
-    const handleBookPress = async () => {
-        try {
-            await AsyncStorage.setItem(`doctor_${_id}`, JSON.stringify(doctor));
-            router.push(`/doctor/${_id}`);
-        } catch (error) {
-            console.error('Failed to store doctor data', error);
-        }
-    };
+    useEffect(() => {
+        const fetchUserId = async () => {
+            try {
+                const storedUserId = await AsyncStorage.getItem('userId');
+                if (storedUserId) {
+                    setUserId(storedUserId);
+                }
+            } catch (error) {
+                console.error('Failed to fetch user ID from AsyncStorage', error);
+            }
+        };
+
+        fetchUserId();
+    }, []);
+const handleBookPress = async () => {
+    try {
+        await AsyncStorage.setItem(`doctor_${_id}`, JSON.stringify(doctor));
+        router.push(`/doctor/${_id}`);
+    } catch (error) {
+        console.error('Failed to store doctor data', error);
+    }
+};
 
     return (
         <View style={styles.cardContainer}>

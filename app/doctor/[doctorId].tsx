@@ -6,6 +6,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlobalApi from '../../Services/GlobalApi';
+
 type RouteParams = {
   doctorId: string;
 };
@@ -31,7 +32,9 @@ type TimeSlot = {
 const DoctorProfile = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
-  const { doctorId } = route.params;
+  
+  // Extracting doctorId from route params
+  const { doctorId } = route.params; 
   const [loading, setIsLoading] = useState(true);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,10 +45,9 @@ const DoctorProfile = () => {
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [patientName, setPatientName] = useState<string>('');
   const [showPatientNameInput, setShowPatientNameInput] = useState<boolean>(false);
-  const [isPaymentRequired, setIsPaymentRequired] = useState<boolean>(true); // To track if payment is required
-const [paymentInProgress, setPaymentInProgress] = useState<boolean>(false); // To track payment progress
-const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To track if the payment is successful
-
+  const [isPaymentRequired, setIsPaymentRequired] = useState<boolean>(true); 
+  const [paymentInProgress, setPaymentInProgress] = useState<boolean>(false); 
+  const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); 
 
   useEffect(() => {
     fetchDoctorDetails();
@@ -59,8 +61,8 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
       const date = moment().add(i, 'days');
       nextSevenDays.push({
         date: date,
-        day: '', // Remove day initials
-        formattedDate: date.format('Do MMM') // 1 Jan
+        day: '',
+        formattedDate: date.format('Do MMM')
       });
     }
     setNext7Days(nextSevenDays);
@@ -84,6 +86,7 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
   const fetchDoctorDetails = async () => {
     try {
       const response = await GlobalApi.getDoctorById(doctorId);
+      console.log(doctorId);
       setDoctor(response.data);
     } catch (err) {
       setError('Error fetching doctor details');
@@ -91,7 +94,6 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
       setIsLoading(false);
     }
   };
-
 
   const handleDateSelect = (date: moment.Moment) => {
     setSelectedDate(date);
@@ -111,7 +113,7 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
       return;
     }
 
-    setBookingInProgress(true); // Start booking process
+    setBookingInProgress(true);
 
     try {
       const token = await AsyncStorage.getItem('authToken');
@@ -119,7 +121,7 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
 
       if (!token || !userId) {
         Alert.alert('Error', 'User not authenticated.');
-        setBookingInProgress(false); // Reset booking process
+        setBookingInProgress(false);
         return;
       }
 
@@ -139,19 +141,19 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
 
       if (response.status === 201) {
         Alert.alert('Success', 'Appointment booked successfully.');
-        setBookingInProgress(false); // Reset booking process
-        setSelectedDate(null); // Reset selected date
-        setSelectedTime(null); // Reset selected time
-        setPatientName(''); // Reset patient name
-        setShowPatientNameInput(false); // Hide patient name input
+        setBookingInProgress(false);
+        setSelectedDate(null);
+        setSelectedTime(null);
+        setPatientName('');
+        setShowPatientNameInput(false);
       } else {
         Alert.alert('Error', 'Failed to book appointment.');
-        setBookingInProgress(false); // Reset booking process
+        setBookingInProgress(false);
       }
     } catch (error) {
       console.error('Error booking appointment:', error);
       Alert.alert('Error', 'An error occurred while booking the appointment.');
-      setBookingInProgress(false); // Reset booking process
+      setBookingInProgress(false);
     }
   };
 
@@ -172,7 +174,6 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
     setPaymentInProgress(true);
   
     try {
-      // Mock payment request to an API or payment gateway
       const paymentResponse = await axios.post('https://medplus-app.onrender.com/api/payment/', {
         amount: 50, // Example amount to charge for the appointment
         userId: await AsyncStorage.getItem('userId'),
@@ -182,10 +183,10 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
   
       if (paymentResponse.status === 200) {
         Alert.alert('Payment Success', 'Payment was successful!');
-        setPaymentSuccess(true); // Mark the payment as successful
+        setPaymentSuccess(true);
       } else {
         Alert.alert('Payment Failed', 'Payment could not be processed. Please try again.');
-        setPaymentSuccess(false); // Mark the payment as failed
+        setPaymentSuccess(false);
       }
     } catch (error) {
       console.error('Payment Error:', error);
@@ -194,7 +195,6 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
       setPaymentInProgress(false);
     }
   };
-  
 
   return (
     <View style={styles.container}>
@@ -220,7 +220,7 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
             style={[
               styles.dateButton,
               selectedDate?.isSame(item.date, 'day') ? { backgroundColor: '#1f6f78' } : null,
-              item.date.isSame(moment(), 'day') ? { borderColor: '#93e4c1', borderWidth: 2 } : null // Highlight today's date
+              item.date.isSame(moment(), 'day') ? { borderColor: '#93e4c1', borderWidth: 2 } : null 
             ]}
           >
             <Text style={[styles.dayInitial, selectedDate?.isSame(item.date, 'day') ? { color: 'black' } : null]}>
@@ -250,50 +250,25 @@ const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false); // To trac
         showsHorizontalScrollIndicator={false}
         style={{ marginBottom: 15 }}
       />
-      {showPatientNameInput ? (
-  <>
-    <Text style={styles.sectionTitle}>Patient Name:</Text>
-    <TextInput
-      style={styles.input}
-      placeholder="Enter your name"
-      value={patientName}
-      onChangeText={setPatientName}
-    />
-    
-    {/* Payment button shown after patient name is entered */}
-    <TouchableOpacity
-      style={[styles.paymentButton, paymentInProgress ? { opacity: 0.5 } : null]}
-      onPress={paymentInProgress ? () => {} : handlePayment}
-      disabled={paymentInProgress}
-    >
-      <Text style={styles.paymentButtonText}>{paymentInProgress ? 'Processing Payment...' : 'Proceed to Payment'}</Text>
-    </TouchableOpacity>
-
-    {/* Show confirmation only if payment is successful */}
-    {paymentSuccess && (
-      <TouchableOpacity
-        style={[styles.bookButton, bookingInProgress ? { opacity: 0.5 } : null]}
-        onPress={bookingInProgress ? () => {} : handleBookAppointment}
-        disabled={bookingInProgress}
-      >
-        <Text style={styles.bookButtonText}>{bookingInProgress ? 'Booking...' : 'Confirm Booking'}</Text>
+      <TouchableOpacity onPress={handleShowPatientNameInput} style={styles.bookButton}>
+        <Text style={styles.bookButtonText}>Book Appointment</Text>
       </TouchableOpacity>
-    )}
-  </>
-) : (
-  <TouchableOpacity
-    style={[styles.bookButton, bookingInProgress ? { opacity: 0.5 } : null]}
-    onPress={bookingInProgress ? () => {} : handleShowPatientNameInput}
-    disabled={bookingInProgress}
-  >
-    <Text style={styles.bookButtonText}>{bookingInProgress ? 'Booking...' : 'Book Appointment'}</Text>
-  </TouchableOpacity>
-)}
-
+      {showPatientNameInput && (
+        <View>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter patient's name"
+            value={patientName}
+            onChangeText={setPatientName}
+          />
+          <TouchableOpacity onPress={handlePayment} style={styles.bookButton}>
+            <Text style={styles.bookButtonText}>Proceed to Payment</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

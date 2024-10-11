@@ -10,21 +10,30 @@ exports.getProfessionals = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-
 // Fetch a single professional by doctorId (_id)
+// Fetch a single professional by their unique _id
 exports.getProfessionalById = async (req, res) => {
-    const { userId } = req.params;
     try {
-        const professional = await Professional.findById(userId);
+        // Extract doctorId from the request parameters
+        const { doctorId } = req.params;
+        
+        // Use Mongoose to find the professional by _id
+        const professional = await Professional.findById(doctorId);
+
+        // Check if the professional was found
         if (!professional) {
             return res.status(404).json({ error: 'Professional not found' });
         }
+
+        // Return the professional data with a 200 status
         res.status(200).json(professional);
     } catch (error) {
-        console.log("Error fetching professional", error);
+        console.error("Error fetching professional:", error); // Log error with context
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+
 exports.createOrUpdateAvailability = async (req, res) => {
     const { userId } = req.params; // Expecting userId in the request parameters
     const { availability } = req.body; // Expecting { availability: true/false }
