@@ -19,7 +19,8 @@ const getClinics = () => AxiosInstance.get("/clinics"); // Update to fetch from 
 const createAppointement = (data) => AxiosInstance.post('/appointments', data);
 const getUserAppointements = (email) => AxiosInstance.get(`/appointments?email=${email}`);
 
-const getDoctorsByCategory = (category) => AxiosInstance.get(`/doctors?category=${category}`);
+// Updated function to fetch doctors by category
+const getDoctorsByCategory = (category) => AxiosInstance.get(`/professionals/category/${category}`);
 const getAllClinics= () => AxiosInstance.get("/clinics");
 const getAllDoctors = () => AxiosInstance.get("/doctors");
 
@@ -43,14 +44,13 @@ const bookDoctor = (doctorId) => AxiosInstance.post('/bookings', { doctorId });
 // New login function
 const loginUser = (email, password) => AxiosInstance.post('/login', { email, password });
 
-
 export default {
     getSlider,
     getCategories, // Updated function
     getClinics, // Updated function
     getClinicsByCategory, // Updated function
     loginUser,
-    getDoctorsByCategory,
+    getDoctorsByCategory, // Updated function
     createAppointement,
     getAllClinics,
     getAllDoctors,

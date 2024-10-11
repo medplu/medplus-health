@@ -106,6 +106,12 @@ const Layout = () => {
           }}
         />
         <Stack.Screen
+          name="doctor/[doctorId]"
+          options={{
+            title: 'Doctor Booking',
+          }}
+        />
+        <Stack.Screen
           name="[missing]"
           options={{
             title: '404',

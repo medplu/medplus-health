@@ -3,18 +3,28 @@ import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
 import Colors from '../Shared/Colors';
-
-
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DoctorCardItem = ({ doctor }) => {
-    const { attributes } = doctor;
-    const { Name, Year_of_Experience, categories, image } = attributes;
+    const { firstName, lastName, category, availability, _id } = doctor;
+    const router = useRouter();
+
+    const handleBookPress = async () => {
+        try {
+            await AsyncStorage.setItem(`doctor_${_id}`, JSON.stringify(doctor));
+            router.push(`/doctor/${_id}`);
+        } catch (error) {
+            console.error('Failed to store doctor data', error);
+        }
+    };
 
     return (
         <View style={styles.cardContainer}>
             <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+                {/* Placeholder image as the response does not contain an image URL */}
                 <Image
-                    source={{ uri: image.data.attributes.formats.thumbnail.url }}
+                    source={{ uri: 'https://via.placeholder.com/120x150' }}
                     style={{ width: 120, height: 150, objectFit: 'contain', borderRadius: 15 }}
                 />
 
@@ -30,16 +40,16 @@ const DoctorCardItem = ({ doctor }) => {
                         <FontAwesome name="heart" size={20} color={Colors.primary} />
                     </View>
 
-                    {/* doctor name - category - Year_of_Experience  */}
+                    {/* doctor name - category - availability */}
                     <View>
                         <Text style={styles.doctorName}>
-                            Dr. {Name}
+                            Dr. {firstName} {lastName}
                         </Text>
                         <Text style={styles.categoryName}>
-                            {categories.data[0].attributes.name}
+                            {category}
                         </Text>
                         <Text style={[styles.categoryName, { color: Colors.primary }]}>
-                            {Year_of_Experience} Years
+                            {availability ? 'Available' : 'Not Available'}
                         </Text>
                     </View>
 
@@ -51,7 +61,7 @@ const DoctorCardItem = ({ doctor }) => {
             </View>
 
             {/* make appointment button */}
-            <TouchableOpacity style={styles.makeAppointmentContainer}>
+            <TouchableOpacity style={styles.makeAppointmentContainer} onPress={handleBookPress}>
                 <Text style={{ color: Colors.primary, fontFamily: 'Inter-Black-Semi', fontSize: 15 }}>
                     Book Appointment
                 </Text>

@@ -124,16 +124,21 @@ exports.createOrUpdateSlots = async (req, res) => {
 // Controller action to fetch professionals by category
 exports.getProfessionalsByCategory = async (req, res) => {
     const { category } = req.params;
-  
-    try {
-      const professionals = await Professional.find({ category });
-      res.status(200).json(professionals);
-    } catch (error) {
-      console.error('Error fetching professionals by category:', error);
-      res.status(500).json({ message: 'Failed to fetch professionals' });
-    }
-  };
+    const allowedCategories = ['doctor', 'dentist', 'pharmacist']; // Define allowed categories
 
+    // Validate the category
+    if (!allowedCategories.includes(category)) {
+        return res.status(400).json({ error: 'Invalid category' });
+    }
+
+    try {
+        const professionals = await Professional.find({ category });
+        res.status(200).json(professionals);
+    } catch (error) {
+        console.error('Error fetching professionals by category:', error);
+        res.status(500).json({ message: 'Failed to fetch professionals' });
+    }
+};
 // Fetch available slots for a professional by userId
 exports.getAvailableSlots = async (req, res) => {
     const { userId } = req.params;
