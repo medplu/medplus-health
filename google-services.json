@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "399287117531",
+    "project_id": "medplus-supat-af28f",
+    "storage_bucket": "medplus-supat-af28f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:399287117531:android:3f4e6b2126e4b509d78efe",
+        "android_client_info": {
+          "package_name": "medplus.company.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "399287117531-tmvmbo06a5l8svihhb7c7smqt7iobbs0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-q537IsNeihxZLtQc2Nkw831SRoQ0NWk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "399287117531-tmvmbo06a5l8svihhb7c7smqt7iobbs0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "399287117531-853cnp42gtbpm3idp02jcrc0thec4jg4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "medplus-supat"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

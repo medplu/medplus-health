@@ -50,6 +50,7 @@ export const signInWithGoogle = async () => {
     throw error;
   }
 };
+
 // Sign in with email and password
 export const signIn = async (email, password) => {
   try {
