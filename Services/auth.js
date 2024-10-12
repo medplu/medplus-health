@@ -4,10 +4,12 @@ import {
   createUserWithEmailAndPassword, 
   signOut,
   GoogleAuthProvider,
-  signInWithPopup 
+  signInWithPopup,
+  signInWithRedirect
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // Sign up user
 export const signUp = async (email, password, accountType, additionalData = {}) => {
@@ -43,8 +45,14 @@ export const signUp = async (email, password, accountType, additionalData = {}) 
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
   try {
-    const result = await signInWithPopup(auth, provider);
-    return result;
+    if (Platform.OS === 'web') {
+      // Use signInWithPopup for web
+      const result = await signInWithPopup(auth, provider);
+      return result;
+    } else {
+      // Use signInWithRedirect for mobile
+      await signInWithRedirect(auth, provider);
+    }
   } catch (error) {
     console.error("Google sign-in error: ", error.message);
     throw error;
