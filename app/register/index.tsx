@@ -11,10 +11,9 @@ import {
   ScrollView,
   Animated,
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
 
@@ -31,11 +30,10 @@ const SignupScreen: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [buttonAnimation] = useState(new Animated.Value(1)); // Animation for buttons
+  const [buttonAnimation] = useState(new Animated.Value(1));
 
   const router = useRouter();
 
-  // Example button animation for interaction
   const animateButton = () => {
     Animated.sequence([
       Animated.timing(buttonAnimation, {
@@ -259,128 +257,120 @@ export default SignupScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#f5f5f5',
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   formContainer: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 500,
     padding: 20,
     borderRadius: 10,
     backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 5,
+    elevation: 3,
   },
   heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontSize: 26,
+    fontWeight: '600',
     textAlign: 'center',
+    marginBottom: 20,
   },
   subHeading: {
     fontSize: 16,
-    color: '#555',
-    marginBottom: 20,
     textAlign: 'center',
+    marginBottom: 20,
+    color: '#888',
   },
   input: {
-    width: '100%',
     height: 50,
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 8,
-    backgroundColor: '#f9f9f9',
-    borderColor: '#ddd',
+    borderColor: '#ccc',
     borderWidth: 1,
-  },
-  signupButton: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
     borderRadius: 8,
-    alignItems: 'center',
-  },
-  signupButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  signupContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-    justifyContent: 'center',
-  },
-  signupText: {
-    fontSize: 14,
-    color: '#555',
-  },
-  signupLink: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  errorMessage: {
-    color: 'red',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  successMessage: {
-    color: 'green',
-    marginBottom: 10,
-    textAlign: 'center',
+    paddingHorizontal: 10,
+    marginBottom: 15,
   },
   genderContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 20,
   },
   genderButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: '#f9f9f9',
-    borderColor: '#ddd',
-    borderWidth: 1,
-    flex: 1,
+    width: '30%',
+    height: 40,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 5,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
   },
   selectedGender: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#007bff',
+    borderColor: '#007bff',
   },
   genderText: {
-    color: '#555',
-    fontWeight: 'bold',
+    color: '#333',
   },
   accountTypeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 20,
   },
   accountTypeButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: '#f9f9f9',
-    borderColor: '#ddd',
-    borderWidth: 1,
-    flex: 1,
+    width: '30%',
+    height: 40,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 5,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
   },
   selectedAccountType: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#007bff',
+    borderColor: '#007bff',
   },
   accountTypeText: {
-    color: '#555',
-    fontWeight: 'bold',
+    color: '#333',
+  },
+  signupButton: {
+    backgroundColor: '#007bff',
+    height: 50,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  signupButtonText: {
+    color: '#fff',
+    fontSize: 18,
+  },
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 15,
+  },
+  signupText: {
+    color: '#888',
+  },
+  signupLink: {
+    color: '#007bff',
+    fontWeight: '600',
+  },
+  errorMessage: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  successMessage: {
+    color: 'green',
+    textAlign: 'center',
+    marginBottom: 10,
   },
 });
