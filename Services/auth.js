@@ -4,7 +4,6 @@ import {
   createUserWithEmailAndPassword, 
   signOut,
   GoogleAuthProvider,
-  signInWithPopup,
   signInWithRedirect
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -45,14 +44,8 @@ export const signUp = async (email, password, accountType, additionalData = {}) 
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
   try {
-    if (Platform.OS === 'web') {
-      // Use signInWithPopup for web
-      const result = await signInWithPopup(auth, provider);
-      return result;
-    } else {
-      // Use signInWithRedirect for mobile
-      await signInWithRedirect(auth, provider);
-    }
+    // Use signInWithRedirect for both web and mobile
+    await signInWithRedirect(auth, provider);
   } catch (error) {
     console.error("Google sign-in error: ", error.message);
     throw error;
