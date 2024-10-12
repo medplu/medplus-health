@@ -1,9 +1,11 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+
+const { width } = Dimensions.get('window');
 
 export default function Header() {
   const [user, setUser] = useState({ firstName: '', lastName: '', profileImage: '' });
@@ -26,8 +28,11 @@ export default function Header() {
   return (
     <View style={styles.container}>
       <View style={styles.profileContainer}>
-        <Image source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }} style={styles.profileImage} />
-        <View>
+        <Image
+          source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
+          style={styles.profileImage}
+        />
+        <View style={styles.textContainer}>
           <Text style={styles.greetingText}>Hello, 👋</Text>
           <Text style={styles.userName}>{`${user.firstName} ${user.lastName}`}</Text>
         </View>
@@ -45,22 +50,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    width: width,
   },
   profileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
   },
   profileImage: {
     width: 50,
     height: 50,
     borderRadius: 25,
+    marginRight: 12,
+  },
+  textContainer: {
+    flexDirection: 'column',
   },
   greetingText: {
-    fontFamily: 'Inter-Black',
+    fontSize: 16,
+    color: '#666',
+    fontFamily: 'Inter-Regular',
   },
   userName: {
     fontSize: 18,
-    fontFamily: 'Inter-Black-Bold',
+    fontWeight: 'bold',
+    color: '#333',
+    fontFamily: 'Inter-Bold',
   },
 });

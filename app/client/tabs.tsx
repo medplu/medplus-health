@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from './HomeScreen';
 import SettingsScreen from './SettingsScreen';
 import ProfileScreen from './ProfileScreen';
-
+import Colors from '../../components/Shared/Colors';
 const Tab = createBottomTabNavigator();
 
 export default function ClientTabs() {
@@ -28,7 +28,7 @@ export default function ClientTabs() {
         tabBarActiveTintColor: 'tomato', 
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
-          backgroundColor: 'white',
+          backgroundColor: Colors.ligh_gray,
           borderTopColor: 'transparent',
           height: 60,
         },

@@ -27,7 +27,7 @@ export default function Category() {
 
   return (
     <View style={{ marginTop: 10 }}>
-      <SubHeading subHeadingTitle={""} />
+      <SubHeading subHeadingTitle={"Specialities"} />
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors.PRIMARY} />

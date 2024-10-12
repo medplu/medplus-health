@@ -1,9 +1,20 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 import Colors from '../Shared/Colors'
-
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+SplashScreen.preventAutoHideAsync();
 
 export default function SubHeading({subHeadingTitle}) {
+  const [fontsLoaded] = useFonts({
+    'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
   return (
     <View style={{
         display: 'flex',
@@ -14,7 +25,8 @@ export default function SubHeading({subHeadingTitle}) {
     }}>
         <Text style={{
             fontSize: 20,
-            fontFamily: 'Inter-Black-Semi'
+            fontWeight: 'bold',
+            fontFamily: 'SourceSans3-Bold',
         }}>{subHeadingTitle}</Text>
         <Text style={{ fontFamily: 'Inter-Black', color: Colors.PRIMARY }}>view all</Text>
     </View>
