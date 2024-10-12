@@ -8,8 +8,8 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
-  Image,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
@@ -31,10 +31,36 @@ const SignupScreen: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [buttonAnimation] = useState(new Animated.Value(1)); // Animation for buttons
 
   const router = useRouter();
+
+  // Example button animation for interaction
+  const animateButton = () => {
+    Animated.sequence([
+      Animated.timing(buttonAnimation, {
+        toValue: 0.9,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(buttonAnimation, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const handleSignupPress = async () => {
-    if (firstName === '' || lastName === '' || email === '' || password === '' || confirmPassword === '' || !gender || !userType) {
+    if (
+      firstName === '' ||
+      lastName === '' ||
+      email === '' ||
+      password === '' ||
+      confirmPassword === '' ||
+      !gender ||
+      !userType
+    ) {
       setErrorMessage('Please fill all fields.');
       return;
     }
@@ -61,63 +87,17 @@ const SignupScreen: React.FC = () => {
       setErrorMessage(null);
       setSuccessMessage('Signup successful! Please check your email for verification.');
       setIsVerifying(true);
-
-      setFirstName('');
-      setLastName('');
-      setPassword('');
-      setConfirmPassword('');
-      setGender(null);
-      setUserType(null);
-      setCategory(''); // Reset category
     } catch (error) {
-      console.error('Error during signup:', error);
       setErrorMessage('Signup failed. Please try again.');
     }
   };
 
-  const handleVerificationPress = async () => {
-    if (verificationCode === '') {
-      setErrorMessage('Please enter the verification code.');
-      return;
-    }
-
-    try {
-      const response = await axios.post('https://medplus-app.onrender.com/api/verify-email', {
-        email,
-        verificationCode,
-      });
-
-      const { token, userType } = response.data;
-
-      setErrorMessage(null);
-      setSuccessMessage('Email verified successfully!');
-      setIsVerifying(false);
-
-      if (userType === 'professional') {
-        router.push('/professional');
-      } else if (userType === 'client') {
-        router.push('/client');
-      } else if (userType === 'student') {
-        router.push('/student');
-      }
-    } catch (error) {
-      console.error('Error during verification:', error);
-      setErrorMessage('Verification failed. Please try again.');
-    }
-  };
-  
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../../assets/images/medical-symbol.png')}
-            style={styles.logo}
-          />
-        </View>
         <View style={styles.formContainer}>
           <Text style={styles.heading}>Create an Account</Text>
           <Text style={styles.subHeading}>Sign up to get started</Text>
@@ -168,60 +148,44 @@ const SignupScreen: React.FC = () => {
                 secureTextEntry
               />
 
+              {/* Gender Selection */}
               <View style={styles.genderContainer}>
                 <TouchableOpacity
-                  style={[
-                    styles.genderButton,
-                    gender === 'Male' && styles.selectedGender,
-                  ]}
+                  style={[styles.genderButton, gender === 'Male' && styles.selectedGender]}
                   onPress={() => setGender('Male')}
                 >
                   <Text style={styles.genderText}>Male</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[
-                    styles.genderButton,
-                    gender === 'Female' && styles.selectedGender,
-                  ]}
+                  style={[styles.genderButton, gender === 'Female' && styles.selectedGender]}
                   onPress={() => setGender('Female')}
                 >
                   <Text style={styles.genderText}>Female</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[
-                    styles.genderButton,
-                    gender === 'Other' && styles.selectedGender,
-                  ]}
+                  style={[styles.genderButton, gender === 'Other' && styles.selectedGender]}
                   onPress={() => setGender('Other')}
                 >
                   <Text style={styles.genderText}>Other</Text>
                 </TouchableOpacity>
               </View>
 
+              {/* Account Type Selection */}
               <View style={styles.accountTypeContainer}>
                 <TouchableOpacity
-                  style={[
-                    styles.accountTypeButton,
-                    userType === 'client' && styles.selectedAccountType,
-                  ]}
+                  style={[styles.accountTypeButton, userType === 'client' && styles.selectedAccountType]}
                   onPress={() => setUserType('client')}
                 >
                   <Text style={styles.accountTypeText}>Client</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[
-                    styles.accountTypeButton,
-                    userType === 'professional' && styles.selectedAccountType,
-                  ]}
+                  style={[styles.accountTypeButton, userType === 'professional' && styles.selectedAccountType]}
                   onPress={() => setUserType('professional')}
                 >
                   <Text style={styles.accountTypeText}>Professional</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[
-                    styles.accountTypeButton,
-                    userType === 'student' && styles.selectedAccountType,
-                  ]}
+                  style={[styles.accountTypeButton, userType === 'student' && styles.selectedAccountType]}
                   onPress={() => setUserType('student')}
                 >
                   <Text style={styles.accountTypeText}>Student</Text>
@@ -244,9 +208,18 @@ const SignupScreen: React.FC = () => {
               {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
               {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
 
-              <TouchableOpacity style={styles.signupButton} onPress={handleSignupPress}>
-                <Text style={styles.signupButtonText}>Sign Up</Text>
-              </TouchableOpacity>
+              <Animated.View style={{ transform: [{ scale: buttonAnimation }] }}>
+                <TouchableOpacity
+                  style={styles.signupButton}
+                  onPress={() => {
+                    animateButton();
+                    handleSignupPress();
+                  }}
+                >
+                  <Text style={styles.signupButtonText}>Sign Up</Text>
+                </TouchableOpacity>
+              </Animated.View>
+
               <View style={styles.signupContainer}>
                 <Text style={styles.signupText}>Already have an account? </Text>
                 <TouchableOpacity onPress={() => router.push('/login')}>
@@ -281,127 +254,133 @@ const SignupScreen: React.FC = () => {
   );
 };
 
+export default SignupScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
   },
   scrollContainer: {
     flexGrow: 1,
+    padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  logo: {
-    width: 100,
-    height: 100,
   },
   formContainer: {
-    alignItems: 'center',
+    width: '100%',
+    maxWidth: 400,
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
   },
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  signupContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  signupText: {
-    color: '#666',
-    fontSize: 14,
-  },
-  signupLink: {
-    color: '#00796B',
-    fontSize: 14,
-    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
   },
   subHeading: {
     fontSize: 16,
     color: '#555',
-    marginBottom: 16,
+    marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
-    width: width * 0.9,
-    padding: 12,
-    marginVertical: 8,
-    borderColor: '#ccc',
-    borderWidth: 1,
+    width: '100%',
+    height: 50,
+    padding: 10,
+    marginBottom: 15,
     borderRadius: 8,
-    fontSize: 16,
-  },
-  genderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: width * 0.9,
-    marginVertical: 16,
-  },
-  genderButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderColor: '#ccc',
+    backgroundColor: '#f9f9f9',
+    borderColor: '#ddd',
     borderWidth: 1,
-    borderRadius: 8,
-  },
-  selectedGender: {
-    backgroundColor: '#007bff',
-    borderColor: '#007bff',
-  },
-  genderText: {
-    color: '#333',
-    fontSize: 16,
-  },
-  accountTypeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: width * 0.9,
-    marginVertical: 16,
-  },
-  accountTypeButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-  selectedAccountType: {
-    backgroundColor: '#007bff',
-    borderColor: '#007bff',
-  },
-  accountTypeText: {
-    color: '#333',
-    fontSize: 16,
-  },
-  errorMessage: {
-    color: 'red',
-    fontSize: 14,
-    marginVertical: 8,
-  },
-  successMessage: {
-    color: 'green',
-    fontSize: 14,
-    marginVertical: 8,
   },
   signupButton: {
-    width: width * 0.9,
-    padding: 16,
-    backgroundColor: '#007bff',
+    backgroundColor: '#4CAF50',
+    padding: 15,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 16,
   },
   signupButtonText: {
     color: '#fff',
+    fontWeight: 'bold',
     fontSize: 16,
+  },
+  signupContainer: {
+    flexDirection: 'row',
+    marginTop: 20,
+    justifyContent: 'center',
+  },
+  signupText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  signupLink: {
+    color: '#4CAF50',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  errorMessage: {
+    color: 'red',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  successMessage: {
+    color: 'green',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  genderButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  selectedGender: {
+    backgroundColor: '#4CAF50',
+  },
+  genderText: {
+    color: '#555',
+    fontWeight: 'bold',
+  },
+  accountTypeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  accountTypeButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  selectedAccountType: {
+    backgroundColor: '#4CAF50',
+  },
+  accountTypeText: {
+    color: '#555',
     fontWeight: 'bold',
   },
 });
-
-export default SignupScreen;

@@ -4,7 +4,8 @@ import { Stack } from 'expo-router';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
 import Toast from 'react-native-toast-message';
 import Header from '../components/dashboard/Header';
-import SharedHeader from '../components/Shared/SharedHeader';
+
+
 
 const ForwardedToast = forwardRef((props, ref) => (
   <Toast {...props} ref={ref} />
@@ -31,7 +32,7 @@ const Layout = () => {
     <>
       <Stack
          screenOptions={{
-          header: () => <SharedHeader />, // Set the Header component as the default header
+         headerShown:false
         }}
       >
         <Stack.Screen
