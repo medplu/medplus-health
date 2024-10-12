@@ -15,12 +15,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlobalApi from '../../Services/GlobalApi';
-import { signInWithGoogle, signIn } from '../../Services/auth'; // Import your auth functions
-import { getFirestore, doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
+import { useOAuth } from '@clerk/clerk-expo'; // Import Clerk OAuth
+import * as Linking from 'expo-linking'; // Import Linking from expo
 
 const { width } = Dimensions.get('window');
-
-const db = getFirestore(); // Initialize Firestore
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -48,7 +46,7 @@ const LoginScreen: React.FC = () => {
         if (doctorId) await AsyncStorage.setItem('doctorId', doctorId);
 
         const route = userType === 'professional' ? '/professional/tabs' : userType === 'client' ? '/client/tabs' : '/student/tabs';
-        router.push(route as const);
+        router.push(route);
       } catch (error) {
         console.error('Error during login:', error);
         setErrorMessage('Invalid email or password. Please try again.');
@@ -56,18 +54,19 @@ const LoginScreen: React.FC = () => {
     }
   };
 
+  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
+
   const handleGoogleLogin = async () => {
     try {
-      const result = await signInWithGoogle();
-      const user = result.user;
+      const { createdSessionId, setActive } = await startOAuthFlow({
+        redirectUrl: Linking.createURL('/client/tabs', { scheme: 'myapp' }),
+      });
 
-      // Store user data in AsyncStorage
-      await AsyncStorage.setItem('authToken', await user.getIdToken());
-      await AsyncStorage.setItem('userId', user.uid);
-      await AsyncStorage.setItem('email', user.email ?? '');
-
-      // Navigate all users to /client/tabs
-      router.push('/client/tabs');
+      if (createdSessionId) {
+        setActive!({ session: createdSessionId });
+      } else {
+        setErrorMessage('Failed to login with Google. Please try again.');
+      }
     } catch (error) {
       console.error('Error during Google login:', error);
       setErrorMessage('Failed to login with Google. Please try again.');
