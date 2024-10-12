@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import Colors from '../Shared/Colors'
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';

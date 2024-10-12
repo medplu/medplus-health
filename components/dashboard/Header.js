@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.ligh_gray,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
     width: width,
