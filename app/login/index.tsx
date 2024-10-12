@@ -15,10 +15,61 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlobalApi from '../../Services/GlobalApi';
+import * as WebBrowser from 'expo-web-browser';
 import { useOAuth } from '@clerk/clerk-expo'; // Import Clerk OAuth
 import * as Linking from 'expo-linking'; // Import Linking from expo
 
 const { width } = Dimensions.get('window');
+
+const useWarmUpBrowser = () => {
+  React.useEffect(() => {
+    // Warm up the android browser to improve UX
+    // https://docs.expo.dev/guides/authentication/#improving-user-experience
+    void WebBrowser.warmUpAsync();
+    return () => {
+      void WebBrowser.coolDownAsync();
+    };
+  }, []);
+};
+
+WebBrowser.maybeCompleteAuthSession();
+
+interface SignInWithOAuthProps {
+  setErrorMessage: (message: string | null) => void;
+}
+
+const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage }) => {
+  useWarmUpBrowser();
+
+  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
+
+  const onPress = React.useCallback(async () => {
+    try {
+      const { createdSessionId, setActive } = await startOAuthFlow({
+        redirectUrl: Linking.createURL('/client/tabs', { scheme: 'myapp' }),
+      });
+
+      if (createdSessionId) {
+        setActive!({ session: createdSessionId });
+      } else {
+        setErrorMessage('Failed to login with Google. Please try again.');
+      }
+    } catch (err) {
+      console.error('OAuth error', err);
+      setErrorMessage('Failed to login with Google. Please try again.');
+    }
+  }, [startOAuthFlow, setErrorMessage]);
+
+  return (
+    <TouchableOpacity style={styles.googleButton} onPress={onPress}>
+      <Image
+        source={require('../../assets/icons/icons8-google-48.png')} // Update the path to your PNG file
+        style={styles.googleIcon}
+      />
+      <Text style={styles.googleButtonText}>Continue with Google</Text>
+    </TouchableOpacity>
+  );
+};
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -46,30 +97,11 @@ const LoginScreen: React.FC = () => {
         if (doctorId) await AsyncStorage.setItem('doctorId', doctorId);
 
         const route = userType === 'professional' ? '/professional/tabs' : userType === 'client' ? '/client/tabs' : '/student/tabs';
-        router.push(route);
+        router.push(route as const);
       } catch (error) {
         console.error('Error during login:', error);
         setErrorMessage('Invalid email or password. Please try again.');
       }
-    }
-  };
-
-  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
-
-  const handleGoogleLogin = async () => {
-    try {
-      const { createdSessionId, setActive } = await startOAuthFlow({
-        redirectUrl: Linking.createURL('/client/tabs', { scheme: 'myapp' }),
-      });
-
-      if (createdSessionId) {
-        setActive!({ session: createdSessionId });
-      } else {
-        setErrorMessage('Failed to login with Google. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error during Google login:', error);
-      setErrorMessage('Failed to login with Google. Please try again.');
     }
   };
 
@@ -127,13 +159,7 @@ const LoginScreen: React.FC = () => {
           </TouchableOpacity>
 
           {/* Google Login */}
-          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-            <Image
-              source={require('../../assets/icons/icons8-google-48.png')} // Update the path to your PNG file
-              style={styles.googleIcon}
-            />
-            <Text style={styles.googleButtonText}>Continue with Google</Text>
-          </TouchableOpacity>
+          <SignInWithOAuth setErrorMessage={setErrorMessage} />
 
           <View style={styles.signupContainer}>
             <Text style={styles.signupText}>Don’t have an account? </Text>
