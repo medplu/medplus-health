@@ -7,6 +7,7 @@ import {
   signInWithPopup 
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Sign up user
 export const signUp = async (email, password, accountType, additionalData = {}) => {
@@ -43,21 +44,12 @@ export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
   try {
     const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-
-    // Store user data in AsyncStorage
-    await AsyncStorage.setItem('authToken', await user.getIdToken());
-    await AsyncStorage.setItem('userId', user.uid);
-    await AsyncStorage.setItem('email', user.email);
-
-    // Navigate all users to /client/tabs
-    router.push('/client/tabs');
+    return result;
   } catch (error) {
     console.error("Google sign-in error: ", error.message);
     throw error;
   }
 };
-
 // Sign in with email and password
 export const signIn = async (email, password) => {
   try {

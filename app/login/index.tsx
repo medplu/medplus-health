@@ -55,16 +55,17 @@ const LoginScreen: React.FC = () => {
       }
     }
   };
+
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithGoogle();
       const user = result.user;
-  
+
       // Store user data in AsyncStorage
       await AsyncStorage.setItem('authToken', await user.getIdToken());
       await AsyncStorage.setItem('userId', user.uid);
       await AsyncStorage.setItem('email', user.email ?? '');
-  
+
       // Navigate all users to /client/tabs
       router.push('/client/tabs');
     } catch (error) {
