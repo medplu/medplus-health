@@ -1,50 +1,8 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, Button } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import React from 'react';
 import { Link } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as WebBrowser from 'expo-web-browser';
-import { useOAuth } from '@clerk/clerk-expo';
-import * as Linking from 'expo-linking';
-
-export const useWarmUpBrowser = () => {
-  React.useEffect(() => {
-    // Warm up the android browser to improve UX
-    // https://docs.expo.dev/guides/authentication/#improving-user-experience
-    void WebBrowser.warmUpAsync();
-    return () => {
-      void WebBrowser.coolDownAsync();
-    };
-  }, []);
-};
-
-WebBrowser.maybeCompleteAuthSession();
-
-const SignInWithOAuth = () => {
-  useWarmUpBrowser();
-
-  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
-
-  const onPress = React.useCallback(async () => {
-    try {
-      const { createdSessionId, signIn, signUp, setActive } = await startOAuthFlow({
-        redirectUrl: Linking.createURL('/client/tabs', { scheme: 'myapp' }),
-      });
-
-      if (createdSessionId) {
-        setActive!({ session: createdSessionId });
-      } else {
-        // Use signIn or signUp for next steps such as MFA
-      }
-    } catch (err) {
-      console.error('OAuth error', err);
-    }
-  }, [startOAuthFlow]);
-
-  return (
-    <Button title="Sign in with Google" onPress={onPress} />
-  );
-};
 
 const Index = () => {
   return (
@@ -66,7 +24,6 @@ const Index = () => {
             <Text style={styles.buttonText}>Get Started</Text>
           </TouchableOpacity>
         </Link>
-        <SignInWithOAuth />
       </View>
     </LinearGradient>
   );
@@ -115,7 +72,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 2,
     elevation: 5,
-    marginBottom: 10, // Add margin to separate buttons
   },
   buttonText: {
     color: '#fff',
