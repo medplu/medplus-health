@@ -5,8 +5,9 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect
+  signInWithCredential
 } from "firebase/auth";
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
@@ -41,17 +42,26 @@ export const signUp = async (email, password, accountType, additionalData = {}) 
   }
 };
 
-// Sign in with Google
 export const signInWithGoogle = async () => {
-  const provider = new GoogleAuthProvider();
   try {
+    const provider = new GoogleAuthProvider();
+
     if (Platform.OS === 'web') {
       // Use signInWithPopup for web
       const result = await signInWithPopup(auth, provider);
       return result;
     } else {
-      // Use signInWithRedirect for mobile
-      await signInWithRedirect(auth, provider);
+      // For mobile: Use GoogleSignin to get the user's ID token
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const { idToken } = userInfo;
+
+      // Create a Google credential with the token
+      const googleCredential = GoogleAuthProvider.credential(idToken);
+
+      // Sign in with the Google credential using Firebase
+      const userCredential = await signInWithCredential(auth, googleCredential);
+      return userCredential;
     }
   } catch (error) {
     console.error("Google sign-in error: ", error.message);
