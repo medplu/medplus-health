@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import axios from 'axios';
@@ -34,60 +34,54 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      // Optional: Show a loading indicator
       setLoading(true);
-  
-      // Clear AsyncStorage
       await AsyncStorage.removeItem('userId');
       await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('authToken'); // Clear the auth token if you're storing it
-  
-      // Sign out from Clerk
+      await AsyncStorage.removeItem('authToken');
       await signOut();
-  
-      // Optional: Show a success message
       setSuccessMessage('Successfully logged out');
-  
-      // Navigate to login screen
       navigation.navigate('login/index');
     } catch (error) {
       console.error('Failed to logout', error);
-      // Optional: Show an error message to the user
       setErrorMessage('Logout failed. Please try again.');
     } finally {
-      // Optional: Hide the loading indicator
       setLoading(false);
     }
   };
 
   return (
-    <LinearGradient
-      colors={['#f95959', '#f77b7b']} // Two colors for the gradient
-      style={styles.container}
-    >
-      <View style={styles.profileContainer}>
-        <Image
-          source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
-          style={styles.profileImage}
-        />
-        <View style={styles.textContainer}>
-          <Text style={styles.greetingText}>Hello, 👋</Text>
-          <Text style={styles.userName}>{user.firstName}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient
+        colors={['#f95959', '#f77b7b']}
+        style={styles.container}
+      >
+        <View style={styles.profileContainer}>
+          <Image
+            source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
+            style={styles.profileImage}
+          />
+          <View style={styles.textContainer}>
+            <Text style={styles.greetingText}>Hello, 👋</Text>
+            <Text style={styles.userName}>{user.firstName}</Text>
+          </View>
         </View>
-      </View>
-      <View style={styles.iconContainer}>
-        <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
-          <MaterialIcons name="notifications" size={28} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
-          <MaterialIcons name="logout" size={28} color="white" />
-        </TouchableOpacity>
-      </View>
-    </LinearGradient>
+        <View style={styles.iconContainer}>
+          <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
+            <MaterialIcons name="notifications" size={28} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
+            <MaterialIcons name="logout" size={28} color="white" />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 0, // Ensures it only takes safe area space
+  },
   container: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -67,11 +67,24 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
     }
 
     try {
-      const { createdSessionId, setActive, user } = await startOAuthFlow({
+      const { createdSessionId, setActive } = await startOAuthFlow({
         redirectUrl: Linking.createURL('/client/tabs', { scheme: 'myapp' }),
       });
 
       console.log("Created Session ID:", createdSessionId);
+
+      // Fetch the user data from Clerk
+      const userResponse = await fetch('https://api.clerk.dev/v1/users/me', {
+        headers: {
+          'Authorization': `Bearer ${createdSessionId}`,
+        },
+      });
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to fetch user data from Clerk');
+      }
+
+      const user = await userResponse.json();
       console.log("User object:", user);
 
       if (createdSessionId && user) {
