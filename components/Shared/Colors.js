@@ -5,8 +5,9 @@ export default {
     SECONDARY: '#D4EDDA',
     GRAY: 'F8F9FA',
     LIGHT_GRAY: '#F8F9FA',
-    ligh_gray: '#DCDCDC',
-    light_gray: '#f95959',
+    ligh_gray: '#feffdf',
+    light_gray: '#feffdf',
     // gray:'#808080'
-    gray: '#a6a4a4'
+    gray: '#a6a4a4',
+    goofy: '#8bffff'
 }

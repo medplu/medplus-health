@@ -4,9 +4,10 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import Colors from '../Shared/Colors';
+import Colors from '../Shared/Colors'; // Import the Colors object
 import { useClerk } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -52,24 +53,27 @@ export default function Header() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient
-        colors={['#f95959', '#f77b7b']}
+        colors={['transparent', 'transparent']}
         style={styles.container}
       >
         <View style={styles.profileContainer}>
-          <Image
+        <TouchableOpacity onPress={()=>{}} style={{marginLeft:20}}>
+        <Image
             source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
             style={styles.profileImage}
           />
+        </TouchableOpacity>
+          
           <View style={styles.textContainer}>
-            <Text style={styles.userName}>{user.firstName}</Text>
+            <Text style={styles.userName}>Welcome, {user.firstName}</Text>
           </View>
         </View>
         <View style={styles.iconContainer}>
           <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
-            <MaterialIcons name="notifications" size={28} color="white" />
+          <Ionicons name="notifications-outline" size={24} color={Colors.PRIMARY } />
           </TouchableOpacity>
           <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
-            <MaterialIcons name="logout" size={28} color="white" />
+          <AntDesign name="logout" size={24} color={Colors.PRIMARY }  />
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -79,14 +83,14 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    flex: 0, // Ensures it only takes safe area space
+    backgroundColor: 'transparent', // Make the SafeAreaView transparent
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 15,
-    width: width,
+    width: '100%', // Ensure it takes the full width
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
     shadowColor: '#000',
@@ -110,8 +114,8 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+   
+    color: Colors.PRIMARY, 
     fontFamily: 'Inter-Bold',
   },
   iconContainer: {
@@ -119,7 +123,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   notificationIcon: {
-    marginRight: 16,
+    marginRight: 20,
+    backgroundColor: Colors.white,
+    padding:10,
+    borderRadius: 10,
+    shadowColor: '#171717',
+    shadowOffset: {width:2, height:4},
+    shadowOpacity: 0.2,
+    shadowRadius:3
+
   },
   logoutIcon: {
     marginRight: 0,

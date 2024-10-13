@@ -8,6 +8,7 @@ import GlobalApi from '../../Services/GlobalApi';
 export default function Category() {
   const [categoryList, setCategoryList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(null); // State to track active index
   const router = useRouter();
 
   useEffect(() => {
@@ -39,36 +40,28 @@ export default function Category() {
       ) : (
         <FlatList
           data={categoryList}
-          numColumns={4}
-          style={{
-            marginTop: 5
-          }}
-          columnWrapperStyle={{
-            flex: 1,
-            justifyContent: 'space-between'
-          }}
+          horizontal={true} // Enable horizontal scrolling
+          showsHorizontalScrollIndicator={false} // Hide horizontal scroll indicator
+          style={styles.flatList}
+          contentContainerStyle={styles.contentContainer}
           renderItem={({ item, index }) => (
-            index < 4 ? (
-              <TouchableOpacity 
-                style={{ alignItems: 'center' }} 
-                onPress={() => router.push(`/clinics/${item.name}`)}
-              >
-                <View style={{
-                  backgroundColor: Colors.SECONDARY,
-                  padding: 15,
-                  borderRadius: 99,
-                }}>
-                  <Image
-                    source={{
-                      uri: item.icon
-                    }}
-                    style={{ width: 30, height: 30 }}
-                  />
-                </View>
-                <Text>{item.name}</Text>
-              </TouchableOpacity>
-            ) : null
+            <TouchableOpacity 
+              style={styles.categoryItem} 
+              onPress={() => {
+                setActiveIndex(index); // Set active index on press
+                router.push(`/clinics/${item.name}`);
+              }}
+            >
+              <View style={activeIndex == index ? styles.categoryIconContainerActive : styles.categoryIconContainer}>
+                <Image
+                  source={{ uri: item.icon }}
+                  style={styles.categoryIcon}
+                />
+              </View>
+              <Text style={activeIndex == index ? styles.categoryBtnActive : styles.categoryBtnTxt}>{item.name}</Text>
+            </TouchableOpacity>
           )}
+          keyExtractor={(item) => item.name}
         />
       )}
     </View>
@@ -80,5 +73,39 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  flatList: {
+    marginTop: 5,
+  },
+  contentContainer: {
+    paddingHorizontal: 10,
+  },
+  categoryItem: {
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  categoryIconContainer: {
+    backgroundColor: Colors.SECONDARY,
+    padding: 15,
+    borderRadius: 99,
+  },
+  categoryIconContainerActive: {
+    backgroundColor: Colors.PRIMARY, // Change background color for active state
+    padding: 15,
+    borderRadius: 99,
+  },
+  categoryIcon: {
+    width: 30,
+    height: 30,
+  },
+  categoryBtnTxt: {
+    marginTop: 5,
+    textAlign: 'center',
+    color: Colors.black,
+  },
+  categoryBtnActive: {
+    marginTop: 5,
+    textAlign: 'center',
+    color: Colors.PRIMARY, // Change text color for active state
   },
 });

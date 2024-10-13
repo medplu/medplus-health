@@ -1,4 +1,4 @@
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Dimensions } from 'react-native';
 import React from 'react';
 
 import SearchBar from '../../components/dashboard/SearchBar';
@@ -6,6 +6,8 @@ import Category from '../../components/dashboard/Category';
 import Doctors from '../../components/dashboard/Doctors';
 import Clinics from '../../components/dashboard/Clinics';
 import Colors from '../../components/Shared/Colors';
+
+const { width, height } = Dimensions.get('window');
 
 export default function Home() {
   const data = [
@@ -29,29 +31,24 @@ export default function Home() {
   };
 
   return (
-    <FlatList
-      data={data}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.key}
-      contentContainerStyle={styles.scrollView}
-    />
+    <View style={styles.container}>
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.key}
+        contentContainerStyle={styles.scrollView}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    padding: 20,
-    backgroundColor: Colors.ligh_gray,
-  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    backgroundColor: Colors.ligh_gray,
   },
-  headerContainer: {
-    marginBottom: 40,
-    alignItems: 'center',
+  scrollView: {
+    padding: 20,
+    backgroundColor: Colors.lightGray,
   },
 });

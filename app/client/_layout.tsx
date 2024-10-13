@@ -14,7 +14,7 @@ const ClientLayout = () => {
       <Stack.Navigator
         screenOptions={{
           header: () => <Header />,
-          headerShown: true,
+          
         }}
       >
         <Stack.Screen name="tabs" component={ClientTabs} />
