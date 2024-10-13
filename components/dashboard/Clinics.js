@@ -70,14 +70,19 @@ const Clinics = () => {
     const imageUrl = item.image || null;
 
     return (
-      <TouchableOpacity style={styles.clinicItem} onPress={() => handlePress(item)}>
+            <TouchableOpacity style={styles.clinicItem} onPress={() => handlePress(item)}>
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={styles.clinicImage} />
         ) : (
           <Text style={styles.noImageText}>No Image</Text>
         )}
-        <Text style={styles.clinicAddress}>{item.address}</Text>
-        <Text style={styles.clinicLocation}>{item.location}</Text>
+        <View style={styles.textContainer}>
+          <View style={styles.nameAddressContainer}>
+            <Text style={styles.clinicName}>{item.name}</Text>
+            <Text style={styles.clinicAddress}>{item.address}</Text>
+          </View>
+          <Text style={styles.clinicCategory}>{item.category}</Text>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -103,7 +108,6 @@ const Clinics = () => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   clinicItem: {
     marginRight: 10,
@@ -118,11 +122,21 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 10,
   },
-  clinicAddress: {
-    color: Colors.GRAY,
+  textContainer: {
     marginTop: 5,
   },
-  clinicLocation: {
+  nameAddressContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  clinicName: {
+    fontWeight: 'bold',
+    color: Colors.GRAY,
+  },
+  clinicAddress: {
+    color: Colors.GRAY,
+  },
+  clinicCategory: {
     color: Colors.GRAY,
     marginTop: 5,
   },
@@ -132,5 +146,4 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
-
 export default Clinics;

@@ -1,4 +1,4 @@
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import {SafeAreaView, View, Text, FlatList, StyleSheet } from 'react-native';
 import React from 'react';
 
 import SearchBar from '../../components/dashboard/SearchBar';
@@ -33,29 +33,24 @@ export default function Home() {
   };
 
   return (
-    <FlatList
-      data={data}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.key}
-      contentContainerStyle={styles.scrollView}
-    />
+    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.container}>
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={item => item.key}
+      />
+    </View>
+  </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
-  scrollView: {
-    padding: 20,
+  safeArea: {
+    flex: 1,
     backgroundColor: Colors.ligh_gray,
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  headerContainer: {
-    marginBottom: 40,
-    alignItems: 'center',
+    backgroundColor: Colors.ligh_gray,
   },
 });

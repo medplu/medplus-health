@@ -35,10 +35,10 @@ export default function Header() {
         />
         <View style={styles.textContainer}>
           <Text style={styles.greetingText}>Hello, 👋</Text>
-          <Text style={styles.userName}>{`${user.firstName} ${user.lastName}`}</Text>
+          <Text style={styles.userName}>{user.firstName}</Text>
         </View>
       </View>
-      <TouchableOpacity onPress={() => navigation.navigate('Notifications')}>
+      <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
         <MaterialIcons name="notifications" size={28} color="black" />
       </TouchableOpacity>
     </View>
@@ -55,6 +55,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
     width: width,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   profileContainer: {
     flexDirection: 'row',
@@ -79,5 +86,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     fontFamily: 'Inter-Bold',
+  },
+  notificationIcon: {
+    marginRight: 16,
   },
 });
