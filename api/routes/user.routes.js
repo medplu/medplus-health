@@ -1,4 +1,3 @@
-// routes/user.routes.js
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user.controller');
@@ -14,5 +13,8 @@ router.get('/users/:userId', userController.getUserProfile);
 
 // Route to update user profile
 router.put('/users/update-profile/:userId', userController.updateUserProfile);
+
+// Route for Google OAuth sign-in
+router.post('/auth/google', userController.handleGoogleOAuth); // New route for Google OAuth
 
 module.exports = router;

@@ -9,7 +9,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 interface SignInWithOAuthProps {
   setErrorMessage: (message: string | null) => void;
-  router: any; // Add router as a prop
+  router: any; // Ensure this is being passed correctly
 }
 
 const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, router }) => {
@@ -18,9 +18,14 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
   const { signOut } = useClerk();
 
   const onPress = React.useCallback(async () => {
+    console.log("Session before sign out:", session);
+
     if (session) {
       try {
         await signOut();
+        // Ensure signOut is complete before continuing
+        console.log("Signed out successfully");
+        // Optionally, wait a bit longer if needed
       } catch (err) {
         console.error('Error logging out existing session', err);
         setErrorMessage('Failed to log out existing session. Please try again.');
@@ -29,13 +34,27 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
     }
 
     try {
-      const { createdSessionId, setActive } = await startOAuthFlow({
+      const { createdSessionId, setActive, user } = await startOAuthFlow({
         redirectUrl: Linking.createURL('/client/tabs', { scheme: 'myapp' }),
       });
+
+      console.log("Created Session ID:", createdSessionId);
 
       if (createdSessionId) {
         await setActive!({ session: createdSessionId });
         await AsyncStorage.setItem('authToken', createdSessionId); // Store session ID as authToken
+
+        // Use the user data directly from the OAuth response
+        console.log("User Data:", user); // Log user data for debugging
+
+        // Save user details to AsyncStorage
+        await AsyncStorage.multiSet([
+          ['userId', user.id],
+          ['firstName', user.first_name],
+          ['lastName', user.last_name],
+          ['email', user.email_addresses[0].email_address],
+        ]);
+
         // Navigate to the main app screen
         router.push('/client/tabs');
       } else {

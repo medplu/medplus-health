@@ -16,6 +16,37 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+// Function to handle OAuth sign-in and map data
+async function handleGoogleOAuth(userData) {
+  const { email, given_name, family_name, picture } = userData;
+
+  try {
+      // Check if a user with the given email already exists
+      let user = await User.findOne({ email });
+
+      if (!user) {
+          // If the user doesn't exist, create a new one
+          user = new User({
+              firstName: given_name || 'Unknown', // Use provided name or a default
+              lastName: family_name || 'Unknown',
+              email,
+              password: await bcrypt.hash('oauth_generated_password', 10), // Generate a placeholder password
+              gender: 'Other', // You can set a default or prompt user for this later
+              userType: 'client', // Default or adjust based on your app logic
+              profileImage: picture || '', // Store the profile picture URL
+              isVerified: true, // Google users are typically verified
+          });
+
+          await user.save();
+      }
+
+      return user; // Return the user object (either found or newly created)
+  } catch (error) {
+      console.error('Error handling Google OAuth:', error);
+      throw new Error('Failed to handle Google OAuth');
+  }
+}
+
 exports.register = async (req, res) => {
     try {
       const { userType, category, ...userData } = req.body;  // Destructure userType and category from request body
