@@ -1,35 +1,55 @@
+// context/AuthContext.tsx
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthContextType {
-  token: string | null;
+  user: any;
   isLoading: boolean;
-  isLoggedIn: () => Promise<void>;
+  login: (userData: any) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const defaultAuthContext: AuthContextType = {
+  user: null,
+  isLoading: true,
+  login: async () => {},
+  logout: async () => {},
+};
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(null);
+export const AuthContext = createContext<AuthContextType>(defaultAuthContext);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const isLoggedIn = async () => {
-    try {
-      const userToken = await AsyncStorage.getItem('token');
-      setToken(userToken);
-    } catch (error) {
-      console.log("Error fetching token from AsyncStorage:", error);
-    } finally {
+  useEffect(() => {
+    const loadUser = async () => {
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
       setIsLoading(false);
-    }
+    };
+
+    loadUser();
+  }, []);
+
+  const login = async (userData: any) => {
+    setUser(userData);
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
   };
 
-  useEffect(() => {
-    isLoggedIn();
-  }, []); // Ensure this runs only once on mount
+  const logout = async () => {
+    setUser(null);
+    await AsyncStorage.removeItem('user');
+  };
 
   return (
-    <AuthContext.Provider value={{ token, isLoading, isLoggedIn }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

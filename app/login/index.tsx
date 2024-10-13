@@ -16,18 +16,20 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlobalApi from '../../Services/GlobalApi';
 import * as WebBrowser from 'expo-web-browser';
-import { useOAuth } from '@clerk/clerk-expo'; // Import Clerk OAuth
-import * as Linking from 'expo-linking'; // Import Linking from expo
+import { useOAuth } from '@clerk/clerk-expo';
+import * as Linking from 'expo-linking';
 
 const { width } = Dimensions.get('window');
 
 const useWarmUpBrowser = () => {
   React.useEffect(() => {
-    // Warm up the android browser to improve UX
-    // https://docs.expo.dev/guides/authentication/#improving-user-experience
-    void WebBrowser.warmUpAsync();
+    if (Platform.OS !== 'web') {
+      void WebBrowser.warmUpAsync();
+    }
     return () => {
-      void WebBrowser.coolDownAsync();
+      if (Platform.OS !== 'web') {
+        void WebBrowser.coolDownAsync();
+      }
     };
   }, []);
 };
@@ -63,7 +65,7 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage }) =>
   return (
     <TouchableOpacity style={styles.googleButton} onPress={onPress}>
       <Image
-        source={require('../../assets/icons/icons8-google-48.png')} // Update the path to your PNG file
+        source={require('../../assets/icons/icons8-google-48.png')}
         style={styles.googleIcon}
       />
       <Text style={styles.googleButtonText}>Continue with Google</Text>
@@ -261,8 +263,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   googleIcon: {
-    width: 24, // Adjust the width as needed
-    height: 24, // Adjust the height as needed
+    width: 24,
+    height: 24,
     marginRight: 10,
   },
   googleButtonText: {
@@ -272,22 +274,21 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     color: 'red',
-    fontSize: 14,
     textAlign: 'center',
     marginBottom: 10,
   },
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: 15,
   },
   signupText: {
-    color: '#666',
     fontSize: 14,
+    color: '#666',
   },
   signupLink: {
-    color: '#00796B',
     fontSize: 14,
+    color: '#00796B',
     fontWeight: 'bold',
   },
 });

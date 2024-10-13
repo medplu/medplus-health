@@ -107,14 +107,15 @@ export default function ProfileScreen() {
             {/* Profile Details */}
             <View>
               {/* Profile Image */}
-              <View style={styles.profileImageView}>
-                <Image
-                  style={styles.profileImage}
-                  source={{
-                    uri: form.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg',
-                  }}
-                />
-              </View>
+              <View style={styles.avatarContainer}>
+        <Image
+          style={styles.avatar}
+          source={{uri: 'https://www.bootdey.com/img/Content/avatar/avatar3.png'}}
+        />
+        <TouchableOpacity style={styles.changeAvatarButton} onPress={() => {/* open image picker */}}>
+          <Text style={styles.changeAvatarButtonText}>Change profile</Text>
+        </TouchableOpacity>
+      </View>
               {/* Profile Name and Bio */}
               <View style={styles.nameAndBioView}>
                 <Text style={styles.userFullName}>{`${form.firstName} ${form.lastName}`}</Text>
@@ -190,5 +191,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 20,
     paddingLeft: 10,
+  },
+  avatarContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  changeAvatarButton: {
+    marginTop: 10,
+  },
+  changeAvatarButtonText: {
+    color: '#1E90FF',
+    fontSize: 18,
   },
 });
