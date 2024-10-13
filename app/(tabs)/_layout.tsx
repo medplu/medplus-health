@@ -1,15 +1,15 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import { Tabs } from 'expo-router'
+import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { Tabs } from 'expo-router';
 
 const _layout = () => {
   return (
-  <Tabs>
+    <Tabs screenOptions={{ headerShown: false }}>
+      {/* Add your tab screens here */}
+    </Tabs>
+  );
+};
 
-  </Tabs>
-  )
-}
+export default _layout;
 
-export default _layout
-
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({});

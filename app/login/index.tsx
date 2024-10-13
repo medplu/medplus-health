@@ -15,63 +15,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlobalApi from '../../Services/GlobalApi';
-import * as WebBrowser from 'expo-web-browser';
-import { useOAuth } from '@clerk/clerk-expo';
-import * as Linking from 'expo-linking';
+import SignInWithOAuth from '../../components/SignInWithOAuth';
 
 const { width } = Dimensions.get('window');
-
-const useWarmUpBrowser = () => {
-  React.useEffect(() => {
-    if (Platform.OS !== 'web') {
-      void WebBrowser.warmUpAsync();
-    }
-    return () => {
-      if (Platform.OS !== 'web') {
-        void WebBrowser.coolDownAsync();
-      }
-    };
-  }, []);
-};
-
-WebBrowser.maybeCompleteAuthSession();
-
-interface SignInWithOAuthProps {
-  setErrorMessage: (message: string | null) => void;
-}
-
-const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage }) => {
-  useWarmUpBrowser();
-
-  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
-
-  const onPress = React.useCallback(async () => {
-    try {
-      const { createdSessionId, setActive } = await startOAuthFlow({
-        redirectUrl: Linking.createURL('/client/tabs', { scheme: 'myapp' }),
-      });
-
-      if (createdSessionId) {
-        setActive!({ session: createdSessionId });
-      } else {
-        setErrorMessage('Failed to login with Google. Please try again.');
-      }
-    } catch (err) {
-      console.error('OAuth error', err);
-      setErrorMessage('Failed to login with Google. Please try again.');
-    }
-  }, [startOAuthFlow, setErrorMessage]);
-
-  return (
-    <TouchableOpacity style={styles.googleButton} onPress={onPress}>
-      <Image
-        source={require('../../assets/icons/icons8-google-48.png')}
-        style={styles.googleIcon}
-      />
-      <Text style={styles.googleButtonText}>Continue with Google</Text>
-    </TouchableOpacity>
-  );
-};
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -161,7 +107,7 @@ const LoginScreen: React.FC = () => {
           </TouchableOpacity>
 
           {/* Google Login */}
-          <SignInWithOAuth setErrorMessage={setErrorMessage} />
+          <SignInWithOAuth setErrorMessage={setErrorMessage} router={router} />
 
           <View style={styles.signupContainer}>
             <Text style={styles.signupText}>Don’t have an account? </Text>

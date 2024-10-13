@@ -34,19 +34,20 @@ const Layout = () => {
   // If user is authenticated, render the authenticated layout with different screens
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{}} />
-        <Stack.Screen name="client/tabs" options={{ title: 'Client' }} />
-        <Stack.Screen name="clinics/index" options={{ title: 'Clinics' }} />
-        <Stack.Screen name="clinics/[name]" options={{ title: '' }} />
-        <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '' }} />
-        <Stack.Screen name="hospital/index" options={{ title: '' }} />
-        <Stack.Screen name="hospital/[id]" options={{ title: '' }} />
-        <Stack.Screen name="student/index" options={{ title: 'Student' }} />
-        <Stack.Screen name="doctor/index" options={{ title: 'Doctor' }} />
-        <Stack.Screen name="doctor/[doctorId]" options={{ title: 'Doctor Booking' }} />
-        <Stack.Screen name="[missing]" options={{ title: '404' }} />
-      </Stack>
+     <Stack screenOptions={{ headerShown: false }}>
+  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+  <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
+  <Stack.Screen name="clinics/index" options={{ title: 'Clinics' }} />
+  <Stack.Screen name="clinics/[name]" options={{ title: '' }} />
+  <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '' }} />
+  <Stack.Screen name="hospital/index" options={{ title: '' }} />
+  <Stack.Screen name="hospital/[id]" options={{ title: '' }} />
+  <Stack.Screen name="student/index" options={{ title: 'Student' }} />
+  <Stack.Screen name="doctor/index" options={{ title: 'Doctor' }} />
+  <Stack.Screen name="doctor/[doctorId]" options={{ title: 'Doctor Booking' }} />
+  <Stack.Screen name="[missing]" options={{ title: '404' }} />
+</Stack>
+
  
     </>
   );

@@ -5,12 +5,18 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import Colors from '../Shared/Colors';
+import { useClerk } from '@clerk/clerk-expo';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
 export default function Header() {
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [user, setUser] = useState({ firstName: '', lastName: '', profileImage: '' });
   const navigation = useNavigation();
+  const { signOut } = useClerk();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -28,16 +34,37 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
+      // Optional: Show a loading indicator
+      setLoading(true);
+  
+      // Clear AsyncStorage
       await AsyncStorage.removeItem('userId');
       await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('authToken'); // Clear the auth token if you're storing it
+  
+      // Sign out from Clerk
+      await signOut();
+  
+      // Optional: Show a success message
+      setSuccessMessage('Successfully logged out');
+  
+      // Navigate to login screen
       navigation.navigate('login/index');
     } catch (error) {
       console.error('Failed to logout', error);
+      // Optional: Show an error message to the user
+      setErrorMessage('Logout failed. Please try again.');
+    } finally {
+      // Optional: Hide the loading indicator
+      setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#f95959']} // Single color for the gradient
+      style={styles.container}
+    >
       <View style={styles.profileContainer}>
         <Image
           source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
@@ -50,13 +77,13 @@ export default function Header() {
       </View>
       <View style={styles.iconContainer}>
         <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
-          <MaterialIcons name="notifications" size={28} color="black" />
+          <MaterialIcons name="notifications" size={28} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
-          <MaterialIcons name="logout" size={28} color="black" />
+          <MaterialIcons name="logout" size={28} color="white" />
         </TouchableOpacity>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -65,10 +92,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 10,
-    backgroundColor: Colors.ligh_gray,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    padding: 15,
     width: width,
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
@@ -79,10 +103,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   profileContainer: {
-    marginTop: 50,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
   },
   profileImage: {
     width: 50,
@@ -95,13 +117,13 @@ const styles = StyleSheet.create({
   },
   greetingText: {
     fontSize: 16,
-    color: '#666',
+    color: '#fff',
     fontFamily: 'Inter-Regular',
   },
   userName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     fontFamily: 'Inter-Bold',
   },
   iconContainer: {
@@ -112,6 +134,6 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   logoutIcon: {
-    marginRight: 16,
+    marginRight: 0,
   },
 });

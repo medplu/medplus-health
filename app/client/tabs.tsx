@@ -6,6 +6,7 @@ import HomeScreen from './HomeScreen';
 import SettingsScreen from './SettingsScreen';
 import ProfileScreen from './ProfileScreen';
 import Colors from '../../components/Shared/Colors';
+
 const Tab = createBottomTabNavigator();
 
 export default function ClientTabs() {
@@ -35,9 +36,9 @@ export default function ClientTabs() {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
     </Tab.Navigator>
   );
 }

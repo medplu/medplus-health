@@ -1,19 +1,24 @@
+// app/client/ClientLayout.tsx
 import React from 'react';
-import { View, Text } from 'react-native';
-import { Stack } from 'expo-router';
+import { View } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Header from '../../components/dashboard/Header';
+import ClientTabs from './tabs';
+
+
+const Stack = createNativeStackNavigator();
 
 const ClientLayout = () => {
   return (
     <View style={{ flex: 1 }}>
-      {/* Common Header */}
-      <View style={{ height: 60, backgroundColor: '#f8f9fa', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Common Header</Text>
-      </View>
-
-      {/* Content below the header */}
-      <View style={{ flex: 1 }}>
-        <Stack />
-      </View>
+      <Stack.Navigator
+        screenOptions={{
+          header: () => <Header />,
+          headerShown: true,
+        }}
+      >
+        <Stack.Screen name="tabs" component={ClientTabs} />
+      </Stack.Navigator>
     </View>
   );
 };
