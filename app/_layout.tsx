@@ -46,7 +46,7 @@ const Layout = () => {
         <Stack.Screen
           name="(tabs)"
           options={{
-            headerShown: false,
+            
           }}
         />
         <Stack.Screen
