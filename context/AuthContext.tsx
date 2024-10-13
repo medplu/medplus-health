@@ -2,10 +2,17 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  // Add other user properties as needed
+}
+
 interface AuthContextType {
-  user: any;
+  user: User | null;
   isLoading: boolean;
-  login: (userData: any) => Promise<void>;
+  login: (userData: User) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -23,29 +30,48 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const loadUser = async () => {
-      const storedUser = await AsyncStorage.getItem('user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+      try {
+        const storedUser = await AsyncStorage.getItem('user');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error('Failed to load user:', error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     loadUser();
   }, []);
 
-  const login = async (userData: any) => {
-    setUser(userData);
-    await AsyncStorage.setItem('user', JSON.stringify(userData));
+  const login = async (userData: User) => {
+    try {
+      setIsLoading(true);
+      setUser(userData);
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+    } catch (error) {
+      console.error('Failed to login:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = async () => {
-    setUser(null);
-    await AsyncStorage.removeItem('user');
+    try {
+      setIsLoading(true);
+      setUser(null);
+      await AsyncStorage.removeItem('user');
+    } catch (error) {
+      console.error('Failed to logout:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

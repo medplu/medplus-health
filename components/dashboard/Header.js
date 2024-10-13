@@ -26,6 +26,16 @@ export default function Header() {
     fetchUserData();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('userId');
+      await AsyncStorage.removeItem('user');
+      navigation.navigate('login/index');
+    } catch (error) {
+      console.error('Failed to logout', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.profileContainer}>
@@ -38,9 +48,14 @@ export default function Header() {
           <Text style={styles.userName}>{user.firstName}</Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
-        <MaterialIcons name="notifications" size={28} color="black" />
-      </TouchableOpacity>
+      <View style={styles.iconContainer}>
+        <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
+          <MaterialIcons name="notifications" size={28} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
+          <MaterialIcons name="logout" size={28} color="black" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -64,7 +79,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   profileContainer: {
-    marginTop:50,
+    marginTop: 50,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
@@ -89,7 +104,14 @@ const styles = StyleSheet.create({
     color: '#333',
     fontFamily: 'Inter-Bold',
   },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   notificationIcon: {
+    marginRight: 16,
+  },
+  logoutIcon: {
     marginRight: 16,
   },
 });
