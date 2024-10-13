@@ -1,17 +1,11 @@
-// app/_layout.tsx
-
 import { StyleSheet, Text, View } from 'react-native';
 import React, { useContext, forwardRef } from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
-import Toast from 'react-native-toast-message';
-import Header from '../components/dashboard/Header';
+
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import UnauthenticatedLayout from './UnauthenticatedLayout';
 
-const ForwardedToast = forwardRef((props, ref) => (
-  <Toast {...props} ref={ref} />
-));
 
 const Layout = () => {
   const { user, isLoading } = useContext(AuthContext);
@@ -23,6 +17,7 @@ const Layout = () => {
     throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env');
   }
 
+  // Show loading state if the user data is being fetched
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -31,86 +26,28 @@ const Layout = () => {
     );
   }
 
+  // Show UnauthenticatedLayout if the user is not logged in
   if (!user) {
     return <UnauthenticatedLayout />;
   }
 
+  // If user is authenticated, render the authenticated layout with different screens
   return (
     <>
-      <Stack
-        screenOptions={{
-          header: () => <Header />,
-          headerShown: true,
-        }}
-      >
-        <Stack.Screen
-          name="(tabs)"
-          options={{
-            
-          }}
-        />
-        <Stack.Screen
-          name="/client/tabs"
-          options={{
-            title: 'client',
-          }}
-        />
-        <Stack.Screen
-          name="clinics/index"
-          options={{
-            title: 'Clinics',
-          }}
-        />
-        <Stack.Screen
-          name="clinics/[name]"
-          options={{
-            title: '',
-          }}
-        />
-        <Stack.Screen
-          name="hospital/book-appointment/[id]"
-          options={{
-            title: '',
-          }}
-        />
-        <Stack.Screen
-          name="hospital/index"
-          options={{
-            title: '',
-          }}
-        />
-        <Stack.Screen
-          name="hospital/[id]"
-          options={{
-            title: '',
-          }}
-        />
-        <Stack.Screen
-          name="student/index"
-          options={{
-            title: 'student',
-          }}
-        />
-        <Stack.Screen
-          name="doctor/index"
-          options={{
-            title: 'doctor',
-          }}
-        />
-        <Stack.Screen
-          name="doctor/[doctorId]"
-          options={{
-            title: 'Doctor Booking',
-          }}
-        />
-        <Stack.Screen
-          name="[missing]"
-          options={{
-            title: '404',
-          }}
-        />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{}} />
+        <Stack.Screen name="client/tabs" options={{ title: 'Client' }} />
+        <Stack.Screen name="clinics/index" options={{ title: 'Clinics' }} />
+        <Stack.Screen name="clinics/[name]" options={{ title: '' }} />
+        <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '' }} />
+        <Stack.Screen name="hospital/index" options={{ title: '' }} />
+        <Stack.Screen name="hospital/[id]" options={{ title: '' }} />
+        <Stack.Screen name="student/index" options={{ title: 'Student' }} />
+        <Stack.Screen name="doctor/index" options={{ title: 'Doctor' }} />
+        <Stack.Screen name="doctor/[doctorId]" options={{ title: 'Doctor Booking' }} />
+        <Stack.Screen name="[missing]" options={{ title: '404' }} />
       </Stack>
-      <ForwardedToast />
+ 
     </>
   );
 };
