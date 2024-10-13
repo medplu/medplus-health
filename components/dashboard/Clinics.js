@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import GlobalApi from '../../Services/GlobalApi';
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
@@ -76,18 +76,14 @@ const Clinics = () => {
         ) : (
           <Text style={styles.noImageText}>No Image</Text>
         )}
-        <View style={styles.nameCategoryContainer}>
-          <Text style={styles.clinicName}>{item.name}</Text>
-          <Text style={styles.clinicCategory}>{item.category}</Text>
-        </View>
-        <Text style={styles.clinicContact}>{item.contactInfo}</Text>
         <Text style={styles.clinicAddress}>{item.address}</Text>
+        <Text style={styles.clinicLocation}>{item.location}</Text>
       </TouchableOpacity>
     );
   };
 
   if (loading) {
-    return <Text>Loading...</Text>;
+    return <ActivityIndicator size="large" color={Colors.GRAY} />;
   }
 
   if (error) {
@@ -122,25 +118,11 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 10,
   },
-  nameCategoryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  clinicName: {
-    fontFamily: 'SourceSans3-Bold',
-    fontSize: 16,
-  },
-  clinicCategory: {
-    fontFamily: 'SourceSans3-Bold',
-    fontSize: 16,
-    color: Colors.GRAY,
-  },
-  clinicContact: {
+  clinicAddress: {
     color: Colors.GRAY,
     marginTop: 5,
   },
-  clinicAddress: {
+  clinicLocation: {
     color: Colors.GRAY,
     marginTop: 5,
   },
