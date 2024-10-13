@@ -61,7 +61,6 @@ export default function Header() {
             style={styles.profileImage}
           />
           <View style={styles.textContainer}>
-            <Text style={styles.greetingText}>Hello, 👋</Text>
             <Text style={styles.userName}>{user.firstName}</Text>
           </View>
         </View>
@@ -101,18 +100,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40, // Reduced size
+    height: 40, // Reduced size
+    borderRadius: 20, // Adjusted for new size
     marginRight: 12,
   },
   textContainer: {
     flexDirection: 'column',
-  },
-  greetingText: {
-    fontSize: 16,
-    color: '#fff',
-    fontFamily: 'Inter-Regular',
   },
   userName: {
     fontSize: 18,
