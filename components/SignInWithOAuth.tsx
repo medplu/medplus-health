@@ -17,6 +17,39 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
   const { session } = useSession();
   const { signOut } = useClerk();
 
+  const saveUserToBackend = async (user: any) => {
+    if (!user) {
+      console.error('User object is undefined');
+      setErrorMessage('User object is undefined. Please try again.');
+      return;
+    }
+
+    try {
+      const response = await fetch('https://medplus-app.onrender.com/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: user.first_name,
+          lastName: user.last_name,
+          email: user.email_addresses[0].email_address,
+          profileImage: user.image_url,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save user to backend');
+      }
+
+      const savedUser = await response.json();
+      console.log('Saved user:', savedUser);
+    } catch (error) {
+      console.error('Error saving user to backend:', error);
+      setErrorMessage('Failed to save user to backend. Please try again.');
+    }
+  };
+
   const onPress = React.useCallback(async () => {
     console.log("Session before sign out:", session);
 
@@ -39,13 +72,14 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
       });
 
       console.log("Created Session ID:", createdSessionId);
+      console.log("User object:", user);
 
-      if (createdSessionId) {
+      if (createdSessionId && user) {
         await setActive!({ session: createdSessionId });
         await AsyncStorage.setItem('authToken', createdSessionId); // Store session ID as authToken
 
-        // Use the user data directly from the OAuth response
-        console.log("User Data:", user); // Log user data for debugging
+        // Save user to backend
+        await saveUserToBackend(user);
 
         // Save user details to AsyncStorage
         await AsyncStorage.multiSet([
