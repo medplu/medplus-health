@@ -50,7 +50,7 @@ const Layout = () => {
           }}
         />
         <Stack.Screen
-          name="client/index"
+          name="/client/tabs"
           options={{
             title: 'client',
           }}
