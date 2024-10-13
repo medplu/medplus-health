@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Image, Text, StyleSheet } from 'react-native';
-import { useOAuth } from '@clerk/clerk-expo';
+import { useOAuth, useSession, useClerk } from '@clerk/clerk-expo';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,8 +14,20 @@ interface SignInWithOAuthProps {
 
 const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, router }) => {
   const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
+  const { session } = useSession();
+  const { signOut } = useClerk();
 
   const onPress = React.useCallback(async () => {
+    if (session) {
+      try {
+        await signOut();
+      } catch (err) {
+        console.error('Error logging out existing session', err);
+        setErrorMessage('Failed to log out existing session. Please try again.');
+        return;
+      }
+    }
+
     try {
       const { createdSessionId, setActive } = await startOAuthFlow({
         redirectUrl: Linking.createURL('/client/tabs', { scheme: 'myapp' }),
@@ -31,9 +43,9 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
       }
     } catch (err) {
       console.error('OAuth error', err);
-      setErrorMessage('Failed to login with Google. Please try again.');
+      setErrorMessage(`Failed to login with Google. Please try again. Error: ${err.message}`);
     }
-  }, [startOAuthFlow, setErrorMessage, router]);
+  }, [startOAuthFlow, setErrorMessage, router, session, signOut]);
 
   return (
     <TouchableOpacity style={styles.googleButton} onPress={onPress}>
