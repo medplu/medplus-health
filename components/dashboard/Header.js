@@ -62,7 +62,7 @@ export default function Header() {
 
   return (
     <LinearGradient
-      colors={['#f95959']} // Single color for the gradient
+      colors={['#f95959', '#f77b7b']} // Two colors for the gradient
       style={styles.container}
     >
       <View style={styles.profileContainer}>
