@@ -37,10 +37,10 @@ const Layout = () => {
 
   return (
     <>
-      <Header />
       <Stack
         screenOptions={{
-          headerShown: false,
+          header: () => <Header />,
+          headerShown: true,
         }}
       >
         <Stack.Screen
