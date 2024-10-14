@@ -54,7 +54,7 @@ export default function Header() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       <LinearGradient
-        colors={['transparent', 'transparent']}
+        colors={[Colors.lightGray, Colors.lightGray]} // Changed from transparent to lightGray
         style={styles.container}
       >
         <View style={styles.profileContainer}>
