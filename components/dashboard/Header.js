@@ -84,9 +84,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.lightGray,
   },
   profileImage: {
-    width: 50, // Increased size for better visibility
-    height: 50, // Increased size for better visibility
-    borderRadius: 25, // Adjusted for new size
+    width: 40, // Increased size for better visibility
+    height: 40, // Increased size for better visibility
+    borderRadius: 20, // Adjusted for new size
     marginRight: 12,
   },
   iconContainer: {
