@@ -32,17 +32,19 @@ exports.getAppointmentsByDoctor = async (req, res) => {
   }
 };
 
-
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
   const { doctorId, userId, patientName } = req.body;
   let { date, time } = req.body;
 
   try {
-    // Log incoming request data
     console.log('Incoming request data:', { doctorId, userId, patientName, date, time });
 
-    // If date or time is not provided, use the current date and time
+    if (!doctorId || !userId || !patientName) {
+      console.error('Missing required fields:', { doctorId, userId, patientName });
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
     if (!date) {
       date = moment().format('YYYY-MM-DD');
     }
@@ -56,12 +58,13 @@ exports.bookAppointment = async (req, res) => {
       patientName,
       date,
       time,
-      status: 'pending' // Set initial status to 'pending'
+      status: 'pending'
     });
+
+    console.log('New appointment data:', newAppointment);
 
     await newAppointment.save();
 
-    // Emit event to notify clients of new appointment
     const io = req.app.get("socketio");
     io.emit("newAppointment", newAppointment);
 
@@ -72,50 +75,23 @@ exports.bookAppointment = async (req, res) => {
   }
 };
 
-// Book an appointment
-exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, patientName } = req.body;
-  let { date, time } = req.body;
+// Confirm an appointment
+exports.confirmAppointment = async (req, res) => {
+  const { id } = req.params;
 
   try {
-    // Log incoming request data
-    console.log('Incoming request data:', { doctorId, userId, patientName, date, time });
+    const appointment = await Appointment.findById(id);
 
-    // Validate required fields
-    if (!doctorId || !userId || !patientName) {
-      console.error('Missing required fields:', { doctorId, userId, patientName });
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
     }
 
-    // If date or time is not provided, use the current date and time
-    if (!date) {
-      date = moment().format('YYYY-MM-DD');
-    }
-    if (!time) {
-      time = moment().format('HH:mm');
-    }
+    appointment.status = 'confirmed';
+    await appointment.save();
 
-    const newAppointment = new Appointment({
-      doctorId,
-      userId,
-      patientName,
-      date,
-      time,
-      status: 'pending' // Set initial status to 'pending'
-    });
-
-    // Log new appointment data before saving
-    console.log('New appointment data:', newAppointment);
-
-    await newAppointment.save();
-
-    // Emit event to notify clients of new appointment
-    const io = req.app.get("socketio");
-    io.emit("newAppointment", newAppointment);
-
-    res.status(201).json(newAppointment);
+    res.status(200).json(appointment);
   } catch (error) {
-    console.error('Error booking appointment:', error);
+    console.error('Error confirming appointment:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
