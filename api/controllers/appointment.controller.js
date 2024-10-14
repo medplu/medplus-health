@@ -78,6 +78,7 @@ exports.bookAppointment = async (req, res) => {
 // Confirm an appointment
 exports.confirmAppointment = async (req, res) => {
   const { appointmentId } = req.params;
+  console.log('Received appointmentId:', appointmentId); // Log the appointmentId
 
   try {
     const appointment = await Appointment.findById(appointmentId);
