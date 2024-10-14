@@ -7,9 +7,9 @@ import DoctorCard from '../../components/common/DoctorCardItem';
 import HorizontalLine from '../../components/common/HorizontalLine';
 import Colors from '../../components/Shared/Colors';
 import BookingSection from '../../components/BookingSection';
-import DoctorServices from '../../components/DoctorServices'; // Import the DoctorServices component
+import DoctorServices from '../../components/DoctorServices';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AirbnbRating } from 'react-native-ratings'; // Import the new star rating component
+import { AirbnbRating } from 'react-native-ratings';
 
 type RouteParams = {
   doctorId: string;
@@ -90,7 +90,7 @@ const DoctorProfile = () => {
     <SafeAreaView style={styles.safeArea}>
       <FlatList
         contentContainerStyle={styles.scrollViewContent}
-        data={[doctor]} // Put doctor info in array to render with FlatList
+        data={[doctor]}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <>
@@ -103,7 +103,7 @@ const DoctorProfile = () => {
               <Text style={styles.descriptionText}>{item.bio}</Text>
             </View>
             <BookingSection doctorId={doctorId} />
-            <DoctorServices /> {/* Render the DoctorServices component */}
+            <DoctorServices />
             <HorizontalLine />
             <Text style={styles.sectionTitle}>Reviews</Text>
             <FlatList

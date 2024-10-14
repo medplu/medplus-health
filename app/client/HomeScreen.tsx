@@ -47,6 +47,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.ligh_gray,
+    padding: 20,
   },
   scrollView: {
     paddingVertical: 20, // Ensure padding is vertical to avoid horizontal overflow
