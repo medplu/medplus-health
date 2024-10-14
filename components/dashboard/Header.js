@@ -73,15 +73,15 @@ export default function Header() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 0,
-    backgroundColor: Colors.lightGray,
+    backgroundColor: Colors.ligh_gray,
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 15,
-    paddingTop: 10, // Add padding to move the icons down slightly
-    backgroundColor: Colors.lightGray,
+    paddingTop: 30, // Add padding to move the icons down slightly
+    backgroundColor: Colors.ligh_gray,
   },
   profileImage: {
     width: 40, // Increased size for better visibility
