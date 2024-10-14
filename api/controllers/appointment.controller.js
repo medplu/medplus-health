@@ -77,10 +77,10 @@ exports.bookAppointment = async (req, res) => {
 
 // Confirm an appointment
 exports.confirmAppointment = async (req, res) => {
-  const { id } = req.params;
+  const { appointmentId } = req.params;
 
   try {
-    const appointment = await Appointment.findById(id);
+    const appointment = await Appointment.findById(appointmentId);
 
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
