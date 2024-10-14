@@ -75,51 +75,53 @@ const BookingSection: React.FC<BookingSectionProps> = ({ doctorId }) => {
     setShowPatientNameInput(true);
   };
 
-  const handleBookAppointment = async () => {
-    if (!patientName) {
-      Alert.alert('Error', 'Please enter the patient\'s name.');
+const handleBookAppointment = async () => {
+  if (!patientName) {
+    Alert.alert('Error', 'Please enter the patient\'s name.');
+    return;
+  }
+
+  setBookingInProgress(true);
+  try {
+    const token = await AsyncStorage.getItem('authToken');
+    const userId = await AsyncStorage.getItem('userId');
+
+    if (!token || !userId) {
+      Alert.alert('Error', 'User not authenticated.');
+      setBookingInProgress(false);
       return;
     }
 
-    setBookingInProgress(true);
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const userId = await AsyncStorage.getItem('userId');
+    const appointmentData = {
+      doctorId,
+      userId,
+      patientName,
+      date: selectedDate ? selectedDate.format('YYYY-MM-DD') : '',
+      time: selectedTime,
+    };
 
-      if (!token || !userId) {
-        Alert.alert('Error', 'User not authenticated.');
-        setBookingInProgress(false);
-        return;
-      }
+    console.log('Appointment Data:', appointmentData);
 
-      const appointmentData = {
-        doctorId,
-        userId,
-        patientName,
-        date: selectedDate ? selectedDate.format('YYYY-MM-DD') : '',
-        time: selectedTime,
-      };
+    const response = await axios.post('https://medplus-app.onrender.com/api/appointments', appointmentData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      const response = await axios.post('https://medplus-app.onrender.com/api/appointments', appointmentData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.status === 201) {
-        Alert.alert('Success', 'Appointment booked successfully.');
-        resetBookingState();
-      } else {
-        Alert.alert('Error', 'Failed to book appointment.');
-        setBookingInProgress(false);
-      }
-    } catch (error) {
-      console.error('Error booking appointment:', error);
-      Alert.alert('Error', 'An error occurred while booking the appointment.');
+    if (response.status === 201) {
+      Alert.alert('Success', 'Appointment booked successfully.');
+      resetBookingState();
+    } else {
+      console.error('Error Response:', response);
+      Alert.alert('Error', 'Failed to book appointment.');
       setBookingInProgress(false);
     }
-  };
-
+  } catch (error) {
+    console.error('Error booking appointment:', error.response ? error.response.data : error.message);
+    Alert.alert('Error', 'An error occurred while booking the appointment.');
+    setBookingInProgress(false);
+  }
+};
   const resetBookingState = () => {
     setBookingInProgress(false);
     setSelectedDate(null);
