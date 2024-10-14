@@ -49,31 +49,38 @@ export default function Header() {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => {}} style={{ marginLeft: 20 }}>
-        <Image
-          source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
-          style={styles.profileImage}
-        />
-      </TouchableOpacity>
-      <View style={styles.iconContainer}>
-        <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
-          <Ionicons name="notifications-outline" size={28} color={Colors.PRIMARY} />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <TouchableOpacity onPress={() => {}} style={{ marginLeft: 20 }}>
+          <Image
+            source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
+            style={styles.profileImage}
+          />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
-          <AntDesign name="logout" size={28} color={Colors.PRIMARY} />
-        </TouchableOpacity>
+        <View style={styles.iconContainer}>
+          <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
+            <Ionicons name="notifications-outline" size={28} color={Colors.PRIMARY} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
+            <AntDesign name="logout" size={28} color={Colors.PRIMARY} />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 0,
+    backgroundColor: Colors.lightGray,
+  },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 15,
+    paddingTop: 10, // Add padding to move the icons down slightly
     backgroundColor: Colors.lightGray,
   },
   profileImage: {
