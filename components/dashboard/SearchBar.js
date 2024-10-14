@@ -49,7 +49,8 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     backgroundColor: Colors.lightGray, // Ensure this matches your overall background color
-    padding: 10,
+    padding: 16,
+    borderRadius: 10
   },
   searchContainer: {
     backgroundColor: 'transparent',
