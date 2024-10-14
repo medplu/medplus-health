@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView, StatusBar } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import axios from 'axios';
@@ -52,28 +52,28 @@ export default function Header() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       <LinearGradient
         colors={['transparent', 'transparent']}
         style={styles.container}
       >
         <View style={styles.profileContainer}>
-        <TouchableOpacity onPress={()=>{}} style={{marginLeft:20}}>
-        <Image
-            source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
-            style={styles.profileImage}
-          />
-        </TouchableOpacity>
-          
+          <TouchableOpacity onPress={() => {}} style={{ marginLeft: 20 }}>
+            <Image
+              source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
+              style={styles.profileImage}
+            />
+          </TouchableOpacity>
           <View style={styles.textContainer}>
             <Text style={styles.userName}>Welcome, {user.firstName}</Text>
           </View>
         </View>
         <View style={styles.iconContainer}>
           <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
-          <Ionicons name="notifications-outline" size={24} color={Colors.PRIMARY } />
+            <Ionicons name="notifications-outline" size={24} color={Colors.PRIMARY} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
-          <AntDesign name="logout" size={24} color={Colors.PRIMARY }  />
+            <AntDesign name="logout" size={24} color={Colors.PRIMARY} />
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -83,7 +83,8 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: 'transparent', // Make the SafeAreaView transparent
+    flex: 1,
+    backgroundColor: Colors.lightGray, // Ensure this matches your overall background color
   },
   container: {
     flexDirection: 'row',
@@ -98,6 +99,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 3,
+    marginTop: StatusBar.currentHeight || 0, // Add margin to avoid overlapping with the status bar
   },
   profileContainer: {
     flexDirection: 'row',
@@ -114,8 +116,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 18,
-   
-    color: Colors.PRIMARY, 
+    color: Colors.PRIMARY,
     fontFamily: 'Inter-Bold',
   },
   iconContainer: {
@@ -125,13 +126,12 @@ const styles = StyleSheet.create({
   notificationIcon: {
     marginRight: 20,
     backgroundColor: Colors.white,
-    padding:10,
+    padding: 10,
     borderRadius: 10,
     shadowColor: '#171717',
-    shadowOffset: {width:2, height:4},
+    shadowOffset: { width: 2, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius:3
-
+    shadowRadius: 3,
   },
   logoutIcon: {
     marginRight: 0,
