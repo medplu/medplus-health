@@ -16,15 +16,15 @@ export default function ClientTabs() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
-          iconName = route.name === 'Home'
-            ? (focused ? 'home' : 'home-outline')
-            : route.name === 'Profile'
-            ? (focused ? 'person' : 'person-outline')
-            : route.name === 'Settings'
-            ? (focused ? 'settings' : 'settings-outline')
-            : undefined;
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'Settings') {
+            iconName = focused ? 'settings' : 'settings-outline';
+          }
 
-          return iconName ? <Ionicons name={iconName} size={size} color={color} /> : null;
+          return iconName ? <Ionicons name={iconName as any} size={size} color={color} /> : null;
         },
         tabBarActiveTintColor: 'tomato', 
         tabBarInactiveTintColor: 'gray',
@@ -36,9 +36,9 @@ export default function ClientTabs() {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }

@@ -11,7 +11,7 @@ const professionalSchema = new Schema({
         type: String,
         required: true
     },
-    consultationFee:{
+    consultationFee: {
         type: Number,
         required: false
     },
@@ -40,9 +40,13 @@ const professionalSchema = new Schema({
         {
             day: { type: String, required: false },  // Day of the week (e.g., 'Monday')
             time: { type: String, required: false }, // Time range (e.g., '10:00 AM - 11:00 AM')
-            isBooked: { type: Boolean, default: false} // Whether the slot is booked or not
+            isBooked: { type: Boolean, default: false } // Whether the slot is booked or not
         }
-    ]
+    ],
+    bio: {
+        type: String,
+        required: false // Bio is optional
+    }
 }, { timestamps: true });
 
 // Create and export the 'Professional' model

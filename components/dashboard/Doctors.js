@@ -45,30 +45,15 @@ const Doctors = () => {
     }
   };
 
-  const handleBookDoctor = async (doctorId) => {
-    try {
-      const resp = await axios.post(`https://medplus-app.onrender.com/api/bookings`, { doctorId });
-      if (resp.status === 200) {
-        Alert.alert('Booking Successful', 'You have successfully booked the doctor.');
-      } else {
-        Alert.alert('Booking Failed', 'Failed to book the doctor.');
-      }
-    } catch (error) {
-      console.error('Error booking doctor:', error);
-      Alert.alert('Booking Error', 'An error occurred while booking the doctor.');
-    }
-  };
-
-  const handleViewProfile = (getId) => {
+  const handleConsult = async (getId) => {
     navigation.navigate('doctor/index', {
-       doctorId: getId, }); // Pass doctorId as a parameter
+      doctorId: getId, }); // Pass doctorId as a parameter
   };
 
   const renderDoctorItem = ({ item }) => {
     const doctor = item;
     const imageUrl = doctor.image?.url;
     const consultationFee = doctor.consultationFee; // Hardcoded consultation fee
-    const rating = 4.5; // Hardcoded doctor rating
     const placeholderImageUrl = 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg'; // Replace with your Cloudinary placeholder URL
 
     return (
@@ -77,27 +62,17 @@ const Doctors = () => {
           source={{ uri: imageUrl || placeholderImageUrl }} 
           style={styles.doctorImage} 
         />
-        <Text style={styles.doctorName}>{`${doctor.firstName} ${doctor.lastName}`}</Text>
-        <Text style={styles.doctorSpecialty}>{doctor.specialty}</Text>
+        <View style={styles.nameCategoryContainer}>
+          <Text style={styles.doctorName}>{`${doctor.firstName} ${doctor.lastName}`}</Text>
+          <Text style={styles.doctorSpecialty}>{doctor.category}</Text>
+        </View>
         <Text style={styles.consultationFee}>Consultation: {consultationFee}</Text>
-        <View style={styles.ratingContainer}>
-          <Text style={styles.ratingText}>Rating: {rating} ★</Text>
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.viewProfileButton]}
-            onPress={() => handleViewProfile(doctor._id)}
-          >
-            <Text style={styles.buttonText}>View</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.bookButton]}
-            onPress={() => handleBookDoctor(doctor._id)}
-          >
-            <Text style={styles.buttonText}>Book</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.button, styles.consultButton]}
+          onPress={() => handleConsult(doctor._id)}
+        >
+          <Text style={styles.buttonText}>Consult</Text>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -138,51 +113,39 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 10,
   },
+  nameCategoryContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+  },
   doctorName: {
     fontFamily: 'SourceSans3-Bold',
     fontSize: 16,
-    marginTop: 10,
   },
   doctorSpecialty: {
     color: Colors.GRAY,
-    marginTop: 5,
+    fontSize: 14,
   },
   consultationFee: {
     fontSize: 14,
     color: Colors.BLACK,
     marginTop: 5,
   },
-  ratingContainer: {
-    marginTop: 5,
-  },
-  ratingText: {
-    fontSize: 14,
-    color: Colors.ORANGE,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  button: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
     marginTop: 10,
   },
-  button: {
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-  },
-  viewProfileButton: {
-    backgroundColor: Colors.LIGHT_BLUE,
-  },
-  bookButton: {
+  consultButton: {
     backgroundColor: Colors.GREEN,
+    alignSelf: 'center',
   },
   buttonText: {
     color: Colors.WHITE,
-    fontSize: 14,
-  },
-  noImageText: {
-    textAlign: 'center',
-    color: Colors.GRAY,
-    marginTop: 20,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

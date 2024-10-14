@@ -6,7 +6,7 @@ import Colors from '../Shared/Colors';
 const HorizontalLine = () => {
     return (
         <View style={{
-            borderWidth: 1, borderColor: Colors.light_gray, margin: 5, marginBottom: 15, marginTop: 15
+            borderWidth: 1, borderColor: Colors.PRIMARY, margin: 5, marginBottom: 15, marginTop: 15
         }}>
 
         </View>

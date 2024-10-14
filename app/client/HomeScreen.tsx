@@ -37,6 +37,7 @@ export default function Home() {
         renderItem={renderItem}
         keyExtractor={(item) => item.key}
         contentContainerStyle={styles.scrollView}
+        showsVerticalScrollIndicator={false} // Optional: Hide vertical scroll indicator
       />
     </View>
   );
@@ -46,10 +47,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.ligh_gray,
-   
   },
   scrollView: {
-    padding: 20,
+    paddingVertical: 20, // Ensure padding is vertical to avoid horizontal overflow
     backgroundColor: Colors.ligh_gray,
   },
 });

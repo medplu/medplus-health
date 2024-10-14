@@ -23,4 +23,7 @@ router.put('/professionals/update-consultation-fee/:userId', professionalControl
 // Route to fetch professionals by category
 router.get('/professionals/category/:category', professionalController.getProfessionalsByCategory);
 
+// Route to update professional profile by userId
+router.put('/professionals/update-profile/:userId', professionalController.updateProfessionalProfile);
+
 module.exports = router;

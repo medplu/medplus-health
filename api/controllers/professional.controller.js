@@ -10,46 +10,63 @@ exports.getProfessionals = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 // Fetch a single professional by doctorId (_id)
-// Fetch a single professional by their unique _id
 exports.getProfessionalById = async (req, res) => {
     try {
-        // Extract doctorId from the request parameters
         const { doctorId } = req.params;
-        
-        // Use Mongoose to find the professional by _id
         const professional = await Professional.findById(doctorId);
 
-        // Check if the professional was found
         if (!professional) {
             return res.status(404).json({ error: 'Professional not found' });
         }
 
-        // Return the professional data with a 200 status
         res.status(200).json(professional);
     } catch (error) {
-        console.error("Error fetching professional:", error); // Log error with context
+        console.error("Error fetching professional:", error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
 
+// Update professional profile
+exports.updateProfessionalProfile = async (req, res) => {
+    const { userId } = req.params;
+    const { firstName, lastName, email, category, yearsOfExperience, certifications, bio } = req.body;
+
+    try {
+        const professional = await Professional.findOneAndUpdate(
+            { user: userId },
+            { firstName, lastName, email, category, yearsOfExperience, certifications, bio },
+            { new: true, upsert: true }
+        );
+
+        if (!professional) {
+            return res.status(404).json({ error: 'Professional not found' });
+        }
+
+        return res.status(200).json({
+            message: 'Professional profile updated successfully',
+            professional
+        });
+    } catch (error) {
+        console.log("Error updating professional profile", error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+};
 
 exports.createOrUpdateAvailability = async (req, res) => {
-    const { userId } = req.params; // Expecting userId in the request parameters
-    const { availability } = req.body; // Expecting { availability: true/false }
+    const { userId } = req.params;
+    const { availability } = req.body;
 
-    // Log the request payload
     console.log('Request Payload:', { userId, availability });
 
     try {
-        // Find the professional by userId and update the availability field
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
-            { $set: { availability: availability } }, // Explicitly use $set to update the field
-            { new: true, upsert: true }  // If the professional does not exist, create a new one
+            { $set: { availability: availability } },
+            { new: true, upsert: true }
         );
 
-        // Log the result of the update operation
         console.log('Updated Professional:', professional);
 
         if (!professional) {
@@ -70,23 +87,19 @@ exports.createOrUpdateConsultationFee = async (req, res) => {
     const { userId } = req.params;
     const { consultationFee } = req.body;
 
-    // Validate consultationFee
     if (typeof consultationFee !== 'number' || consultationFee < 0) {
         return res.status(400).json({ error: 'Invalid consultation fee' });
     }
 
-    // Log the request payload
     console.log('Request Payload:', { userId, consultationFee });
 
     try {
-        // Find the professional by userId and update the consultationFee field
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
             { consultationFee },
-            { new: true, upsert: true }  // If the professional does not exist, create a new one
+            { new: true, upsert: true }
         );
 
-        // Log the result of the update operation
         console.log('Updated Professional:', professional);
 
         if (!professional) {
@@ -103,17 +116,16 @@ exports.createOrUpdateConsultationFee = async (req, res) => {
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
-// Update or create time slots for a professional
+
 exports.createOrUpdateSlots = async (req, res) => {
-    const { userId } = req.params; // Expecting userId in the request parameters
-    const { slots } = req.body; // Expecting an array of slots
+    const { userId } = req.params;
+    const { slots } = req.body;
 
     try {
-        // Find the professional by userId and update the slots field
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
-            { slots },  // Update the slots field
-            { new: true, upsert: true }  // If the professional does not exist, create a new one
+            { slots },
+            { new: true, upsert: true }
         );
 
         if (!professional) {
@@ -130,12 +142,10 @@ exports.createOrUpdateSlots = async (req, res) => {
     }
 };
 
-// Controller action to fetch professionals by category
 exports.getProfessionalsByCategory = async (req, res) => {
     const { category } = req.params;
-    const allowedCategories = ['Kidney', 'Heart', 'Brain', 'Cancer', 'Skin', 'Bone', ]; // Define allowed categories
+    const allowedCategories = ['Kidney', 'Heart', 'Brain', 'Cancer', 'Skin', 'Bone'];
 
-    // Validate the category
     if (!allowedCategories.includes(category)) {
         return res.status(400).json({ error: 'Invalid category' });
     }
@@ -148,10 +158,10 @@ exports.getProfessionalsByCategory = async (req, res) => {
         res.status(500).json({ message: 'Failed to fetch professionals' });
     }
 };
-// Fetch available slots for a professional by userId
+
 exports.getAvailableSlots = async (req, res) => {
     const { userId } = req.params;
-    const { day } = req.query;  // Optional query param to filter slots by day (e.g., ?day=Monday)
+    const { day } = req.query;
 
     try {
         const professional = await Professional.findOne({ user: userId });
@@ -160,7 +170,6 @@ exports.getAvailableSlots = async (req, res) => {
             return res.status(404).json({ error: 'Professional not found' });
         }
 
-        // Filter the available slots based on the day (if provided) and availability (not booked)
         let availableSlots = professional.slots.filter(slot => !slot.isBooked);
         if (day) {
             availableSlots = availableSlots.filter(slot => slot.day === day);
