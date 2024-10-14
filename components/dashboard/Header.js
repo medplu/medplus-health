@@ -8,7 +8,7 @@ import Colors from '../Shared/Colors'; // Import the Colors object
 import { useClerk } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-import { useHeaderHeight } from '@react-navigation/stack'; // Import useHeaderHeight
+import { useHeaderHeight } from '@react-navigation/elements'; // Import useHeaderHeight
 
 const { width } = Dimensions.get('window');
 
