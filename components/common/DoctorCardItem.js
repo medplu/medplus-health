@@ -78,27 +78,27 @@ const DoctorCardItem = ({ doctor }) => {
     }
   };
 
-  const handlePaymentSuccess = async (response) => {
-    try {
-      console.log('Payment successful:', response);
-      console.log('Confirming appointment with appointmentId:', appointmentId);
+  const handlePaymentSuccess = async (response, appointmentId) => {
+  try {
+    console.log('Payment successful:', response);
+    console.log('Confirming appointment with appointmentId:', appointmentId);
 
-      await axios.put(`https://medplus-app.onrender.com/api/appointments/confirm/${appointmentId}`, {
-        status: 'confirmed'
-      });
+    await axios.put(`https://medplus-app.onrender.com/api/appointments/confirm/${appointmentId}`, {
+      status: 'confirmed'
+    });
 
-      setAlertMessage('Appointment booked and payment successful!');
-      setAlertType('success');
-      setShowAlert(true);
-    } catch (error) {
-      console.error('Failed to update appointment status:', error);
-      setAlertMessage('Payment successful, but failed to update appointment status. Please contact support.');
-      setAlertType('error');
-      setShowAlert(true);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    setAlertMessage('Appointment booked and payment successful!');
+    setAlertType('success');
+    setShowAlert(true);
+  } catch (error) {
+    console.error('Failed to update appointment status:', error);
+    setAlertMessage('Payment successful, but failed to update appointment status. Please contact support.');
+    setAlertType('error');
+    setShowAlert(true);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handlePaymentCancel = () => {
     console.log('Payment cancelled');
