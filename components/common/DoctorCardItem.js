@@ -157,16 +157,18 @@ const DoctorCardItem = ({ doctor }) => {
         )}
       </TouchableOpacity>
 
-      <Paystack
-        paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-        amount={consultationFee * 100}
+      {appointmentId && (
+        <Paystack
+           paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+        amount={'25000.00'}
         billingEmail={user.email}
-        currency='NGN'
+        currency='KES'
         activityIndicatorColor={Colors.primary}
         onCancel={handlePaymentCancel}
         onSuccess={handlePaymentSuccess}
         ref={paystackWebViewRef}
-      />
+        />
+      )}
 
       <AwesomeAlert
         show={showAlert}
