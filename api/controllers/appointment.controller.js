@@ -34,15 +34,25 @@ exports.getAppointmentsByDoctor = async (req, res) => {
 
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, patientName, date, time } = req.body;
+  const { doctorId, userId, patientName } = req.body;
+  let { date, time } = req.body;
 
   try {
+    // If date or time is not provided, use the current date and time
+    if (!date) {
+      date = moment().format('YYYY-MM-DD');
+    }
+    if (!time) {
+      time = moment().format('HH:mm');
+    }
+
     const newAppointment = new Appointment({
       doctorId,
       userId,
       patientName,
       date,
       time,
+      status: 'pending' // Set initial status to 'pending'
     });
 
     await newAppointment.save();
