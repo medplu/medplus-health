@@ -70,10 +70,10 @@ export default function Header() {
         </View>
         <View style={styles.iconContainer}>
           <TouchableOpacity style={styles.notificationIcon} onPress={() => navigation.navigate('Notifications')}>
-            <Ionicons name="notifications-outline" size={24} color={Colors.PRIMARY} />
+            <Ionicons name="notifications-outline" size={28} color={Colors.PRIMARY} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
-            <AntDesign name="logout" size={24} color={Colors.PRIMARY} />
+            <AntDesign name="logout" size={28} color={Colors.PRIMARY} />
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -106,9 +106,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileImage: {
-    width: 40, // Reduced size
-    height: 40, // Reduced size
-    borderRadius: 20, // Adjusted for new size
+    width: 50, // Increased size for better visibility
+    height: 50, // Increased size for better visibility
+    borderRadius: 25, // Adjusted for new size
     marginRight: 12,
   },
   textContainer: {
