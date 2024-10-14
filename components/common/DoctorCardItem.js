@@ -28,6 +28,7 @@ const DoctorCardItem = ({ doctor }) => {
         const storedUserId = await AsyncStorage.getItem('userId');
         if (storedUserId) {
           setUserId(storedUserId);
+          console.log('Fetched userId:', storedUserId);
         }
       } catch (error) {
         console.error('Failed to fetch user ID from AsyncStorage', error);
@@ -45,6 +46,7 @@ const DoctorCardItem = ({ doctor }) => {
       const email = await AsyncStorage.getItem('email');
       const userId = await AsyncStorage.getItem('userId');
       setUser({ firstName, lastName, email, userId });
+      console.log('Fetched user data:', { firstName, lastName, email, userId });
     } catch (error) {
       console.error('Failed to load user data', error);
     }
@@ -53,19 +55,19 @@ const DoctorCardItem = ({ doctor }) => {
   const handleBookPress = async () => {
     setIsSubmitting(true);
     try {
-      
+      console.log('Booking appointment with doctorId:', _id, 'and userId:', user.userId);
       const appointmentResponse = await axios.post('https://medplus-app.onrender.com/api/appointments', {
         doctorId: _id,
         userId: user.userId,
         patientName: `${user.firstName} ${user.lastName}`,
         date: new Date().toISOString().split('T')[0],
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       });
 
       const appointmentId = appointmentResponse.data._id;
       setAppointmentId(appointmentId);
+      console.log('Created appointment with appointmentId:', appointmentId);
 
-      
       paystackWebViewRef.current.startTransaction();
     } catch (error) {
       console.error('Failed to book appointment:', error);
@@ -78,8 +80,8 @@ const DoctorCardItem = ({ doctor }) => {
 
   const handlePaymentSuccess = async (response) => {
     try {
-     
       console.log('Payment successful:', response);
+      console.log('Confirming appointment with appointmentId:', appointmentId);
 
       await axios.put(`https://medplus-app.onrender.com/api/appointments/confirm/${appointmentId}`, {
         status: 'confirmed'
@@ -109,7 +111,6 @@ const DoctorCardItem = ({ doctor }) => {
   return (
     <View style={styles.cardContainer}>
       <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
-       
         <Image
           source={{ uri: 'https://via.placeholder.com/120x150' }}
           style={{ width: 120, height: 150, objectFit: 'contain', borderRadius: 15 }}
@@ -127,7 +128,6 @@ const DoctorCardItem = ({ doctor }) => {
             <FontAwesome name="heart" size={20} color={Colors.primary} />
           </View>
 
-         
           <View>
             <Text style={styles.doctorName}>
               Dr. {firstName} {lastName}
@@ -146,7 +146,6 @@ const DoctorCardItem = ({ doctor }) => {
           </View>
         </View>
       </View>
-
 
       <TouchableOpacity style={styles.makeAppointmentContainer} onPress={handleBookPress} disabled={isSubmitting}>
         {isSubmitting ? (

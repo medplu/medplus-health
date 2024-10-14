@@ -73,23 +73,50 @@ exports.bookAppointment = async (req, res) => {
   }
 };
 
-// Confirm an appointment
-exports.confirmAppointment = async (req, res) => {
-  const { appointmentId } = req.params;
+// Book an appointment
+exports.bookAppointment = async (req, res) => {
+  const { doctorId, userId, patientName } = req.body;
+  let { date, time } = req.body;
 
   try {
-    const appointment = await Appointment.findById(appointmentId);
-    if (!appointment) {
-      return res.status(404).json({ error: 'Appointment not found' });
+    // Log incoming request data
+    console.log('Incoming request data:', { doctorId, userId, patientName, date, time });
+
+    // Validate required fields
+    if (!doctorId || !userId || !patientName) {
+      console.error('Missing required fields:', { doctorId, userId, patientName });
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Update the status to 'confirmed'
-    appointment.status = 'confirmed';
-    await appointment.save();
+    // If date or time is not provided, use the current date and time
+    if (!date) {
+      date = moment().format('YYYY-MM-DD');
+    }
+    if (!time) {
+      time = moment().format('HH:mm');
+    }
 
-    res.status(200).json({ message: 'Appointment confirmed successfully', appointment });
+    const newAppointment = new Appointment({
+      doctorId,
+      userId,
+      patientName,
+      date,
+      time,
+      status: 'pending' // Set initial status to 'pending'
+    });
+
+    // Log new appointment data before saving
+    console.log('New appointment data:', newAppointment);
+
+    await newAppointment.save();
+
+    // Emit event to notify clients of new appointment
+    const io = req.app.get("socketio");
+    io.emit("newAppointment", newAppointment);
+
+    res.status(201).json(newAppointment);
   } catch (error) {
-    console.error('Error confirming appointment:', error);
+    console.error('Error booking appointment:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
