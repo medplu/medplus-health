@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.lightGray, // Ensure this matches your overall background color
+    backgroundColor: Colors.white, // Ensure this matches your overall background color
     padding: 16,
     borderRadius: 10,
   },
@@ -61,12 +61,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   filterBtn: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: Colors.SECONDARY,
     padding: 10,
     borderRadius: 10,
     marginLeft: 10, // Add margin to separate from the search bar
   },
   input: {
-    color: Colors.black, // Adjust this to match your text color
+    color: Colors.ligh_gray, // Adjust this to match your text color
   },
 });

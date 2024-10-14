@@ -46,10 +46,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.ligh_gray,
-    padding: 20,
+   
   },
   scrollView: {
     padding: 20,
-    backgroundColor: Colors.lightGray,
+    backgroundColor: Colors.ligh_gray,
   },
 });
