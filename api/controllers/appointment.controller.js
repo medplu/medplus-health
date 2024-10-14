@@ -31,6 +31,8 @@ exports.getAppointmentsByDoctor = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+const moment = require('moment');
+const Appointment = require('../models/appointment.model'); // Adjust the path as necessary
 
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
@@ -38,6 +40,9 @@ exports.bookAppointment = async (req, res) => {
   let { date, time } = req.body;
 
   try {
+    // Log incoming request data
+    console.log('Incoming request data:', { doctorId, userId, patientName, date, time });
+
     // If date or time is not provided, use the current date and time
     if (!date) {
       date = moment().format('YYYY-MM-DD');
