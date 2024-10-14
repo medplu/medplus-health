@@ -31,8 +31,7 @@ exports.getAppointmentsByDoctor = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-const moment = require('moment');
-const Appointment = require('../models/appointment.model'); // Adjust the path as necessary
+
 
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
