@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.white, // Ensure this matches your overall background color
-    padding: 16,
+    padding: 15,
     borderRadius: 10,
   },
   searchBarContainer: {
