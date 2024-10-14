@@ -18,27 +18,22 @@ export default class App extends React.Component {
 
     return (
       <View style={styles.container}>
-      <View>
-      <SearchBar
-          placeholder="Type Here..."
-          onChangeText={this.updateSearch}
-          value={search}
-          containerStyle={styles.searchContainer}
-          inputContainerStyle={styles.inputContainer}
-          inputStyle={styles.input}
-          placeholderTextColor={Colors.gray}
-          searchIcon={{ color: Colors.primary }}
-          clearIcon={{ color: Colors.primary }}
-          rightIconContainerStyle={styles.rightIconContainer}
-         
-        />
-      </View>
-      
-        <View>
-          <TouchableOpacity onPress={()=>{}} style={styles.filterBtn}>
-            <Ionicons name='options' size={28} style color={Colors.PRIMARY}/>
-          </TouchableOpacity>
+        <View style={styles.searchBarContainer}>
+          <SearchBar
+            placeholder="Type Here..."
+            onChangeText={this.updateSearch}
+            value={search}
+            containerStyle={styles.searchContainer}
+            inputContainerStyle={styles.inputContainer}
+            inputStyle={styles.input}
+            placeholderTextColor={Colors.gray}
+            searchIcon={{ color: Colors.primary }}
+            clearIcon={{ color: Colors.primary }}
+          />
         </View>
+        <TouchableOpacity onPress={() => {}} style={styles.filterBtn}>
+          <Ionicons name='options' size={28} color={Colors.primary} />
+        </TouchableOpacity>
       </View>
     );
   }
@@ -46,35 +41,32 @@ export default class App extends React.Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.lightGray, // Ensure this matches your overall background color
     padding: 16,
-    borderRadius: 10
+    borderRadius: 10,
+  },
+  searchBarContainer: {
+    flex: 1, // Take up the remaining space
   },
   searchContainer: {
     backgroundColor: 'transparent',
     borderTopWidth: 0,
     borderBottomWidth: 0,
-    width: '100%', // Make the search bar take the full width
+    padding: 0, // Remove padding to align with the filter button
   },
   inputContainer: {
     backgroundColor: Colors.white, // Adjust this to blend with your overall background
     borderRadius: 10,
-    paddingRight: 50, // Add padding to make space for the filter icon
   },
-filterBtn:{
-  backgroundColor: Colors.SECONDARY,
-  padding:10,
-  borderRadius:10
-
-
-
-},
+  filterBtn: {
+    backgroundColor: Colors.secondary,
+    padding: 10,
+    borderRadius: 10,
+    marginLeft: 10, // Add margin to separate from the search bar
+  },
   input: {
     color: Colors.black, // Adjust this to match your text color
-  },
-  rightIconContainer: {
-    marginRight: 10, // Adjust the margin to position the icon correctly
   },
 });
