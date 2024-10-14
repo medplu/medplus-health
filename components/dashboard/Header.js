@@ -8,7 +8,6 @@ import Colors from '../Shared/Colors'; // Import the Colors object
 import { useClerk } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-import { useHeaderHeight } from '@react-navigation/elements'; // Import useHeaderHeight
 
 const { width } = Dimensions.get('window');
 
@@ -19,7 +18,6 @@ export default function Header() {
   const [user, setUser] = useState({ firstName: '', lastName: '', profileImage: '' });
   const navigation = useNavigation();
   const { signOut } = useClerk();
-  const headerHeight = useHeaderHeight(); // Get the header height
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -57,7 +55,7 @@ export default function Header() {
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       <LinearGradient
         colors={['transparent', 'transparent']}
-        style={[styles.container, { marginTop: headerHeight }]} // Adjust marginTop using headerHeight
+        style={styles.container}
       >
         <View style={styles.profileContainer}>
           <TouchableOpacity onPress={() => {}} style={{ marginLeft: 20 }}>
@@ -101,6 +99,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 3,
+    marginTop: StatusBar.currentHeight || 0, // Add margin to avoid overlapping with the status bar
   },
   profileContainer: {
     flexDirection: 'row',
