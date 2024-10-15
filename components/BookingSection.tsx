@@ -1,10 +1,10 @@
-// BookingSection.tsx
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, FlatList, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Alert, FlatList, TextInput, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
 import moment from 'moment';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Colors from '../components/Shared/Colors';
+import { Paystack, PaystackRef } from 'react-native-paystack-webview';
+import AwesomeAlert from 'react-native-awesome-alerts';
 
 type Day = {
   date: moment.Moment;
@@ -25,16 +25,18 @@ const BookingSection: React.FC<BookingSectionProps> = ({ doctorId }) => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [next7Days, setNext7Days] = useState<Day[]>([]);
   const [timeList, setTimeList] = useState<TimeSlot[]>([]);
-  const [bookingInProgress, setBookingInProgress] = useState(false);
+  const [bookingInProgress, setBookingInProgress] = useState<boolean>(false);
   const [patientName, setPatientName] = useState<string>('');
   const [showPatientNameInput, setShowPatientNameInput] = useState<boolean>(false);
-  const [isPaymentRequired, setIsPaymentRequired] = useState<boolean>(true);
-  const [paymentInProgress, setPaymentInProgress] = useState<boolean>(false);
-  const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
+  const [user, setUser] = useState({ firstName: '', lastName: '', email: '', userId: '' });
+
+  const paystackWebViewRef = useRef<PaystackRef>(null);
 
   useEffect(() => {
     getDays();
     getTime();
+    getUserData();
   }, []);
 
   const getDays = () => {
@@ -63,6 +65,19 @@ const BookingSection: React.FC<BookingSectionProps> = ({ doctorId }) => {
     setTimeList(timeList);
   };
 
+  const getUserData = async () => {
+    try {
+      const firstName = await AsyncStorage.getItem('firstName');
+      const lastName = await AsyncStorage.getItem('lastName');
+      const email = await AsyncStorage.getItem('email');
+      const userId = await AsyncStorage.getItem('userId');
+      setUser({ firstName, lastName, email, userId });
+      console.log('Fetched user data:', { firstName, lastName, email, userId });
+    } catch (error) {
+      console.error('Failed to load user data', error);
+    }
+  };
+
   const handleDateSelect = (date: moment.Moment) => {
     setSelectedDate(date);
   };
@@ -75,73 +90,117 @@ const BookingSection: React.FC<BookingSectionProps> = ({ doctorId }) => {
     setShowPatientNameInput(true);
   };
 
-const handleBookAppointment = async () => {
-  if (!patientName) {
-    Alert.alert('Error', 'Please enter the patient\'s name.');
-    return;
-  }
-
-  setBookingInProgress(true);
-  try {
-    const token = await AsyncStorage.getItem('authToken');
-    const userId = await AsyncStorage.getItem('userId');
-
-    if (!token || !userId) {
-      Alert.alert('Error', 'User not authenticated.');
-      setBookingInProgress(false);
+  const handleBookAppointment = async () => {
+    if (!patientName) {
+      Alert.alert('Error', 'Please enter the patient\'s name.');
       return;
     }
 
-    const appointmentData = {
-      doctorId,
-      userId,
-      patientName,
-      date: selectedDate ? selectedDate.format('YYYY-MM-DD') : '',
-      time: selectedTime,
-    };
+    setBookingInProgress(true);
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const userId = await AsyncStorage.getItem('userId');
 
-    console.log('Appointment Data:', appointmentData);
+      if (!token || !userId) {
+        Alert.alert('Error', 'User not authenticated.');
+        setBookingInProgress(false);
+        return;
+      }
 
-    const response = await axios.post('https://medplus-app.onrender.com/api/appointments', appointmentData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const appointmentData = {
+        doctorId,
+        userId,
+        patientName,
+        date: selectedDate ? selectedDate.format('YYYY-MM-DD') : '',
+        time: selectedTime,
+        status: 'pending'
+      };
 
-    if (response.status === 201) {
-      Alert.alert('Success', 'Appointment booked successfully.');
-      resetBookingState();
-    } else {
-      console.error('Error Response:', response);
-      Alert.alert('Error', 'Failed to book appointment.');
+      console.log('Appointment Data:', appointmentData);
+
+      const response = await axios.post('https://medplus-app.onrender.com/api/appointments', appointmentData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 201) {
+        const appointmentId = response.data._id;
+        setAppointmentId(appointmentId);
+        console.log('Created appointment with appointmentId:', appointmentId);
+
+        // Ensure Paystack is triggered immediately after setting the appointmentId
+        if (paystackWebViewRef.current) {
+          console.log('Paystack transaction initiated');
+          paystackWebViewRef.current.startTransaction();
+        } else {
+          console.error('Paystack WebView reference is undefined');
+          Alert.alert('Error', 'Failed to initiate payment. Please try again.');
+          setBookingInProgress(false);
+        }
+      } else {
+        console.error('Error Response:', response);
+        Alert.alert('Error', 'Failed to book appointment.');
+        setBookingInProgress(false);
+      }
+    } catch (error: any) {
+      console.error('Error booking appointment:', error.response ? error.response.data : error.message);
+      Alert.alert('Error', 'An error occurred while booking the appointment.');
       setBookingInProgress(false);
     }
-  } catch (error) {
-    console.error('Error booking appointment:', error.response ? error.response.data : error.message);
-    Alert.alert('Error', 'An error occurred while booking the appointment.');
+  };
+
+  const handlePaymentSuccess = async (response: any) => {
+    try {
+      console.log('Payment successful:', response);
+      console.log('Confirming appointment with appointmentId:', appointmentId);
+
+      await axios.put(`https://medplus-app.onrender.com/api/appointments/confirm/${appointmentId}`, {
+        status: 'confirmed'
+      });
+
+      Alert.alert('Success', 'Appointment booked and payment successful!');
+      resetBookingState();
+    } catch (error: any) {
+      console.error('Failed to update appointment status:', error);
+      Alert.alert('Error', 'Payment successful, but failed to update appointment status. Please contact support.');
+      setBookingInProgress(false);
+    }
+  };
+
+  const handlePaymentCancel = () => {
+    console.log('Payment cancelled');
+    Alert.alert('Error', 'Payment was cancelled. Please try again.');
     setBookingInProgress(false);
-  }
-};
+  };
+
   const resetBookingState = () => {
     setBookingInProgress(false);
     setSelectedDate(null);
     setSelectedTime(null);
     setPatientName('');
     setShowPatientNameInput(false);
+    setAppointmentId(null);
   };
+
+  const screenWidth = Dimensions.get('window').width;
 
   return (
     <View>
       <Text style={styles.sectionTitle}>Pick a Day</Text>
       <FlatList
         data={next7Days}
-        horizontal={true}
-        showsHorizontalScrollIndicator={false}
+        numColumns={7}
+        key={'fixed-columns'} // Static key to avoid dynamic column change error
         keyExtractor={(item) => item.date.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => handleDateSelect(item.date)}
-            style={[styles.dateButton, selectedDate?.isSame(item.date, 'day') ? { backgroundColor: '#1f6f78' } : null]}
+            style={[
+              styles.dateButton,
+              selectedDate?.isSame(item.date, 'day') ? { backgroundColor: '#1f6f78' } : null,
+              { width: screenWidth / 7 - 10 },
+            ]}
           >
             <Text style={styles.dayInitial}>{item.date.format('ddd').toUpperCase()}</Text>
             <Text style={styles.dateText}>{item.date.format('D')}</Text>
@@ -181,7 +240,11 @@ const handleBookAppointment = async () => {
             onPress={handleBookAppointment}
             disabled={bookingInProgress}
           >
-            <Text style={styles.bookButtonText}>{bookingInProgress ? 'Booking...' : 'Confirm Booking'}</Text>
+            {bookingInProgress ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.bookButtonText}>Confirm Booking</Text>
+            )}
           </TouchableOpacity>
         </View>
       ) : (
@@ -190,8 +253,25 @@ const handleBookAppointment = async () => {
           onPress={handleShowPatientNameInput}
           disabled={bookingInProgress}
         >
-          <Text style={styles.bookButtonText}>{bookingInProgress ? 'Booking...' : 'Book Appointment'}</Text>
+          {bookingInProgress ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.bookButtonText}>Book Appointment</Text>
+          )}
         </TouchableOpacity>
+      )}
+
+      {appointmentId && (
+        <Paystack
+          paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+          amount={'25000.00'}
+          billingEmail={user.email}
+          currency='KES'
+          activityIndicatorColor="#1f6f78"
+          onCancel={handlePaymentCancel}
+          onSuccess={handlePaymentSuccess}
+          ref={paystackWebViewRef}
+        />
       )}
     </View>
   );
@@ -199,36 +279,55 @@ const handleBookAppointment = async () => {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
     marginBottom: 10,
   },
   dateButton: {
-    padding: 10,
-    borderRadius: 5,
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: '#1f6f78',
+    alignItems: 'center',
+    padding: 5,
     marginHorizontal: 5,
+    height: 60,
+  },
+  dayInitial: {
+    fontSize: 12,
+    color: 'black',
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'black',
   },
   timeSlotButton: {
-    padding: 10,
-    borderRadius: 5,
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: '#1f6f78',
+    alignItems: 'center',
+    padding: 5,
     marginHorizontal: 5,
+  },
+  timeSlotText: {
+    color: 'black',
   },
   bookButton: {
     backgroundColor: '#1f6f78',
-    padding: 15,
+    padding: 10,
     borderRadius: 5,
     alignItems: 'center',
     marginTop: 10,
   },
   bookButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontWeight: '600',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
+    borderColor: '#1f6f78',
     padding: 10,
+    borderRadius: 5,
     marginBottom: 10,
   },
 });

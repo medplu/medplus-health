@@ -41,6 +41,8 @@ const DoctorProfile = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [newReview, setNewReview] = useState<string>('');
   const [newRating, setNewRating] = useState<number>(0);
+  const [showFullBio, setShowFullBio] = useState<boolean>(false);
+  const [showAllReviews, setShowAllReviews] = useState<boolean>(false);
 
   useEffect(() => {
     fetchDoctorDetails();
@@ -62,6 +64,7 @@ const DoctorProfile = () => {
     const dummyReviews = [
       { id: '1', user: 'John Doe', rating: 4, comment: 'Great doctor!' },
       { id: '2', user: 'Jane Smith', rating: 5, comment: 'Very professional and kind.' },
+      { id: '3', user: 'Alice Johnson', rating: 3, comment: 'Good, but could be better.' },
     ];
     setReviews(dummyReviews);
   };
@@ -100,14 +103,19 @@ const DoctorProfile = () => {
             <DoctorCard doctor={item} />
             <HorizontalLine />
             <View style={styles.descriptionContainer}>
-              <Text style={styles.descriptionText}>{item.bio}</Text>
+              <Text style={styles.descriptionText}>
+                {showFullBio ? item.bio : `${item.bio.substring(0, 100)}...`}
+              </Text>
+              <TouchableOpacity onPress={() => setShowFullBio(!showFullBio)}>
+                <Text style={styles.readMoreText}>{showFullBio ? 'Read Less' : 'Read More'}</Text>
+              </TouchableOpacity>
             </View>
             <BookingSection doctorId={doctorId} />
             <DoctorServices />
             <HorizontalLine />
             <Text style={styles.sectionTitle}>Reviews</Text>
             <FlatList
-              data={reviews}
+              data={showAllReviews ? reviews : reviews.slice(0, 2)}
               renderItem={({ item }) => (
                 <View style={styles.reviewCard}>
                   <Text style={styles.reviewUser}>{item.user}</Text>
@@ -125,6 +133,9 @@ const DoctorProfile = () => {
               keyExtractor={(item) => item.id}
               style={styles.reviewList}
             />
+            <TouchableOpacity onPress={() => setShowAllReviews(!showAllReviews)}>
+              <Text style={styles.viewMoreText}>{showAllReviews ? 'View Less Reviews' : 'View More Reviews'}</Text>
+            </TouchableOpacity>
             <View style={styles.addReviewContainer}>
               <Text style={styles.addReviewTitle}>Add Your Review</Text>
               <AirbnbRating
@@ -171,6 +182,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
+  readMoreText: {
+    color: Colors.primary,
+    marginTop: 5,
+    fontWeight: 'bold',
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -197,6 +213,12 @@ const styles = StyleSheet.create({
   reviewComment: {
     marginTop: 5,
     color: '#555',
+  },
+  viewMoreText: {
+    color: Colors.primary,
+    marginTop: 5,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   addReviewContainer: {
     marginTop: 20,
