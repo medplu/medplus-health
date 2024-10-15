@@ -63,16 +63,20 @@ const DoctorCardItem = ({ doctor }) => {
         date: new Date().toISOString().split('T')[0],
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       });
-  
+
       const appointmentId = appointmentResponse.data._id;
       setAppointmentId(appointmentId);
       console.log('Created appointment with appointmentId:', appointmentId);
-  
-      // Pass appointmentId to handlePaymentSuccess
-      paystackWebViewRef.current.startTransaction({
-        onSuccess: (response) => handlePaymentSuccess(response, appointmentId),
-        onCancel: handlePaymentCancel
-      });
+
+      // Ensure paystackWebViewRef.current is defined before calling startTransaction
+      if (paystackWebViewRef.current) {
+        paystackWebViewRef.current.startTransaction({
+          onSuccess: (response) => handlePaymentSuccess(response, appointmentId),
+          onCancel: handlePaymentCancel
+        });
+      } else {
+        console.error('paystackWebViewRef.current is undefined');
+      }
     } catch (error) {
       console.error('Failed to book appointment:', error);
       setAlertMessage('Failed to book appointment. Please try again.');
@@ -81,16 +85,16 @@ const DoctorCardItem = ({ doctor }) => {
       setIsSubmitting(false);
     }
   };
-  
+
   const handlePaymentSuccess = async (response, appointmentId) => {
     try {
       console.log('Payment successful:', response);
       console.log('Confirming appointment with appointmentId:', appointmentId);
-  
+
       await axios.put(`https://medplus-app.onrender.com/api/appointments/confirm/${appointmentId}`, {
         status: 'confirmed'
       });
-  
+
       setAlertMessage('Appointment booked and payment successful!');
       setAlertType('success');
       setShowAlert(true);
@@ -103,6 +107,7 @@ const DoctorCardItem = ({ doctor }) => {
       setIsSubmitting(false);
     }
   };
+
   const handlePaymentCancel = () => {
     console.log('Payment cancelled');
     setAlertMessage('Payment was cancelled. Please try again.');
@@ -162,14 +167,14 @@ const DoctorCardItem = ({ doctor }) => {
 
       {appointmentId && (
         <Paystack
-           paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-        amount={'25000.00'}
-        billingEmail={user.email}
-        currency='KES'
-        activityIndicatorColor={Colors.primary}
-        onCancel={handlePaymentCancel}
-        onSuccess={handlePaymentSuccess}
-        ref={paystackWebViewRef}
+          paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+          amount={'25000.00'}
+          billingEmail={user.email}
+          currency='KES'
+          activityIndicatorColor={Colors.primary}
+          onCancel={handlePaymentCancel}
+          onSuccess={(response) => handlePaymentSuccess(response, appointmentId)}
+          ref={paystackWebViewRef}
         />
       )}
 
