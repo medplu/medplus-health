@@ -63,12 +63,16 @@ const DoctorCardItem = ({ doctor }) => {
         date: new Date().toISOString().split('T')[0],
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       });
-
+  
       const appointmentId = appointmentResponse.data._id;
       setAppointmentId(appointmentId);
       console.log('Created appointment with appointmentId:', appointmentId);
-
-      paystackWebViewRef.current.startTransaction();
+  
+      // Pass appointmentId to handlePaymentSuccess
+      paystackWebViewRef.current.startTransaction({
+        onSuccess: (response) => handlePaymentSuccess(response, appointmentId),
+        onCancel: handlePaymentCancel
+      });
     } catch (error) {
       console.error('Failed to book appointment:', error);
       setAlertMessage('Failed to book appointment. Please try again.');
@@ -77,29 +81,28 @@ const DoctorCardItem = ({ doctor }) => {
       setIsSubmitting(false);
     }
   };
-
+  
   const handlePaymentSuccess = async (response, appointmentId) => {
-  try {
-    console.log('Payment successful:', response);
-    console.log('Confirming appointment with appointmentId:', appointmentId);
-
-    await axios.put(`https://medplus-app.onrender.com/api/appointments/confirm/${appointmentId}`, {
-      status: 'confirmed'
-    });
-
-    setAlertMessage('Appointment booked and payment successful!');
-    setAlertType('success');
-    setShowAlert(true);
-  } catch (error) {
-    console.error('Failed to update appointment status:', error);
-    setAlertMessage('Payment successful, but failed to update appointment status. Please contact support.');
-    setAlertType('error');
-    setShowAlert(true);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+    try {
+      console.log('Payment successful:', response);
+      console.log('Confirming appointment with appointmentId:', appointmentId);
+  
+      await axios.put(`https://medplus-app.onrender.com/api/appointments/confirm/${appointmentId}`, {
+        status: 'confirmed'
+      });
+  
+      setAlertMessage('Appointment booked and payment successful!');
+      setAlertType('success');
+      setShowAlert(true);
+    } catch (error) {
+      console.error('Failed to update appointment status:', error);
+      setAlertMessage('Payment successful, but failed to update appointment status. Please contact support.');
+      setAlertType('error');
+      setShowAlert(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const handlePaymentCancel = () => {
     console.log('Payment cancelled');
     setAlertMessage('Payment was cancelled. Please try again.');

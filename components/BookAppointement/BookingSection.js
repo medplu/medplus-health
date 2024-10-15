@@ -91,8 +91,11 @@ const BookingSection = ({ clinic, navigation }) => {
       const appointmentId = appointmentResponse.data._id;
       setAppointmentId(appointmentId);
 
-      // Start Paystack transaction
-      paystackWebViewRef.current.startTransaction();
+       // Pass appointmentId to handlePaymentSuccess
+       paystackWebViewRef.current.startTransaction({
+        onSuccess: (response) => handlePaymentSuccess(response, appointmentId),
+        onCancel: handlePaymentCancel
+      });
     } catch (error) {
       console.error('Failed to book appointment:', error);
       setAlertMessage('Failed to book appointment. Please try again.');
