@@ -46,6 +46,10 @@ const professionalSchema = new Schema({
     bio: {
         type: String,
         required: false // Bio is optional
+    },
+    profileImage: {
+        type: String,
+        required: false // Profile image URL is optional
     }
 }, { timestamps: true });
 

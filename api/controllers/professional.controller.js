@@ -26,17 +26,26 @@ exports.getProfessionalById = async (req, res) => {
         console.error("Error fetching professional:", error);
         res.status(500).json({ error: 'Internal server error' });
     }
-};
-
-// Update professional profile
+};// Update professional profile
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
-    const { firstName, lastName, email, category, yearsOfExperience, certifications, bio } = req.body;
+    const { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage } = req.body;
 
     try {
+        // Build the update object dynamically
+        const updateFields = {};
+        if (firstName) updateFields.firstName = firstName;
+        if (lastName) updateFields.lastName = lastName;
+        if (email) updateFields.email = email;
+        if (category) updateFields.category = category;
+        if (yearsOfExperience) updateFields.yearsOfExperience = yearsOfExperience;
+        if (certifications) updateFields.certifications = certifications;
+        if (bio) updateFields.bio = bio;
+        if (profileImage) updateFields.profileImage = profileImage;
+
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
-            { firstName, lastName, email, category, yearsOfExperience, certifications, bio },
+            { $set: updateFields },
             { new: true, upsert: true }
         );
 
@@ -53,7 +62,6 @@ exports.updateProfessionalProfile = async (req, res) => {
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
-
 exports.createOrUpdateAvailability = async (req, res) => {
     const { userId } = req.params;
     const { availability } = req.body;
