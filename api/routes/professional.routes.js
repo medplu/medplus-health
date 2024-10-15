@@ -6,7 +6,7 @@ const professionalController = require('../controllers/professional.controller')
 router.get('/professionals', professionalController.getProfessionals);
 
 // Route to fetch a single professional by doctorId (_id)
-router.get('/professionals/:doctorId', professionalController.getProfessionalById);
+router.get('/professionals/:userId', professionalController.getProfessionalById);
 
 // Route to update availability status by userId
 router.put('/professionals/update-availability/:userId', professionalController.createOrUpdateAvailability);
