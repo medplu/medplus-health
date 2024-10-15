@@ -36,18 +36,16 @@ const SettingsScreen = () => {
     const fetchUserData = async () => {
       const storedUserId = await AsyncStorage.getItem('userId');
       setUserId(storedUserId);
-      // Fetch user data
-      // const userData = await fetchUserDataById(storedUserId);
-      // setForm(userData);
+      if (storedUserId) {
+        fetchProfile(storedUserId);
+      }
     };
 
     fetchUserData();
-    if (userId) {
-      fetchProfile(userId);
-    }
-  }, [userId]);
+  }, []);
 
   const fetchProfile = async (userId: string) => {
+    console.log(`Fetching profile for userId: ${userId}`); // Log the userId
     try {
       const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${userId}`);
       const profile = response.data;
@@ -62,7 +60,6 @@ const SettingsScreen = () => {
       console.error('Error fetching profile:', error);
     }
   };
-
 
   const handleProfileChange = (key, value) => {
     setForm((prevForm) => ({
@@ -101,10 +98,9 @@ const SettingsScreen = () => {
       const data = await response.json();
       console.log('Profile updated successfully:', data);
       setModalVisible(false);
-      // Optionally update AsyncStorage here
+      fetchProfile(userId); // Fetch updated profile data
     } catch (error) {
       console.error('Error updating profile:', error);
-      // Show an alert or toast message to the user
     }
   };
 

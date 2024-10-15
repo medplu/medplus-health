@@ -11,11 +11,15 @@ exports.getProfessionals = async (req, res) => {
     }
 };
 
-// Fetch a single professional by doctorId (_id)
+const Professional = require('../models/professional.model');
+
+// Fetch a single professional by user field
 exports.getProfessionalById = async (req, res) => {
     try {
         const { userId } = req.params;
-        const professional = await Professional.findById(userId);
+        console.log(`Fetching professional with userId: ${userId}`); // Log the userId
+
+        const professional = await Professional.findOne({ user: userId });
 
         if (!professional) {
             return res.status(404).json({ error: 'Professional not found' });
