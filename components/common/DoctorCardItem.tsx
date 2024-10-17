@@ -66,12 +66,13 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
   };
 
   const fetchSubaccountCode = async () => {
-    if (!userId) return;
+    if (!userId) return; // Ensure userId is available
     try {
       const response = await axios.get(`https://medplus-app.onrender.com/api/subaccount/${userId}`);
       if (response.data.status === 'Success') {
-        setSubaccountCode(response.data.data.subaccount_code);
-        console.log('Fetched subaccount code:', response.data.data.subaccount_code);
+        const { subaccount_code } = response.data.data; // Destructure subaccount_code
+        setSubaccountCode(subaccount_code); // Update state with the fetched subaccount code
+        console.log('Fetched subaccount code:', subaccount_code);
       } else {
         console.error('Failed to fetch subaccount code:', response.data.message);
       }
@@ -79,39 +80,53 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
       console.error('Failed to fetch subaccount code:', error);
     }
   };
-
   const handleBookPress = async () => {
     setIsSubmitting(true);
     try {
       console.log('Booking appointment with doctorId:', _id, 'and userId:', user.userId);
-      
+  
+      // Validate that subaccountCode and user.email are available
+      if (!subaccountCode || !user.email) {
+        throw new Error('Missing subaccount code or user email.');
+      }
+  
+      // Initialize payment
       const paymentResponse = await axios.post('https://api.paystack.co/transaction/initialize', {
         email: user.email,
-        amount: consultationFee * 100,
-        subaccount: subaccountCode,
+        amount: consultationFee * 100, // Ensure this is the correct amount
+        subaccount: subaccountCode, // Use the fetched subaccount code
+        currency: 'KES', // Specifying the currency
       }, {
         headers: {
           'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
           'Content-Type': 'application/json'
         }
       });
-
-      const appointmentResponse = await axios.post('https://medplus-app.onrender.com/api/appointments', {
-        doctorId: _id,
-        userId: user.userId,
-        patientName: `${user.firstName} ${user.lastName}`,
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      });
-
-      const appointmentId = appointmentResponse.data._id;
-      setAppointmentId(appointmentId);
-      console.log('Created appointment with appointmentId:', appointmentId);
-
-      if (paystackWebViewRef.current) {
-        paystackWebViewRef.current.startTransaction();
+  
+      // Check if payment initialization was successful
+      if (paymentResponse.data.status) {
+        console.log('Payment initialized:', paymentResponse.data);
+  
+        // Proceed with booking appointment after initializing payment
+        const appointmentResponse = await axios.post('https://medplus-app.onrender.com/api/appointments', {
+          doctorId: _id,
+          userId: user.userId,
+          patientName: `${user.firstName} ${user.lastName}`,
+          date: new Date().toISOString().split('T')[0],
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+  
+        const appointmentId = appointmentResponse.data._id;
+        setAppointmentId(appointmentId);
+        console.log('Created appointment with appointmentId:', appointmentId);
+  
+        if (paystackWebViewRef.current) {
+          paystackWebViewRef.current.startTransaction();
+        } else {
+          console.error('paystackWebViewRef.current is undefined');
+        }
       } else {
-        console.error('paystackWebViewRef.current is undefined');
+        throw new Error('Payment initialization failed');
       }
     } catch (error) {
       console.error('Failed to book appointment:', error);
@@ -121,6 +136,8 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
       setIsSubmitting(false);
     }
   };
+  
+
 
   const handlePaymentSuccess = async (response: any, appointmentId: string) => {
     try {
@@ -205,6 +222,7 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
         amount={consultationFee}
         billingEmail={user.email}
+
         currency='KES'
         activityIndicatorColor={Colors.primary}
         onCancel={handlePaymentCancel}
