@@ -23,7 +23,7 @@ type Doctor = {
   email: string;
   bio: string;
   image?: { url: string };
-  user: string; // Add user field
+  user: string;
   consultationFee: number;
 };
 
@@ -34,7 +34,7 @@ type Review = {
   comment: string;
 };
 
-const DoctorProfile = () => {
+const DoctorProfile: React.FC = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
   const { doctorId } = route.params;
@@ -57,7 +57,7 @@ const DoctorProfile = () => {
       const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
       const doctorData = response.data;
       setDoctor(doctorData);
-      await AsyncStorage.setItem('doctorDetails', JSON.stringify(doctorData)); // Store doctor details in AsyncStorage
+      await AsyncStorage.setItem('doctorDetails', JSON.stringify(doctorData)); 
     } catch (err) {
       setError('Error fetching doctor details');
     } finally {
@@ -75,7 +75,7 @@ const DoctorProfile = () => {
   };
 
   const handleAddReview = () => {
-    const newReviewData = {
+    const newReviewData: Review = {
       id: Math.random().toString(),
       user: 'Current User',
       rating: newRating,
@@ -105,7 +105,7 @@ const DoctorProfile = () => {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <FontAwesome name="arrow-left" size={24} color="black" />
             </TouchableOpacity>
-            <DoctorCard doctor={item} userId={item.user} consultationFee={item.consultationFee} /> {/* Pass userId to DoctorCard */}
+            <DoctorCard doctor={item} userId={item.user} consultationFee={item.consultationFee} />
             <HorizontalLine />
             <View style={styles.descriptionContainer}>
               <Text style={styles.descriptionText}>
