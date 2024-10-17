@@ -10,6 +10,7 @@ import BookingSection from '../../components/BookingSection';
 import DoctorServices from '../../components/DoctorServices';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AirbnbRating } from 'react-native-ratings';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RouteParams = {
   doctorId: string;
@@ -22,6 +23,8 @@ type Doctor = {
   email: string;
   bio: string;
   image?: { url: string };
+  user: string; // Add user field
+  consultationFee: number;
 };
 
 type Review = {
@@ -52,7 +55,9 @@ const DoctorProfile = () => {
   const fetchDoctorDetails = async () => {
     try {
       const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
-      setDoctor(response.data);
+      const doctorData = response.data;
+      setDoctor(doctorData);
+      await AsyncStorage.setItem('doctorDetails', JSON.stringify(doctorData)); // Store doctor details in AsyncStorage
     } catch (err) {
       setError('Error fetching doctor details');
     } finally {
@@ -100,11 +105,11 @@ const DoctorProfile = () => {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <FontAwesome name="arrow-left" size={24} color="black" />
             </TouchableOpacity>
-            <DoctorCard doctor={item} />
+            <DoctorCard doctor={item} userId={item.user} consultationFee={item.consultationFee} /> {/* Pass userId to DoctorCard */}
             <HorizontalLine />
             <View style={styles.descriptionContainer}>
               <Text style={styles.descriptionText}>
-                {showFullBio ? item.bio : `${item.bio.substring(0, 100)}...`}
+                {showFullBio ? item.bio : `${item.bio?.substring(0, 100) || ''}...`}
               </Text>
               <TouchableOpacity onPress={() => setShowFullBio(!showFullBio)}>
                 <Text style={styles.readMoreText}>{showFullBio ? 'Read Less' : 'Read More'}</Text>

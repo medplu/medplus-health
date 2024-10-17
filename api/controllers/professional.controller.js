@@ -11,15 +11,11 @@ exports.getProfessionals = async (req, res) => {
     }
 };
 
-const Professional = require('../models/professional.model');
-
-// Fetch a single professional by user field
+// Fetch a single professional by doctorId (_id)
 exports.getProfessionalById = async (req, res) => {
     try {
-        const { userId } = req.params;
-        console.log(`Fetching professional with userId: ${userId}`); // Log the userId
-
-        const professional = await Professional.findOne({ user: userId });
+        const { doctorId } = req.params;
+        const professional = await Professional.findById(doctorId);
 
         if (!professional) {
             return res.status(404).json({ error: 'Professional not found' });
@@ -31,26 +27,15 @@ exports.getProfessionalById = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-
+// Update professional profile
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
     const { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage } = req.body;
 
     try {
-        
-        const updateFields = {};
-        if (firstName) updateFields.firstName = firstName;
-        if (lastName) updateFields.lastName = lastName;
-        if (email) updateFields.email = email;
-        if (category) updateFields.category = category;
-        if (yearsOfExperience) updateFields.yearsOfExperience = yearsOfExperience;
-        if (certifications) updateFields.certifications = certifications;
-        if (bio) updateFields.bio = bio;
-        if (profileImage) updateFields.profileImage = profileImage;
-
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
-            { $set: updateFields },
+            { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage },
             { new: true, upsert: true }
         );
 
