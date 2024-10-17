@@ -203,7 +203,7 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
 
       <Paystack
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-        amount={consultationFee}
+        amount={consultationFee * 100}
         billingEmail={user.email}
         currency='KES'
         activityIndicatorColor={Colors.primary}
