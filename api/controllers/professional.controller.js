@@ -28,7 +28,6 @@ exports.getProfessionalById = async (req, res) => {
     }
 };
 
-
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
     const updateFields = {};
@@ -51,7 +50,7 @@ exports.updateProfessionalProfile = async (req, res) => {
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
             { $set: updateFields },
-            { new: true, upsert: true }
+            { new: true } // Remove upsert: true
         );
 
         if (!professional) {
@@ -67,35 +66,6 @@ exports.updateProfessionalProfile = async (req, res) => {
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
-exports.createOrUpdateAvailability = async (req, res) => {
-    const { userId } = req.params;
-    const { availability } = req.body;
-
-    console.log('Request Payload:', { userId, availability });
-
-    try {
-        const professional = await Professional.findOneAndUpdate(
-            { user: userId },
-            { $set: { availability: availability } },
-            { new: true, upsert: true }
-        );
-
-        console.log('Updated Professional:', professional);
-
-        if (!professional) {
-            return res.status(404).json({ error: 'Professional not found' });
-        }
-
-        return res.status(200).json({
-            message: 'Availability updated successfully',
-            professional
-        });
-    } catch (error) {
-        console.log("Error updating availability", error);
-        return res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
 exports.createOrUpdateConsultationFee = async (req, res) => {
     const { userId } = req.params;
     const { consultationFee } = req.body;
