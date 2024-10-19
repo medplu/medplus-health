@@ -1,26 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, Text, Image, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native'; 
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-SplashScreen.preventAutoHideAsync();
-
-const Doctors = () => {
-  const [fontsLoaded] = useFonts({
-    'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
-  });
-
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
+const Doctors = ({ searchQuery, selectedCategory, onViewAll }) => {
   const [doctorList, setDoctorList] = useState([]);
+  const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
@@ -29,11 +17,16 @@ const Doctors = () => {
     getDoctors();
   }, []);
 
+  useEffect(() => {
+    filterDoctors();
+  }, [searchQuery, selectedCategory, doctorList]);
+
   const getDoctors = async () => {
     try {
       const resp = await axios.get('https://medplus-app.onrender.com/api/professionals');
       if (resp?.data) {
         setDoctorList(resp.data);
+        await AsyncStorage.setItem('doctorList', JSON.stringify(resp.data)); // Save data to AsyncStorage
       } else {
         setError('Failed to fetch doctor data');
       }
@@ -45,54 +38,56 @@ const Doctors = () => {
     }
   };
 
-  const handleConsult = async (getId) => {
-    navigation.navigate('doctor/index', {
-      doctorId: getId, }); // Pass doctorId as a parameter
+  const filterDoctors = () => {
+    let filtered = doctorList;
+
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter((doctor) =>
+        doctor.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doctor.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doctor.category.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by selected category
+    if (selectedCategory) {
+      filtered = filtered.filter((doctor) =>
+        doctor.category === selectedCategory
+      );
+    }
+
+    setFilteredDoctors(filtered);
   };
 
-  const renderDoctorItem = ({ item }) => {
-    const doctor = item;
-    const imageUrl = doctor.image?.url;
-    const consultationFee = doctor.consultationFee; // Hardcoded consultation fee
-    const placeholderImageUrl = 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg'; // Replace with your Cloudinary placeholder URL
-
-    return (
-      <View style={styles.doctorItem}>
-        <Image 
-          source={{ uri: imageUrl || placeholderImageUrl }} 
-          style={styles.doctorImage} 
-        />
-        <View style={styles.nameCategoryContainer}>
-          <Text style={styles.doctorName}>{`${doctor.firstName} ${doctor.lastName}`}</Text>
-          <Text style={styles.doctorSpecialty}>{doctor.category}</Text>
-        </View>
-        <Text style={styles.consultationFee}>Consultation: {consultationFee}</Text>
-        <TouchableOpacity
-          style={[styles.button, styles.consultButton]}
-          onPress={() => handleConsult(doctor._id)}
-        >
-          <Text style={styles.buttonText}>Consult</Text>
-        </TouchableOpacity>
-      </View>
-    );
+  const handleConsult = async (doctorId) => {
+    navigation.navigate('doctor/index', { doctorId });
   };
-
-  if (loading) {
-    return <Text>Loading...</Text>;
-  }
-
-  if (error) {
-    return <Text>{error}</Text>;
-  }
 
   return (
     <View style={{ marginTop: 10 }}>
-      <SubHeading subHeadingTitle={'Discover Doctors Near You'} />
+      <SubHeading subHeadingTitle={'Discover Doctors Near You'} onViewAll={() => onViewAll('Doctors')}  />
+   
       <FlatList
-        data={doctorList}
+        data={filteredDoctors}
         horizontal={true}
-        renderItem={renderDoctorItem}
-        keyExtractor={item => item._id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.doctorItem}>
+            <Image source={{ uri: item.image?.url || 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }} style={styles.doctorImage} />
+            <View style={styles.nameCategoryContainer}>
+              <Text style={styles.doctorName}>{`${item.firstName} ${item.lastName}`}</Text>
+              <Text style={styles.doctorSpecialty}>{item.category}</Text>
+            </View>
+            <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
+            <TouchableOpacity
+              style={[styles.button, styles.consultButton]}
+              onPress={() => handleConsult(item._id)}
+            >
+              <Text style={styles.buttonText}>Book</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        keyExtractor={(item) => item._id.toString()}
         showsHorizontalScrollIndicator={false}
       />
     </View>
@@ -128,8 +123,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   consultationFee: {
-    fontSize: 14,
-    color: Colors.BLACK,
+    fontSize: 16,
+    color: Colors.green,
     marginTop: 5,
   },
   button: {
@@ -143,9 +138,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   buttonText: {
-    color: Colors.WHITE,
+    color: Colors.PRIMARY,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

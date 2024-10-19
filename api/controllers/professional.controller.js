@@ -27,15 +27,23 @@ exports.getProfessionalById = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-// Update professional profile
+
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
-    const { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage } = req.body;
+    const updateFields = {};
+
+    // Add fields to updateFields object only if they are provided in the request body
+    const fields = ['firstName', 'lastName', 'email', 'category', 'yearsOfExperience', 'certifications', 'bio', 'profileImage'];
+    fields.forEach(field => {
+        if (req.body[field] !== undefined) {
+            updateFields[field] = req.body[field];
+        }
+    });
 
     try {
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
-            { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage },
+            { $set: updateFields },
             { new: true, upsert: true }
         );
 
