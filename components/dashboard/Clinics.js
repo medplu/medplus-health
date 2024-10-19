@@ -7,11 +7,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { Link } from 'expo-router';
 
 SplashScreen.preventAutoHideAsync();
 
-const Clinics = () => {
+const Clinics = ({ searchQuery, onViewAll }) => {
   const router = useRouter();
   const [fontsLoaded] = useFonts({
     'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
@@ -34,26 +33,24 @@ const Clinics = () => {
   const fetchClinics = async () => {
     try {
       const resp = await GlobalApi.getClinics();
-      console.log('Response from backend:', resp);
-
       if (resp.status === 200 && Array.isArray(resp.data)) {
         setClinicList(resp.data);
-        console.log('Clinic list set:', resp.data);
+        await AsyncStorage.setItem('clinicList', JSON.stringify(resp.data)); // Save data to AsyncStorage
       } else {
-        console.error('Unexpected response structure or status:', resp);
         setError('Failed to fetch clinic data');
       }
     } catch (error) {
       setError('Error fetching clinics');
-      if (error.response) {
-        console.error('Error response:', error.response);
-      } else {
-        console.error('Error fetching clinics:', error);
-      }
     } finally {
       setLoading(false);
     }
   };
+
+  const filteredClinics = clinicList.filter(clinic =>
+    clinic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    clinic.address.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const handlePress = async (item) => {
     try {
       await AsyncStorage.setItem(`clinic_${item._id}`, JSON.stringify(item));
@@ -68,9 +65,8 @@ const Clinics = () => {
 
   const renderClinicItem = ({ item }) => {
     const imageUrl = item.image || null;
-
     return (
-            <TouchableOpacity style={styles.clinicItem} onPress={() => handlePress(item)}>
+      <TouchableOpacity style={styles.clinicItem} onPress={() => handlePress(item)}>
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={styles.clinicImage} />
         ) : (
@@ -97,9 +93,9 @@ const Clinics = () => {
 
   return (
     <View style={{ marginTop: 10 }}>
-      <SubHeading subHeadingTitle={'Discover Clinics Near You'} />
+      <SubHeading subHeadingTitle={'Discover Clinics Near You'} onViewAll={onViewAll} />
       <FlatList
-        data={clinicList}
+        data={filteredClinics}
         horizontal={true}
         renderItem={renderClinicItem}
         keyExtractor={item => item._id.toString()}
@@ -108,6 +104,7 @@ const Clinics = () => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   clinicItem: {
     marginRight: 10,
@@ -146,4 +143,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
+
 export default Clinics;

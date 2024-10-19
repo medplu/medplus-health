@@ -1,72 +1,62 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { SearchBar } from 'react-native-elements';
-import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
-import Colors from '../Shared/Colors'; // Import your Colors object
+import { Ionicons } from '@expo/vector-icons';
+import Colors from '../Shared/Colors';
 
-export default class App extends React.Component {
-  state = {
-    search: '',
-  };
-
-  updateSearch = (search) => {
-    this.setState({ search });
-  };
-
-  render() {
-    const { search } = this.state;
-
-    return (
-      <View style={styles.container}>
-        <View style={styles.searchBarContainer}>
-          <SearchBar
-            placeholder="Type Here..."
-            onChangeText={this.updateSearch}
-            value={search}
-            containerStyle={styles.searchContainer}
-            inputContainerStyle={styles.inputContainer}
-            inputStyle={styles.input}
-            placeholderTextColor={Colors.gray}
-            searchIcon={{ color: Colors.primary }}
-            clearIcon={{ color: Colors.primary }}
-          />
-        </View>
-        <TouchableOpacity onPress={() => {}} style={styles.filterBtn}>
-          <Ionicons name='options' size={28} color={Colors.primary} />
-        </TouchableOpacity>
+const AppSearchBar = ({ value, onChangeText }) => {
+  return (
+    <View style={styles.container}>
+      <View style={styles.searchBarContainer}>
+        <SearchBar
+          placeholder="Type Here..."
+          onChangeText={onChangeText} // Use the prop for handling search input
+          value={value} // Use the prop for the search value
+          containerStyle={styles.searchContainer}
+          inputContainerStyle={styles.inputContainer}
+          inputStyle={styles.input}
+          placeholderTextColor={Colors.gray}
+          searchIcon={{ color: Colors.primary }}
+          clearIcon={{ color: Colors.primary }}
+        />
       </View>
-    );
-  }
-}
+      <TouchableOpacity onPress={() => {}} style={styles.filterBtn}>
+        <Ionicons name='options' size={28} color={Colors.primary} />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+export default AppSearchBar;
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white, // Ensure this matches your overall background color
+    backgroundColor: Colors.ligh_gray,
     padding: 15,
     borderRadius: 10,
   },
   searchBarContainer: {
-    flex: 1, // Take up the remaining space
+    flex: 1,
   },
   searchContainer: {
     backgroundColor: 'transparent',
     borderTopWidth: 0,
     borderBottomWidth: 0,
-    padding: 0, // Remove padding to align with the filter button
+    padding: 0,
   },
   inputContainer: {
-    backgroundColor: Colors.white, // Adjust this to blend with your overall background
+    backgroundColor: Colors.ligh_gray,
     borderRadius: 10,
   },
   filterBtn: {
     backgroundColor: Colors.SECONDARY,
     padding: 10,
     borderRadius: 10,
-    marginLeft: 10, // Add margin to separate from the search bar
+    marginLeft: 10,
   },
   input: {
-    color: Colors.ligh_gray, // Adjust this to match your text color
+    color: Colors.primary,
   },
 });

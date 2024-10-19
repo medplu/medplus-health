@@ -7,7 +7,7 @@ export default {
     LIGHT_GRAY: '#F8F9FA',
     ligh_gray: '#feffdf',
     light_gray: '#feffdf',
-    // gray:'#808080'
+    green:'#03fc62',
     gray: '#a6a4a4',
     goofy: '#8bffff'
 }

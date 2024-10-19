@@ -45,6 +45,8 @@ const Layout = () => {
         <Stack.Screen name="student/index" options={{ title: 'Student' }} />
         <Stack.Screen name="doctor/index" options={{ title: 'Doctor' }} />
         <Stack.Screen name="doctor/[doctorId]" options={{ title: 'Doctor Booking' }} />
+        <Stack.Screen name="alldoctors/index" options={{ title: 'All Doctors' }} />
+        <Stack.Screen name="ClinicDoctorsList" options={{ title: 'Clinic Doctors List' }} /> {/* Add the ClinicDoctorsList screen */}
         <Stack.Screen name="[missing]" options={{ title: '404' }} />
       </Stack>
     </SafeAreaView>

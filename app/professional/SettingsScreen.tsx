@@ -10,11 +10,13 @@ import {
   Switch,
   Image,
   Modal,
+  Platform,
 } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput } from 'react-native-paper';
+import * as Location from 'expo-location';
 
 const SettingsScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -29,25 +31,46 @@ const SettingsScreen = () => {
     profileImage: '',
     emailNotifications: false,
     pushNotifications: false,
+    location: { latitude: null as number | null, longitude: null as number | null },
   });
   const [userId, setUserId] = useState(null);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const storedUserId = await AsyncStorage.getItem('userId');
-      setUserId(storedUserId);
-      if (storedUserId) {
-        fetchProfile(storedUserId);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  const fetchProfile = async (userId: string) => {
-    console.log(`Fetching profile for userId: ${userId}`); // Log the userId
+  const [doctorId, setDoctorId] = useState(null);
+useEffect(() => {
+  const fetchUserData = async () => {
     try {
-      const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${userId}`);
+      const storedUserId = await AsyncStorage.getItem('userId');
+      const storedDoctorId = await AsyncStorage.getItem('doctorId');
+      const storedLocation = await AsyncStorage.getItem('location');
+      const storedEmail = await AsyncStorage.getItem('email');
+      const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
+      const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
+
+      setUserId(storedUserId);
+      setDoctorId(storedDoctorId);
+
+      setForm((prevForm) => ({
+        ...prevForm,
+        location: storedLocation ? JSON.parse(storedLocation) : prevForm.location,
+        email: storedEmail ? storedEmail : prevForm.email,
+        emailNotifications: storedEmailNotifications ? JSON.parse(storedEmailNotifications) : prevForm.emailNotifications,
+        pushNotifications: storedPushNotifications ? JSON.parse(storedPushNotifications) : prevForm.pushNotifications,
+      }));
+
+      if (storedDoctorId) {
+        fetchProfile(storedDoctorId);
+      }
+    } catch (error) {
+      console.error('Error fetching user data from AsyncStorage:', error);
+    }
+  };
+
+  fetchUserData();
+}, []);
+
+  const fetchProfile = async (doctorId: string) => {
+    console.log(`Fetching profile for doctorId: ${doctorId}`); // Log the doctorId
+    try {
+      const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
       const profile = response.data;
       setForm((prevForm) => ({
         ...prevForm,
@@ -61,11 +84,15 @@ const SettingsScreen = () => {
     }
   };
 
-  const handleProfileChange = (key, value) => {
+  const handleProfileChange = async (key, value) => {
     setForm((prevForm) => ({
       ...prevForm,
       [key]: value,
     }));
+
+    if (key === 'emailNotifications' || key === 'pushNotifications' || key === 'email') {
+      await AsyncStorage.setItem(key, JSON.stringify(value));
+    }
   };
 
   const pickImage = async () => {
@@ -83,7 +110,7 @@ const SettingsScreen = () => {
 
   const updateProfile = async () => {
     try {
-      const response = await fetch(`https://medplus-app.onrender.com/api/professionals/update-profile/${userId}`, {
+      const response = await fetch(`https://medplus-app.onrender.com/api/professionals/update-profile/${doctorId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -98,23 +125,38 @@ const SettingsScreen = () => {
       const data = await response.json();
       console.log('Profile updated successfully:', data);
       setModalVisible(false);
-      fetchProfile(userId); // Fetch updated profile data
+      fetchProfile(doctorId); // Fetch updated profile data
     } catch (error) {
       console.error('Error updating profile:', error);
     }
   };
 
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'android') {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      return status === 'granted';
+    } else {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      return status === 'granted';
+    }
+  };
+
+  const fetchLocation = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) return;
+
+    const location = await Location.getCurrentPositionAsync({});
+    const { latitude, longitude } = location.coords;
+    setForm((prevForm) => ({
+      ...prevForm,
+      location: { latitude, longitude },
+    }));
+    await AsyncStorage.setItem('location', JSON.stringify({ latitude, longitude }));
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f8f8' }}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => {/* handle back navigation */}}>
-          <FeatherIcon color="#000" name="arrow-left" size={24} />
-        </TouchableOpacity>
-        <Text numberOfLines={1} style={styles.headerTitle}>Settings</Text>
-        <TouchableOpacity onPress={() => {/* handle more options */}}>
-          <FeatherIcon color="#000" name="more-vertical" size={24} />
-        </TouchableOpacity>
-      </View>
+     
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.section}>
@@ -149,18 +191,14 @@ const SettingsScreen = () => {
           <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.sectionBody}>
             <View style={styles.rowWrapper}>
-              <TouchableOpacity style={styles.row}>
-                <Text style={styles.rowLabel}>Language</Text>
-                <View style={styles.rowSpacer} />
-                <Text style={styles.rowValue}>English</Text>
-                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.rowWrapper}>
-              <TouchableOpacity style={styles.row}>
+              <TouchableOpacity style={styles.row} onPress={fetchLocation}>
                 <Text style={styles.rowLabel}>Location</Text>
                 <View style={styles.rowSpacer} />
-                <Text style={styles.rowValue}>Los Angeles, CA</Text>
+                <Text style={styles.rowValue}>
+                  {form.location.latitude && form.location.longitude
+                    ? `${form.location.latitude}, ${form.location.longitude}`
+                    : 'Set Location'}
+                </Text>
                 <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
               </TouchableOpacity>
             </View>
@@ -229,40 +267,43 @@ const SettingsScreen = () => {
         </View>
       </ScrollView>
 
-      <Modal
+            <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(!modalVisible)}>
-        <View style={styles.modalView}>
-          <Text style={styles.modalText}>Update Profile</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="First Name"
-            value={form.firstName}
-            onChangeText={(text) => handleProfileChange('firstName', text)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Last Name"
-            value={form.lastName}
-            onChangeText={(text) => handleProfileChange('lastName', text)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={form.email}
-            onChangeText={(text) => handleProfileChange('email', text)}
-          />
-          <TouchableOpacity onPress={pickImage} style={styles.imageButton}>
-            <Text style={styles.buttonText}>Choose Profile Image</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
-            <Text style={styles.buttonText}>Update</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(!modalVisible)}>
-            <Text style={styles.buttonText}>Close</Text>
-          </TouchableOpacity>
+        onRequestClose={() => setModalVisible(!modalVisible)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Update Profile</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="First Name"
+              value={form.firstName}
+              onChangeText={(text) => handleProfileChange('firstName', text)}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Last Name"
+              value={form.lastName}
+              onChangeText={(text) => handleProfileChange('lastName', text)}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={form.email}
+              onChangeText={(text) => handleProfileChange('email', text)}
+            />
+            <TouchableOpacity onPress={pickImage} style={styles.imageButton}>
+              <Text style={styles.buttonText}>Choose Profile Image</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
+              <Text style={styles.buttonText}>Update</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(!modalVisible)}>
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -352,15 +393,27 @@ const styles = StyleSheet.create({
   },
   rowSpacer: {
     flex: 1,
-  },
-  modalView: {
+  },  
+
+  modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+  },
+  modalView: {
+    width: '90%',
     backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
     elevation: 5,
   },
   modalText: {
@@ -368,6 +421,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#333', // Darker text color
   },
   input: {
     width: '100%',
@@ -375,26 +429,28 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 4,
+    borderRadius: 5,
+    backgroundColor: '#f9f9f9', // Light background for inputs
   },
   imageButton: {
     backgroundColor: '#007bff',
-    borderRadius: 4,
+    borderRadius: 5,
     padding: 10,
     marginVertical: 8,
     alignItems: 'center',
+    width: '100%',
   },
   updateButton: {
     backgroundColor: '#28a745',
-    borderRadius: 4,
+    borderRadius: 5,
     padding: 10,
     marginVertical: 8,
     alignItems: 'center',
     width: '100%',
   },
   closeButton: {
-    backgroundColor: '#dc3545',
-    borderRadius: 4,
+    backgroundColor: '#6c757d',
+    borderRadius: 5,
     padding: 10,
     marginVertical: 8,
     alignItems: 'center',
