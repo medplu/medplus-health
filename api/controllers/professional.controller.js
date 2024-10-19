@@ -1,5 +1,5 @@
 const Professional = require('../models/professional.model');
-
+const cloudinary = require('cloudinary').v2;
 // Fetch all professionals
 exports.getProfessionals = async (req, res) => {
     try {
@@ -27,12 +27,14 @@ exports.getProfessionalById = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
     const updateFields = {};
 
     // Add fields to updateFields object only if they are provided in the request body
-    const fields = ['firstName', 'lastName', 'email', 'category', 'yearsOfExperience', 'certifications', 'bio', 'profileImage'];
+    const fields = ['firstName', 'lastName', 'email', 'category', 'yearsOfExperience', 'certifications', 'bio'];
     fields.forEach(field => {
         if (req.body[field] !== undefined) {
             updateFields[field] = req.body[field];
@@ -40,6 +42,12 @@ exports.updateProfessionalProfile = async (req, res) => {
     });
 
     try {
+        // Handle profile image upload if provided
+        if (req.files && req.files.profileImage) {
+            const result = await cloudinary.uploader.upload(req.files.profileImage.path);
+            updateFields.profileImage = result.secure_url;
+        }
+
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
             { $set: updateFields },

@@ -20,7 +20,7 @@ import * as Location from 'expo-location';
 
 const SettingsScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [form, setForm] = useState({
+  const initialFormState = {
     firstName: '',
     lastName: '',
     email: '',
@@ -32,45 +32,47 @@ const SettingsScreen = () => {
     emailNotifications: false,
     pushNotifications: false,
     location: { latitude: null as number | null, longitude: null as number | null },
-  });
+  };
+  const [form, setForm] = useState(initialFormState);
   const [userId, setUserId] = useState(null);
   const [doctorId, setDoctorId] = useState(null);
-useEffect(() => {
-  const fetchUserData = async () => {
-    try {
-      const storedUserId = await AsyncStorage.getItem('userId');
-      const storedDoctorId = await AsyncStorage.getItem('doctorId');
-      const storedLocation = await AsyncStorage.getItem('location');
-      const storedEmail = await AsyncStorage.getItem('email');
-      const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
-      const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
 
-      setUserId(storedUserId);
-      setDoctorId(storedDoctorId);
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        const storedDoctorId = await AsyncStorage.getItem('doctorId');
+        const storedLocation = await AsyncStorage.getItem('location');
+        const storedEmail = await AsyncStorage.getItem('email');
+        const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
+        const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
 
-      setForm((prevForm) => ({
-        ...prevForm,
-        location: storedLocation ? JSON.parse(storedLocation) : prevForm.location,
-        email: storedEmail ? storedEmail : prevForm.email,
-        emailNotifications: storedEmailNotifications ? JSON.parse(storedEmailNotifications) : prevForm.emailNotifications,
-        pushNotifications: storedPushNotifications ? JSON.parse(storedPushNotifications) : prevForm.pushNotifications,
-      }));
+        setUserId(storedUserId);
+        setDoctorId(storedDoctorId);
 
-      if (storedDoctorId) {
-        fetchProfile(storedDoctorId);
+        setForm((prevForm) => ({
+          ...prevForm,
+          location: storedLocation ? JSON.parse(storedLocation) : prevForm.location,
+          email: storedEmail ? storedEmail : prevForm.email,
+          emailNotifications: storedEmailNotifications ? JSON.parse(storedEmailNotifications) : prevForm.emailNotifications,
+          pushNotifications: storedPushNotifications ? JSON.parse(storedPushNotifications) : prevForm.pushNotifications,
+        }));
+
+        if (storedDoctorId) {
+          fetchProfile(storedDoctorId);
+        }
+      } catch (error) {
+        console.error('Error fetching user data from AsyncStorage:', error);
       }
-    } catch (error) {
-      console.error('Error fetching user data from AsyncStorage:', error);
-    }
-  };
+    };
 
-  fetchUserData();
-}, []);
+    fetchUserData();
+  }, []);
 
   const fetchProfile = async (doctorId: string) => {
     console.log(`Fetching profile for doctorId: ${doctorId}`); // Log the doctorId
     try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/professionals/${doctorId}`);
+      const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
       const profile = response.data;
       setForm((prevForm) => ({
         ...prevForm,
@@ -110,7 +112,7 @@ useEffect(() => {
 
   const updateProfile = async () => {
     try {
-      const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${doctorId}`, {
+      const response = await fetch(`https://medplus-app.onrender.com/api/professionals/update-profile/${doctorId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -125,6 +127,7 @@ useEffect(() => {
       const data = await response.json();
       console.log('Profile updated successfully:', data);
       setModalVisible(false);
+      setForm(initialFormState); // Reset form state
       fetchProfile(doctorId); // Fetch updated profile data
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -156,8 +159,6 @@ useEffect(() => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f8f8' }}>
-     
-
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
@@ -194,11 +195,7 @@ useEffect(() => {
               <TouchableOpacity style={styles.row} onPress={fetchLocation}>
                 <Text style={styles.rowLabel}>Location</Text>
                 <View style={styles.rowSpacer} />
-                <Text style={styles.rowValue}>
-                  {form.location.latitude && form.location.longitude
-                    ? `${form.location.latitude}, ${form.location.longitude}`
-                    : 'Set Location'}
-                </Text>
+                <FeatherIcon color="#bcbcbc" name="map-pin" size={19} />
                 <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
               </TouchableOpacity>
             </View>
@@ -267,7 +264,7 @@ useEffect(() => {
         </View>
       </ScrollView>
 
-            <Modal
+      <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
@@ -393,8 +390,7 @@ const styles = StyleSheet.create({
   },
   rowSpacer: {
     flex: 1,
-  },  
-
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
