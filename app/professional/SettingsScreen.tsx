@@ -70,7 +70,7 @@ useEffect(() => {
   const fetchProfile = async (doctorId: string) => {
     console.log(`Fetching profile for doctorId: ${doctorId}`); // Log the doctorId
     try {
-      const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/professionals/${doctorId}`);
       const profile = response.data;
       setForm((prevForm) => ({
         ...prevForm,
@@ -110,7 +110,7 @@ useEffect(() => {
 
   const updateProfile = async () => {
     try {
-      const response = await fetch(`https://medplus-app.onrender.com/api/professionals/update-profile/${doctorId}`, {
+      const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${doctorId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
