@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = "https://medplus-app.onrender.com/api"; // Update to your backend API base
+const BASE_URL = "https://medplus-health.onrender.com/api"; // Update to your backend API base
 const API_KEY = '22aa7adcfa0dedae84f6deded16bdf1794bc084d97ea1d8816a646333276d8441044fa280f68b87651d3421f571d0e383c452df2ba7cf11b5a8bedd27b51f9712e4d68d518f2940c190cf9b66f64717597438561a4163def7ee3c25fd213ebfce4c2d206b3f657449744f568472ac3917220d07b1adc336320d9cb6d20d77c';
 
 const AxiosInstance = axios.create({
