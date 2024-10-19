@@ -222,6 +222,8 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
         amount={consultationFee}
         billingEmail={user.email}
+        subaccount={subaccountCode} // Add this line
+
 
         currency='KES'
         activityIndicatorColor={Colors.primary}
