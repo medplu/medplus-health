@@ -30,7 +30,6 @@ exports.getProfessionalById = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-
 // Update professional profile
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
@@ -56,10 +55,14 @@ exports.updateProfessionalProfile = async (req, res) => {
             updateFields.profileImage = uploadedResponse.secure_url;
         }
 
+        // Log the userId and updateFields for debugging
+        console.log('Updating profile for userId:', userId);
+        console.log('Update fields:', updateFields);
+
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
             { $set: updateFields },
-            { new: true, upsert: false } // Make sure upsert is false
+            { new: true, upsert: false } // Ensure upsert is false to avoid creating a new document
         );
 
         // If the professional is not found, return a 404 error.
