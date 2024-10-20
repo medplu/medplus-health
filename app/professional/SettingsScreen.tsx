@@ -30,8 +30,8 @@ interface FormState {
   emailNotifications: boolean;
   pushNotifications: boolean;
   location: Location;
-  consultationFee: string;  // New field for consultation fee
-  availability: string;     // New field for availability
+  consultationFee: number;
+  availability: boolean;
 }
 
 const SettingsScreen: React.FC = () => {
@@ -44,8 +44,8 @@ const SettingsScreen: React.FC = () => {
     emailNotifications: false,
     pushNotifications: false,
     location: { latitude: null, longitude: null },
-    consultationFee: '',  // Initialize consultation fee
-    availability: '',      // Initialize availability
+    consultationFee: 1000,
+    availability: false,
   };
   const [form, setForm] = useState<FormState>(initialFormState);
   const [doctorId, setDoctorId] = useState<string | null>(null);
@@ -58,8 +58,8 @@ const SettingsScreen: React.FC = () => {
         const storedEmail = await AsyncStorage.getItem('email');
         const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
         const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
-        const storedConsultationFee = await AsyncStorage.getItem('consultationFee');  // Fetching consultation fee
-        const storedAvailability = await AsyncStorage.getItem('availability');          // Fetching availability
+        const storedConsultationFee = await AsyncStorage.getItem('consultationFee');
+        const storedAvailability = await AsyncStorage.getItem('availability');
 
         setDoctorId(storedDoctorId);
 
@@ -69,8 +69,8 @@ const SettingsScreen: React.FC = () => {
           email: storedEmail || prevForm.email,
           emailNotifications: storedEmailNotifications ? JSON.parse(storedEmailNotifications) : prevForm.emailNotifications,
           pushNotifications: storedPushNotifications ? JSON.parse(storedPushNotifications) : prevForm.pushNotifications,
-          consultationFee: storedConsultationFee || prevForm.consultationFee,  // Set consultation fee
-          availability: storedAvailability || prevForm.availability,            // Set availability
+          consultationFee: storedConsultationFee ? JSON.parse(storedConsultationFee) : prevForm.consultationFee,
+          availability: storedAvailability ? JSON.parse(storedAvailability) : prevForm.availability,
         }));
 
         if (storedDoctorId) {
@@ -91,10 +91,12 @@ const SettingsScreen: React.FC = () => {
       const profile = response.data;
       setForm((prevForm) => ({
         ...prevForm,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        email: profile.email,
-        profileImage: profile.profileImage,
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
+        email: profile.email || '',
+        profileImage: profile.profileImage || '',
+        consultationFee: profile.consultationFee || 1000,
+        availability: profile.availability || false,
       }));
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -107,7 +109,7 @@ const SettingsScreen: React.FC = () => {
       [key]: value,
     }));
 
-    if (key === 'emailNotifications' || key === 'pushNotifications' || key === 'email') {
+    if (key === 'emailNotifications' || key === 'pushNotifications' || key === 'email' || key === 'availability' || key === 'consultationFee') {
       await AsyncStorage.setItem(key, JSON.stringify(value));
     }
   };
@@ -145,15 +147,15 @@ const SettingsScreen: React.FC = () => {
       // Update the form state with the new profile data
       setForm((prevForm) => ({
         ...prevForm,
-        firstName: data.professional.firstName,
-        lastName: data.professional.lastName,
-        email: data.professional.email,
-        profileImage: data.professional.profileImage,
+        firstName: data.professional.firstName || '',
+        lastName: data.professional.lastName || '',
+        email: data.professional.email || '',
+        profileImage: data.professional.profileImage || '',
         emailNotifications: data.professional.emailNotifications,
         pushNotifications: data.professional.pushNotifications,
         location: data.professional.location,
-        consultationFee: data.professional.consultationFee, // Update consultation fee
-        availability: data.professional.availability,       // Update availability
+        consultationFee: data.professional.consultationFee || 1000,
+        availability: data.professional.availability || false,
       }));
 
       setModalVisible(false);
@@ -178,6 +180,20 @@ const SettingsScreen: React.FC = () => {
       location: { latitude, longitude },
     }));
     await AsyncStorage.setItem('location', JSON.stringify({ latitude, longitude }));
+  };
+
+  const incrementFee = () => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      consultationFee: prevForm.consultationFee + 100,
+    }));
+  };
+
+  const decrementFee = () => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      consultationFee: Math.max(prevForm.consultationFee - 100, 1000),
+    }));
   };
 
   return (
@@ -238,6 +254,35 @@ const SettingsScreen: React.FC = () => {
                   onValueChange={(value) => handleProfileChange('pushNotifications', value)}
                   value={form.pushNotifications}
                 />
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Availability and Consultation</Text>
+          <View style={styles.sectionBody}>
+            <View style={styles.rowWrapper}>
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Availability</Text>
+                <View style={styles.rowSpacer} />
+                <Switch
+                  onValueChange={(value) => handleProfileChange('availability', value)}
+                  value={form.availability}
+                />
+              </View>
+            </View>
+            <View style={styles.rowWrapper}>
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Consultation Fee</Text>
+                <View style={styles.rowSpacer} />
+                <TouchableOpacity onPress={decrementFee} style={styles.feeButton}>
+                  <FeatherIcon name="minus" size={20} color="#000" />
+                </TouchableOpacity>
+                <Text style={styles.feeText}>{form.consultationFee}</Text>
+                <TouchableOpacity onPress={incrementFee} style={styles.feeButton}>
+                  <FeatherIcon name="plus" size={20} color="#000" />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -313,19 +358,25 @@ const SettingsScreen: React.FC = () => {
               value={form.email}
               onChangeText={(text) => handleProfileChange('email', text)}
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Consultation Fee"
-              value={form.consultationFee}
-              onChangeText={(text) => handleProfileChange('consultationFee', text)}
-              keyboardType="numeric" // Numeric input for fee
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Availability"
-              value={form.availability}
-              onChangeText={(text) => handleProfileChange('availability', text)}
-            />
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Availability</Text>
+              <View style={styles.rowSpacer} />
+              <Switch
+                onValueChange={(value) => handleProfileChange('availability', value)}
+                value={form.availability}
+              />
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Consultation Fee</Text>
+              <View style={styles.rowSpacer} />
+              <TouchableOpacity onPress={decrementFee} style={styles.feeButton}>
+                <FeatherIcon name="minus" size={20} color="#000" />
+              </TouchableOpacity>
+              <Text style={styles.feeText}>{form.consultationFee}</Text>
+              <TouchableOpacity onPress={incrementFee} style={styles.feeButton}>
+                <FeatherIcon name="plus" size={20} color="#000" />
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity style={styles.button} onPress={pickImage}>
               <Text style={styles.buttonText}>Pick Profile Image</Text>
             </TouchableOpacity>
@@ -448,6 +499,13 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: '#f44336',
+  },
+  feeButton: {
+    padding: 10,
+  },
+  feeText: {
+    fontSize: 16,
+    marginHorizontal: 10,
   },
 });
 

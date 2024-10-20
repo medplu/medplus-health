@@ -73,7 +73,12 @@ const Doctors = ({ searchQuery, selectedCategory, onViewAll }) => {
         horizontal={true}
         renderItem={({ item }) => (
           <View style={styles.doctorItem}>
-            <Image source={{ uri: item.image?.url || 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }} style={styles.doctorImage} />
+            <Image 
+              source={{ 
+                uri: item.profileImage ? item.profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' 
+              }} 
+              style={styles.doctorImage} 
+            />
             <View style={styles.nameCategoryContainer}>
               <Text style={styles.doctorName}>{`${item.firstName} ${item.lastName}`}</Text>
               <Text style={styles.doctorSpecialty}>{item.category}</Text>
@@ -101,31 +106,34 @@ const styles = StyleSheet.create({
     borderColor: Colors.LIGHT_GRAY,
     borderRadius: 10,
     padding: 10,
-    width: 220,
+    width: 240,
   },
   doctorImage: {
     width: '100%',
-    height: 120,
+    height: 150,
     borderRadius: 10,
   },
   nameCategoryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
   },
   doctorName: {
     fontFamily: 'SourceSans3-Bold',
     fontSize: 16,
+    textAlign: 'center',
   },
   doctorSpecialty: {
     color: Colors.GRAY,
     fontSize: 14,
+    textAlign: 'center',
   },
   consultationFee: {
     fontSize: 16,
     color: Colors.green,
     marginTop: 5,
+    textAlign: 'center',
   },
   button: {
     paddingVertical: 10,
