@@ -5,6 +5,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const http = require("http");
 const paymentRoutes = require('./routes/payment.route'); // Renamed for clarity
+const subaccountRoutes = require('./routes/subaccount.routes'); // Import subaccount routes
 const { Server } = require("socket.io");
 const fileUpload = require("express-fileupload");
 const cloudinary = require('cloudinary').v2;
@@ -75,6 +76,9 @@ app.use('/api/categories', categoryRoutes);
 
 // Use the payment routes
 app.use('/api/payment', paymentRoutes); // Corrected route path
+
+// Use the subaccount routes
+app.use('/api', subaccountRoutes); // Added subaccount routes
 
 // Use the appointment routes
 app.use('/api', appointmentRoutes);
