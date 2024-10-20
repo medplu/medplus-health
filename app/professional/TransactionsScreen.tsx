@@ -7,6 +7,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons'; // Import the eye icon
 import Colors from '../../components/Shared/Colors';
 import HorizontalLine from '../../components/common/HorizontalLine';
+import { fetchTransactions } from '../../Services/paystackService'; // Import the fetchTransactions function
 
 const TransactionScreen: React.FC = () => {
   const PAYSTACK_SECRET_KEY = process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
@@ -17,6 +18,7 @@ const TransactionScreen: React.FC = () => {
     business_name: '',
     settlement_bank: '',
     account_number: '',
+    subaccount_code: '',
   });
   const [banks, setBanks] = useState<{ name: string, code: string }[]>([]);
   const [isAccountInfoVisible, setIsAccountInfoVisible] = useState<boolean>(false); // Add state for toggling visibility
@@ -36,8 +38,13 @@ const TransactionScreen: React.FC = () => {
     checkPaymentSetupStatus();
     fetchBanks();
     fetchSubaccountInfo();
-    fetchTransactions(); // Fetch transactions
   }, []);
+
+  useEffect(() => {
+    if (subaccountData.subaccount_code) {
+      fetchTransactionsData(subaccountData.subaccount_code);
+    }
+  }, [subaccountData]);
 
   const fetchBanks = async () => {
     try {
@@ -65,6 +72,7 @@ const TransactionScreen: React.FC = () => {
       const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
       if (response.data.status === 'Success') {
         setSubaccountData(response.data.data);
+        console.log('Fetched subaccount data:', response.data.data); // Log subaccount data
       } else {
         Alert.alert('Error', 'Failed to fetch subaccount info.');
       }
@@ -74,23 +82,12 @@ const TransactionScreen: React.FC = () => {
     }
   };
 
-  const fetchTransactions = async () => {
-    console.log('fetchTransactions called'); // Debug log
+  const fetchTransactionsData = async (subaccountCode: string) => {
     try {
-      const reference = await AsyncStorage.getItem('transactionReference');
-      console.log(reference)
-      if (!reference) {
-        Alert.alert('Error', 'Transaction reference not found. Please try again.');
-        return;
-      }
-  
-      const response = await axios.get(`https://api.paystack.co/transaction/${reference}`, {
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-        },
-      });
-      console.log('Transactions fetched:', response.data); // Debug log
-      setTransactions(response.data);
+      const transactions = await fetchTransactions(subaccountCode);
+      const successfulTransactions = transactions.filter(transaction => transaction.status === 'success');
+      setTransactions(successfulTransactions);
+      console.log('Fetched transactions:', successfulTransactions); // Log transactions
     } catch (error) {
       console.error('Error fetching transactions:', error);
       Alert.alert('Error', 'Failed to fetch transactions.');
@@ -181,9 +178,10 @@ const TransactionScreen: React.FC = () => {
         <Text style={styles.sectionTitle}>Transaction History</Text>
         {transactions.map((transaction, index) => (
           <View key={index} style={styles.transactionCard}>
-            <Text style={styles.transactionText}>{transaction.description}</Text>
-            <Text style={styles.transactionText}>Amount: {transaction.amount}</Text>
-            <Text style={styles.transactionDate}>Date: {new Date(transaction.date).toLocaleDateString()}</Text>
+            <Text style={styles.transactionText}>Reference: {transaction.reference}</Text>
+            <Text style={styles.transactionText}>Amount: {transaction.amount / 100} KES</Text>
+            <Text style={styles.transactionText}>Status: {transaction.status}</Text>
+            <Text style={styles.transactionDate}>Date: {new Date(transaction.paid_at).toLocaleDateString()}</Text>
           </View>
         ))}
       </View>
