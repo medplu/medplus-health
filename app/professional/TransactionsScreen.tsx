@@ -7,9 +7,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons'; // Import the eye icon
 import Colors from '../../components/Shared/Colors';
 import HorizontalLine from '../../components/common/HorizontalLine';
-import { PAYSTACK_SECRET_KEY } from 'react-native-dotenv'; // Import the environment variable
+
 
 const TransactionScreen: React.FC = () => {
+  const PAYSTACK_SECRET_KEY= process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
   const [isPaymentSetupCompleted, setIsPaymentSetupCompleted] = useState<boolean>(false);
   const [showPaymentSetupModal, setShowPaymentSetupModal] = useState<boolean>(false);
   const [showSubaccountModal, setShowSubaccountModal] = useState<boolean>(false);
@@ -63,7 +64,7 @@ const TransactionScreen: React.FC = () => {
         return;
       }
 
-      const response = await axios.get(`https://medplus-app.onrender.com/api/subaccount/${userId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
       setSubaccountData(response.data);
     } catch (error) {
       console.error('Error fetching subaccount info:', error);
@@ -114,7 +115,7 @@ const TransactionScreen: React.FC = () => {
         userId,
       };
 
-      const response = await axios.post('https://medplus-app.onrender.com/api/payment/create-subaccount', subaccountPayload);
+      const response = await axios.post('https://medplus-health.onrender.com/api/payment/create-subaccount', subaccountPayload);
       Alert.alert('Subaccount Creation', 'Subaccount created successfully.');
       setShowSubaccountModal(false);
     } catch (error) {
