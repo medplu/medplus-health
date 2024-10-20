@@ -80,7 +80,6 @@ exports.updateProfessionalProfile = async (req, res) => {
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
-
 // Create or update consultation fee
 exports.createOrUpdateConsultationFee = async (req, res) => {
     const { userId } = req.params;

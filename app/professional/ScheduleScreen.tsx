@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, TouchableOpacity, Text, ActivityIndicator, Modal, TextInput, Button } from 'react-native';
 import { Agenda, AgendaEntry, AgendaSchedule } from 'react-native-calendars';
 import { Card, Avatar } from 'react-native-paper';
@@ -71,8 +71,8 @@ const Schedule: React.FC = () => {
     setEventDetails({ name: '', time: '', patientImage: '' });
   };
 
-  const renderItem = (item: AgendaEntry) => {
-    return (
+  const renderItem = useCallback(
+    (item: AgendaEntry) => (
       <TouchableOpacity style={{ marginRight: 10, marginTop: 17 }}>
         <Card>
           <Card.Content>
@@ -90,8 +90,9 @@ const Schedule: React.FC = () => {
           </Card.Content>
         </Card>
       </TouchableOpacity>
-    );
-  };
+    ),
+    []
+  );
 
   if (loading) {
     return (
