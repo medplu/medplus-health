@@ -50,6 +50,24 @@ const professionalSchema = new Schema({
     profileImage: {
         type: String,
         required: false // Profile image URL is optional
+    },
+    emailNotifications: {
+        type: Boolean,
+        default: false // Default to not receiving email notifications
+    },
+    pushNotifications: {
+        type: Boolean,
+        default: false // Default to not receiving push notifications
+    },
+    location: {
+        latitude: {
+            type: Number,
+            required: false
+        },
+        longitude: {
+            type: Number,
+            required: false
+        }
     }
 }, { timestamps: true });
 
