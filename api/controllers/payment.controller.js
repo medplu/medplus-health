@@ -1,6 +1,7 @@
 const PaymentService = require('../service/payment.service');
 const PaymentModel = require('../models/payment.model');
 const ClinicAppointmentModel = require('../models/appointment.model');
+const SubaccountModel = require('../models/sub_account.model'); // Import the Subaccount model
 const paymentInstance = new PaymentService();
 
 exports.startPayment = async (req, res) => {
@@ -13,6 +14,12 @@ exports.startPayment = async (req, res) => {
     try {
         console.log('startPayment called with body:', req.body);
 
+        // Retrieve the subaccount code from the database
+        const subaccount = await SubaccountModel.findOne({ user: userId });
+        if (!subaccount) {
+            return res.status(404).json({ status: 'Failed', message: 'Subaccount not found for the user' });
+        }
+
         const paymentData = {
             amount,
             email,
@@ -22,6 +29,7 @@ exports.startPayment = async (req, res) => {
             date,
             time,
             appointmentId,
+            subaccount: subaccount.subaccount_code, // Include the subaccount code
             metadata: {
                 full_name,
                 amount,
@@ -47,6 +55,7 @@ exports.startPayment = async (req, res) => {
         });
     }
 };
+
 exports.createPayment = async (req, res) => {
     const { reference } = req.query;
 
@@ -56,8 +65,12 @@ exports.createPayment = async (req, res) => {
 
     try {
         console.log('createPayment called with query:', req.query);
-        const response = await paymentInstance.createPayment(req.query);
-        res.status(201).json({ status: 'Success', data: response });
+        
+        // Fetch transaction details using the reference
+        const transactionDetails = await paymentInstance.fetchTransactionByReference(reference);
+
+        // Handle the transaction details as needed (e.g., save to your database)
+        res.status(201).json({ status: 'Success', data: transactionDetails });
     } catch (error) {
         // Enhanced error handling
         console.error('Error in createPayment:', error.response ? error.response.data : error.message);
@@ -78,11 +91,15 @@ exports.getPayment = async (req, res) => {
 
     try {
         console.log('getPayment called with body:', req.body);
-        const response = await paymentInstance.paymentReceipt(req.body);
-        if (!response) {
+
+        // Fetch transaction details using the reference
+        const transactionDetails = await paymentInstance.fetchTransactionByReference(reference);
+
+        if (!transactionDetails) {
             return res.status(404).json({ status: 'Failed', message: 'Payment not found.' });
         }
-        res.status(200).json({ status: 'Success', data: response });
+
+        res.status(200).json({ status: 'Success', data: transactionDetails });
     } catch (error) {
         // Enhanced error handling
         console.error('Error in getPayment:', error.response ? error.response.data : error.message);
@@ -164,4 +181,37 @@ exports.handlePaymentWebhook = async (req, res) => {
 
     // Respond to Paystack that the webhook was received successfully
     res.status(200).send('Webhook received');
+};
+
+// New method to create a subaccount
+exports.createSubaccount = async (req, res) => {
+    const { business_name, settlement_bank, account_number, percentage_charge, userId } = req.body;
+
+    if (!business_name || !settlement_bank || !account_number || !percentage_charge || !userId) {
+        return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Business name, settlement bank, account number, percentage charge, and userId are required.' });
+    }
+
+    try {
+        console.log('createSubaccount called with body:', req.body);
+
+        const subaccountData = {
+            business_name,
+            settlement_bank,
+            account_number,
+            percentage_charge,
+            userId, // Include userId in the subaccount data
+        };
+
+        console.log('Subaccount data being sent:', subaccountData);
+
+        const response = await paymentInstance.createSubaccount(subaccountData);
+        res.status(200).json({ status: 'Success', data: response });
+    } catch (error) {
+        // Enhanced error handling
+        console.error('Error in createSubaccount:', error); // Log the actual error object
+        res.status(500).json({ 
+            status: 'Failed', 
+            message: 'Subaccount creation failed. Please try again later.',
+        });
+    }
 };
