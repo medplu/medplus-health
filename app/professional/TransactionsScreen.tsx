@@ -8,9 +8,8 @@ import { Ionicons } from '@expo/vector-icons'; // Import the eye icon
 import Colors from '../../components/Shared/Colors';
 import HorizontalLine from '../../components/common/HorizontalLine';
 
-
 const TransactionScreen: React.FC = () => {
-  const PAYSTACK_SECRET_KEY= process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
+  const PAYSTACK_SECRET_KEY = process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
   const [isPaymentSetupCompleted, setIsPaymentSetupCompleted] = useState<boolean>(false);
   const [showPaymentSetupModal, setShowPaymentSetupModal] = useState<boolean>(false);
   const [showSubaccountModal, setShowSubaccountModal] = useState<boolean>(false);
@@ -18,7 +17,6 @@ const TransactionScreen: React.FC = () => {
     business_name: '',
     settlement_bank: '',
     account_number: '',
-    percentage_charge: '',
   });
   const [banks, setBanks] = useState<{ name: string, code: string }[]>([]);
   const [isAccountInfoVisible, setIsAccountInfoVisible] = useState<boolean>(false); // Add state for toggling visibility
@@ -113,6 +111,7 @@ const TransactionScreen: React.FC = () => {
       const subaccountPayload = {
         ...subaccountData,
         userId,
+        percentage_charge: '10', // Set default percentage charge to 10%
       };
 
       const response = await axios.post('https://medplus-health.onrender.com/api/payment/create-subaccount', subaccountPayload);
@@ -219,12 +218,6 @@ const TransactionScreen: React.FC = () => {
                   value={subaccountData.account_number}
                   onChangeText={(text) => setSubaccountData({ ...subaccountData, account_number: text })}
                 />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Percentage Charge"
-                  value={subaccountData.percentage_charge}
-                  onChangeText={(text) => setSubaccountData({ ...subaccountData, percentage_charge: text })}
-                />
                 <TouchableOpacity style={styles.button} onPress={handleCreateSubaccount}>
                   <Text style={styles.buttonText}>Confirm Updates</Text>
                 </TouchableOpacity>
@@ -267,12 +260,6 @@ const TransactionScreen: React.FC = () => {
                   placeholder="Account Number"
                   value={subaccountData.account_number}
                   onChangeText={(text) => setSubaccountData({ ...subaccountData, account_number: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Percentage Charge"
-                  value={subaccountData.percentage_charge}
-                  onChangeText={(text) => setSubaccountData({ ...subaccountData, percentage_charge: text })}
                 />
                 <TouchableOpacity style={styles.button} onPress={handleCreateSubaccount}>
                   <Text style={styles.buttonText}>Confirm Updates</Text>
