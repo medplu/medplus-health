@@ -22,7 +22,6 @@ interface Location {
   latitude: number | null;
   longitude: number | null;
 }
-
 interface FormState {
   firstName: string;
   lastName: string;
@@ -31,6 +30,8 @@ interface FormState {
   emailNotifications: boolean;
   pushNotifications: boolean;
   location: Location;
+  consultationFee: string;  // New field for consultation fee
+  availability: string;     // New field for availability
 }
 
 const SettingsScreen: React.FC = () => {
@@ -43,6 +44,8 @@ const SettingsScreen: React.FC = () => {
     emailNotifications: false,
     pushNotifications: false,
     location: { latitude: null, longitude: null },
+    consultationFee: '',  // Initialize consultation fee
+    availability: '',      // Initialize availability
   };
   const [form, setForm] = useState<FormState>(initialFormState);
   const [doctorId, setDoctorId] = useState<string | null>(null);
@@ -55,6 +58,8 @@ const SettingsScreen: React.FC = () => {
         const storedEmail = await AsyncStorage.getItem('email');
         const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
         const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
+        const storedConsultationFee = await AsyncStorage.getItem('consultationFee');  // Fetching consultation fee
+        const storedAvailability = await AsyncStorage.getItem('availability');          // Fetching availability
 
         setDoctorId(storedDoctorId);
 
@@ -64,6 +69,8 @@ const SettingsScreen: React.FC = () => {
           email: storedEmail || prevForm.email,
           emailNotifications: storedEmailNotifications ? JSON.parse(storedEmailNotifications) : prevForm.emailNotifications,
           pushNotifications: storedPushNotifications ? JSON.parse(storedPushNotifications) : prevForm.pushNotifications,
+          consultationFee: storedConsultationFee || prevForm.consultationFee,  // Set consultation fee
+          availability: storedAvailability || prevForm.availability,            // Set availability
         }));
 
         if (storedDoctorId) {
@@ -134,9 +141,22 @@ const SettingsScreen: React.FC = () => {
 
       const data = await response.json();
       console.log('Profile updated successfully:', data);
+
+      // Update the form state with the new profile data
+      setForm((prevForm) => ({
+        ...prevForm,
+        firstName: data.professional.firstName,
+        lastName: data.professional.lastName,
+        email: data.professional.email,
+        profileImage: data.professional.profileImage,
+        emailNotifications: data.professional.emailNotifications,
+        pushNotifications: data.professional.pushNotifications,
+        location: data.professional.location,
+        consultationFee: data.professional.consultationFee, // Update consultation fee
+        availability: data.professional.availability,       // Update availability
+      }));
+
       setModalVisible(false);
-      setForm(initialFormState);
-      fetchProfile(doctorId!);
     } catch (error) {
       console.error('Error updating profile:', error);
     }
@@ -265,6 +285,7 @@ const SettingsScreen: React.FC = () => {
         </View>
       </ScrollView>
 
+      {/* Modal for updating profile */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -292,17 +313,27 @@ const SettingsScreen: React.FC = () => {
               value={form.email}
               onChangeText={(text) => handleProfileChange('email', text)}
             />
+            <TextInput
+              style={styles.input}
+              placeholder="Consultation Fee"
+              value={form.consultationFee}
+              onChangeText={(text) => handleProfileChange('consultationFee', text)}
+              keyboardType="numeric" // Numeric input for fee
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Availability"
+              value={form.availability}
+              onChangeText={(text) => handleProfileChange('availability', text)}
+            />
             <TouchableOpacity style={styles.button} onPress={pickImage}>
               <Text style={styles.buttonText}>Pick Profile Image</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.button} onPress={updateProfile}>
               <Text style={styles.buttonText}>Update Profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={() => setModalVisible(!modalVisible)}
-            >
-              <Text style={styles.buttonText}>Cancel</Text>
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>

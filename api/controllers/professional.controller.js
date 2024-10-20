@@ -37,7 +37,7 @@ exports.updateProfessionalProfile = async (req, res) => {
     const updateFields = {};
 
     // Define the list of fields that are allowed to be updated.
-    const fields = ['firstName', 'lastName', 'category', 'yearsOfExperience', 'bio'];
+    const fields = ['firstName', 'lastName', 'category', 'yearsOfExperience', 'bio', 'availability', 'consultationFee'];
 
     // Iterate through the allowed fields and add them to updateFields if provided.
     fields.forEach((field) => {
