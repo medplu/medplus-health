@@ -6,6 +6,7 @@ export default {
     GRAY: 'F8F9FA',
     LIGHT_GRAY: '#F8F9FA',
     ligh_gray: '#feffdf',
+    lit: '#FBFF8F',
     light_gray: '#feffdf',
     green:'#03fc62',
     gray: '#a6a4a4',

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, ActivityIndicator, Button, Alert, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Image, ActivityIndicator, Button, Alert, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import moment from 'moment'; // To handle date formatting
 import { MaterialIcons } from '@expo/vector-icons'; // Importing icons from Material Icons
@@ -7,6 +7,7 @@ import io, { Socket } from 'socket.io-client'; // Import socket.io-client
 import PushNotification from 'react-native-push-notification'; // Import react-native-push-notification
 import { CircularProgress } from 'react-native-svg-circular-progress'; // Import CircularProgress
 import AddClinicForm from '../../components/AddClinicForm'; // Import AddClinicForm component
+import Colors from '@/components/Shared/Colors';
 
 interface Appointment {
   _id: string;
@@ -27,6 +28,7 @@ const DashboardScreen: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [recentAppointments, setRecentAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showAllRecentAppointments, setShowAllRecentAppointments] = useState<boolean>(false);
   const totalAppointments = appointments.length + recentAppointments.length;
   const completedAppointments = recentAppointments.length;
   const progress = calculateProgress(completedAppointments, totalAppointments);
@@ -96,7 +98,7 @@ const DashboardScreen: React.FC = () => {
 
   const confirmAppointment = async (appointmentId: string) => {
     try {
-      const response = await fetch(`https://medplus-app.onrender.com/api/appointments/confirm/${appointmentId}`, {
+      const response = await fetch(`https://medplus-health.onrender.com/api/appointments/confirm/${appointmentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -139,117 +141,121 @@ const DashboardScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#6200ee" />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Today</Text>
-        <View style={styles.calendar}>
-          {days.map((day) => (
-            <View key={day.label} style={styles.dayContainer}>
-              <Text style={[styles.dayLabel, day.isToday && styles.todayText]}>
-                {day.label}
-              </Text>
-              <Text style={[styles.dateLabel, day.isToday && styles.todayText]}>
-                {day.date}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        {showAddClinicForm ? (
-          <AddClinicForm onClose={handleCloseForm} />
-        ) : (
-          <View style={styles.cardContainer}>
-            <TouchableOpacity style={styles.card} onPress={handleAddClinicClick}>
-              <View style={styles.iconContainer}>
-                <MaterialIcons name="add" size={40} color="#6200ee" />
-              </View>
-              <Text style={styles.details}>Add Clinic</Text>
-            </TouchableOpacity>
-            <View style={styles.card}>
-              <View style={styles.iconContainer}>
-                <MaterialIcons name="schedule" size={40} color="#6200ee" />
-              </View>
-              <Text style={styles.details}>Schedule</Text>
-            </View>
-            <View style={styles.card}>
-              <View style={styles.iconContainer}>
-                <MaterialIcons name="history" size={40} color="#6200ee" />
-              </View>
-              <Text style={styles.details}>History</Text>
-            </View>
-          </View>
-        )}
-
-        {/* Overview section */}
-        <View style={styles.cardContainer}>
-          <View style={styles.cardCategories}>
-            <Text>Patients</Text>
-            <Text>12</Text>
-          </View>
-          <View style={styles.cardCategories}>
-            <Text>Appointments</Text>
-            <Text>5</Text>
-          </View>
-          <View style={styles.cardCategories}>
-            <Text>Revenue</Text>
-            <Text>$200</Text>
-          </View>
-        </View>
-
-        {/* Circular Progress Bar for Completed Appointments */}
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressTitle}>Completed Appointments</Text>
-          <CircularProgress
-            size={100}
-            width={10}
-            fill={progress}
-            tintColor="#6200ee"
-            backgroundColor="#e3e3e3"
-          >
-            <Text style={styles.progressText}>
-              {`${Math.round(progress)}%`}
+      <Text style={styles.title}>Today</Text>
+      <FlatList
+        data={days}
+        horizontal
+        keyExtractor={(item) => item.label}
+        renderItem={({ item }) => (
+          <View style={styles.dayContainer}>
+            <Text style={[styles.dayLabel, item.isToday && styles.todayText]}>
+              {item.label}
             </Text>
-          </CircularProgress>
-        </View>
+            <Text style={[styles.dateLabel, item.isToday && styles.todayText]}>
+              {item.date}
+            </Text>
+          </View>
+        )}
+        showsHorizontalScrollIndicator={false}
+      />
 
-        {/* Appointment Cards */}
-        {appointments.length === 0 ? (
-          <Text style={styles.noAppointmentsText}>No upcoming appointments</Text>
-        ) : (
-          appointments.map((appointment) => (
-            <View key={appointment._id} style={styles.appointmentCard}>
-              <Image
-                source={{ uri: appointment.patientImage || 'https://via.placeholder.com/40' }}
-                style={styles.profileImage}
-              />
-              <View style={styles.appointmentDetails}>
-                <Text style={styles.patientName}>{appointment.patientName}</Text>
-                <Text style={styles.appointmentTime}>
-                  {moment(appointment.date).format('MMMM Do YYYY')} at {appointment.time}
-                </Text>
-                <View style={styles.actions}>
-                  {appointment.status === 'booked' && (
-                    <Button title="Confirm" onPress={() => confirmAppointment(appointment._id)} />
-                  )}
-                  <Button title="Reschedule" onPress={() => console.log('Reschedule pressed')} />
-                </View>
+      {showAddClinicForm ? (
+        <AddClinicForm onClose={handleCloseForm} />
+      ) : (
+        <View style={styles.cardContainer}>
+          <TouchableOpacity style={styles.card} onPress={handleAddClinicClick}>
+            <View style={styles.iconContainer}>
+              <MaterialIcons name="add" size={40} color={Colors.primary} />
+            </View>
+            <Text style={styles.details}>Add Clinic</Text>
+          </TouchableOpacity>
+          <View style={styles.card}>
+            <View style={styles.iconContainer}>
+              <MaterialIcons name="local-pharmacy" size={40} color={Colors.primary} />
+            </View>
+            <Text style={styles.details}>Add Pharmacy</Text>
+          </View>
+          <View style={styles.card}>
+            <View style={styles.iconContainer}>
+              <MaterialIcons name="folder" size={40} color={Colors.primary} />
+            </View>
+            <Text style={styles.details}>Patient Records</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Overview section */}
+      <View style={styles.cardContainer}>
+        <View style={styles.cardCategories}>
+          <Text>Patients</Text>
+          <Text>12</Text>
+        </View>
+        <View style={styles.cardCategories}>
+          <Text>Appointments</Text>
+          <Text>5</Text>
+        </View>
+        <View style={styles.cardCategories}>
+          <Text>Revenue</Text>
+          <Text>$200</Text>
+        </View>
+      </View>
+
+      {/* Circular Progress Bar for Completed Appointments */}
+      <View style={styles.progressContainer}>
+        <Text style={styles.progressTitle}>Completed Appointments</Text>
+        <CircularProgress
+          size={100}
+          width={10}
+          fill={progress}
+          tintColor={Colors.primary}
+          backgroundColor={Colors.LIGHT_GRAY}
+        >
+          <Text style={styles.progressText}>
+            {`${Math.round(progress)}%`}
+          </Text>
+        </CircularProgress>
+      </View>
+
+      {/* Appointment Cards */}
+      {appointments.length === 0 ? (
+        <Text style={styles.noAppointmentsText}>No upcoming appointments</Text>
+      ) : (
+        appointments.map((appointment) => (
+          <View key={appointment._id} style={styles.appointmentCard}>
+            <Image
+              source={{ uri: appointment.patientImage || 'https://via.placeholder.com/40' }}
+              style={styles.profileImage}
+            />
+            <View style={styles.appointmentDetails}>
+              <Text style={styles.patientName}>{appointment.patientName}</Text>
+              <Text style={styles.appointmentTime}>
+                {moment(appointment.date).format('MMMM Do YYYY')} at {appointment.time}
+              </Text>
+              <View style={styles.actions}>
+                {appointment.status === 'booked' && (
+                  <Button title="Confirm" onPress={() => confirmAppointment(appointment._id)} />
+                )}
+                <Button title="Reschedule" onPress={() => console.log('Reschedule pressed')} />
               </View>
             </View>
-          ))
-        )}
+          </View>
+        ))
+      )}
 
-        {/* Recent Appointments */}
-        <Text style={styles.title}>Recent Appointments</Text>
-        {recentAppointments.length === 0 ? (
-          <Text style={styles.noAppointmentsText}>No recent appointments</Text>
-        ) : (
-          recentAppointments.map((appointment) => (
+      {/* Recent Appointments */}
+      <Text style={styles.title}>Recent Appointments</Text>
+      {recentAppointments.length === 0 ? (
+        <Text style={styles.noAppointmentsText}>No recent appointments</Text>
+      ) : (
+        <>
+          {recentAppointments.slice(0, showAllRecentAppointments ? recentAppointments.length : 2).map((appointment) => (
             <View key={appointment._id} style={styles.appointmentCard}>
               <Image
                 source={{ uri: appointment.patientImage || 'https://via.placeholder.com/40' }}
@@ -265,9 +271,16 @@ const DashboardScreen: React.FC = () => {
                 </View>
               </View>
             </View>
-          ))
-        )}
-      </View>
+          ))}
+          {recentAppointments.length > 2 && (
+            <TouchableOpacity onPress={() => setShowAllRecentAppointments(!showAllRecentAppointments)}>
+              <Text style={styles.viewMoreText}>
+                {showAllRecentAppointments ? 'View Less' : 'View More'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </>
+      )}
     </ScrollView>
   );
 };
@@ -279,36 +292,30 @@ const calculateProgress = (completed: number, total: number) => {
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: Colors.ligh_gray,
+    padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
-  },
-  calendar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
+    color: Colors.primary,
   },
   dayContainer: {
     alignItems: 'center',
+    marginHorizontal: 10,
   },
   dayLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000',
+    color: Colors.primary,
   },
   dateLabel: {
     fontSize: 16,
-    color: '#000',
+    color: Colors.primary,
   },
   todayText: {
-    color: '#6200ee',
+    color: Colors.PRIMARY,
   },
   cardContainer: {
     flexDirection: 'row',
@@ -316,7 +323,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
     padding: 20,
     borderRadius: 10,
     elevation: 3,
@@ -325,7 +332,7 @@ const styles = StyleSheet.create({
   },
   cardCategories: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
     margin: 10,
     borderRadius: 10,
     elevation: 2,
@@ -336,7 +343,7 @@ const styles = StyleSheet.create({
   },
   details: {
     fontSize: 16,
-    color: '#000',
+    color: Colors.primary,
     fontWeight: 'bold',
   },
   progressContainer: {
@@ -347,17 +354,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 10,
     fontWeight: 'bold',
+    color: Colors.primary,
   },
   progressText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#6200ee',
+    color: Colors.primary,
   },
   appointmentCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: Colors.LIGHT_GRAY,
     borderRadius: 10,
     marginBottom: 15,
   },
@@ -373,11 +381,11 @@ const styles = StyleSheet.create({
   patientName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: Colors.primary,
   },
   appointmentTime: {
     fontSize: 16,
-    color: '#666',
+    color: Colors.gray,
     marginBottom: 10,
   },
   actions: {
@@ -386,9 +394,15 @@ const styles = StyleSheet.create({
   },
   noAppointmentsText: {
     textAlign: 'center',
-    color: '#666',
+    color: Colors.gray,
     fontSize: 16,
     marginTop: 20,
+  },
+  viewMoreText: {
+    textAlign: 'center',
+    color: Colors.primary,
+    fontSize: 16,
+    marginTop: 10,
   },
 });
 
