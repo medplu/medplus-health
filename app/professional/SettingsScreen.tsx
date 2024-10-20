@@ -97,38 +97,43 @@ const SettingsScreen = () => {
   };
 
   const pickImage = async () => {
-    if (Platform.OS === 'web') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = (event: any) => {
-        if (event.target.files && event.target.files[0]) {
-          handleProfileChange('profileImage', event.target.files[0]);
-        }
-      };
-      input.click();
-    } else {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
 
-      if (!result.canceled) {
-        handleProfileChange('profileImage', result.assets[0].uri);
-      }
+    if (!result.canceled) {
+      const localUri = result.assets[0].uri;
+      const filename = localUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image`;
+
+      const formData = new FormData();
+      formData.append('profileImage', { uri: localUri, name: filename, type });
+
+      handleProfileChange('profileImage', formData);
     }
   };
 
   const updateProfile = async () => {
     try {
+      const formData = new FormData();
+      Object.keys(form).forEach((key) => {
+        if (key === 'profileImage' && form[key] instanceof FormData) {
+          formData.append(key, form[key].get('profileImage'));
+        } else {
+          formData.append(key, form[key]);
+        }
+      });
+
       const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${doctorId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
-        body: JSON.stringify(form),
+        body: formData,
       });
 
       if (!response.ok) {

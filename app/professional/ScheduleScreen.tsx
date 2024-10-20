@@ -3,7 +3,7 @@ import { View, TouchableOpacity, Text, ActivityIndicator, Modal, TextInput, Butt
 import { Agenda, AgendaEntry, AgendaSchedule } from 'react-native-calendars';
 import { Card, Avatar } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import moment from 'moment'; // To handle date formatting
+import moment from 'moment';
 
 const timeToString = (time: number): string => {
   const date = new Date(time);
@@ -30,7 +30,6 @@ const Schedule: React.FC = () => {
 
         const newItems: AgendaSchedule = {};
 
-        // Populate the agenda items with the fetched appointments
         data.forEach((appointment: any) => {
           const strTime = moment(appointment.date).format('YYYY-MM-DD');
           if (!newItems[strTime]) {
@@ -38,7 +37,7 @@ const Schedule: React.FC = () => {
           }
           newItems[strTime].push({
             name: appointment.patientName,
-            height: 100, // Adjust the height if necessary
+            height: 100,
             patientImage: appointment.patientImage,
             time: appointment.time,
           });
@@ -86,7 +85,7 @@ const Schedule: React.FC = () => {
               <Text>{item.name}</Text>
               <Avatar.Image source={{ uri: item.patientImage || 'https://via.placeholder.com/40' }} size={40} />
             </View>
-            <Text>{item.time}</Text> {/* Show appointment time */}
+            <Text>{item.time}</Text>
           </Card.Content>
         </Card>
       </TouchableOpacity>
