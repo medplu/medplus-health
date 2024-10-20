@@ -18,63 +18,47 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput } from 'react-native-paper';
 import * as Location from 'expo-location';
 
-interface Location {
-  latitude: number | null;
-  longitude: number | null;
-}
-interface FormState {
-  firstName: string;
-  lastName: string;
-  email: string;
-  profileImage: string;
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  location: Location;
-  consultationFee: number;
-  availability: boolean;
-}
-
-const SettingsScreen: React.FC = () => {
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const initialFormState: FormState = {
+const SettingsScreen = () => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [form, setForm] = useState({
     firstName: '',
     lastName: '',
     email: '',
+    category: '',
+    yearsOfExperience: '',
+    certifications: '',
+    bio: '',
     profileImage: '',
     emailNotifications: false,
     pushNotifications: false,
-    location: { latitude: null, longitude: null },
-    consultationFee: 1000,
-    availability: false,
-  };
-  const [form, setForm] = useState<FormState>(initialFormState);
-  const [userId, setUserId] = useState<string | null>(null);
+    location: { latitude: null as number | null, longitude: null as number | null },
+  });
+  const [userId, setUserId] = useState(null);
+  const [doctorId, setDoctorId] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const storedUserId = await AsyncStorage.getItem('userId');
+        const storedDoctorId = await AsyncStorage.getItem('doctorId');
         const storedLocation = await AsyncStorage.getItem('location');
         const storedEmail = await AsyncStorage.getItem('email');
         const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
         const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
-        const storedConsultationFee = await AsyncStorage.getItem('consultationFee');
-        const storedAvailability = await AsyncStorage.getItem('availability');
 
         setUserId(storedUserId);
+        setDoctorId(storedDoctorId);
 
         setForm((prevForm) => ({
           ...prevForm,
           location: storedLocation ? JSON.parse(storedLocation) : prevForm.location,
-          email: storedEmail || prevForm.email,
+          email: storedEmail ? storedEmail : prevForm.email,
           emailNotifications: storedEmailNotifications ? JSON.parse(storedEmailNotifications) : prevForm.emailNotifications,
           pushNotifications: storedPushNotifications ? JSON.parse(storedPushNotifications) : prevForm.pushNotifications,
-          consultationFee: storedConsultationFee ? JSON.parse(storedConsultationFee) : prevForm.consultationFee,
-          availability: storedAvailability ? JSON.parse(storedAvailability) : prevForm.availability,
         }));
 
-        if (storedUserId) {
-          fetchProfile(storedUserId);
+        if (storedDoctorId) {
+          fetchProfile(storedDoctorId);
         }
       } catch (error) {
         console.error('Error fetching user data from AsyncStorage:', error);
@@ -84,32 +68,30 @@ const SettingsScreen: React.FC = () => {
     fetchUserData();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    console.log(`Fetching profile for userId: ${userId}`);
+  const fetchProfile = async (doctorId: string) => {
+    console.log(`Fetching profile for doctorId: ${doctorId}`); // Log the doctorId
     try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/professionals/${userId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/professionals/${doctorId}`);
       const profile = response.data;
       setForm((prevForm) => ({
         ...prevForm,
-        firstName: profile.firstName || '',
-        lastName: profile.lastName || '',
-        email: profile.email || '',
-        profileImage: profile.profileImage || '',
-        consultationFee: profile.consultationFee || 1000,
-        availability: profile.availability || false,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+        profileImage: profile.profileImage,
       }));
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
   };
 
-  const handleProfileChange = async (key: keyof FormState, value: any) => {
+  const handleProfileChange = async (key, value) => {
     setForm((prevForm) => ({
       ...prevForm,
       [key]: value,
     }));
 
-    if (key === 'emailNotifications' || key === 'pushNotifications' || key === 'email' || key === 'availability' || key === 'consultationFee') {
+    if (key === 'emailNotifications' || key === 'pushNotifications' || key === 'email') {
       await AsyncStorage.setItem(key, JSON.stringify(value));
     }
   };
@@ -141,36 +123,12 @@ const SettingsScreen: React.FC = () => {
 
   const updateProfile = async () => {
     try {
-      const formData = new FormData();
-      formData.append('firstName', form.firstName);
-      formData.append('lastName', form.lastName);
-      formData.append('email', form.email);
-      formData.append('emailNotifications', JSON.stringify(form.emailNotifications));
-      formData.append('pushNotifications', JSON.stringify(form.pushNotifications));
-      formData.append('location', JSON.stringify(form.location));
-      formData.append('consultationFee', JSON.stringify(form.consultationFee));
-      formData.append('availability', JSON.stringify(form.availability));
-
-      if (form.profileImage) {
-        if (typeof form.profileImage === 'string') {
-          const uriParts = form.profileImage.split('.');
-          const fileType = uriParts[uriParts.length - 1];
-          formData.append('profileImage', {
-            uri: form.profileImage,
-            name: `photo.${fileType}`,
-            type: `image/${fileType}`,
-          } as any); // TypeScript workaround for FormData
-        } else {
-          formData.append('profileImage', form.profileImage);
-        }
-      }
-
-      const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${userId}`, {
+      const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${doctorId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify(form),
       });
 
       if (!response.ok) {
@@ -179,30 +137,21 @@ const SettingsScreen: React.FC = () => {
 
       const data = await response.json();
       console.log('Profile updated successfully:', data);
-
-      // Update the form state with the new profile data
-      setForm((prevForm) => ({
-        ...prevForm,
-        firstName: data.professional.firstName || '',
-        lastName: data.professional.lastName || '',
-        email: data.professional.email || '',
-        profileImage: data.professional.profileImage || '',
-        emailNotifications: data.professional.emailNotifications,
-        pushNotifications: data.professional.pushNotifications,
-        location: data.professional.location,
-        consultationFee: data.professional.consultationFee || 1000,
-        availability: data.professional.availability || false,
-      }));
-
       setModalVisible(false);
+      fetchProfile(doctorId); // Fetch updated profile data
     } catch (error) {
       console.error('Error updating profile:', error);
     }
   };
 
-  const requestLocationPermission = async (): Promise<boolean> => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    return status === 'granted';
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'android') {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      return status === 'granted';
+    } else {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      return status === 'granted';
+    }
   };
 
   const fetchLocation = async () => {
@@ -218,20 +167,6 @@ const SettingsScreen: React.FC = () => {
     await AsyncStorage.setItem('location', JSON.stringify({ latitude, longitude }));
   };
 
-  const incrementFee = () => {
-    setForm((prevForm) => ({
-      ...prevForm,
-      consultationFee: prevForm.consultationFee + 100,
-    }));
-  };
-
-  const decrementFee = () => {
-    setForm((prevForm) => ({
-      ...prevForm,
-      consultationFee: Math.max(prevForm.consultationFee - 100, 1000),
-    }));
-  };
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f8f8' }}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -241,16 +176,18 @@ const SettingsScreen: React.FC = () => {
             <View style={styles.profile}>
               <View style={styles.profileImageContainer}>
                 <Image
+                  alt=""
                   source={{
-                    uri: typeof form.profileImage === 'string' ? form.profileImage : URL.createObjectURL(form.profileImage),
+                    uri: form.profileImage || 'https://via.placeholder.com/150',
                   }}
-                  style={styles.profileAvatar}
-                />
+                  style={styles.profileAvatar} />
                 <TouchableOpacity
                   style={styles.editIconContainer}
-                  onPress={() => setModalVisible(true)}
-                >
-                  <FeatherIcon color="#fff" name="edit" size={16} />
+                  onPress={() => setModalVisible(true)}>
+                  <FeatherIcon
+                    color="#fff"
+                    name="edit"
+                    size={16} />
                 </TouchableOpacity>
               </View>
               <View style={styles.profileBody}>
@@ -290,35 +227,6 @@ const SettingsScreen: React.FC = () => {
                   onValueChange={(value) => handleProfileChange('pushNotifications', value)}
                   value={form.pushNotifications}
                 />
-              </View>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Availability and Consultation</Text>
-          <View style={styles.sectionBody}>
-            <View style={styles.rowWrapper}>
-              <View style={styles.row}>
-                <Text style={styles.rowLabel}>Availability</Text>
-                <View style={styles.rowSpacer} />
-                <Switch
-                  onValueChange={(value) => handleProfileChange('availability', value)}
-                  value={form.availability}
-                />
-              </View>
-            </View>
-            <View style={styles.rowWrapper}>
-              <View style={styles.row}>
-                <Text style={styles.rowLabel}>Consultation Fee</Text>
-                <View style={styles.rowSpacer} />
-                <TouchableOpacity onPress={decrementFee} style={styles.feeButton}>
-                  <FeatherIcon name="minus" size={20} color="#000" />
-                </TouchableOpacity>
-                <Text style={styles.feeText}>{form.consultationFee}</Text>
-                <TouchableOpacity onPress={incrementFee} style={styles.feeButton}>
-                  <FeatherIcon name="plus" size={20} color="#000" />
-                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -366,7 +274,6 @@ const SettingsScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* Modal for updating profile */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -394,33 +301,14 @@ const SettingsScreen: React.FC = () => {
               value={form.email}
               onChangeText={(text) => handleProfileChange('email', text)}
             />
-            <View style={styles.row}>
-              <Text style={styles.rowLabel}>Availability</Text>
-              <View style={styles.rowSpacer} />
-              <Switch
-                onValueChange={(value) => handleProfileChange('availability', value)}
-                value={form.availability}
-              />
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.rowLabel}>Consultation Fee</Text>
-              <View style={styles.rowSpacer} />
-              <TouchableOpacity onPress={decrementFee} style={styles.feeButton}>
-                <FeatherIcon name="minus" size={20} color="#000" />
-              </TouchableOpacity>
-              <Text style={styles.feeText}>{form.consultationFee}</Text>
-              <TouchableOpacity onPress={incrementFee} style={styles.feeButton}>
-                <FeatherIcon name="plus" size={20} color="#000" />
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity style={styles.button} onPress={pickImage}>
-              <Text style={styles.buttonText}>Pick Profile Image</Text>
+            <TouchableOpacity onPress={pickImage} style={styles.imageButton}>
+              <Text style={styles.buttonText}>Choose Profile Image</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={updateProfile}>
-              <Text style={styles.buttonText}>Update Profile</Text>
+            <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
+              <Text style={styles.buttonText}>Update</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.closeText}>Close</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(!modalVisible)}>
+              <Text style={styles.buttonText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -430,37 +318,35 @@ const SettingsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
+    elevation: 4,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   content: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   section: {
     marginBottom: 16,
     backgroundColor: '#fff',
     borderRadius: 8,
     elevation: 2,
+    padding: 16,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    padding: 16,
-  },
-  sectionBody: {
-    padding: 16,
-  },
-  rowWrapper: {
-    marginVertical: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  rowLabel: {
     fontSize: 16,
-    color: '#333',
-  },
-  rowSpacer: {
-    flex: 1,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   profile: {
     flexDirection: 'row',
@@ -468,84 +354,118 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     position: 'relative',
-    marginRight: 12,
   },
   profileAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderColor: '#bcbcbc',
+    borderWidth: 2,
   },
   editIconContainer: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#000',
-    borderRadius: 12,
+    right: -5,
+    bottom: -5,
+    backgroundColor: '#007bff',
+    borderRadius: 20,
     padding: 4,
   },
   profileBody: {
-    flex: 1,
+    marginLeft: 12,
   },
   profileName: {
     fontSize: 18,
     fontWeight: 'bold',
   },
   profileHandle: {
-    fontSize: 14,
-    color: '#777',
+    color: '#666',
+  },
+  sectionBody: {
+    marginTop: 8,
+  },
+  rowWrapper: {
+    marginVertical: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  rowLabel: {
+    fontSize: 16,
+  },
+  rowValue: {
+    color: '#666',
+  },
+  rowSpacer: {
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
   },
   modalView: {
-    width: '80%',
+    width: '90%',
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 12,
+    color: '#333', // Darker text color
   },
   input: {
     width: '100%',
-    height: 40,
-    borderColor: 'gray',
+    padding: 10,
+    marginVertical: 8,
     borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 5,
-    marginBottom: 12,
-    paddingLeft: 8,
+    backgroundColor: '#f9f9f9', // Light background for inputs
   },
-  button: {
-    backgroundColor: '#007BFF',
+  imageButton: {
+    backgroundColor: '#007bff',
     borderRadius: 5,
     padding: 10,
+    marginVertical: 8,
     alignItems: 'center',
-    marginBottom: 12,
+    width: '100%',
+  },
+  updateButton: {
+    backgroundColor: '#28a745',
+    borderRadius: 5,
+    padding: 10,
+    marginVertical: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  closeButton: {
+    backgroundColor: '#6c757d',
+    borderRadius: 5,
+    padding: 10,
+    marginVertical: 8,
+    alignItems: 'center',
     width: '100%',
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  cancelButton: {
-    backgroundColor: '#f44336',
-  },
-  feeButton: {
-    padding: 10,
-  },
-  feeText: {
+    color: 'white',
     fontSize: 16,
-    marginHorizontal: 10,
   },
-  closeText: {
-    
-  }
 });
 
 export default SettingsScreen;
