@@ -18,12 +18,20 @@ exports.getProfessionals = async (req, res) => {
 exports.getProfessionalById = async (req, res) => {
     try {
         const { doctorId } = req.params;
-        const professional = await Professional.findOne({ user: doctorId });
 
+        // Convert doctorId to a MongoDB ObjectId if necessary
+        const mongoose = require('mongoose');
+        const userObjectId = mongoose.Types.ObjectId(doctorId);
+
+        // Find the professional using the user field
+        const professional = await Professional.findOne({ user: userObjectId });
+
+        // If the professional is not found, return a 404 error.
         if (!professional) {
             return res.status(404).json({ error: 'Professional not found' });
         }
 
+        // Return the found professional.
         res.status(200).json(professional);
     } catch (error) {
         console.error("Error fetching professional:", error);
@@ -32,7 +40,7 @@ exports.getProfessionalById = async (req, res) => {
 };
 // Update professional profile
 exports.updateProfessionalProfile = async (req, res) => {
-    const { userId } = req.params;
+    const { userId } = req.params; // The user ID to match the `user` field in the Professional document.
     const updateFields = {};
 
     // Define the list of fields that are allowed to be updated.
@@ -59,10 +67,14 @@ exports.updateProfessionalProfile = async (req, res) => {
         console.log('Updating profile for userId:', userId);
         console.log('Update fields:', updateFields);
 
+        // Ensure the userId is treated as an ObjectId if necessary
+        const mongoose = require('mongoose');
+        const userObjectId = mongoose.Types.ObjectId(userId);
+
         const professional = await Professional.findOneAndUpdate(
-            { user: userId },
+            { user: userObjectId }, // Use the correct field `user` to find the professional.
             { $set: updateFields },
-            { new: true, upsert: false } // Ensure upsert is false to avoid creating a new document
+            { new: true, upsert: false } // Ensure upsert is false to avoid creating a new document.
         );
 
         // If the professional is not found, return a 404 error.
@@ -76,10 +88,11 @@ exports.updateProfessionalProfile = async (req, res) => {
             professional,
         });
     } catch (error) {
-        console.log('Error updating professional profile', error);
+        console.log('Error updating professional profile:', error);
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 // Create or update consultation fee
 exports.createOrUpdateConsultationFee = async (req, res) => {
     const { userId } = req.params;

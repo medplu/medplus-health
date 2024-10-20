@@ -48,12 +48,12 @@ const SettingsScreen: React.FC = () => {
     availability: false,
   };
   const [form, setForm] = useState<FormState>(initialFormState);
-  const [doctorId, setDoctorId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const storedDoctorId = await AsyncStorage.getItem('doctorId');
+        const storedUserId = await AsyncStorage.getItem('userId');
         const storedLocation = await AsyncStorage.getItem('location');
         const storedEmail = await AsyncStorage.getItem('email');
         const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
@@ -61,7 +61,7 @@ const SettingsScreen: React.FC = () => {
         const storedConsultationFee = await AsyncStorage.getItem('consultationFee');
         const storedAvailability = await AsyncStorage.getItem('availability');
 
-        setDoctorId(storedDoctorId);
+        setUserId(storedUserId);
 
         setForm((prevForm) => ({
           ...prevForm,
@@ -73,8 +73,8 @@ const SettingsScreen: React.FC = () => {
           availability: storedAvailability ? JSON.parse(storedAvailability) : prevForm.availability,
         }));
 
-        if (storedDoctorId) {
-          fetchProfile(storedDoctorId);
+        if (storedUserId) {
+          fetchProfile(storedUserId);
         }
       } catch (error) {
         console.error('Error fetching user data from AsyncStorage:', error);
@@ -84,10 +84,10 @@ const SettingsScreen: React.FC = () => {
     fetchUserData();
   }, []);
 
-  const fetchProfile = async (doctorId: string) => {
-    console.log(`Fetching profile for doctorId: ${doctorId}`);
+  const fetchProfile = async (userId: string) => {
+    console.log(`Fetching profile for userId: ${userId}`);
     try {
-      const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/professionals/${userId}`);
       const profile = response.data;
       setForm((prevForm) => ({
         ...prevForm,
@@ -165,7 +165,7 @@ const SettingsScreen: React.FC = () => {
         }
       }
 
-      const response = await fetch(`https://medplus-app.onrender.com/api/professionals/update-profile/${doctorId}`, {
+      const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -543,6 +543,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginHorizontal: 10,
   },
+  closeText: {
+    
+  }
 });
 
 export default SettingsScreen;
