@@ -63,7 +63,11 @@ const TransactionScreen: React.FC = () => {
       }
 
       const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
-      setSubaccountData(response.data);
+      if (response.data.status === 'Success') {
+        setSubaccountData(response.data.data);
+      } else {
+        Alert.alert('Error', 'Failed to fetch subaccount info.');
+      }
     } catch (error) {
       console.error('Error fetching subaccount info:', error);
       Alert.alert('Error', 'Failed to fetch subaccount info.');
