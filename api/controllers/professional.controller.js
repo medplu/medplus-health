@@ -56,11 +56,10 @@ exports.updateProfessionalProfile = async (req, res) => {
             updateFields.profileImage = uploadedResponse.secure_url;
         }
 
-        // Find and update the professional using userId, and return the updated document.
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
             { $set: updateFields },
-            { new: true } // Return the updated document.
+            { new: true, upsert: false } // Make sure upsert is false
         );
 
         // If the professional is not found, return a 404 error.
