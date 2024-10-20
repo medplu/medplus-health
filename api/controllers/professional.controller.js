@@ -1,5 +1,8 @@
+// professional.controller.js
+
 const Professional = require('../models/professional.model');
 const cloudinary = require('cloudinary').v2;
+
 // Fetch all professionals
 exports.getProfessionals = async (req, res) => {
     try {
@@ -27,6 +30,8 @@ exports.getProfessionalById = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// Update professional profile
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
     const updateFields = {};
@@ -74,6 +79,7 @@ exports.updateProfessionalProfile = async (req, res) => {
     }
 };
 
+// Create or update consultation fee
 exports.createOrUpdateConsultationFee = async (req, res) => {
     const { userId } = req.params;
     const { consultationFee } = req.body;
@@ -108,6 +114,7 @@ exports.createOrUpdateConsultationFee = async (req, res) => {
     }
 };
 
+// Create or update slots
 exports.createOrUpdateSlots = async (req, res) => {
     const { userId } = req.params;
     const { slots } = req.body;
@@ -133,6 +140,7 @@ exports.createOrUpdateSlots = async (req, res) => {
     }
 };
 
+// Get professionals by category
 exports.getProfessionalsByCategory = async (req, res) => {
     const { category } = req.params;
     const allowedCategories = ['Kidney', 'Heart', 'Brain', 'Cancer', 'Skin', 'Bone'];
@@ -150,6 +158,7 @@ exports.getProfessionalsByCategory = async (req, res) => {
     }
 };
 
+// Get available slots
 exports.getAvailableSlots = async (req, res) => {
     const { userId } = req.params;
     const { day } = req.query;
@@ -169,6 +178,32 @@ exports.getAvailableSlots = async (req, res) => {
         return res.status(200).json(availableSlots);
     } catch (error) {
         console.log("Error fetching available slots", error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Create or update availability
+exports.createOrUpdateAvailability = async (req, res) => {
+    const { userId } = req.params;
+    const { availability } = req.body;
+
+    try {
+        const professional = await Professional.findOneAndUpdate(
+            { user: userId },
+            { availability },
+            { new: true, upsert: true }
+        );
+
+        if (!professional) {
+            return res.status(404).json({ error: 'Professional not found' });
+        }
+
+        return res.status(200).json({
+            message: 'Availability updated successfully',
+            professional
+        });
+    } catch (error) {
+        console.log("Error updating availability", error);
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
