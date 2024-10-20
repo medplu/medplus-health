@@ -27,14 +27,15 @@ exports.getProfessionalById = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
     const updateFields = {};
 
-    // Add fields to updateFields object only if they are provided in the request body
-    const fields = ['firstName', 'lastName', 'email', 'category', 'yearsOfExperience', 'certifications', 'bio'];
-    fields.forEach(field => {
+    // Define the list of fields that are allowed to be updated.
+    const fields = ['firstName', 'lastName', 'category', 'yearsOfExperience', 'bio'];
+
+    // Iterate through the allowed fields and add them to updateFields if provided.
+    fields.forEach((field) => {
         if (req.body[field] !== undefined) {
             updateFields[field] = req.body[field];
         }
@@ -42,30 +43,37 @@ exports.updateProfessionalProfile = async (req, res) => {
 
     try {
         // Handle profile image upload if provided
-        if (req.files && req.files.profileImage) {
-            const result = await cloudinary.uploader.upload(req.files.profileImage.path);
-            updateFields.profileImage = result.secure_url;
+        if (req.files?.profileImage) {
+            const file = req.files.profileImage;
+            const uploadedResponse = await cloudinary.uploader.upload(file.tempFilePath, {
+                folder: 'profiles', // Optionally, specify a folder in Cloudinary for organization.
+            });
+            updateFields.profileImage = uploadedResponse.secure_url;
         }
 
+        // Find and update the professional using userId, and return the updated document.
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
             { $set: updateFields },
-            { new: true } // Remove upsert: true
+            { new: true } // Return the updated document.
         );
 
+        // If the professional is not found, return a 404 error.
         if (!professional) {
             return res.status(404).json({ error: 'Professional not found' });
         }
 
+        // Return a success message with the updated professional document.
         return res.status(200).json({
             message: 'Professional profile updated successfully',
-            professional
+            professional,
         });
     } catch (error) {
-        console.log("Error updating professional profile", error);
+        console.log('Error updating professional profile', error);
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 exports.createOrUpdateConsultationFee = async (req, res) => {
     const { userId } = req.params;
     const { consultationFee } = req.body;

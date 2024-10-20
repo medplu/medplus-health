@@ -18,42 +18,50 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput } from 'react-native-paper';
 import * as Location from 'expo-location';
 
-const SettingsScreen = () => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const initialFormState = {
+interface Location {
+  latitude: number | null;
+  longitude: number | null;
+}
+
+interface FormState {
+  firstName: string;
+  lastName: string;
+  email: string;
+  profileImage: string;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  location: Location;
+}
+
+const SettingsScreen: React.FC = () => {
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const initialFormState: FormState = {
     firstName: '',
     lastName: '',
     email: '',
-    category: '',
-    yearsOfExperience: '',
-    certifications: '',
-    bio: '',
     profileImage: '',
     emailNotifications: false,
     pushNotifications: false,
-    location: { latitude: null as number | null, longitude: null as number | null },
+    location: { latitude: null, longitude: null },
   };
-  const [form, setForm] = useState(initialFormState);
-  const [userId, setUserId] = useState(null);
-  const [doctorId, setDoctorId] = useState(null);
+  const [form, setForm] = useState<FormState>(initialFormState);
+  const [doctorId, setDoctorId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const storedUserId = await AsyncStorage.getItem('userId');
         const storedDoctorId = await AsyncStorage.getItem('doctorId');
         const storedLocation = await AsyncStorage.getItem('location');
         const storedEmail = await AsyncStorage.getItem('email');
         const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
         const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
 
-        setUserId(storedUserId);
         setDoctorId(storedDoctorId);
 
         setForm((prevForm) => ({
           ...prevForm,
           location: storedLocation ? JSON.parse(storedLocation) : prevForm.location,
-          email: storedEmail ? storedEmail : prevForm.email,
+          email: storedEmail || prevForm.email,
           emailNotifications: storedEmailNotifications ? JSON.parse(storedEmailNotifications) : prevForm.emailNotifications,
           pushNotifications: storedPushNotifications ? JSON.parse(storedPushNotifications) : prevForm.pushNotifications,
         }));
@@ -70,7 +78,7 @@ const SettingsScreen = () => {
   }, []);
 
   const fetchProfile = async (doctorId: string) => {
-    console.log(`Fetching profile for doctorId: ${doctorId}`); // Log the doctorId
+    console.log(`Fetching profile for doctorId: ${doctorId}`);
     try {
       const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
       const profile = response.data;
@@ -86,7 +94,7 @@ const SettingsScreen = () => {
     }
   };
 
-  const handleProfileChange = async (key, value) => {
+  const handleProfileChange = async (key: keyof FormState, value: any) => {
     setForm((prevForm) => ({
       ...prevForm,
       [key]: value,
@@ -127,21 +135,16 @@ const SettingsScreen = () => {
       const data = await response.json();
       console.log('Profile updated successfully:', data);
       setModalVisible(false);
-      setForm(initialFormState); // Reset form state
-      fetchProfile(doctorId); // Fetch updated profile data
+      setForm(initialFormState);
+      fetchProfile(doctorId!);
     } catch (error) {
       console.error('Error updating profile:', error);
     }
   };
 
-  const requestLocationPermission = async () => {
-    if (Platform.OS === 'android') {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      return status === 'granted';
-    } else {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      return status === 'granted';
-    }
+  const requestLocationPermission = async (): Promise<boolean> => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    return status === 'granted';
   };
 
   const fetchLocation = async () => {
@@ -166,18 +169,16 @@ const SettingsScreen = () => {
             <View style={styles.profile}>
               <View style={styles.profileImageContainer}>
                 <Image
-                  alt=""
                   source={{
                     uri: form.profileImage || 'https://via.placeholder.com/150',
                   }}
-                  style={styles.profileAvatar} />
+                  style={styles.profileAvatar}
+                />
                 <TouchableOpacity
                   style={styles.editIconContainer}
-                  onPress={() => setModalVisible(true)}>
-                  <FeatherIcon
-                    color="#fff"
-                    name="edit"
-                    size={16} />
+                  onPress={() => setModalVisible(true)}
+                >
+                  <FeatherIcon color="#fff" name="edit" size={16} />
                 </TouchableOpacity>
               </View>
               <View style={styles.profileBody}>
@@ -291,14 +292,17 @@ const SettingsScreen = () => {
               value={form.email}
               onChangeText={(text) => handleProfileChange('email', text)}
             />
-            <TouchableOpacity onPress={pickImage} style={styles.imageButton}>
-              <Text style={styles.buttonText}>Choose Profile Image</Text>
+            <TouchableOpacity style={styles.button} onPress={pickImage}>
+              <Text style={styles.buttonText}>Pick Profile Image</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
-              <Text style={styles.buttonText}>Update</Text>
+            <TouchableOpacity style={styles.button} onPress={updateProfile}>
+              <Text style={styles.buttonText}>Update Profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(!modalVisible)}>
-              <Text style={styles.buttonText}>Close</Text>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => setModalVisible(!modalVisible)}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -308,35 +312,37 @@ const SettingsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    elevation: 4,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
   content: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    padding: 16,
   },
   section: {
     marginBottom: 16,
     backgroundColor: '#fff',
     borderRadius: 8,
     elevation: 2,
-    padding: 16,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
+    padding: 16,
+  },
+  sectionBody: {
+    padding: 16,
+  },
+  rowWrapper: {
+    marginVertical: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  rowLabel: {
+    fontSize: 16,
+    color: '#333',
+  },
+  rowSpacer: {
+    flex: 1,
   },
   profile: {
     flexDirection: 'row',
@@ -344,117 +350,73 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     position: 'relative',
+    marginRight: 12,
   },
   profileAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderColor: '#bcbcbc',
-    borderWidth: 2,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   editIconContainer: {
     position: 'absolute',
-    right: -5,
-    bottom: -5,
-    backgroundColor: '#007bff',
-    borderRadius: 20,
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#000',
+    borderRadius: 12,
     padding: 4,
   },
   profileBody: {
-    marginLeft: 12,
+    flex: 1,
   },
   profileName: {
     fontSize: 18,
     fontWeight: 'bold',
   },
   profileHandle: {
-    color: '#666',
-  },
-  sectionBody: {
-    marginTop: 8,
-  },
-  rowWrapper: {
-    marginVertical: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  rowLabel: {
-    fontSize: 16,
-  },
-  rowValue: {
-    color: '#666',
-  },
-  rowSpacer: {
-    flex: 1,
+    fontSize: 14,
+    color: '#777',
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalView: {
-    width: '90%',
+    width: '80%',
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
   modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333', // Darker text color
+    marginBottom: 12,
   },
   input: {
     width: '100%',
-    padding: 10,
-    marginVertical: 8,
+    height: 40,
+    borderColor: 'gray',
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 5,
-    backgroundColor: '#f9f9f9', // Light background for inputs
+    marginBottom: 12,
+    paddingLeft: 8,
   },
-  imageButton: {
-    backgroundColor: '#007bff',
+  button: {
+    backgroundColor: '#007BFF',
     borderRadius: 5,
     padding: 10,
-    marginVertical: 8,
     alignItems: 'center',
-    width: '100%',
-  },
-  updateButton: {
-    backgroundColor: '#28a745',
-    borderRadius: 5,
-    padding: 10,
-    marginVertical: 8,
-    alignItems: 'center',
-    width: '100%',
-  },
-  closeButton: {
-    backgroundColor: '#6c757d',
-    borderRadius: 5,
-    padding: 10,
-    marginVertical: 8,
-    alignItems: 'center',
+    marginBottom: 12,
     width: '100%',
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    backgroundColor: '#f44336',
   },
 });
 
