@@ -22,7 +22,7 @@ exports.getAppointmentsByDoctor = async (req, res) => {
     const today = moment().startOf('day'); // Get today's date at the start of the day
     const appointments = await Appointment.find({
       doctorId,
-      status: 'booked',
+    status: 'confirmed',
       date: { $gte: today.toDate() } // Filter for dates that are today or in the future
     });
     res.status(200).json(appointments);
