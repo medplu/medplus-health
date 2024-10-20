@@ -1,5 +1,5 @@
 const express = require("express");
-const { startPayment, createPayment, getPayment,  handlePaymentWebhook } = require("../controllers/payment.controller");
+const { startPayment, createPayment, getPayment, handlePaymentWebhook, createSubaccount } = require("../controllers/payment.controller");
 
 const router = express.Router();
 
@@ -14,5 +14,8 @@ router.get("/payment-details", getPayment);
 
 // Webhook endpoint for Paystack notifications
 router.post('/webhook', handlePaymentWebhook);
+
+// Create a subaccount
+router.post('/create-subaccount', createSubaccount);
 
 module.exports = router;
