@@ -69,7 +69,7 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
   const fetchSubaccountCode = async () => {
     if (!userId) return; // Ensure userId is available
     try {
-      const response = await axios.get(`https://medplus-app.onrender.com/api/subaccount/${userId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
       if (response.data.status === 'Success') {
         const { subaccount_code } = response.data.data; // Destructure subaccount_code
         setSubaccountCode(subaccount_code); // Update state with the fetched subaccount code
@@ -110,7 +110,7 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
         console.log('Payment initialized:', paymentResponse.data);
 
         // Proceed with booking appointment after initializing payment
-        const appointmentResponse = await axios.post('https://medplus-app.onrender.com/api/appointments', {
+        const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', {
           doctorId: _id,
           userId: user.userId,
           patientName: `${user.firstName} ${user.lastName}`,
@@ -144,7 +144,7 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
       console.log('Payment successful:', response);
       console.log('Confirming appointment with appointmentId:', appointmentId);
 
-      await axios.put(`https://medplus-app.onrender.com/api/appointments/confirm/${appointmentId}`, {
+      await axios.put(`https://medplus-health.onrender.com/api/appointments/confirm/${appointmentId}`, {
         status: 'confirmed'
       });
 

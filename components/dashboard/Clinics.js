@@ -73,11 +73,9 @@ const Clinics = ({ searchQuery, onViewAll }) => {
           <Text style={styles.noImageText}>No Image</Text>
         )}
         <View style={styles.textContainer}>
-          <View style={styles.nameAddressContainer}>
-            <Text style={styles.clinicName}>{item.name}</Text>
-            <Text style={styles.clinicAddress}>{item.address}</Text>
-          </View>
-          <Text style={styles.clinicCategory}>{item.category}</Text>
+          <Text style={styles.clinicName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+          <Text style={styles.clinicAddress} numberOfLines={1} ellipsizeMode="tail">{item.address}</Text>
+          <Text style={styles.clinicCategory} numberOfLines={1} ellipsizeMode="tail">{item.category}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -121,21 +119,21 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     marginTop: 5,
-  },
-  nameAddressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    width: '100%',
   },
   clinicName: {
     fontWeight: 'bold',
     color: Colors.GRAY,
+    width: '100%',
   },
   clinicAddress: {
     color: Colors.GRAY,
+    width: '100%',
   },
   clinicCategory: {
     color: Colors.GRAY,
     marginTop: 5,
+    width: '100%',
   },
   noImageText: {
     textAlign: 'center',
