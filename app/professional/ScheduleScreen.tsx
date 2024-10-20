@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, Text, ActivityIndicator, Modal, TextInput, Button } from 'react-native';
 import { Agenda, AgendaEntry, AgendaSchedule } from 'react-native-calendars';
 import { Card, Avatar } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,6 +13,9 @@ const timeToString = (time: number): string => {
 const Schedule: React.FC = () => {
   const [items, setItems] = useState<AgendaSchedule>({});
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>(timeToString(Date.now()));
+  const [eventDetails, setEventDetails] = useState({ name: '', time: '', patientImage: '' });
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -52,6 +55,22 @@ const Schedule: React.FC = () => {
     fetchAppointments();
   }, []);
 
+  const handleAddEvent = () => {
+    const newItems = { ...items };
+    if (!newItems[selectedDate]) {
+      newItems[selectedDate] = [];
+    }
+    newItems[selectedDate].push({
+      name: eventDetails.name,
+      height: 100,
+      patientImage: eventDetails.patientImage,
+      time: eventDetails.time,
+    });
+    setItems(newItems);
+    setModalVisible(false);
+    setEventDetails({ name: '', time: '', patientImage: '' });
+  };
+
   const renderItem = (item: AgendaEntry) => {
     return (
       <TouchableOpacity style={{ marginRight: 10, marginTop: 17 }}>
@@ -89,7 +108,56 @@ const Schedule: React.FC = () => {
         loadItemsForMonth={() => {}}
         selected={new Date().toISOString().split('T')[0]}
         renderItem={renderItem}
+        onDayPress={(day) => setSelectedDate(day.dateString)}
       />
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          bottom: 30,
+          right: 30,
+          backgroundColor: '#6200ee',
+          borderRadius: 50,
+          width: 60,
+          height: 60,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={{ color: '#fff', fontSize: 30 }}>+</Text>
+      </TouchableOpacity>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(!modalVisible)}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+          <View style={{ width: '80%', backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12 }}>Add Event</Text>
+            <TextInput
+              style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 12, paddingLeft: 8 }}
+              placeholder="Event Name"
+              value={eventDetails.name}
+              onChangeText={(text) => setEventDetails({ ...eventDetails, name: text })}
+            />
+            <TextInput
+              style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 12, paddingLeft: 8 }}
+              placeholder="Event Time"
+              value={eventDetails.time}
+              onChangeText={(text) => setEventDetails({ ...eventDetails, time: text })}
+            />
+            <TextInput
+              style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 12, paddingLeft: 8 }}
+              placeholder="Patient Image URL"
+              value={eventDetails.patientImage}
+              onChangeText={(text) => setEventDetails({ ...eventDetails, patientImage: text })}
+            />
+            <Button title="Add Event" onPress={handleAddEvent} />
+            <Button title="Cancel" color="red" onPress={() => setModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
