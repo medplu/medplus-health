@@ -13,15 +13,20 @@ exports.getProfessionals = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-
 // Fetch a single professional by userId (user field)
 exports.getProfessionalById = async (req, res) => {
     try {
         const { doctorId } = req.params;
 
-        // Convert doctorId to a MongoDB ObjectId if necessary
+        // Check if doctorId is a valid ObjectId
         const mongoose = require('mongoose');
-        const userObjectId = mongoose.Types.ObjectId(doctorId);
+        let userObjectId;
+
+        if (mongoose.Types.ObjectId.isValid(doctorId)) {
+            userObjectId = mongoose.Types.ObjectId(doctorId);
+        } else {
+            return res.status(400).json({ error: 'Invalid ID format' });
+        }
 
         // Find the professional using the user field
         const professional = await Professional.findOne({ user: userObjectId });
@@ -38,6 +43,7 @@ exports.getProfessionalById = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 // Update professional profile
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params; // The user ID to match the `user` field in the Professional document.
