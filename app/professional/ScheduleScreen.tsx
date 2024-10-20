@@ -25,7 +25,7 @@ const Schedule: React.FC = () => {
           throw new Error('Doctor ID not found in AsyncStorage');
         }
 
-        const response = await fetch(`https://medplus-app.onrender.com/api/appointments/doctor/${doctorId}`);
+        const response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${doctorId}`);
         const data = await response.json();
 
         const newItems: AgendaSchedule = {};
