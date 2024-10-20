@@ -13,7 +13,7 @@ import { AirbnbRating } from 'react-native-ratings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RouteParams = {
-  doctorId: string;
+  doctor: Doctor;
 };
 
 type Doctor = {
@@ -37,9 +37,8 @@ type Review = {
 const DoctorProfile: React.FC = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
-  const { doctorId } = route.params;
+  const { doctor } = route.params;
   const [loading, setIsLoading] = useState(true);
-  const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [newReview, setNewReview] = useState<string>('');
@@ -48,22 +47,9 @@ const DoctorProfile: React.FC = () => {
   const [showAllReviews, setShowAllReviews] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchDoctorDetails();
     fetchReviews();
-  }, [doctorId]);
-
-  const fetchDoctorDetails = async () => {
-    try {
-      const response = await axios.get(`https://medplus-app.onrender.com/api/professionals/${doctorId}`);
-      const doctorData = response.data;
-      setDoctor(doctorData);
-      await AsyncStorage.setItem('doctorDetails', JSON.stringify(doctorData)); 
-    } catch (err) {
-      setError('Error fetching doctor details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setIsLoading(false);
+  }, []);
 
   const fetchReviews = async () => {
     const dummyReviews = [
@@ -115,7 +101,7 @@ const DoctorProfile: React.FC = () => {
                 <Text style={styles.readMoreText}>{showFullBio ? 'Read Less' : 'Read More'}</Text>
               </TouchableOpacity>
             </View>
-            <BookingSection doctorId={doctorId} />
+            <BookingSection doctorId={item._id} />
             <DoctorServices />
             <HorizontalLine />
             <Text style={styles.sectionTitle}>Reviews</Text>

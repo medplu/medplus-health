@@ -115,26 +115,62 @@ const SettingsScreen: React.FC = () => {
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (event: any) => {
+        if (event.target.files && event.target.files[0]) {
+          handleProfileChange('profileImage', event.target.files[0]);
+        }
+      };
+      input.click();
+    } else {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
 
-    if (!result.canceled) {
-      handleProfileChange('profileImage', result.assets[0].uri);
+      if (!result.canceled) {
+        handleProfileChange('profileImage', result.assets[0].uri);
+      }
     }
   };
 
   const updateProfile = async () => {
     try {
+      const formData = new FormData();
+      formData.append('firstName', form.firstName);
+      formData.append('lastName', form.lastName);
+      formData.append('email', form.email);
+      formData.append('emailNotifications', JSON.stringify(form.emailNotifications));
+      formData.append('pushNotifications', JSON.stringify(form.pushNotifications));
+      formData.append('location', JSON.stringify(form.location));
+      formData.append('consultationFee', JSON.stringify(form.consultationFee));
+      formData.append('availability', JSON.stringify(form.availability));
+
+      if (form.profileImage) {
+        if (typeof form.profileImage === 'string') {
+          const uriParts = form.profileImage.split('.');
+          const fileType = uriParts[uriParts.length - 1];
+          formData.append('profileImage', {
+            uri: form.profileImage,
+            name: `photo.${fileType}`,
+            type: `image/${fileType}`,
+          } as any); // TypeScript workaround for FormData
+        } else {
+          formData.append('profileImage', form.profileImage);
+        }
+      }
+
       const response = await fetch(`https://medplus-app.onrender.com/api/professionals/update-profile/${doctorId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
-        body: JSON.stringify(form),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -206,7 +242,7 @@ const SettingsScreen: React.FC = () => {
               <View style={styles.profileImageContainer}>
                 <Image
                   source={{
-                    uri: form.profileImage || 'https://via.placeholder.com/150',
+                    uri: typeof form.profileImage === 'string' ? form.profileImage : URL.createObjectURL(form.profileImage),
                   }}
                   style={styles.profileAvatar}
                 />
