@@ -8,14 +8,14 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { checkUserExists, loginUser, registerUser } from '@/Services/auth';
-
+import GlobalApi from '../../Services/GlobalApi';
+import SignInWithOAuth from '../../components/SignInWithOAuth';
 
 const { width } = Dimensions.get('window');
 
@@ -31,10 +31,10 @@ const LoginScreen: React.FC = () => {
       setErrorMessage('Please enter both email and password.');
     } else {
       try {
-        const response = await loginUser(email, password);
+        const response = await GlobalApi.loginUser(email, password);
         setErrorMessage(null);
 
-        const { token, userId, userType, doctorId, firstName, lastName, email: userEmail } = response;
+        const { token, userId, userType, doctorId, firstName, lastName, email: userEmail } = response.data;
         await AsyncStorage.setItem('authToken', token);
         await AsyncStorage.setItem('userId', userId);
         await AsyncStorage.setItem('userType', userType);
@@ -50,57 +50,6 @@ const LoginScreen: React.FC = () => {
         console.error('Error during login:', error);
         setErrorMessage('Invalid email or password. Please try again.');
       }
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      const { email: googleEmail, givenName, familyName, photo } = userInfo.user;
-
-      // Check if user already exists in your database
-      const response = await checkUserExists(googleEmail);
-      
-      if (response.exists) {
-        // User exists
-        const { token, userId, userType, doctorId, firstName, lastName } = response.user;
-        await AsyncStorage.setItem('authToken', token);
-        await AsyncStorage.setItem('userId', userId);
-        await AsyncStorage.setItem('userType', userType);
-        await AsyncStorage.setItem('firstName', firstName);
-        await AsyncStorage.setItem('lastName', lastName);
-        if (doctorId) await AsyncStorage.setItem('doctorId', doctorId);
-
-        const route = userType === 'professional' ? '/professional/tabs' : userType === 'client' ? '/client/tabs' : '/student/tabs';
-        router.push(route as const);
-      } else {
-        // User does not exist, register them in your database
-        const registerResponse = await registerUser({
-          firstName: givenName,
-          lastName: familyName,
-          email: googleEmail,
-          profileImage: photo,
-        });
-
-        if (registerResponse) {
-          const { token, userId, userType, doctorId, firstName, lastName } = registerResponse;
-          await AsyncStorage.setItem('authToken', token);
-          await AsyncStorage.setItem('userId', userId);
-          await AsyncStorage.setItem('userType', userType);
-          await AsyncStorage.setItem('firstName', firstName);
-          await AsyncStorage.setItem('lastName', lastName);
-          if (doctorId) await AsyncStorage.setItem('doctorId', doctorId);
-
-          const route = userType === 'professional' ? '/professional/tabs' : userType === 'client' ? '/client/tabs' : '/student/tabs';
-          router.push(route as const);
-        } else {
-          setErrorMessage('Failed to register user. Please try again.');
-        }
-      }
-    } catch (error) {
-      console.error('Google Sign-In Error:', error);
-      setErrorMessage('Failed to sign in with Google. Please try again.');
     }
   };
 
@@ -158,9 +107,7 @@ const LoginScreen: React.FC = () => {
           </TouchableOpacity>
 
           {/* Google Login */}
-          <TouchableOpacity onPress={handleGoogleSignIn} style={styles.googleButton}>
-            <Text style={styles.googleButtonText}>Sign in with Google</Text>
-          </TouchableOpacity>
+          <SignInWithOAuth setErrorMessage={setErrorMessage} router={router} />
 
           <View style={styles.signupContainer}>
             <Text style={styles.signupText}>Don’t have an account? </Text>
@@ -254,14 +201,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   googleButton: {
-    backgroundColor: '#4285F4',
-    paddingVertical: 15,
-    borderRadius: 8,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    backgroundColor: 'white',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  googleIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
   },
   googleButtonText: {
-    color: '#fff',
+    color: '#333',
     fontSize: 16,
     fontWeight: '600',
   },
