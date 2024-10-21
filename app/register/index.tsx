@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
-import axios from 'axios';
+import { registerUser, verifyEmail } from '@/Services/auth';
+
 
 const { width } = Dimensions.get('window');
 
@@ -72,7 +73,7 @@ const SignupScreen: React.FC = () => {
     }
 
     try {
-      const response = await axios.post('https://medplus-app.onrender.com/api/register', {
+      await registerUser({
         firstName,
         lastName,
         email,
@@ -86,24 +87,20 @@ const SignupScreen: React.FC = () => {
       setSuccessMessage('Signup successful! Please check your email for verification.');
       setIsVerifying(true);
     } catch (error) {
-      const serverError = error.response?.data?.message || 'Signup failed. Please try again.';
-      setErrorMessage(serverError);
+      setErrorMessage(error);
     }
   };
 
   const handleVerificationPress = async () => {
     try {
-      const response = await axios.post('https://medplus-app.onrender.com/api/verify-email', {
-        email,
-        verificationCode,
-      });
+      await verifyEmail(email, verificationCode);
 
       setErrorMessage(null);
       setSuccessMessage('Verification successful! You can now log in.');
       setIsVerifying(false);
       router.push('/login'); // Route to login page after successful verification
     } catch (error) {
-      setErrorMessage('Verification failed. Please try again.');
+      setErrorMessage(error);
     }
   };
 
