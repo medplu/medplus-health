@@ -13,9 +13,6 @@ const createPharmacy = async (req, res) => {
             city,
             state,
             zipCode,
-            latitude,
-            longitude,
-            inventory,
             operatingHours,
             services,
             licenseNumber,
@@ -34,7 +31,7 @@ const createPharmacy = async (req, res) => {
             return res.status(403).json({ error: 'Only pharmacists can create a pharmacy' });
         }
 
-        // Create a new pharmacy
+        // Create a new pharmacy without location and inventory
         const pharmacy = new Pharmacy({
             name,
             contactNumber,
@@ -45,12 +42,7 @@ const createPharmacy = async (req, res) => {
                 state,
                 zipCode
             },
-            location: {
-                latitude,
-                longitude
-            },
             pharmacists: [professional._id],  // Link the pharmacist to the pharmacy
-            inventory,
             operatingHours,
             services,
             licenseNumber
@@ -73,6 +65,60 @@ const createPharmacy = async (req, res) => {
     }
 };
 
+// Controller to update the location of a pharmacy
+const updatePharmacyLocation = async (req, res) => {
+    try {
+        const { latitude, longitude } = req.body;
+
+        // Validate required fields
+        if (!latitude || !longitude) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const pharmacy = await Pharmacy.findByIdAndUpdate(
+            req.params.id,
+            { location: { latitude, longitude } },
+            { new: true, runValidators: true }
+        );
+
+        if (!pharmacy) {
+            return res.status(404).json({ message: 'Pharmacy not found' });
+        }
+
+        res.status(200).json(pharmacy);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+// Controller to update the inventory of a pharmacy
+const updatePharmacyInventory = async (req, res) => {
+    try {
+        const { inventory } = req.body;
+
+        // Validate required fields
+        if (!inventory) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const pharmacy = await Pharmacy.findByIdAndUpdate(
+            req.params.id,
+            { inventory },
+            { new: true, runValidators: true }
+        );
+
+        if (!pharmacy) {
+            return res.status(404).json({ message: 'Pharmacy not found' });
+        }
+
+        res.status(200).json(pharmacy);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
 module.exports = {
-    createPharmacy
+    createPharmacy,
+    updatePharmacyLocation,
+    updatePharmacyInventory
 };
