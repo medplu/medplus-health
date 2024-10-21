@@ -25,39 +25,44 @@ const professionalSchema = new Schema({
         ref: 'User',  // Reference to the base User model
         required: true
     },
+    profession: {  // Add profession field to identify pharmacist, doctor, etc.
+        type: String,
+        required: true,
+        enum: ['doctor', 'pharmacist', 'nurse', 'other'],  // Restrict to valid professions
+    },
     category: {
         type: String,
     },
     yearsOfExperience: {
         type: Number,
     },
-    certifications: [String], // Array of certifications (optional)
+    certifications: [String],
     availability: {
         type: Boolean,
-        default: false // Default to not available
+        default: false
     },
     slots: [
         {
-            day: { type: String, required: false },  // Day of the week (e.g., 'Monday')
-            time: { type: String, required: false }, // Time range (e.g., '10:00 AM - 11:00 AM')
-            isBooked: { type: Boolean, default: false } // Whether the slot is booked or not
+            day: { type: String, required: false },  
+            time: { type: String, required: false }, 
+            isBooked: { type: Boolean, default: false }
         }
     ],
     bio: {
         type: String,
-        required: false // Bio is optional
+        required: false
     },
     profileImage: {
         type: String,
-        required: false // Profile image URL is optional
+        required: false
     },
     emailNotifications: {
         type: Boolean,
-        default: false // Default to not receiving email notifications
+        default: false
     },
     pushNotifications: {
         type: Boolean,
-        default: false // Default to not receiving push notifications
+        default: false
     },
     location: {
         latitude: {

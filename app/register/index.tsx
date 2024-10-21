@@ -25,7 +25,7 @@ const SignupScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | null>(null);
   const [userType, setUserType] = useState<'client' | 'professional' | 'student' | null>(null);
-  const [category, setCategory] = useState('');
+  const [profession, setProfession] = useState('');  // Changed from category to profession
   const [verificationCode, setVerificationCode] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -66,8 +66,8 @@ const SignupScreen: React.FC = () => {
       setErrorMessage('Passwords do not match.');
       return;
     }
-    if (userType === 'professional' && category === '') {
-      setErrorMessage('Please enter a category.');
+    if (userType === 'professional' && profession === '') {  // Check for profession instead of category
+      setErrorMessage('Please select a profession.');
       return;
     }
 
@@ -79,14 +79,15 @@ const SignupScreen: React.FC = () => {
         password,
         gender,
         userType,
-        category: userType === 'professional' ? category : undefined,
+        profession: userType === 'professional' ? profession : undefined,  // Send profession only if professional
       });
 
       setErrorMessage(null);
       setSuccessMessage('Signup successful! Please check your email for verification.');
       setIsVerifying(true);
     } catch (error) {
-      setErrorMessage('Signup failed. Please try again.');
+      const serverError = error.response?.data?.message || 'Signup failed. Please try again.';
+      setErrorMessage(serverError);
     }
   };
 
@@ -208,14 +209,16 @@ const SignupScreen: React.FC = () => {
 
               {userType === 'professional' && (
                 <Picker
-                  selectedValue={category}
+                  selectedValue={profession}
                   style={styles.input}
-                  onValueChange={(itemValue) => setCategory(itemValue)}
+                  onValueChange={(itemValue) => setProfession(itemValue)}  // Update to profession
                 >
-                  <Picker.Item label="Select Category" value="" />
+                  <Picker.Item label="Select Profession" value="" />
                   <Picker.Item label="Doctor" value="doctor" />
                   <Picker.Item label="Dentist" value="dentist" />
                   <Picker.Item label="Pharmacist" value="pharmacist" />
+                  <Picker.Item label="Nurse" value="nurse" />
+                  <Picker.Item label="Other" value="other" />
                 </Picker>
               )}
 
@@ -268,125 +271,107 @@ const SignupScreen: React.FC = () => {
   );
 };
 
-export default SignupScreen;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
   },
   formContainer: {
-    width: '100%',
-    maxWidth: 500,
-    padding: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 3,
+    width: width * 0.8,
+    alignSelf: 'center',
   },
   heading: {
-    fontSize: 26,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 20,
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   subHeading: {
     fontSize: 16,
-    textAlign: 'center',
     marginBottom: 20,
-    color: '#888',
   },
   input: {
-    height: 50,
-    borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    padding: 10,
     marginBottom: 15,
   },
   genderContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 15,
   },
   genderButton: {
-    width: '30%',
-    height: 40,
-    justifyContent: 'center',
+    flex: 1,
     alignItems: 'center',
-    borderColor: '#ccc',
+    padding: 10,
     borderWidth: 1,
-    borderRadius: 8,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    marginHorizontal: 5,
   },
   selectedGender: {
-    backgroundColor: '#007bff',
-    borderColor: '#007bff',
+    backgroundColor: '#cce5ff',
   },
   genderText: {
-    color: '#333',
+    fontSize: 16,
   },
   accountTypeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 15,
   },
   accountTypeButton: {
-    width: '30%',
-    height: 40,
-    justifyContent: 'center',
+    flex: 1,
     alignItems: 'center',
-    borderColor: '#ccc',
+    padding: 10,
     borderWidth: 1,
-    borderRadius: 8,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    marginHorizontal: 5,
   },
   selectedAccountType: {
-    backgroundColor: '#007bff',
-    borderColor: '#007bff',
+    backgroundColor: '#cce5ff',
   },
   accountTypeText: {
-    color: '#333',
-  },
-  signupButton: {
-    backgroundColor: '#007bff',
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  signupButtonText: {
-    color: '#fff',
-    fontSize: 18,
-  },
-  signupContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 15,
-  },
-  signupText: {
-    color: '#888',
-  },
-  signupLink: {
-    color: '#007bff',
-    fontWeight: '600',
+    fontSize: 16,
   },
   errorMessage: {
     color: 'red',
-    textAlign: 'center',
     marginBottom: 10,
   },
   successMessage: {
     color: 'green',
-    textAlign: 'center',
     marginBottom: 10,
   },
+  signupButton: {
+    backgroundColor: '#007BFF',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  signupButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  signupText: {
+    fontSize: 14,
+  },
+  signupLink: {
+    fontSize: 14,
+    color: '#007BFF',
+  },
 });
+
+export default SignupScreen;
