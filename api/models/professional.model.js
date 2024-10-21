@@ -37,10 +37,6 @@ const professionalSchema = new Schema({
         type: Number,
     },
     certifications: [String],
-    availability: {
-        type: Boolean,
-        default: false
-    },
     slots: [
         {
             day: { type: String, required: false },  
@@ -75,6 +71,11 @@ const professionalSchema = new Schema({
         }
     }
 }, { timestamps: true });
+
+// Virtual field to determine availability based on slots
+professionalSchema.virtual('isAvailable').get(function() {
+    return this.slots.some(slot => !slot.isBooked);
+});
 
 // Create and export the 'Professional' model
 const Professional = mongoose.model('Professional', professionalSchema);
