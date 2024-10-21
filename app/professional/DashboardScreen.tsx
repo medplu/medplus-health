@@ -63,7 +63,7 @@ const DashboardScreen: React.FC = () => {
   };
 
   // Connect to WebSocket server
-  const socket: Socket = io('https://medplus-app.onrender.com');
+  const socket: Socket = io('https://medplus-health.onrender.com');
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -74,7 +74,7 @@ const DashboardScreen: React.FC = () => {
         }
 
         // Fetch upcoming appointments
-        const upcomingResponse = await fetch(`https://medplus-app.onrender.com/api/appointments/doctor/${doctorId}`);
+        const upcomingResponse = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${doctorId}`);
         const upcomingData: Appointment[] = await upcomingResponse.json();
 
         // Fetch all appointments
@@ -83,7 +83,7 @@ const DashboardScreen: React.FC = () => {
 
         // Filter for upcoming appointments
         const upcomingAppointments = upcomingData.filter(appointment => 
-          moment(appointment.date).isSameOrAfter(moment(), 'day') && appointment.status === 'booked'
+          moment(appointment.date).isSameOrAfter(moment(), 'day') && appointment.status === 'confirmed'
         );
 
         // Filter for recent (overdue) appointments
