@@ -9,6 +9,7 @@ import { CircularProgress } from 'react-native-svg-circular-progress'; // Import
 import AddClinicForm from '../../components/AddClinicForm'; // Import AddClinicForm component
 import Colors from '@/components/Shared/Colors';
 import CreatePharmacy from '@/components/CreatePharmacy';
+import SetAvailabilityForm from '@/components/SetAvailabilityForm'; // Import SetAvailabilityForm component
 
 interface Appointment {
   _id: string;
@@ -35,16 +36,31 @@ const DashboardScreen: React.FC = () => {
   const progress = calculateProgress(completedAppointments, totalAppointments);
   const [showAddClinicForm, setShowAddClinicForm] = useState(false);
   const [showCreatePharmacyForm, setShowCreatePharmacyForm] = useState(false);
+  const [showSetAvailabilityForm, setShowSetAvailabilityForm] = useState(false);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfessionalId = async () => {
       const id = await AsyncStorage.getItem('professionalId');
       setProfessionalId(id);
+      checkAvailability(id);
     };
 
     fetchProfessionalId();
   }, []);
+
+  const checkAvailability = async (id: string | null) => {
+    if (!id) return;
+    try {
+      const response = await fetch(`https://medplus-health.onrender.com/api/professionals/${id}`);
+      const professional = await response.json();
+      if (!professional.slots || professional.slots.length === 0) {
+        setShowSetAvailabilityForm(true);
+      }
+    } catch (error) {
+      console.error('Error checking availability:', error);
+    }
+  };
 
   const handleAddPharmacyClick = () => {
     setShowCreatePharmacyForm(true);
@@ -60,6 +76,10 @@ const DashboardScreen: React.FC = () => {
 
   const handleCloseClinicForm = () => {
     setShowAddClinicForm(false);
+  };
+
+  const handleCloseAvailabilityForm = () => {
+    setShowSetAvailabilityForm(false);
   };
 
   // Connect to WebSocket server
@@ -199,6 +219,12 @@ const DashboardScreen: React.FC = () => {
           </View>
           <Text style={styles.details}>Add Pharmacy</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.card} onPress={() => setShowSetAvailabilityForm(true)}>
+          <View style={styles.iconContainer}>
+            <MaterialIcons name="schedule" size={40} color={Colors.primary} />
+          </View>
+          <Text style={styles.details}>Set Availability</Text>
+        </TouchableOpacity>
         <View style={styles.card}>
           <View style={styles.iconContainer}>
             <MaterialIcons name="folder" size={40} color={Colors.primary} />
@@ -326,6 +352,23 @@ const DashboardScreen: React.FC = () => {
           <View style={styles.modalContainer}>
             <AddClinicForm onClose={handleCloseClinicForm} />
             <TouchableOpacity style={styles.closeButton} onPress={handleCloseClinicForm}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal for Set Availability Form */}
+      <Modal
+        visible={showSetAvailabilityForm}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={handleCloseAvailabilityForm}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <SetAvailabilityForm professionalId={professionalId} onClose={handleCloseAvailabilityForm} />
+            <TouchableOpacity style={styles.closeButton} onPress={handleCloseAvailabilityForm}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
