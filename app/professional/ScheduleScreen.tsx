@@ -15,35 +15,38 @@ const Schedule: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(timeToString(Date.now()));
-  const [eventDetails, setEventDetails] = useState({ name: '', time: '', patientImage: '' });
+  const [eventDetails, setEventDetails] = useState({ time: '' });
 
   useEffect(() => {
-    const fetchAppointments = async () => {
+    const fetchData = async () => {
       try {
         const doctorId = await AsyncStorage.getItem('doctorId');
         if (!doctorId) {
           throw new Error('Doctor ID not found in AsyncStorage');
         }
 
-        const response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${doctorId}`);
-        const data = await response.json();
+        // Fetch appointments for the doctor
+        const appointmentsResponse = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${doctorId}`);
+        const appointmentsData = await appointmentsResponse.json();
 
         const newItems: AgendaSchedule = {};
 
-        data.forEach((appointment: any) => {
-          const strTime = moment(appointment.date).format('YYYY-MM-DD');
+        // Process appointments data
+        appointmentsData.forEach((appointment: any) => {
+          const strTime = moment(appointment.date).format('YYYY-MM-DD');  // Correct date format
           if (!newItems[strTime]) {
             newItems[strTime] = [];
           }
           newItems[strTime].push({
-            name: appointment.patientName,
-            height: 100,
-            patientImage: appointment.patientImage,
-            time: appointment.time,
+            name: `Appointment with ${appointment.patientName}`,
+            type: 'appointment',
+            height: 120,
+            time: appointment.time,  // Appointment time
+            patientImage: appointment.patientImage || 'https://via.placeholder.com/40',
           });
         });
 
-        setItems(newItems);
+        setItems(newItems);  // Update items in agenda
       } catch (error) {
         console.error('Error fetching appointments:', error);
       } finally {
@@ -51,29 +54,57 @@ const Schedule: React.FC = () => {
       }
     };
 
-    fetchAppointments();
+    fetchData();
   }, []);
 
-  const handleAddEvent = () => {
-    const newItems = { ...items };
-    if (!newItems[selectedDate]) {
-      newItems[selectedDate] = [];
+  const handleAddAvailability = async () => {
+    try {
+      const doctorId = await AsyncStorage.getItem('doctorId');
+      if (!doctorId) {
+        throw new Error('Doctor ID not found in AsyncStorage');
+      }
+
+      const availabilityDetails = {
+        date: selectedDate,
+        time: eventDetails.time,
+        doctorId: doctorId,
+      };
+
+      const response = await fetch('https://medplus-health.onrender.com/api/professionals/update-availability/' + doctorId, {
+        method: 'PUT',  // Change to PUT for updating availability
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(availabilityDetails),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create availability');
+      }
+
+      const newItems = { ...items };
+      if (!newItems[selectedDate]) {
+        newItems[selectedDate] = [];
+      }
+      newItems[selectedDate].push({
+        name: 'Available Slot',
+        height: 100,
+        type: 'availability',
+        time: eventDetails.time,
+      });
+
+      setItems(newItems);
+      setModalVisible(false);
+      setEventDetails({ time: '' });
+    } catch (error) {
+      console.error('Error creating availability:', error);
     }
-    newItems[selectedDate].push({
-      name: eventDetails.name,
-      height: 100,
-      patientImage: eventDetails.patientImage,
-      time: eventDetails.time,
-    });
-    setItems(newItems);
-    setModalVisible(false);
-    setEventDetails({ name: '', time: '', patientImage: '' });
   };
 
   const renderItem = useCallback(
     (item: AgendaEntry) => (
       <TouchableOpacity style={{ marginRight: 10, marginTop: 17 }}>
-        <Card>
+        <Card style={{ backgroundColor: item.type === 'appointment' ? '#f8d7da' : '#d4edda' }}>
           <Card.Content>
             <View
               style={{
@@ -83,7 +114,9 @@ const Schedule: React.FC = () => {
               }}
             >
               <Text>{item.name}</Text>
-              <Avatar.Image source={{ uri: item.patientImage || 'https://via.placeholder.com/40' }} size={40} />
+              {item.type === 'appointment' && (
+                <Avatar.Image source={{ uri: item.patientImage || 'https://via.placeholder.com/40' }} size={40} />
+              )}
             </View>
             <Text>{item.time}</Text>
           </Card.Content>
@@ -134,26 +167,14 @@ const Schedule: React.FC = () => {
       >
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
           <View style={{ width: '80%', backgroundColor: 'white', borderRadius: 10, padding: 20 }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12 }}>Add Event</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12 }}>Add Availability</Text>
             <TextInput
               style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 12, paddingLeft: 8 }}
-              placeholder="Event Name"
-              value={eventDetails.name}
-              onChangeText={(text) => setEventDetails({ ...eventDetails, name: text })}
-            />
-            <TextInput
-              style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 12, paddingLeft: 8 }}
-              placeholder="Event Time"
+              placeholder="Availability Time"
               value={eventDetails.time}
-              onChangeText={(text) => setEventDetails({ ...eventDetails, time: text })}
+              onChangeText={(text) => setEventDetails({ time: text })}
             />
-            <TextInput
-              style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 12, paddingLeft: 8 }}
-              placeholder="Patient Image URL"
-              value={eventDetails.patientImage}
-              onChangeText={(text) => setEventDetails({ ...eventDetails, patientImage: text })}
-            />
-            <Button title="Add Event" onPress={handleAddEvent} />
+            <Button title="Add Availability" onPress={handleAddAvailability} />
             <Button title="Cancel" color="red" onPress={() => setModalVisible(false)} />
           </View>
         </View>
