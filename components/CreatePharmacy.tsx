@@ -21,15 +21,12 @@ const CreatePharmacy: React.FC<CreatePharmacyProps> = ({ professionalId }) => {
   const [city, setCity] = useState<string>('');
   const [state, setState] = useState<string>('');
   const [zipCode, setZipCode] = useState<string>('');
-  const [latitude, setLatitude] = useState<string>('');
-  const [longitude, setLongitude] = useState<string>('');
-  const [inventory, setInventory] = useState<string>('');
   const [operatingHours, setOperatingHours] = useState<string>('');
   const [services, setServices] = useState<string>('');
   const [licenseNumber, setLicenseNumber] = useState<string>('');
 
   const handleSubmit = async () => {
-    if (!name || !contactNumber || !email || !street || !city || !state || !zipCode || !latitude || !longitude || !inventory || !operatingHours || !services || !licenseNumber) {
+    if (!name || !contactNumber || !email || !street || !city || !state || !zipCode || !operatingHours || !services || !licenseNumber) {
       Alert.alert('Error', 'Please fill in all fields.');
       return;
     }
@@ -43,9 +40,6 @@ const CreatePharmacy: React.FC<CreatePharmacyProps> = ({ professionalId }) => {
         city,
         state,
         zipCode,
-        latitude,
-        longitude,
-        inventory,
         operatingHours,
         services,
         licenseNumber,
@@ -107,26 +101,6 @@ const CreatePharmacy: React.FC<CreatePharmacyProps> = ({ professionalId }) => {
         value={zipCode}
         onChangeText={setZipCode}
         keyboardType="numeric"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Latitude"
-        value={latitude}
-        onChangeText={setLatitude}
-        keyboardType="decimal-pad"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Longitude"
-        value={longitude}
-        onChangeText={setLongitude}
-        keyboardType="decimal-pad"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Inventory"
-        value={inventory}
-        onChangeText={setInventory}
       />
       <TextInput
         style={styles.input}

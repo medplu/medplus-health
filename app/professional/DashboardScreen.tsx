@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, ActivityIndicator, Button, Alert, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { StyleSheet, Text, View, Image, ActivityIndicator, Button, Alert, ScrollView, TouchableOpacity, FlatList, Modal } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import moment from 'moment'; // To handle date formatting
 import { MaterialIcons } from '@expo/vector-icons'; // Importing icons from Material Icons
@@ -8,6 +8,7 @@ import PushNotification from 'react-native-push-notification'; // Import react-n
 import { CircularProgress } from 'react-native-svg-circular-progress'; // Import CircularProgress
 import AddClinicForm from '../../components/AddClinicForm'; // Import AddClinicForm component
 import Colors from '@/components/Shared/Colors';
+import CreatePharmacy from '@/components/CreatePharmacy';
 
 interface Appointment {
   _id: string;
@@ -33,12 +34,31 @@ const DashboardScreen: React.FC = () => {
   const completedAppointments = recentAppointments.length;
   const progress = calculateProgress(completedAppointments, totalAppointments);
   const [showAddClinicForm, setShowAddClinicForm] = useState(false);
+  const [showCreatePharmacyForm, setShowCreatePharmacyForm] = useState(false);
+  const [professionalId, setProfessionalId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfessionalId = async () => {
+      const id = await AsyncStorage.getItem('professionalId');
+      setProfessionalId(id);
+    };
+
+    fetchProfessionalId();
+  }, []);
+
+  const handleAddPharmacyClick = () => {
+    setShowCreatePharmacyForm(true);
+  };
+
+  const handleClosePharmacyForm = () => {
+    setShowCreatePharmacyForm(false);
+  };
 
   const handleAddClinicClick = () => {
     setShowAddClinicForm(true);
   };
 
-  const handleCloseForm = () => {
+  const handleCloseClinicForm = () => {
     setShowAddClinicForm(false);
   };
 
@@ -58,7 +78,7 @@ const DashboardScreen: React.FC = () => {
         const upcomingData: Appointment[] = await upcomingResponse.json();
 
         // Fetch all appointments
-        const allResponse = await fetch(`https://medplus-app.onrender.com/api/appointments/doctor/${doctorId}/all`);
+        const allResponse = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${doctorId}/all`);
         const allData: Appointment[] = await allResponse.json();
 
         // Filter for upcoming appointments
@@ -166,30 +186,26 @@ const DashboardScreen: React.FC = () => {
         showsHorizontalScrollIndicator={false}
       />
 
-      {showAddClinicForm ? (
-        <AddClinicForm onClose={handleCloseForm} />
-      ) : (
-        <View style={styles.cardContainer}>
-          <TouchableOpacity style={styles.card} onPress={handleAddClinicClick}>
-            <View style={styles.iconContainer}>
-              <MaterialIcons name="add" size={40} color={Colors.primary} />
-            </View>
-            <Text style={styles.details}>Add Clinic</Text>
-          </TouchableOpacity>
-          <View style={styles.card}>
-            <View style={styles.iconContainer}>
-              <MaterialIcons name="local-pharmacy" size={40} color={Colors.primary} />
-            </View>
-            <Text style={styles.details}>Add Pharmacy</Text>
+      <View style={styles.cardContainer}>
+        <TouchableOpacity style={styles.card} onPress={handleAddClinicClick}>
+          <View style={styles.iconContainer}>
+            <MaterialIcons name="add" size={40} color={Colors.primary} />
           </View>
-          <View style={styles.card}>
-            <View style={styles.iconContainer}>
-              <MaterialIcons name="folder" size={40} color={Colors.primary} />
-            </View>
-            <Text style={styles.details}>Patient Records</Text>
+          <Text style={styles.details}>Add Clinic</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.card} onPress={handleAddPharmacyClick}>
+          <View style={styles.iconContainer}>
+            <MaterialIcons name="local-pharmacy" size={40} color={Colors.primary} />
           </View>
+          <Text style={styles.details}>Add Pharmacy</Text>
+        </TouchableOpacity>
+        <View style={styles.card}>
+          <View style={styles.iconContainer}>
+            <MaterialIcons name="folder" size={40} color={Colors.primary} />
+          </View>
+          <Text style={styles.details}>Patient Records</Text>
         </View>
-      )}
+      </View>
 
       {/* Overview section */}
       <View style={styles.cardContainer}>
@@ -281,6 +297,40 @@ const DashboardScreen: React.FC = () => {
           )}
         </>
       )}
+
+      {/* Modal for Create Pharmacy Form */}
+      <Modal
+        visible={showCreatePharmacyForm}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={handleClosePharmacyForm}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <CreatePharmacy professionalId={professionalId} />
+            <TouchableOpacity style={styles.closeButton} onPress={handleClosePharmacyForm}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal for Add Clinic Form */}
+      <Modal
+        visible={showAddClinicForm}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={handleCloseClinicForm}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <AddClinicForm onClose={handleCloseClinicForm} />
+            <TouchableOpacity style={styles.closeButton} onPress={handleCloseClinicForm}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -403,6 +453,30 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 16,
     marginTop: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '90%', // Maximize horizontal space
+    height: '70%', // Do not cover the entire height
+    backgroundColor: Colors.white,
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: Colors.primary,
+    padding: 10,
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: Colors.white,
+    fontWeight: 'bold',
   },
 });
 
