@@ -114,6 +114,33 @@ exports.register = async (req, res) => {
   }
 };
 
+
+exports.checkUserExists = async (req, res) => {
+  try {
+    const { email } = req.query;
+    const user = await User.findOne({ email });
+
+    if (user) {
+      return res.status(200).json({
+        exists: true,
+        user: {
+          userId: user._id,
+          userType: user.userType,
+          doctorId: user.doctorId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          token: user.token, // Assuming you have a token field or generate a token here
+        },
+      });
+    } else {
+      return res.status(200).json({ exists: false });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.verifyEmail = async (req, res) => {
     try {
         const { email, verificationCode } = req.body;

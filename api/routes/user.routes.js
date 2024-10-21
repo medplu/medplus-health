@@ -14,7 +14,10 @@ router.get('/users/:userId', userController.getUserProfile);
 // Route to update user profile
 router.put('/users/update-profile/:userId', userController.updateUserProfile);
 
+// Route to check if user exists
+router.get('/users/exists', userController.checkUserExists); // New route for checking if user exists
+
 // Route for Google OAuth sign-in
-router.post('/auth/google', userController.handleGoogleOAuth); // New route for Google OAuth
+router.post('/auth/google', userController.handleGoogleOAuth); // Route for Google OAuth
 
 module.exports = router;
