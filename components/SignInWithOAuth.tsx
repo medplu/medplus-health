@@ -25,7 +25,8 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
     }
 
     try {
-      const response = await fetch('https://medplus-app.onrender.com/auth/google', {
+      // Save the user to the backend
+      const saveResponse = await fetch('https://medplus-app.onrender.com/auth/google', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -38,12 +39,14 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
         }),
       });
 
-      if (!response.ok) {
+      if (!saveResponse.ok) {
         throw new Error('Failed to save user to backend');
       }
 
-      const savedUser = await response.json();
+      const savedUser = await saveResponse.json();
       console.log('Saved user:', savedUser);
+
+      return savedUser.userId;
     } catch (error) {
       console.error('Error saving user to backend:', error);
       setErrorMessage('Failed to save user to backend. Please try again.');
@@ -56,9 +59,7 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
     if (session) {
       try {
         await signOut();
-        // Ensure signOut is complete before continuing
         console.log("Signed out successfully");
-        // Optionally, wait a bit longer if needed
       } catch (err) {
         console.error('Error logging out existing session', err);
         setErrorMessage('Failed to log out existing session. Please try again.');
@@ -91,12 +92,12 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
         await setActive!({ session: createdSessionId });
         await AsyncStorage.setItem('authToken', createdSessionId); // Store session ID as authToken
 
-        // Save user to backend
-        await saveUserToBackend(user);
+        // Save user to backend and get userId
+        const userId = await saveUserToBackend(user);
 
         // Save user details to AsyncStorage
         await AsyncStorage.multiSet([
-          ['userId', user.id],
+          ['userId', userId],
           ['firstName', user.first_name],
           ['lastName', user.last_name],
           ['email', user.email_addresses[0].email_address],

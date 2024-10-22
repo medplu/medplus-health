@@ -15,7 +15,6 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS,
     },
 });
-
 exports.handleGoogleOAuth = async (req, res) => {
   try {
     const { firstName, lastName, email, profileImage } = req.body;
@@ -38,11 +37,12 @@ exports.handleGoogleOAuth = async (req, res) => {
       await user.save();
     }
 
-    res.status(201).json(user);
+    res.status(201).json({ userId: user._id, user });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
+
 exports.register = async (req, res) => {
   try {
     const { userType, profession, ...userData } = req.body;  // Destructure userType and profession from request body
