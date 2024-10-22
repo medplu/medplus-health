@@ -21,7 +21,7 @@ const professionalSchema = new Schema({
         unique: true // Ensure email is unique
     },
     user: {
-        type: Schema.Types.ObjectId,
+        type: Schema.ObjectId,
         ref: 'User',  // Reference to the base User model
         required: true
     },
@@ -39,9 +39,19 @@ const professionalSchema = new Schema({
     certifications: [String],
     slots: [
         {
-            day: { type: String, required: false },  
-            time: { type: String, required: false }, 
-            isBooked: { type: Boolean, default: false }
+            day: { 
+                type: String, 
+                required: true,
+                enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] // Restrict to valid days
+            },  
+            time: { 
+                type: String, 
+                required: true 
+            }, 
+            isBooked: { 
+                type: Boolean, 
+                default: false 
+            }
         }
     ],
     bio: {

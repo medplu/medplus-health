@@ -68,6 +68,9 @@ const clinicAppointmentRoutes = require('./routes/clinic_appointment.routes');
 // Import the pharmacy routes
 const pharmacyRoutes = require('./routes/pharmacy.routes'); // Import the new pharmacy routes
 
+// Import the schedule routes
+const scheduleRoutes = require('./routes/schedule.routes'); // Import the schedule routes
+
 // Use the user routes
 app.use('/api', userRoutes);
 
@@ -94,6 +97,9 @@ app.use('/api/clinic', clinicAppointmentRoutes);
 
 // Use the pharmacy routes
 app.use('/api/pharmacies', pharmacyRoutes); // Added the new pharmacy routes
+
+// Use the schedule routes
+app.use('/api', scheduleRoutes); // Added the schedule routes
 
 // Handle WebSocket connections
 io.on("connection", (socket) => {

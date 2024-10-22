@@ -21,12 +21,12 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
     if (!user) {
       console.error('User object is undefined');
       setErrorMessage('User object is undefined. Please try again.');
-      return;
+      return null;
     }
 
     try {
       // Save the user to the backend
-      const saveResponse = await fetch('https://medplus-app.onrender.com/auth/google', {
+      const saveResponse = await fetch('https://medplus-health.onrender.com/auth/google', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,6 +50,7 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
     } catch (error) {
       console.error('Error saving user to backend:', error);
       setErrorMessage('Failed to save user to backend. Please try again.');
+      return null;
     }
   };
 
@@ -68,24 +69,11 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
     }
 
     try {
-      const { createdSessionId, setActive } = await startOAuthFlow({
+      const { createdSessionId, setActive, user } = await startOAuthFlow({
         redirectUrl: Linking.createURL('/client/tabs', { scheme: 'myapp' }),
       });
 
       console.log("Created Session ID:", createdSessionId);
-
-      // Fetch the user data from Clerk
-      const userResponse = await fetch('https://api.clerk.dev/v1/users/me', {
-        headers: {
-          'Authorization': `Bearer ${createdSessionId}`,
-        },
-      });
-
-      if (!userResponse.ok) {
-        throw new Error('Failed to fetch user data from Clerk');
-      }
-
-      const user = await userResponse.json();
       console.log("User object:", user);
 
       if (createdSessionId && user) {
@@ -94,6 +82,11 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
 
         // Save user to backend and get userId
         const userId = await saveUserToBackend(user);
+
+        if (!userId) {
+          setErrorMessage('Failed to save user to backend. Please try again.');
+          return;
+        }
 
         // Save user details to AsyncStorage
         await AsyncStorage.multiSet([
