@@ -26,5 +26,12 @@ const scheduleSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// Middleware to clear overdue slots before saving
+scheduleSchema.pre('save', function(next) {
+  const now = Date.now();
+  this.slots = this.slots.filter(slot => slot.date >= now);
+  next();
+});
+
 const Schedule = mongoose.model('Schedule', scheduleSchema);
 module.exports = Schedule;

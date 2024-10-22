@@ -23,6 +23,11 @@ const generateTimeSlots = (start: string, duration: number, slots: number) => {
   return timeSlots;
 };
 
+const getWeekDates = (selectedDate: string) => {
+  const startOfWeek = moment(selectedDate).startOf('isoWeek');
+  return Array.from({ length: 5 }, (_, i) => startOfWeek.clone().add(i, 'days').format('YYYY-MM-DD'));
+};
+
 const Schedule: React.FC = () => {
   const [items, setItems] = useState<AgendaSchedule>({});
   const [loading, setLoading] = useState(true);
@@ -153,11 +158,6 @@ const Schedule: React.FC = () => {
     } catch (error) {
       console.error('Error updating availability:', error);
     }
-  };
-
-  const getWeekDates = (selectedDate: string) => {
-    const startOfWeek = moment(selectedDate).startOf('isoWeek');
-    return Array.from({ length: 5 }, (_, i) => startOfWeek.clone().add(i, 'days').format('YYYY-MM-DD'));
   };
 
   const renderItem = useCallback(
