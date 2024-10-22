@@ -3,7 +3,7 @@ const Professional = require('../models/professional.model');
 
 // Create or update the schedule for a professional
 exports.createOrUpdateSchedule = async (req, res) => {
-    const { professionalId, availability } = req.body;
+    const { professionalId, availability, repeatPattern, repeatDuration } = req.body;
 
     // Validate the incoming data
     if (!professionalId || !Array.isArray(availability)) {
@@ -18,10 +18,13 @@ exports.createOrUpdateSchedule = async (req, res) => {
             return res.status(404).json({ message: 'Professional not found.' });
         }
 
+        // Expand slots based on repeat pattern and duration
+        const expandedSlots = expandSlots(availability, repeatPattern, repeatDuration);
+
         // Update or create the schedule
         const schedule = await Schedule.findOneAndUpdate(
             { doctorId: professionalId },
-            { doctorId: professionalId, slots: availability.map(slot => ({ ...slot, isBooked: false })) },
+            { doctorId: professionalId, slots: expandedSlots.map(slot => ({ ...slot, isBooked: false })) },
             { new: true, upsert: true }
         );
 
@@ -32,6 +35,28 @@ exports.createOrUpdateSchedule = async (req, res) => {
     }
 };
 
+// Helper function to expand slots based on repeat pattern and duration
+const expandSlots = (availability, repeatPattern, repeatDuration) => {
+    const expandedSlots = [];
+    const now = new Date();
+
+    availability.forEach(slot => {
+        const slotDate = new Date(slot.date);
+        for (let i = 0; i < repeatDuration; i++) {
+            const newSlot = { ...slot, date: new Date(slotDate) };
+            expandedSlots.push(newSlot);
+
+            // Update the slot date based on the repeat pattern
+            if (repeatPattern === 'daily') {
+                slotDate.setDate(slotDate.getDate() + 1);
+            } else if (repeatPattern === 'weekly') {
+                slotDate.setDate(slotDate.getDate() + 7);
+            }
+        }
+    });
+
+    return expandedSlots;
+};
 // Fetch the schedule for a professional by their ID
 exports.getScheduleByProfessionalId = async (req, res) => {
     const { professionalId } = req.params;
