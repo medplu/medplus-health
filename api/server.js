@@ -69,7 +69,7 @@ const clinicAppointmentRoutes = require('./routes/clinic_appointment.routes');
 const pharmacyRoutes = require('./routes/pharmacy.routes'); // Import the new pharmacy routes
 
 // Import the schedule routes
-const scheduleRoutes = require('./routes/schedule.routes'); // Import the schedule routes
+const scheduleRoutes = require('./routes/schedule.route'); // Import the schedule routes
 
 // Use the user routes
 app.use('/api', userRoutes);
