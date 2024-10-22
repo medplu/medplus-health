@@ -8,13 +8,6 @@ import UnauthenticatedLayout from './UnauthenticatedLayout';
 const Layout = () => {
   const { user, isLoading } = useContext(AuthContext);
 
-  // Ensure to fetch the publishable key from environment variables
-  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-
-  if (!publishableKey) {
-    throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env');
-  }
-
   // Show loading state if the user data is being fetched
   if (isLoading) {
     return (
