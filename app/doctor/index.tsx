@@ -101,7 +101,11 @@ const DoctorProfile: React.FC = () => {
                 <Text style={styles.readMoreText}>{showFullBio ? 'Read Less' : 'Read More'}</Text>
               </TouchableOpacity>
             </View>
-            <BookingSection doctorId={item._id} />
+            <BookingSection 
+  doctorId={item._id} // Assuming _id is the doctorId
+  userId={item.user} 
+  consultationFee={item.consultationFee} 
+/>
             <DoctorServices />
             <HorizontalLine />
             <Text style={styles.sectionTitle}>Reviews</Text>

@@ -6,12 +6,14 @@ import Colors from '../Shared/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack } from 'react-native-paystack-webview';
-import { FontAwesome } from '@expo/vector-icons'; // Import FontAwesome
+import { FontAwesome } from '@expo/vector-icons';
+import { useSchedule } from '../../context/ScheduleContext';
+import moment from 'moment';
 
 const BookingSection = ({ clinic, navigation }) => {
+  const { schedule } = useSchedule();
   const [next7Days, setNext7Days] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [timeList, setTimeList] = useState([]);
   const [selectedTime, setSelectedTime] = useState(null);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,7 +27,6 @@ const BookingSection = ({ clinic, navigation }) => {
 
   useEffect(() => {
     getDays();
-    getTime();
     getUserData();
   }, []);
 
@@ -56,19 +57,6 @@ const BookingSection = ({ clinic, navigation }) => {
     setNext7Days(nextSevenDays);
   };
 
-  const getTime = () => {
-    const timeList = [];
-    for (let i = 7; i <= 11; i++) {
-      timeList.push({ time: `${i}:00 AM` });
-      timeList.push({ time: `${i}:30 AM` });
-    }
-    for (let i = 1; i <= 5; i++) {
-      timeList.push({ time: `${i}:00 PM` });
-      timeList.push({ time: `${i}:30 PM` });
-    }
-    setTimeList(timeList);
-  };
-
   const handleBookAppointment = async () => {
     if (!selectedDate || !selectedTime || !clinic._id || !notes) {
       setAlertMessage('Please fill in all the required fields.');
@@ -78,7 +66,6 @@ const BookingSection = ({ clinic, navigation }) => {
     }
 
     try {
-      // Step 1: Create the appointment
       const appointmentResponse = await axios.post('https://medplus-app.onrender.com/api/clinic/appointments', {
         userId: user.userId,
         clinicId: clinic._id,
@@ -91,8 +78,7 @@ const BookingSection = ({ clinic, navigation }) => {
       const appointmentId = appointmentResponse.data._id;
       setAppointmentId(appointmentId);
 
-       // Pass appointmentId to handlePaymentSuccess
-       paystackWebViewRef.current.startTransaction({
+      paystackWebViewRef.current.startTransaction({
         onSuccess: (response) => handlePaymentSuccess(response, appointmentId),
         onCancel: handlePaymentCancel
       });
@@ -106,11 +92,7 @@ const BookingSection = ({ clinic, navigation }) => {
 
   const handlePaymentSuccess = async (response) => {
     try {
-      // Handle successful payment here
-      console.log('Payment successful:', response);
-
-      // Update appointment status to 'confirmed'
-      await axios.put(`https://medplus-app.onrender.com/api/clinic/appointments/${appointmentId}`, {
+      await axios.put(`https://medplus-health.onrender.com/api/clinic/appointments/${appointmentId}`, {
         status: 'confirmed'
       });
 
@@ -126,21 +108,23 @@ const BookingSection = ({ clinic, navigation }) => {
   };
 
   const handlePaymentCancel = () => {
-    console.log('Payment cancelled');
     setAlertMessage('Payment was cancelled. Please try again.');
     setAlertType('error');
     setShowAlert(true);
   };
 
+  const filteredTimeSlots = schedule
+    .filter(slot => moment(slot.date).format('YYYY-MM-DD') === selectedDate)
+    .flatMap(slot => slot.slots);
+
   return (
     <View>
-     
       <Text style={{ fontSize: 18, color: Colors.gray, marginBottom: 10 }}>Book Appointment</Text>
       <SubHeading subHeadingTitle="Day" seeAll={false} />
       <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
-        {next7Days.map((day, index) => (
+        {next7Days.map((day) => (
           <TouchableOpacity
-            key={index}
+            key={day.date}
             style={[
               styles.dayButton,
               selectedDate === day.date && styles.selectedButton,
@@ -155,20 +139,24 @@ const BookingSection = ({ clinic, navigation }) => {
       </ScrollView>
       <SubHeading subHeadingTitle="Time" seeAll={false} />
       <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
-        {timeList.map((slot, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.timeButton,
-              selectedTime === slot.time && styles.selectedButton,
-            ]}
-            onPress={() => setSelectedTime(slot.time)}
-          >
-            <Text style={selectedTime === slot.time ? styles.selectedText : styles.text}>
-              {slot.time}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {filteredTimeSlots.length > 0 ? (
+          filteredTimeSlots.map((slot, index) => (
+            <TouchableOpacity
+              key={`${selectedDate}-${slot.time}-${index}`} // Ensure unique key
+              style={[
+                styles.timeButton,
+                selectedTime === slot.time && styles.selectedButton,
+              ]}
+              onPress={() => setSelectedTime(slot.time)}
+            >
+              <Text style={selectedTime === slot.time ? styles.selectedText : styles.text}>
+                {slot.time}
+              </Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text style={{ color: Colors.primary, marginLeft: 10 }}>No available time slots for this date.</Text>
+        )}
       </ScrollView>
       <TextInput
         style={styles.textInput}
@@ -249,6 +237,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     marginBottom: 15,
+    color: Colors.black,
   },
 });
 
