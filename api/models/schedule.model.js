@@ -6,13 +6,12 @@ const scheduleSchema = new mongoose.Schema({
     ref: 'Professional',
     required: true,
   },
-  day: {
-    type: String,
-    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-    required: true,
-  },
   slots: [
     {
+      date: {
+        type: Date,
+        required: true,  // Specific date for the slot
+      },
       time: {
         type: String,
         required: true,  // Example: '09:00 AM - 10:00 AM'
