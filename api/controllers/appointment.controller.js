@@ -1,4 +1,5 @@
 const Appointment = require('../models/appointment.model');
+const Schedule = require('../models/schedule.model');
 const moment = require('moment');
 
 // Fetch all appointments for a doctor
@@ -32,25 +33,31 @@ exports.getAppointmentsByDoctor = async (req, res) => {
   }
 };
 
+
+
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, patientName } = req.body;
-  let { date, time } = req.body;
+  const { doctorId, userId, patientName, date, time } = req.body;
 
   try {
-    console.log('Incoming request data:', { doctorId, userId, patientName, date, time });
-
-    if (!doctorId || !userId || !patientName) {
-      console.error('Missing required fields:', { doctorId, userId, patientName });
+    if (!doctorId || !userId || !patientName || !date || !time) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    if (!date) {
-      date = moment().format('YYYY-MM-DD');
+    // Check if the slot is already booked
+    const schedule = await Schedule.findOne({ doctorId, 'slots.date': date, 'slots.time': time });
+    if (!schedule) {
+      return res.status(404).json({ error: 'Schedule not found' });
     }
-    if (!time) {
-      time = moment().format('HH:mm');
+
+    const slot = schedule.slots.find(slot => slot.date.toISOString().split('T')[0] === date && slot.time === time);
+    if (!slot || slot.isBooked) {
+      return res.status(400).json({ error: 'Time slot is already booked' });
     }
+
+    // Mark the slot as booked
+    slot.isBooked = true;
+    await schedule.save();
 
     const newAppointment = new Appointment({
       doctorId,
@@ -60,8 +67,6 @@ exports.bookAppointment = async (req, res) => {
       time,
       status: 'pending'
     });
-
-    console.log('New appointment data:', newAppointment);
 
     await newAppointment.save();
 
