@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import UnauthenticatedLayout from './UnauthenticatedLayout';
+import { ScheduleProvider } from '../context/ScheduleContext';
 
 const Layout = () => {
   const { user, isLoading } = useContext(AuthContext);
@@ -57,7 +58,9 @@ const LayoutWithProviders = () => {
     <ClerkProvider publishableKey={publishableKey}>
       <ClerkLoaded>
         <AuthProvider>
-          <Layout />
+          <ScheduleProvider>
+            <Layout />
+          </ScheduleProvider>
         </AuthProvider>
       </ClerkLoaded>
     </ClerkProvider>
