@@ -64,7 +64,7 @@ exports.getAvailableSlots = async (req, res) => {
 
         let availableSlots = schedule.slots.filter(slot => !slot.isBooked);
         if (day) {
-            availableSlots = availableSlots.filter(slot => slot.day === day);
+            availableSlots = availableSlots.filter(slot => moment(slot.date).format('dddd') === day);
         }
 
         return res.status(200).json(availableSlots);

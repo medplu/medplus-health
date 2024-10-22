@@ -32,19 +32,50 @@ const Schedule: React.FC = () => {
   const [timeRange, setTimeRange] = useState({ start: '08:00', duration: 30 });
   const [repeatForWeek, setRepeatForWeek] = useState(false);
 
+  const fetchSchedule = async (professionalId: string) => {
+    try {
+      const scheduleResponse = await fetch(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);
+      const scheduleData = await scheduleResponse.json();
+
+      const newItems: AgendaSchedule = {};
+
+      // Process schedule data
+      scheduleData.slots.forEach((slot: any) => {
+        const strTime = moment(slot.date).format('YYYY-MM-DD');
+        if (!newItems[strTime]) {
+          newItems[strTime] = [];
+        }
+        newItems[strTime].push({
+          name: 'Available Slot',
+          type: 'availability',
+          height: 80,
+          time: slot.time,
+        });
+      });
+
+      return newItems;
+    } catch (error) {
+      console.error('Error fetching schedule:', error);
+      return {};
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const doctorId = await AsyncStorage.getItem('doctorId');
-        if (!doctorId) {
-          throw new Error('Doctor ID not found in AsyncStorage');
+        const professionalId = await AsyncStorage.getItem('doctorId');
+        if (!professionalId) {
+          throw new Error('Professional ID not found in AsyncStorage');
         }
 
-        // Fetch appointments for the doctor
-        const appointmentsResponse = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${doctorId}`);
+        // Fetch appointments for the professional
+        const appointmentsResponse = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${professionalId}`);
         const appointmentsData = await appointmentsResponse.json();
 
-        const newItems: AgendaSchedule = {};
+        // Fetch schedule for the professional
+        const scheduleItems = await fetchSchedule(professionalId);
+
+        const newItems: AgendaSchedule = { ...scheduleItems };
 
         // Process appointments data
         appointmentsData.forEach((appointment: any) => {
@@ -63,7 +94,7 @@ const Schedule: React.FC = () => {
 
         setItems(newItems);
       } catch (error) {
-        console.error('Error fetching appointments:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
@@ -85,7 +116,7 @@ const Schedule: React.FC = () => {
       // If the repeat for the week option is selected, apply the schedule to all weekdays
       const dates = repeatForWeek ? getWeekDates(selectedDate) : [selectedDate];
       const availabilityForWeek = dates.flatMap((date) => timeSlots.map((time) => ({
-        day: moment(date).format('dddd'), // Convert date to day of the week
+        date, // Include the specific date
         time,
       })));
 
