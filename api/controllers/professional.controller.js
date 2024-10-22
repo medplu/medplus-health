@@ -10,6 +10,7 @@ exports.getProfessionals = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 // Fetch a single professional by doctorId (_id)
 exports.getProfessionalById = async (req, res) => {
     try {
@@ -27,7 +28,7 @@ exports.getProfessionalById = async (req, res) => {
     }
 };
 
-// Fetch a single professional by doctorId (_id)
+// Fetch a single professional by userId
 exports.getProfessionalByUserId = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -46,6 +47,7 @@ exports.getProfessionalByUserId = async (req, res) => {
     }
 };
 
+// Update professional profile
 exports.updateProfessionalProfile = async (req, res) => {
     const { userId } = req.params;
     const { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage, emailNotifications, pushNotifications, location } = req.body;
@@ -87,6 +89,8 @@ exports.updateProfessionalProfile = async (req, res) => {
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// Create or update availability
 exports.createOrUpdateAvailability = async (req, res) => {
     const { userId } = req.params;
     const { availability } = req.body;
@@ -96,7 +100,7 @@ exports.createOrUpdateAvailability = async (req, res) => {
     try {
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
-            { $set: { availability: availability } },
+            { $set: { slots: availability.map(slot => ({ ...slot, isBooked: false })) } },
             { new: true, upsert: true }
         );
 
@@ -116,6 +120,7 @@ exports.createOrUpdateAvailability = async (req, res) => {
     }
 };
 
+// Create or update consultation fee
 exports.createOrUpdateConsultationFee = async (req, res) => {
     const { userId } = req.params;
     const { consultationFee } = req.body;
@@ -150,6 +155,7 @@ exports.createOrUpdateConsultationFee = async (req, res) => {
     }
 };
 
+// Create or update slots
 exports.createOrUpdateSlots = async (req, res) => {
     const { userId } = req.params;
     const { slots } = req.body;
@@ -157,7 +163,7 @@ exports.createOrUpdateSlots = async (req, res) => {
     try {
         const professional = await Professional.findOneAndUpdate(
             { user: userId },
-            { slots },
+            { slots: slots.map(slot => ({ ...slot, isBooked: false })) },
             { new: true, upsert: true }
         );
 
@@ -175,6 +181,7 @@ exports.createOrUpdateSlots = async (req, res) => {
     }
 };
 
+// Get professionals by category
 exports.getProfessionalsByCategory = async (req, res) => {
     const { category } = req.params;
     const allowedCategories = ['Kidney', 'Heart', 'Brain', 'Cancer', 'Skin', 'Bone'];
@@ -192,6 +199,7 @@ exports.getProfessionalsByCategory = async (req, res) => {
     }
 };
 
+// Get available slots
 exports.getAvailableSlots = async (req, res) => {
     const { userId } = req.params;
     const { day } = req.query;
