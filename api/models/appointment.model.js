@@ -15,37 +15,11 @@ const appointmentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  patientEmail: {
-    type: String,
-    required: true,
-  },
-  gender: {
-    type: String,
-    enum: ['male', 'female', 'other'],
-    required: true,
-  },
-  isNew: {
-    type: Boolean,
-    default: true,
-  },
-  date: {
-    type: Date,
-    required: true,
-  },
-  time: {
-    type: String,
-    required: true,
-  },
   status: {
     type: String,
     enum: ['pending', 'booked', 'confirmed', 'completed', 'cancelled'],
-    default: 'booked',
+    default: 'pending',
   },
-  medicalRecords: [
-    {
-      type: String, // URL or path to the uploaded file
-    },
-  ],
 }, {
   timestamps: true,
 });
