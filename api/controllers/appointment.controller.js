@@ -34,40 +34,22 @@ exports.getAppointmentsByDoctor = async (req, res) => {
   }
 };
 
-
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, patientName, patientEmail, gender, isNew, date, time, medicalRecords } = req.body;
+  const { doctorId, userId, patientName, status } = req.body;
 
   try {
-    if (!doctorId || !userId || !patientName || !patientEmail || !gender || isNew === undefined || !date || !time) {
+    if (!doctorId || !userId || !patientName || !status) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Check if the slot is already booked
-    const schedule = await Schedule.findOne({ doctorId, 'slots.date': date, 'slots.time': time });
-    if (!schedule) {
-      return res.status(404).json({ error: 'Schedule not found' });
-    }
-
-    const slot = schedule.slots.find(slot => slot.date.toISOString().split('T')[0] === date && slot.time === time);
-    if (!slot || slot.isBooked) {
-      return res.status(400).json({ error: 'Time slot is already booked' });
-    }
-
-    // Mark the slot as booked
-    slot.isBooked = true;
-    await schedule.save();
-
     // Check if the client already exists
-    let client = await Client.findOne({ email: patientEmail });
+    let client = await Client.findOne({ user: userId });
     if (!client) {
       // Create a new client if not exists
       client = new Client({
         firstName: patientName.split(' ')[0],
         lastName: patientName.split(' ').slice(1).join(' '),
-        email: patientEmail,
-        gender,
         user: userId,
         doctors: [doctorId]  // Add the doctorId to the doctors array
       });
@@ -83,13 +65,7 @@ exports.bookAppointment = async (req, res) => {
       doctorId,
       userId,
       patientName,
-      patientEmail,
-      gender,
-      isNew,
-      date,
-      time,
-      status: 'pending',
-      medicalRecords: medicalRecords || []
+      status
     });
 
     await newAppointment.save();
