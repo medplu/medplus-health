@@ -23,7 +23,7 @@ exports.getAppointmentsByDoctor = async (req, res) => {
     const today = moment().startOf('day'); // Get today's date at the start of the day
     const appointments = await Appointment.find({
       doctorId,
-    status: 'confirmed',
+      status: 'confirmed',
       date: { $gte: today.toDate() } // Filter for dates that are today or in the future
     });
     res.status(200).json(appointments);
@@ -33,14 +33,12 @@ exports.getAppointmentsByDoctor = async (req, res) => {
   }
 };
 
-
-
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, patientName, date, time } = req.body;
+  const { doctorId, userId, patientName, patientEmail, gender, isNew, date, time, medicalRecords } = req.body;
 
   try {
-    if (!doctorId || !userId || !patientName || !date || !time) {
+    if (!doctorId || !userId || !patientName || !patientEmail || !gender || isNew === undefined || !date || !time) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -63,9 +61,13 @@ exports.bookAppointment = async (req, res) => {
       doctorId,
       userId,
       patientName,
+      patientEmail,
+      gender,
+      isNew,
       date,
       time,
-      status: 'pending'
+      status: 'pending',
+      medicalRecords: medicalRecords || []
     });
 
     await newAppointment.save();
