@@ -1,14 +1,17 @@
 export default {
-    white:  '#ffffff',
+    white: '#ffffff',
     primary: '#002D62',
     PRIMARY: '#e30972',
     SECONDARY: '#D4EDDA',
-    GRAY: 'F8F9FA',
+    GRAY: '#F8F9FA',
     LIGHT_GRAY: '#F8F9FA',
     ligh_gray: '#feffdf',
     lit: '#FBFF8F',
     light_gray: '#feffdf',
-    green:'#03fc62',
+    green: '#03fc62',
     gray: '#a6a4a4',
-    goofy: '#8bffff'
+    goofy: '#8bffff',
+    background: '#F8F9FA', // Background color used in scrollContainer
+    textPrimary: '#002D62', // Text color for primary text like title and name
+    textSecondary: '#a6a4a4' // Text color for secondary text like dateTime and noAppointmentsText
 }

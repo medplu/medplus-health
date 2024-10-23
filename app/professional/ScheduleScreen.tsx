@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { Agenda, AgendaEntry, AgendaSchedule } from 'react-native-calendars';
-import { Card, Avatar, TextInput, Checkbox, Button, Modal, Portal, Provider, RadioButton } from 'react-native-paper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Card, Avatar, TextInput, Button, Modal, Portal, Provider, RadioButton } from 'react-native-paper';
 import moment from 'moment';
+import useSchedule from '../../hooks/useSchedule';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const timeToString = (time: number): string => {
   const date = new Date(time);
@@ -41,6 +42,7 @@ const getDates = (selectedDate: string, repeatPattern: string, repeatDuration: n
 };
 
 const Schedule: React.FC = () => {
+  const { schedule, fetchSchedule } = useSchedule();
   const [items, setItems] = useState<AgendaSchedule>({});
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -50,50 +52,54 @@ const Schedule: React.FC = () => {
   const [repeatPattern, setRepeatPattern] = useState('daily');
   const [repeatDuration, setRepeatDuration] = useState(1);
   const [step, setStep] = useState(1);
+  const [todayAppointments, setTodayAppointments] = useState<AgendaEntry[]>([]);
 
-  const fetchSchedule = async (professionalId: string) => {
-    try {
-      const response = await fetch(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);
-      const data = await response.json();
-
+  useEffect(() => {
+    const transformSchedule = () => {
       const newItems: AgendaSchedule = {};
+      const todayAppointments: AgendaEntry[] = [];
 
-      // Transform fetched data into the expected format
-      data.slots.forEach((slot: any) => {
+      schedule.forEach((slot: any) => {
         const strTime = moment(slot.date).format('YYYY-MM-DD');
         if (!newItems[strTime]) {
           newItems[strTime] = [];
         }
-        newItems[strTime].push({
-          name: 'Available Slot',
-          type: 'availability',
-          height: 80,
-          time: slot.time,
-        });
+        if (slot.isBooked) {
+          newItems[strTime].push({
+            name: slot.patientName,
+            type: 'appointment',
+            height: 80,
+            time: slot.time,
+            patientImage: slot.patientImage,
+          });
+
+          // Add to today's appointments if the date matches
+          if (strTime === moment().format('YYYY-MM-DD')) {
+            todayAppointments.push({
+              name: slot.patientName,
+              type: 'appointment',
+              height: 80,
+              time: slot.time,
+              patientImage: slot.patientImage,
+            });
+          }
+        } else {
+          newItems[strTime].push({
+            name: 'Available Slot',
+            type: 'availability',
+            height: 80,
+            time: slot.time,
+          });
+        }
       });
 
       setItems(newItems);
-    } catch (error) {
-      console.error('Error fetching schedule:', error);
-    }
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const professionalId = await AsyncStorage.getItem('doctorId');
-        if (professionalId) {
-          await fetchSchedule(professionalId);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
+      setTodayAppointments(todayAppointments);
+      setLoading(false);
     };
 
-    fetchData();
-  }, []);
+    transformSchedule();
+  }, [schedule]);
 
   const handleAddAvailability = async () => {
     try {
@@ -241,6 +247,25 @@ const Schedule: React.FC = () => {
     }
   };
 
+  const renderTodayAppointments = () => {
+    return (
+      <View style={styles.todayAppointmentsContainer}>
+        <Text style={styles.sectionTitle}>Today's Appointments</Text>
+        {todayAppointments.map((appointment, index) => (
+          <Card key={index} style={styles.appointmentCard}>
+            <Card.Content>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text>{appointment.name}</Text>
+                <Avatar.Image source={{ uri: appointment.patientImage || 'https://via.placeholder.com/40' }} size={40} />
+              </View>
+              <Text>{appointment.time}</Text>
+            </Card.Content>
+          </Card>
+        ))}
+      </View>
+    );
+  };
+
   const renderItem = useCallback(
     (item: AgendaEntry) => (
       <TouchableOpacity style={{ marginRight: 10, marginTop: 17 }}>
@@ -271,6 +296,7 @@ const Schedule: React.FC = () => {
   return (
     <Provider>
       <View style={{ flex: 1 }}>
+        {renderTodayAppointments()}
         <Agenda
           items={items}
           loadItemsForMonth={() => {}}
@@ -331,6 +357,18 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 10,
+  },
+  todayAppointmentsContainer: {
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  appointmentCard: {
+    marginBottom: 10,
   },
 });
 

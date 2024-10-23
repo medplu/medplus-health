@@ -1,23 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Alert, FlatList, TextInput, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
-import moment from 'moment';
+import { View, Text, TouchableOpacity, Alert, FlatList, TextInput, ActivityIndicator, StyleSheet, Dimensions, Platform } from 'react-native';
+import moment, { Moment } from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack, paystackProps } from 'react-native-paystack-webview';
+import * as DocumentPicker from 'expo-document-picker';
 import useBooking from '../hooks/useBooking';
 import useSchedule from '../hooks/useSchedule';
 import Colors from './Shared/Colors';
 
 type Day = {
-  date: moment.Moment;
+  date: Moment;
   formattedDate: string;
 };
 
-const BookingSection: React.FC<{ doctorId: string, userId: string, consultationFee: number }> = ({ doctorId, userId, consultationFee }) => {
-  const [selectedDate, setSelectedDate] = useState<moment.Moment | null>(moment());
+interface BookingSectionProps {
+  doctorId: string;
+  userId: string;
+  consultationFee: number;
+}
+
+const BookingSection: React.FC<BookingSectionProps> = ({ doctorId, userId, consultationFee }) => {
+  const [selectedDate, setSelectedDate] = useState<Moment | null>(moment());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [next7Days, setNext7Days] = useState<Day[]>([]);
   const [patientName, setPatientName] = useState<string>('');
+  const [patientEmail, setPatientEmail] = useState<string>('');
+  const [gender, setGender] = useState<string>('male');
+  const [isNew, setIsNew] = useState<boolean>(true);
+  const [medicalRecords, setMedicalRecords] = useState<string[]>([]);
   const [showPatientNameInput, setShowPatientNameInput] = useState<boolean>(false);
 
   const { schedule, fetchSchedule } = useSchedule();
@@ -61,12 +72,13 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
       const email = await AsyncStorage.getItem('email');
       const userId = await AsyncStorage.getItem('userId');
       setUser({ firstName, lastName, email, userId });
+      setPatientEmail(email || '');
     } catch (error) {
       console.error('Failed to load user data', error);
     }
   };
 
-  const handleDateSelect = (date: moment.Moment) => {
+  const handleDateSelect = (date: Moment) => {
     setSelectedDate(date);
     setSelectedTime(null);
   };
@@ -80,11 +92,37 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
   };
 
   const handleBookAppointment = async () => {
-    if (!patientName) {
-      Alert.alert('Error', 'Please enter the patient\'s name.');
+    if (!patientName || !patientEmail || !gender) {
+      Alert.alert('Error', 'Please fill in all required fields.');
       return;
     }
-    await handleBookPress(consultationFee);
+    await handleBookPress({
+      doctorId,
+      userId,
+      patientName,
+      patientEmail,
+      gender,
+      isNew,
+      date: selectedDate?.format('YYYY-MM-DD'),
+      time: selectedTime,
+      medicalRecords,
+      consultationFee,
+    });
+  };
+
+  const handleUploadMedicalRecord = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.type === 'success') {
+        setMedicalRecords([...medicalRecords, result.uri]);
+      }
+    } catch (error) {
+      console.error('Error uploading medical record:', error);
+    }
   };
 
   const screenWidth = Dimensions.get('window').width;
@@ -140,6 +178,41 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
             value={patientName}
             onChangeText={setPatientName}
           />
+          <Text style={styles.sectionTitle}>Patient Email:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your email"
+            value={patientEmail}
+            onChangeText={setPatientEmail}
+          />
+          <Text style={styles.sectionTitle}>Gender:</Text>
+          <View style={styles.genderContainer}>
+            <TouchableOpacity
+              style={[styles.genderButton, gender === 'male' ? styles.genderButtonSelected : null]}
+              onPress={() => setGender('male')}
+            >
+              <Text style={styles.genderButtonText}>Male</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.genderButton, gender === 'female' ? styles.genderButtonSelected : null]}
+              onPress={() => setGender('female')}
+            >
+              <Text style={styles.genderButtonText}>Female</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.genderButton, gender === 'other' ? styles.genderButtonSelected : null]}
+              onPress={() => setGender('other')}
+            >
+              <Text style={styles.genderButtonText}>Other</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.sectionTitle}>Upload Medical Records:</Text>
+          <TouchableOpacity style={styles.uploadButton} onPress={handleUploadMedicalRecord}>
+            <Text style={styles.uploadButtonText}>Upload</Text>
+          </TouchableOpacity>
+          {medicalRecords.map((record, index) => (
+            <Text key={index} style={styles.recordText}>{record.split('/').pop()}</Text>
+          ))}
 
           <TouchableOpacity
             style={styles.bookButton}
@@ -224,6 +297,42 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
     paddingHorizontal: 10,
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  genderButton: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: '#e0e0e0',
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  genderButtonSelected: {
+    backgroundColor: '#1f6f78',
+  },
+  genderButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  uploadButton: {
+    backgroundColor: '#1f6f78',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  uploadButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  recordText: {
+    fontSize: 14,
+    color: '#000',
+    marginBottom: 5,
   },
   bookButton: {
     backgroundColor: '#1f6f78',
