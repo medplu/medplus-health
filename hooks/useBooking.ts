@@ -20,8 +20,8 @@ interface BookingHook {
   user: User;
   subaccountCode: string | null;
   paystackWebViewRef: React.RefObject<paystackProps.PayStackRef>;
-  handleBookPress: (consultationFee: number) => Promise<void>;
-  handlePaymentSuccess: (response: any, appointmentId: string) => Promise<void>;
+  handleBookPress: (consultationFee: number, selectedTimeSlot: string, selectedDate: string) => Promise<void>;
+  handlePaymentSuccess: (response: any) => Promise<void>;
   handlePaymentCancel: () => void;
 }
 
@@ -60,8 +60,8 @@ const useBooking = (professionalId: string): BookingHook => {
     try {
       const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${professionalId}`);
       if (response.data.status === 'Success') {
-        const { subaccount_code } = response.data.data; // Destructure subaccount_code
-        setSubaccountCode(subaccount_code); // Update state with the fetched subaccount code
+        const { subaccount_code } = response.data.data; 
+        setSubaccountCode(subaccount_code); 
         console.log('Fetched subaccount code:', subaccount_code);
       } else {
         console.error('Failed to fetch subaccount code:', response.data.message);
@@ -71,22 +71,21 @@ const useBooking = (professionalId: string): BookingHook => {
     }
   };
 
-  const handleBookPress = async (consultationFee: number) => {
+  const handleBookPress = async (consultationFee: number, selectedTimeSlot: string, selectedDate: string) => {
     setIsSubmitting(true);
     try {
       console.log('Booking appointment with professionalId:', professionalId, 'and userId:', user.userId);
 
-      // Validate that subaccountCode and user.email are available
       if (!subaccountCode || !user.email) {
         throw new Error('Missing subaccount code or user email.');
       }
 
-      // Initialize payment
+      // Initialize payment with Paystack
       const paymentResponse = await axios.post('https://api.paystack.co/transaction/initialize', {
         email: user.email,
-        amount: consultationFee * 100, // Ensure this is the correct amount
-        subaccount: subaccountCode, // Use the fetched subaccount code
-        currency: 'KES', // Specifying the currency
+        amount: consultationFee * 100, // Convert to kobo
+        subaccount: subaccountCode, 
+        currency: 'KES', 
       }, {
         headers: {
           'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
@@ -94,7 +93,6 @@ const useBooking = (professionalId: string): BookingHook => {
         }
       });
 
-      // Check if payment initialization was successful
       if (paymentResponse.data.status) {
         console.log('Payment initialized:', paymentResponse.data);
 
@@ -103,14 +101,16 @@ const useBooking = (professionalId: string): BookingHook => {
           doctorId: professionalId,
           userId: user.userId,
           patientName: `${user.firstName} ${user.lastName}`,
-          date: new Date().toISOString().split('T')[0],
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          date: selectedDate,
+          time: selectedTimeSlot,
+          status: 'pending', // Set initial status to pending
         });
 
-        const appointmentId = appointmentResponse.data._id;
-        setAppointmentId(appointmentId);
-        console.log('Created appointment with appointmentId:', appointmentId);
+        const newAppointmentId = appointmentResponse.data._id;
+        setAppointmentId(newAppointmentId);
+        console.log('Created appointment with appointmentId:', newAppointmentId);
 
+        // Start the Paystack transaction
         if (paystackWebViewRef.current) {
           paystackWebViewRef.current.startTransaction();
         } else {
@@ -128,12 +128,14 @@ const useBooking = (professionalId: string): BookingHook => {
     }
   };
 
-  const handlePaymentSuccess = async (response: any, appointmentId: string) => {
+  const handlePaymentSuccess = async (response: any) => {
+    const currentAppointmentId = appointmentId; // Capture the appointmentId from state
     try {
       console.log('Payment successful:', response);
-      console.log('Confirming appointment with appointmentId:', appointmentId);
+      console.log('Confirming appointment with appointmentId:', currentAppointmentId);
 
-      await axios.put(`https://medplus-health.onrender.com/api/appointments/confirm/${appointmentId}`, {
+      // Confirm the appointment after successful payment
+      await axios.put(`https://medplus-health.onrender.com/api/appointments/confirm/${currentAppointmentId}`, {
         status: 'confirmed'
       });
 
