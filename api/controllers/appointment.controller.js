@@ -1,5 +1,6 @@
 const Appointment = require('../models/appointment.model');
 const Schedule = require('../models/schedule.model');
+const Client = require('../models/client.model'); // Import the Client model
 const moment = require('moment');
 
 // Fetch all appointments for a doctor
@@ -33,6 +34,7 @@ exports.getAppointmentsByDoctor = async (req, res) => {
   }
 };
 
+
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
   const { doctorId, userId, patientName, patientEmail, gender, isNew, date, time, medicalRecords } = req.body;
@@ -57,6 +59,26 @@ exports.bookAppointment = async (req, res) => {
     slot.isBooked = true;
     await schedule.save();
 
+    // Check if the client already exists
+    let client = await Client.findOne({ email: patientEmail });
+    if (!client) {
+      // Create a new client if not exists
+      client = new Client({
+        firstName: patientName.split(' ')[0],
+        lastName: patientName.split(' ').slice(1).join(' '),
+        email: patientEmail,
+        gender,
+        user: userId,
+        doctors: [doctorId]  // Add the doctorId to the doctors array
+      });
+    } else {
+      // Add the doctorId to the doctors array if not already present
+      if (!client.doctors.includes(doctorId)) {
+        client.doctors.push(doctorId);
+      }
+    }
+    await client.save();
+
     const newAppointment = new Appointment({
       doctorId,
       userId,
@@ -75,7 +97,7 @@ exports.bookAppointment = async (req, res) => {
     const io = req.app.get("socketio");
     io.emit("newAppointment", newAppointment);
 
-    res.status(201).json(newAppointment);
+    res.status(201).json({ appointment: newAppointment, client });
   } catch (error) {
     console.error('Error booking appointment:', error);
     res.status(500).json({ error: 'Internal server error' });

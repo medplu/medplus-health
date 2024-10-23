@@ -38,6 +38,10 @@ const DoctorProfile: React.FC = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
   const { doctor } = route.params;
+
+  // Log the doctor object to verify it is being passed correctly
+  console.log('Received doctor:', doctor);
+
   const [loading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -80,6 +84,11 @@ const DoctorProfile: React.FC = () => {
     return <Text>{error}</Text>;
   }
 
+  // Check if doctor is null or undefined
+  if (!doctor) {
+    return <Text>Error: Doctor information is missing.</Text>;
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <FlatList
@@ -101,11 +110,12 @@ const DoctorProfile: React.FC = () => {
                 <Text style={styles.readMoreText}>{showFullBio ? 'Read Less' : 'Read More'}</Text>
               </TouchableOpacity>
             </View>
-            <BookingSection 
-  doctorId={item._id} // Assuming _id is the doctorId
-  userId={item.user} 
-  consultationFee={item.consultationFee} 
-/>
+                       <BookingSection 
+              doctor={item} 
+              doctorId={item._id} 
+              userId={item.user} 
+              consultationFee={item.consultationFee} 
+            />
             <DoctorServices />
             <HorizontalLine />
             <Text style={styles.sectionTitle}>Reviews</Text>
