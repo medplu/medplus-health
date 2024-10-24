@@ -66,21 +66,21 @@ const Schedule: React.FC = () => {
         }
         if (slot.isBooked) {
           newItems[strTime].push({
-            name: slot.patientName,
+            name: slot.patientName || 'Booked Slot',
             type: 'appointment',
             height: 80,
             time: slot.time,
-            patientImage: slot.patientImage,
+            patientImage: slot.patientImage || 'https://via.placeholder.com/40',
           });
 
           // Add to today's appointments if the date matches
           if (strTime === moment().format('YYYY-MM-DD')) {
             todayAppointments.push({
-              name: slot.patientName,
+              name: slot.patientName || 'Booked Slot',
               type: 'appointment',
               height: 80,
               time: slot.time,
-              patientImage: slot.patientImage,
+              patientImage: slot.patientImage || 'https://via.placeholder.com/40',
             });
           }
         } else {
