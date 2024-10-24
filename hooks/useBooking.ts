@@ -70,69 +70,67 @@ const useBooking = (professionalId: string): BookingHook => {
       console.error('Failed to fetch subaccount code:', error);
     }
   };
+const handleBookPress = async (consultationFee: number, selectedTimeSlot: string, selectedDate: string) => {
+  setIsSubmitting(true);
+  try {
+    console.log('Booking appointment with professionalId:', professionalId, 'and userId:', user.userId);
 
-  const handleBookPress = async (consultationFee: number, selectedTimeSlot: string, selectedDate: string) => {
-    setIsSubmitting(true);
-    try {
-      console.log('Booking appointment with professionalId:', professionalId, 'and userId:', user.userId);
+    if (!subaccountCode || !user.email) {
+      throw new Error('Missing subaccount code or user email.');
+    }
 
-      if (!subaccountCode || !user.email) {
-        throw new Error('Missing subaccount code or user email.');
+    // Initialize payment with Paystack
+    const paymentResponse = await axios.post('https://api.paystack.co/transaction/initialize', {
+      email: user.email,
+      amount: consultationFee * 100, // Convert to kobo
+      subaccount: subaccountCode, 
+      currency: 'KES', 
+    }, {
+      headers: {
+        'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json'
       }
+    });
 
-      // Initialize payment with Paystack
-      const paymentResponse = await axios.post('https://api.paystack.co/transaction/initialize', {
-        email: user.email,
-        amount: consultationFee * 100, // Convert to kobo
-        subaccount: subaccountCode, 
-        currency: 'KES', 
-      }, {
-        headers: {
-          'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
-          'Content-Type': 'application/json'
-        }
+    if (paymentResponse.data.status) {
+      console.log('Payment initialized:', paymentResponse.data);
+
+      // Proceed with booking appointment after initializing payment
+      const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', {
+        doctorId: professionalId,
+        userId: user.userId,
+        patientName: `${user.firstName} ${user.lastName}`,
+        date: selectedDate,
+        time: selectedTimeSlot,
+        status: 'pending', // Set initial status to pending
       });
 
-      if (paymentResponse.data.status) {
-        console.log('Payment initialized:', paymentResponse.data);
+      console.log('Appointment response:', appointmentResponse.data);
 
-        // Proceed with booking appointment after initializing payment
-        const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', {
-          doctorId: professionalId,
-          userId: user.userId,
-          patientName: `${user.firstName} ${user.lastName}`,
-          date: selectedDate,
-          time: selectedTimeSlot,
-          status: 'pending', // Set initial status to pending
-        });
-
-        console.log('Appointment response:', appointmentResponse.data);
-
-        const newAppointmentId = appointmentResponse.data._id;
-        if (!newAppointmentId) {
-          throw new Error('Failed to retrieve appointmentId from response');
-        }
-        setAppointmentId(newAppointmentId);
-        console.log('Created appointment with appointmentId:', newAppointmentId);
-
-        // Start the Paystack transaction
-        if (paystackWebViewRef.current) {
-          paystackWebViewRef.current.startTransaction();
-        } else {
-          console.error('paystackWebViewRef.current is undefined');
-        }
-      } else {
-        throw new Error('Payment initialization failed');
+      const newAppointmentId = appointmentResponse.data.appointment._id; // Access the nested appointment object
+      if (!newAppointmentId) {
+        throw new Error('Failed to retrieve appointmentId from response');
       }
-    } catch (error) {
-      console.error('Failed to book appointment:', error);
-      setAlertMessage('Failed to book appointment. Please try again.');
-      setAlertType('error');
-      setShowAlert(true);
-      setIsSubmitting(false);
-    }
-  };
+      setAppointmentId(newAppointmentId);
+      console.log('Created appointment with appointmentId:', newAppointmentId);
 
+      // Start the Paystack transaction
+      if (paystackWebViewRef.current) {
+        paystackWebViewRef.current.startTransaction();
+      } else {
+        console.error('paystackWebViewRef.current is undefined');
+      }
+    } else {
+      throw new Error('Payment initialization failed');
+    }
+  } catch (error) {
+    console.error('Failed to book appointment:', error);
+    setAlertMessage('Failed to book appointment. Please try again.');
+    setAlertType('error');
+    setShowAlert(true);
+    setIsSubmitting(false);
+  }
+};
   const handlePaymentSuccess = async (response: any) => {
     const currentAppointmentId = appointmentId; // Capture the appointmentId from state
     if (!currentAppointmentId) {
