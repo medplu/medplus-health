@@ -3,7 +3,7 @@ const Professional = require('../models/professional.model');
 
 // Create or update the schedule for a professional
 exports.createOrUpdateSchedule = async (req, res) => {
-    const { professionalId, availability, repeatPattern, repeatDuration } = req.body;
+    const { professionalId, availability } = req.body;
 
     // Validate the incoming data
     if (!professionalId || !Array.isArray(availability)) {
@@ -21,16 +21,10 @@ exports.createOrUpdateSchedule = async (req, res) => {
         // Log the availability array
         console.log('Availability:', availability);
 
-        // Expand slots based on repeat pattern and duration
-        const expandedSlots = expandSlots(availability, repeatPattern, repeatDuration);
-
-        // Log the expanded slots
-        console.log('Expanded Slots:', expandedSlots);
-
         // Update or create the schedule
         const schedule = await Schedule.findOneAndUpdate(
             { doctorId: professionalId },
-            { doctorId: professionalId, slots: expandedSlots.map(slot => ({ ...slot, isBooked: false })) },
+            { doctorId: professionalId, slots: availability.map(slot => ({ ...slot, isBooked: false })) },
             { new: true, upsert: true }
         );
 
@@ -39,31 +33,6 @@ exports.createOrUpdateSchedule = async (req, res) => {
         console.error('Error saving schedule:', error);
         return res.status(500).json({ message: 'Internal server error.' });
     }
-};
-
-// Helper function to expand slots based on repeat pattern and duration
-const expandSlots = (availability, repeatPattern, repeatDuration) => {
-    const expandedSlots = [];
-    const now = new Date();
-
-    availability.forEach(slot => {
-        const slotDate = new Date(slot.date);
-        const [startTime, endTime] = slot.time.split(' - ');
-
-        for (let i = 0; i < repeatDuration; i++) {
-            const newSlot = { ...slot, date: new Date(slotDate), startTime, endTime };
-            expandedSlots.push(newSlot);
-
-            // Update the slot date based on the repeat pattern
-            if (repeatPattern === 'daily') {
-                slotDate.setDate(slotDate.getDate() + 1);
-            } else if (repeatPattern === 'weekly') {
-                slotDate.setDate(slotDate.getDate() + 7);
-            }
-        }
-    });
-
-    return expandedSlots;
 };
 
 // Fetch the schedule for a professional by their ID
