@@ -99,7 +99,7 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
   };
 
   const screenWidth = Dimensions.get('window').width;
-  const filteredTimeSlots = schedule?.slots.filter(slot => moment(slot.date).isSame(selectedDate, 'day')) || [];
+  const filteredTimeSlots = schedule?.slots?.filter(slot => moment(slot.date).isSame(selectedDate, 'day')) || [];
 
   return (
     <View>
@@ -255,5 +255,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BookingSection;
 export default BookingSection;
