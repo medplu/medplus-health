@@ -106,7 +106,12 @@ const useBooking = (professionalId: string): BookingHook => {
           status: 'pending', // Set initial status to pending
         });
 
+        console.log('Appointment response:', appointmentResponse.data);
+
         const newAppointmentId = appointmentResponse.data._id;
+        if (!newAppointmentId) {
+          throw new Error('Failed to retrieve appointmentId from response');
+        }
         setAppointmentId(newAppointmentId);
         console.log('Created appointment with appointmentId:', newAppointmentId);
 
@@ -130,6 +135,15 @@ const useBooking = (professionalId: string): BookingHook => {
 
   const handlePaymentSuccess = async (response: any) => {
     const currentAppointmentId = appointmentId; // Capture the appointmentId from state
+    if (!currentAppointmentId) {
+      console.error('No appointmentId found in state');
+      setAlertMessage('Payment successful, but failed to update appointment status. Please contact support.');
+      setAlertType('error');
+      setShowAlert(true);
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       console.log('Payment successful:', response);
       console.log('Confirming appointment with appointmentId:', currentAppointmentId);
