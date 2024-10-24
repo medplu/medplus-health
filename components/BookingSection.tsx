@@ -17,6 +17,7 @@ type Slot = {
   date: string;
   time: string;
   isBooked: boolean;
+  _id: string; // Ensure _id is part of the Slot type
 };
 
 const BookingSection: React.FC<{ doctorId: string, userId: string, consultationFee: number }> = ({ doctorId, userId, consultationFee }) => {
@@ -28,11 +29,11 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
   const [userEmail, setUserEmail] = useState<string>('');
   const [userFirstName, setUserFirstName] = useState<string>('');
   const [userLastName, setUserLastName] = useState<string>('');
+  const [showAlert, setShowAlert] = useState<boolean>(false); // Define showAlert state
 
   const { schedule, fetchSchedule } = useSchedule();
   const {
     isSubmitting,
-    showAlert,
     alertMessage,
     alertType,
     appointmentId,
@@ -98,7 +99,7 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
   };
 
   const screenWidth = Dimensions.get('window').width;
-  const filteredTimeSlots = schedule?.filter(slot => moment(slot.date).isSame(selectedDate, 'day')) || [];
+  const filteredTimeSlots = schedule?.slots.filter(slot => moment(slot.date).isSame(selectedDate, 'day')) || [];
 
   return (
     <View>
@@ -254,4 +255,5 @@ const styles = StyleSheet.create({
   },
 });
 
+export default BookingSection;
 export default BookingSection;
