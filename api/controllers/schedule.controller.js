@@ -18,8 +18,14 @@ exports.createOrUpdateSchedule = async (req, res) => {
             return res.status(404).json({ message: 'Professional not found.' });
         }
 
+        // Log the availability array
+        console.log('Availability:', availability);
+
         // Expand slots based on repeat pattern and duration
         const expandedSlots = expandSlots(availability, repeatPattern, repeatDuration);
+
+        // Log the expanded slots
+        console.log('Expanded Slots:', expandedSlots);
 
         // Update or create the schedule
         const schedule = await Schedule.findOneAndUpdate(
@@ -42,8 +48,10 @@ const expandSlots = (availability, repeatPattern, repeatDuration) => {
 
     availability.forEach(slot => {
         const slotDate = new Date(slot.date);
+        const [startTime, endTime] = slot.time.split(' - ');
+
         for (let i = 0; i < repeatDuration; i++) {
-            const newSlot = { ...slot, date: new Date(slotDate) };
+            const newSlot = { ...slot, date: new Date(slotDate), startTime, endTime };
             expandedSlots.push(newSlot);
 
             // Update the slot date based on the repeat pattern
@@ -57,6 +65,7 @@ const expandSlots = (availability, repeatPattern, repeatDuration) => {
 
     return expandedSlots;
 };
+
 // Fetch the schedule for a professional by their ID
 exports.getScheduleByProfessionalId = async (req, res) => {
     const { professionalId } = req.params;
