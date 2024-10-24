@@ -19,6 +19,9 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
   const [next7Days, setNext7Days] = useState<Day[]>([]);
   const [patientName, setPatientName] = useState<string>('');
   const [showPatientNameInput, setShowPatientNameInput] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [userFirstName, setUserFirstName] = useState<string>('');
+  const [userLastName, setUserLastName] = useState<string>('');
 
   const { schedule, fetchSchedule } = useSchedule();
   const {
@@ -59,8 +62,9 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
       const firstName = await AsyncStorage.getItem('firstName');
       const lastName = await AsyncStorage.getItem('lastName');
       const email = await AsyncStorage.getItem('email');
-      const userId = await AsyncStorage.getItem('userId');
-      setUser({ firstName, lastName, email, userId });
+      setUserFirstName(firstName || '');
+      setUserLastName(lastName || '');
+      setUserEmail(email || '');
     } catch (error) {
       console.error('Failed to load user data', error);
     }
@@ -171,7 +175,7 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
       <Paystack
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
         amount={consultationFee}
-        billingEmail={user.email}
+        billingEmail={userEmail}
         subaccount={subaccountCode}
         currency='KES'
         activityIndicatorColor={Colors.primary}
@@ -244,4 +248,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BookingSection;  
+export default BookingSection;
