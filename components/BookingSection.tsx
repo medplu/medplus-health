@@ -13,6 +13,12 @@ type Day = {
   formattedDate: string;
 };
 
+type Slot = {
+  date: string;
+  time: string;
+  isBooked: boolean;
+};
+
 const BookingSection: React.FC<{ doctorId: string, userId: string, consultationFee: number }> = ({ doctorId, userId, consultationFee }) => {
   const [selectedDate, setSelectedDate] = useState<moment.Moment | null>(moment());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -88,7 +94,7 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
       Alert.alert('Error', 'Please enter the patient\'s name.');
       return;
     }
-    await handleBookPress(consultationFee);
+    await handleBookPress(consultationFee, selectedDate?.format('YYYY-MM-DD') || '', selectedTime || '');
   };
 
   const screenWidth = Dimensions.get('window').width;
