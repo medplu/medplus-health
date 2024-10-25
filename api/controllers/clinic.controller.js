@@ -5,7 +5,8 @@ const cloudinary = require('cloudinary').v2; // Use require for cloudinary
 const generateReferenceCode = () => {
   // Simple example: generating a unique reference code
   return 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-};const registerClinic = async (req, res) => {
+};
+const registerClinic = async (req, res) => {
   const { userId } = req.params; // Expecting userId in the request parameters
   const { name, contactInfo, address, category } = req.body; // Include category in the request body
 
@@ -69,7 +70,48 @@ const fetchClinics = async (req, res) => {
     res.status(500).send(error);
   }
 };
+const joinClinic = async (req, res) => {
+  const { userId } = req.params; // Expecting userId in the request parameters
+  const { referenceCode } = req.body; // Expecting the referenceCode in the request body
 
+  try {
+    // Find the clinic with the provided reference code
+    const clinic = await Clinic.findOne({ referenceCode });
+    if (!clinic) {
+      return res.status(404).json({ error: 'Clinic not found with the provided reference code' });
+    }
+
+    // Find the professional associated with the userId
+    const professional = await Professional.findOne({ user: userId });
+    if (!professional) {
+      return res.status(404).json({ error: 'Professional not found' });
+    }
+
+    // Check if the professional is already attached to the clinic
+    if (professional.attachedToClinic) {
+      return res.status(400).json({ error: 'You are already attached to a clinic' });
+    }
+
+    // Update the clinic to include this professional
+    clinic.professionals.push(professional._id); // Add professional ID to the clinic's professionals array
+    await clinic.save();
+
+    // Update the professional document to reflect the clinic association
+    await Professional.findOneAndUpdate(
+      { user: userId },
+      {
+        clinic: clinic._id,
+        attachedToClinic: true,
+      },
+      { new: true }
+    );
+
+    res.status(200).json({ message: 'Successfully joined the clinic', clinic });
+  } catch (error) {
+    console.error('Error joining clinic:', error);
+    res.status(500).send(error);
+  }
+};
 const fetchClinicById = async (req, res) => {
   try {
     const clinic = await Clinic.findById(req.params.id).populate('professionals'); // Populate professionals
@@ -105,4 +147,5 @@ module.exports = {
   fetchClinics,
   fetchClinicById,
   fetchClinicsByCategory,
+  joinClinic, // Add joinClinic to the exported module
 };

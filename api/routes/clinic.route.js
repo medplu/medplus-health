@@ -13,4 +13,6 @@ router.get('/:id', clinicsController.fetchClinicById);
 
 router.get('/clinics/category/:category', clinicsController.fetchClinicsByCategory);
 
+router.post('/join/:userId', clinicsController.joinClinic); // Add this line
+
 module.exports = router;
