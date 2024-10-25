@@ -76,7 +76,7 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
 
       console.log('Submitting form with userId:', userId); // Debugging log
 
-      const response = await axios.post(`https://medplus-app.onrender.com/api/clinics/register/${userId}`, formData, {
+      const response = await axios.post(`https://medplus-health.onrender.com/api/clinics/register/${userId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

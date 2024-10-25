@@ -16,7 +16,7 @@ const clinicSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        required: true,
+        required: false, // Change this to false to make the image optional
     },
     category: {
         type: String,
