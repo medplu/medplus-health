@@ -171,17 +171,17 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         onConfirmPressed={() => setShowAlert(false)}
       />
 
-      <Paystack
+    
+<Paystack
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-        amount={consultationFee * 100} // Ensure the amount is in the smallest unit (e.g., kobo for Naira)
-        billingEmail={userEmail}
-        subaccount={subaccountCode}
-        currency="KES"
+        amount={consultationFee}
+        billingEmail={user.email}
+        subaccount={subaccountCode} // Add this line
+        currency='KES'
         activityIndicatorColor={Colors.primary}
-        ref={paystackWebViewRef}
         onCancel={handlePaymentCancel}
-        onSuccess={handlePaymentSuccess}
-        autoStart={false} // Prevent auto-start of the transaction
+        onSuccess={(response) => handlePaymentSuccess(response, appointmentId!)}
+        ref={paystackWebViewRef}
       />
 
       <TouchableOpacity onPress={() => paystackWebViewRef.current && paystackWebViewRef.current.startTransaction()}>

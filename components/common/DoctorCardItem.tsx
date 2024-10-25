@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
+import Colors from '../Shared/Colors';
+import { Paystack } from 'react-native-paystack-webview';
+import AwesomeAlert from 'react-native-awesome-alerts';
+import useBooking from '../../hooks/useBooking';
 
 interface Doctor {
   _id: string;
@@ -8,15 +14,30 @@ interface Doctor {
   category: string;
   availability: boolean;
   user: string;
-  profileImage?: string;
+  profileImage?: string; // Add profileImage to the Doctor interface
 }
 
 interface DoctorCardItemProps {
   doctor: Doctor;
+  userId: string; // Professional's ID
+  consultationFee: number;
 }
 
-const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
-  const { firstName, lastName, category, availability, profileImage } = doctor;
+const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consultationFee }) => {
+  const { firstName, lastName, category, availability, _id, profileImage } = doctor;
+  const {
+    isSubmitting,
+    showAlert,
+    alertMessage,
+    alertType,
+    appointmentId,
+    user,
+    subaccountCode,
+    paystackWebViewRef,
+    handleBookPress,
+    handlePaymentSuccess,
+    handlePaymentCancel,
+  } = useBooking(userId); // Pass professional ID to the hook
 
   return (
     <View style={styles.container}>
@@ -30,16 +51,50 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
         <View style={styles.headerText}>
           <Text style={styles.doctorName}>Dr. {firstName} {lastName}</Text>
           <Text style={styles.categoryName}>{category}</Text>
-          <Text style={[styles.categoryName, { color: availability ? 'green' : 'red' }]}>
+          <Text style={[styles.categoryName, { color: Colors.primary }]}>
             {availability ? 'Available' : 'Not Available'}
           </Text>
         </View>
+        <FontAwesome name="heart" size={20} color={Colors.primary} />
       </View>
 
       <View style={styles.ratingContainer}>
         <Text style={styles.ratingText}>⭐⭐⭐⭐ 4.8 </Text>
         <Text style={styles.reviewText}>49 Reviews</Text>
       </View>
+
+      <TouchableOpacity style={styles.bookButton} onPress={() => handleBookPress(consultationFee)} disabled={isSubmitting}>
+        {isSubmitting ? (
+          <ActivityIndicator size="small" color={Colors.primary} />
+        ) : (
+          <Text style={styles.bookButtonText}>Book Appointment</Text>
+        )}
+      </TouchableOpacity>
+
+      <Paystack
+        paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+        amount={consultationFee}
+        billingEmail={user.email}
+        subaccount={subaccountCode} // Add this line
+        currency='KES'
+        activityIndicatorColor={Colors.primary}
+        onCancel={handlePaymentCancel}
+        onSuccess={(response) => handlePaymentSuccess(response, appointmentId!)}
+        ref={paystackWebViewRef}
+      />
+
+      <AwesomeAlert
+        show={showAlert}
+        title={alertType === 'success' ? 'Success' : 'Error'}
+        message={alertMessage}
+        closeOnTouchOutside={true}
+        closeOnHardwareBackPress={false}
+        showCancelButton={false}
+        showConfirmButton={true}
+        confirmText="OK"
+        confirmButtonColor={Colors.primary}
+        onConfirmPressed={() => setShowAlert(false)}
+      />
     </View>
   );
 };
@@ -49,7 +104,7 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: Colors.lightGray,
   },
   header: {
     flexDirection: 'row',
@@ -67,22 +122,33 @@ const styles = StyleSheet.create({
   },
   doctorName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Inter-Black-Semi',
   },
   categoryName: {
     fontSize: 14,
-    color: '#666',
+    fontFamily: 'Inter-Regular',
   },
   ratingContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10, 
+    marginBottom: 10,
   },
   ratingText: {
-    fontWeight: 'bold',
+    fontFamily: 'Inter-Black-Semi',
   },
   reviewText: {
-    color: '#666',
+    color: Colors.gray,
+  },
+  bookButton: {
+    backgroundColor: Colors.lightGray,
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  bookButtonText: {
+    color: Colors.primary,
+    fontFamily: 'Inter-Black-Semi',
+    fontSize: 15,
   },
 });
 
