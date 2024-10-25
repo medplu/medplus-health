@@ -45,10 +45,12 @@ exports.getProfessionalByUserId = async (req, res) => {
         console.error("Error fetching professional:", error);
         res.status(500).json({ error: 'Internal server error' });
     }
-};// Update professional profile
+};
 exports.updateProfessionalProfile = async (req, res) => {
-    const { professionalId } = req.params; // Assume that the `professionalId` is being sent as a parameter
+    const { professionalId } = req.params; // Get the professionalId from the request params
     const { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage, emailNotifications, pushNotifications, location } = req.body;
+
+    console.log('Incoming professionalId:', professionalId); // Log incoming ID
 
     try {
         // Build the update object dynamically
@@ -68,9 +70,11 @@ exports.updateProfessionalProfile = async (req, res) => {
             if (location.longitude !== undefined) updateFields['location.longitude'] = location.longitude;
         }
 
+        console.log('Update fields:', updateFields); // Log update fields
+
         // Update the professional profile by professionalId
         const professional = await Professional.findOneAndUpdate(
-            { _id: professionalId }, // Query by `professionalId` instead of `userId`
+            { _id: mongoose.Types.ObjectId(professionalId) }, // Ensure proper ID type
             { $set: updateFields },
             { new: true } // Return the updated document
         );

@@ -25,7 +25,7 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
-
+  
   const handleLoginPress = async () => {
     if (email === '' || password === '') {
       setErrorMessage('Please enter both email and password.');
@@ -33,18 +33,37 @@ const LoginScreen: React.FC = () => {
       try {
         const response = await GlobalApi.loginUser(email, password);
         setErrorMessage(null);
-
-        const { token, userId, userType, doctorId, firstName, lastName, email: userEmail } = response.data;
+  
+        const {
+          token,
+          userId,
+          userType,
+          professional,
+          firstName,
+          lastName,
+          email: userEmail,
+        } = response.data;
+  
         await AsyncStorage.setItem('authToken', token);
         await AsyncStorage.setItem('userId', userId);
         await AsyncStorage.setItem('userType', userType);
         await AsyncStorage.setItem('firstName', firstName);
         await AsyncStorage.setItem('lastName', lastName);
         await AsyncStorage.setItem('email', userEmail);
-
-        if (doctorId) await AsyncStorage.setItem('doctorId', doctorId);
-
-        const route = userType === 'professional' ? '/professional/tabs' : userType === 'client' ? '/client/tabs' : '/student/tabs';
+  
+        // Store professionalId if the userType is 'professional'
+        if (userType === 'professional' && professional?._id) {
+          await AsyncStorage.setItem('professionalId', professional._id);
+        }
+  
+        // Determine the appropriate route based on the userType
+        const route =
+          userType === 'professional'
+            ? '/professional/tabs'
+            : userType === 'client'
+            ? '/client/tabs'
+            : '/student/tabs';
+  
         router.push(route as const);
       } catch (error) {
         console.error('Error during login:', error);
@@ -52,6 +71,7 @@ const LoginScreen: React.FC = () => {
       }
     }
   };
+  
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

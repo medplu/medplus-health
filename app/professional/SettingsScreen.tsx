@@ -34,20 +34,20 @@ const SettingsScreen = () => {
     location: { latitude: null as number | null, longitude: null as number | null },
   });
   const [userId, setUserId] = useState(null);
-  const [doctorId, setDoctorId] = useState(null);
+  const [professionalId, setProfessionalId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const storedUserId = await AsyncStorage.getItem('userId');
-        const storedDoctorId = await AsyncStorage.getItem('doctorId');
+        const storedProfessionalId = await AsyncStorage.getItem('professionalId');
         const storedLocation = await AsyncStorage.getItem('location');
         const storedEmail = await AsyncStorage.getItem('email');
         const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
         const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
 
         setUserId(storedUserId);
-        setDoctorId(storedDoctorId);
+        setProfessionalId(storedProfessionalId);
 
         setForm((prevForm) => ({
           ...prevForm,
@@ -57,8 +57,8 @@ const SettingsScreen = () => {
           pushNotifications: storedPushNotifications ? JSON.parse(storedPushNotifications) : prevForm.pushNotifications,
         }));
 
-        if (storedDoctorId) {
-          fetchProfile(storedDoctorId);
+        if (storedProfessionalId) {
+          fetchProfile(storedProfessionalId);
         }
       } catch (error) {
         console.error('Error fetching user data from AsyncStorage:', error);
@@ -68,10 +68,10 @@ const SettingsScreen = () => {
     fetchUserData();
   }, []);
 
-  const fetchProfile = async (doctorId: string) => {
-    console.log(`Fetching profile for doctorId: ${doctorId}`); // Log the doctorId
+  const fetchProfile = async (professionalId: string) => {
+    console.log(`Fetching profile for professionalId: ${professionalId}`);
     try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/professionals/${doctorId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/professionals/${professionalId}`);
       const profile = response.data;
       setForm((prevForm) => ({
         ...prevForm,
@@ -85,7 +85,7 @@ const SettingsScreen = () => {
     }
   };
 
-  const handleProfileChange = async (key, value) => {
+  const handleProfileChange = async (key: keyof typeof form, value: any) => {
     setForm((prevForm) => ({
       ...prevForm,
       [key]: value,
@@ -104,31 +104,33 @@ const SettingsScreen = () => {
       quality: 1,
     });
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets) {
       const localUri = result.assets[0].uri;
       const filename = localUri.split('/').pop();
-      const match = /\.(\w+)$/.exec(filename);
+      const match = /\.(\w+)$/.exec(filename || '');
       const type = match ? `image/${match[1]}` : `image`;
 
-      const formData = new FormData();
-      formData.append('profileImage', { uri: localUri, name: filename, type });
+      const imageData = new FormData();
+      imageData.append('profileImage', { uri: localUri, name: filename, type } as any);
 
-      handleProfileChange('profileImage', formData);
+      handleProfileChange('profileImage', imageData);
     }
   };
 
   const updateProfile = async () => {
+    if (!professionalId) return;
+
     try {
       const formData = new FormData();
       Object.keys(form).forEach((key) => {
         if (key === 'profileImage' && form[key] instanceof FormData) {
           formData.append(key, form[key].get('profileImage'));
         } else {
-          formData.append(key, form[key]);
+          formData.append(key, form[key as keyof FormData]);
         }
       });
 
-      const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${doctorId}`, {
+      const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${professionalId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -143,7 +145,7 @@ const SettingsScreen = () => {
       const data = await response.json();
       console.log('Profile updated successfully:', data);
       setModalVisible(false);
-      fetchProfile(doctorId); // Fetch updated profile data
+      fetchProfile(professionalId);
     } catch (error) {
       console.error('Error updating profile:', error);
     }
