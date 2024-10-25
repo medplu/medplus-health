@@ -4,12 +4,6 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 
-interface Doctor {
-  name: string;
-  specialties: string;
-  experience: string;
-}
-
 interface AddClinicFormProps {
   onClose: () => void;
 }
@@ -19,8 +13,7 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
   const [contactInfo, setContactInfo] = useState<string>('');
   const [address, setAddress] = useState<string>('');
   const [category, setCategory] = useState<string>(''); // Add category state
-  const [image, setImage] = useState<string | File | null>(null);
-  const [doctors, setDoctors] = useState<Doctor[]>([{ name: '', specialties: '', experience: '' }]);
+  const [image, setImage] = useState<string | null>(null);
   const [userId, setUserId] = useState<string>('');
 
   useEffect(() => {
@@ -41,16 +34,6 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
     fetchUserId();
   }, []);
 
-  const handleAddDoctor = () => {
-    setDoctors([...doctors, { name: '', specialties: '', experience: '' }]);
-  };
-
-  const handleDoctorChange = (index: number, field: keyof Doctor, value: string) => {
-    const newDoctors = [...doctors];
-    newDoctors[index][field] = value;
-    setDoctors(newDoctors);
-  };
-
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -65,17 +48,8 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
       quality: 1,
     });
 
-    if (!result.canceled && 'uri' in result) {
-      if (!result.canceled) {
-        const successResult = result as ImagePicker.ImagePickerSuccessResult;
-        setImage(successResult.uri);
-      }
-    }
-  };
-
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setImage(event.target.files[0]);
+    if (!result.canceled && result.assets) {
+      setImage(result.assets[0].uri); // Accessing the uri from the assets array
     }
   };
 
@@ -90,19 +64,14 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
       formData.append('contactInfo', contactInfo);
       formData.append('address', address);
       formData.append('category', category); // Include category in form data
-      formData.append('doctors', JSON.stringify(doctors)); // Ensure doctors is stringified
       if (image) {
-        if (typeof image === 'string') {
-          const uriParts = image.split('.');
-          const fileType = uriParts[uriParts.length - 1];
-          formData.append('image', {
-            uri: image,
-            name: `photo.${fileType}`,
-            type: `image/${fileType}`,
-          } as any); // TypeScript workaround for FormData
-        } else {
-          formData.append('image', image);
-        }
+        const uriParts = image.split('.');
+        const fileType = uriParts[uriParts.length - 1];
+        formData.append('image', {
+          uri: image,
+          name: `photo.${fileType}`,
+          type: `image/${fileType}`,
+        } as any); // TypeScript workaround for FormData
       }
 
       console.log('Submitting form with userId:', userId); // Debugging log
@@ -147,40 +116,13 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
         value={category}
         onChangeText={setCategory}
       />
-      {Platform.OS === 'web' ? (
-        <input type="file" accept="image/*" onChange={handleImageChange} />
-      ) : (
-        <Button title="Pick an image from camera roll" onPress={pickImage} />
-      )}
+      <Button title="Pick an image from camera roll" onPress={pickImage} />
       {image && (
         <Image
-          source={{ uri: typeof image === 'string' ? image : URL.createObjectURL(image) }}
+          source={{ uri: image }}
           style={styles.image}
         />
       )}
-      {doctors.map((doctor, index) => (
-        <View key={index} style={styles.doctorContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Doctor Name"
-            value={doctor.name}
-            onChangeText={(value) => handleDoctorChange(index, 'name', value)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Specialties"
-            value={doctor.specialties}
-            onChangeText={(value) => handleDoctorChange(index, 'specialties', value)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Experience"
-            value={doctor.experience}
-            onChangeText={(value) => handleDoctorChange(index, 'experience', value)}
-          />
-        </View>
-      ))}
-      <Button title="Add Another Doctor" onPress={handleAddDoctor} />
       <Button title="Submit" onPress={handleSubmit} />
       <Button title="Cancel" onPress={onClose} />
     </ScrollView>
@@ -207,9 +149,6 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     marginBottom: 10,
-  },
-  doctorContainer: {
-    marginBottom: 20,
   },
 });
 
