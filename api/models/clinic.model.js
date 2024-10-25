@@ -22,6 +22,11 @@ const clinicSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    referenceCode: { // New field for the reference code
+        type: String,
+        required: true,
+        unique: true, // Ensure reference code is unique
+    },
     professionals: [{  // This allows multiple professionals to be attached to a clinic
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Professional'

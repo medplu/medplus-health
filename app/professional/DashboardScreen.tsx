@@ -5,7 +5,6 @@ import {
   Image,
   ActivityIndicator,
   Button,
-  Alert,
   ScrollView,
   TouchableOpacity,
   FlatList,
@@ -37,14 +36,17 @@ const DashboardScreen: React.FC = () => {
   const [showAddClinicForm, setShowAddClinicForm] = useState(false);
   const [showCreatePharmacyForm, setShowCreatePharmacyForm] = useState(false);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
+  const [isAttachedToClinic, setIsAttachedToClinic] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchProfessionalId = async () => {
+    const fetchProfessionalData = async () => {
       const id = await AsyncStorage.getItem('professionalId');
+      const attachedToClinic = await AsyncStorage.getItem('attachedToClinic'); // Fetch clinic status
       setProfessionalId(id);
+      setIsAttachedToClinic(attachedToClinic === 'true'); // Update state based on clinic status
     };
 
-    fetchProfessionalId();
+    fetchProfessionalData();
   }, []);
 
   const handleAddPharmacyClick = () => {
@@ -86,79 +88,90 @@ const DashboardScreen: React.FC = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      
-      <FlatList
-        data={days}
-        horizontal
-        keyExtractor={(item) => item.label}
-        renderItem={({ item }) => (
-          <View style={styles.dayContainer}>
-            <Text style={[styles.dayLabel, item.isToday && styles.todayText]}>{item.label}</Text>
-            <Text style={[styles.dateLabel, item.isToday && styles.todayText]}>{item.date}</Text>
-          </View>
-        )}
-        showsHorizontalScrollIndicator={false}
-      />
-
-      <View style={styles.cardContainer}>
-        <TouchableOpacity style={styles.card} onPress={handleAddClinicClick}>
-          <View style={styles.iconContainer}>
-            <MaterialIcons name="add" size={40} color={Colors.primary} />
-          </View>
-          <Text style={styles.details}>Add Clinic</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.card} onPress={handleAddPharmacyClick}>
-          <View style={styles.iconContainer}>
-            <MaterialIcons name="local-pharmacy" size={40} color={Colors.primary} />
-          </View>
-          <Text style={styles.details}>Add Pharmacy</Text>
-        </TouchableOpacity>
-        <View style={styles.card}>
-          <View style={styles.iconContainer}>
-            <MaterialIcons name="folder" size={40} color={Colors.primary} />
-          </View>
-          <Text style={styles.details}>Patient Records</Text>
+      {!isAttachedToClinic ? (
+        <View style={styles.promptContainer}>
+          <Text style={styles.promptText}>
+            Please create or join a clinic to proceed with your professional activities.
+          </Text>
+          <Button title="Create Clinic" onPress={handleAddClinicClick} />
+          <Button title="Join Existing Clinic" onPress={() => Alert.alert('Join Clinic', 'Feature coming soon')} />
         </View>
-      </View>
-
-      <AppointmentOverview
-        totalAppointments={totalAppointments}
-        completedAppointments={completedAppointments}
-        upcomingAppointments={upcomingAppointments}
-        requestAppointments={requestAppointments}
-      />
-
-      <Text style={styles.subtitle}>Recent Appointments</Text>
-      {recentAppointments.length > 0 ? (
-        <FlatList
-          data={showAllRecentAppointments ? recentAppointments : recentAppointments.slice(0, 5)}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <View style={styles.appointmentCard}>
-              <Image source={{ uri: item.patientImage }} style={styles.patientImage} />
-              <View style={styles.detailsContainer}>
-                <Text style={styles.name}>{item.patientName}</Text>
-                <Text style={styles.dateTime}>
-                  {moment(item.date).format('MMMM Do, YYYY')} - {item.time}
-                </Text>
-              </View>
-              {item.status !== 'confirmed' && (
-                <Button title="Confirm" onPress={() => confirmAppointment(item._id)} />
-              )}
-            </View>
-          )}
-          ListFooterComponent={
-            recentAppointments.length > 5 && (
-              <TouchableOpacity onPress={() => setShowAllRecentAppointments((prev) => !prev)}>
-                <Text style={styles.showMoreText}>
-                  {showAllRecentAppointments ? 'Show Less' : 'Show All'}
-                </Text>
-              </TouchableOpacity>
-            )
-          }
-        />
       ) : (
-        <Text style={styles.noAppointmentsText}>No recent appointments.</Text>
+        <>
+          <FlatList
+            data={days}
+            horizontal
+            keyExtractor={(item) => item.label}
+            renderItem={({ item }) => (
+              <View style={styles.dayContainer}>
+                <Text style={[styles.dayLabel, item.isToday && styles.todayText]}>{item.label}</Text>
+                <Text style={[styles.dateLabel, item.isToday && styles.todayText]}>{item.date}</Text>
+              </View>
+            )}
+            showsHorizontalScrollIndicator={false}
+          />
+
+          <View style={styles.cardContainer}>
+            <TouchableOpacity style={styles.card} onPress={handleAddClinicClick}>
+              <View style={styles.iconContainer}>
+                <MaterialIcons name="add" size={40} color={Colors.primary} />
+              </View>
+              <Text style={styles.details}>Add Clinic</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.card} onPress={handleAddPharmacyClick}>
+              <View style={styles.iconContainer}>
+                <MaterialIcons name="local-pharmacy" size={40} color={Colors.primary} />
+              </View>
+              <Text style={styles.details}>Add Pharmacy</Text>
+            </TouchableOpacity>
+            <View style={styles.card}>
+              <View style={styles.iconContainer}>
+                <MaterialIcons name="folder" size={40} color={Colors.primary} />
+              </View>
+              <Text style={styles.details}>Patient Records</Text>
+            </View>
+          </View>
+
+          <AppointmentOverview
+            totalAppointments={totalAppointments}
+            completedAppointments={completedAppointments}
+            upcomingAppointments={upcomingAppointments}
+            requestAppointments={requestAppointments}
+          />
+
+          <Text style={styles.subtitle}>Recent Appointments</Text>
+          {recentAppointments.length > 0 ? (
+            <FlatList
+              data={showAllRecentAppointments ? recentAppointments : recentAppointments.slice(0, 5)}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
+                <View style={styles.appointmentCard}>
+                  <Image source={{ uri: item.patientImage }} style={styles.patientImage} />
+                  <View style={styles.detailsContainer}>
+                    <Text style={styles.name}>{item.patientName}</Text>
+                    <Text style={styles.dateTime}>
+                      {moment(item.date).format('MMMM Do, YYYY')} - {item.time}
+                    </Text>
+                  </View>
+                  {item.status !== 'confirmed' && (
+                    <Button title="Confirm" onPress={() => confirmAppointment(item._id)} />
+                  )}
+                </View>
+              )}
+              ListFooterComponent={
+                recentAppointments.length > 5 && (
+                  <TouchableOpacity onPress={() => setShowAllRecentAppointments((prev) => !prev)}>
+                    <Text style={styles.showMoreText}>
+                      {showAllRecentAppointments ? 'Show Less' : 'Show All'}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              }
+            />
+          ) : (
+            <Text style={styles.noAppointmentsText}>No recent appointments.</Text>
+          )}
+        </>
       )}
 
       {/* Add Clinic Modal */}
@@ -183,18 +196,17 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     backgroundColor: Colors.background,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.primary,
-    marginBottom: 8,
+  promptContainer: {
+    padding: 16,
+    backgroundColor: Colors.warning,
+    borderRadius: 8,
+    marginBottom: 16,
   },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 16,
-    color: Colors.primary,
+  promptText: {
+    fontSize: 16,
+    color: Colors.textPrimary,
     marginBottom: 8,
+    textAlign: 'center',
   },
   cardContainer: {
     flexDirection: 'row',
@@ -222,6 +234,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.textPrimary,
   },
+  dayContainer: {
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+  dayLabel: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+  },
+  dateLabel: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+  },
+  todayText: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+  },
   appointmentCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -239,7 +267,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginRight: 8,
+    marginRight: 12,
   },
   detailsContainer: {
     flex: 1,
@@ -253,29 +281,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
   },
+  showMoreText: {
+    color: Colors.primary,
+    textAlign: 'center',
+    marginTop: 8,
+  },
   noAppointmentsText: {
     textAlign: 'center',
     color: Colors.textSecondary,
-  },
-  showMoreText: {
-    textAlign: 'center',
-    color: Colors.primary,
-    marginTop: 8,
-  },
-  dayContainer: {
-    alignItems: 'center',
-    marginHorizontal: 8,
-  },
-  dayLabel: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-  },
-  dateLabel: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-  },
-  todayText: {
-    color: Colors.primary,
-    fontWeight: 'bold',
+    marginTop: 16,
   },
 });
