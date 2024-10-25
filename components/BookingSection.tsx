@@ -97,6 +97,18 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     await handleBookPress(consultationFee, selectedTimeSlot?.id || '', selectedDate);
   };
 
+  const resetForm = () => {
+    setSelectedDate(moment().format('YYYY-MM-DD'));
+    setSelectedTimeSlot(null);
+    setPatientName('');
+    setShowPatientNameInput(false);
+  };
+
+  const handlePaymentSuccessWithReset = (response: any, appointmentId: string) => {
+    handlePaymentSuccess(response, appointmentId);
+    resetForm();
+  };
+
   const groupedSlots = schedule.reduce((acc: Record<string, { date: string; _id: string; time: string }[]>, slot) => {
     const date = moment(slot.date).format('YYYY-MM-DD');
     if (!acc[date]) {
@@ -196,7 +208,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         currency='KES'
         activityIndicatorColor={Colors.primary}
         onCancel={handlePaymentCancel}
-        onSuccess={(response) => handlePaymentSuccess(response, appointmentId!)}
+        onSuccess={(response) => handlePaymentSuccessWithReset(response, appointmentId!)}
         ref={paystackWebViewRef}
       />
 
