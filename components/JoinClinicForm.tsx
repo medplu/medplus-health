@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
+import { Input, Button, Text } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Colors from '@/components/Shared/Colors';
 
@@ -57,15 +58,24 @@ const JoinClinicForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Join Clinic</Text>
-      <TextInput
-        style={styles.input}
+      <Text h4 style={styles.title}>Join Clinic</Text>
+      <Input
         placeholder="Enter Reference Code"
         value={referenceCode}
         onChangeText={setReferenceCode}
+        containerStyle={styles.input}
       />
-      <Button title="Join" onPress={handleJoinClinic} />
-      <Button title="Cancel" onPress={onClose} color={Colors.SECONDARY} />
+      <Button
+        title="Join"
+        onPress={handleJoinClinic}
+        buttonStyle={styles.joinButton}
+      />
+      <Button
+        title="Cancel"
+        onPress={onClose}
+        buttonStyle={styles.cancelButton}
+        type="outline"
+      />
     </View>
   );
 };
@@ -81,13 +91,17 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
-    height: 40,
-    borderColor: Colors.primary,
-    borderWidth: 1,
     marginBottom: 20,
-    paddingHorizontal: 10,
+  },
+  joinButton: {
+    backgroundColor: Colors.primary,
+    marginBottom: 10,
+  },
+  cancelButton: {
+    borderColor: Colors.SECONDARY,
   },
 });
 

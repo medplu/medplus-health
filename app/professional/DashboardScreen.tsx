@@ -11,14 +11,15 @@ import {
   Modal,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import moment from 'moment'; // To handle date formatting
-import { MaterialIcons } from '@expo/vector-icons'; // Importing icons from Material Icons
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
-import AddClinicForm from '../../components/AddClinicForm'; // Import AddClinicForm component
+import moment from 'moment';
+import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AddClinicForm from '../../components/AddClinicForm';
 import Colors from '@/components/Shared/Colors';
 import CreatePharmacy from '@/components/CreatePharmacy';
-import useAppointments from '../../hooks/useAppointments'; // Import the custom hook
-import AppointmentOverview from '../../components/AppointmentOverview'; // Import the AppointmentOverview component
+import useAppointments from '../../hooks/useAppointments';
+import AppointmentOverview from '../../components/AppointmentOverview';
+import JoinClinicForm from '../../components/JoinClinicForm';
 
 interface Day {
   label: string;
@@ -35,15 +36,16 @@ const DashboardScreen: React.FC = () => {
   const requestAppointments = totalAppointments - completedAppointments - upcomingAppointments;
   const [showAddClinicForm, setShowAddClinicForm] = useState(false);
   const [showCreatePharmacyForm, setShowCreatePharmacyForm] = useState(false);
+  const [showJoinClinicForm, setShowJoinClinicForm] = useState(false);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
   const [isAttachedToClinic, setIsAttachedToClinic] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchProfessionalData = async () => {
       const id = await AsyncStorage.getItem('professionalId');
-      const attachedToClinic = await AsyncStorage.getItem('attachedToClinic'); // Fetch clinic status
+      const attachedToClinic = await AsyncStorage.getItem('attachedToClinic');
       setProfessionalId(id);
-      setIsAttachedToClinic(attachedToClinic === 'true'); // Update state based on clinic status
+      setIsAttachedToClinic(attachedToClinic === 'true');
     };
 
     fetchProfessionalData();
@@ -63,6 +65,14 @@ const DashboardScreen: React.FC = () => {
 
   const handleCloseClinicForm = () => {
     setShowAddClinicForm(false);
+  };
+
+  const handleJoinClinicClick = () => {
+    setShowJoinClinicForm(true);
+  };
+
+  const handleCloseJoinClinicForm = () => {
+    setShowJoinClinicForm(false);
   };
 
   const today = moment();
@@ -94,7 +104,7 @@ const DashboardScreen: React.FC = () => {
             Please create or join a clinic to proceed with your professional activities.
           </Text>
           <Button title="Create Clinic" onPress={handleAddClinicClick} />
-          <Button title="Join Existing Clinic" onPress={() => Alert.alert('Join Clinic', 'Feature coming soon')} />
+          <Button title="Join Existing Clinic" onPress={handleJoinClinicClick} />
         </View>
       ) : (
         <>
@@ -112,6 +122,7 @@ const DashboardScreen: React.FC = () => {
           />
 
           <View style={styles.cardContainer}>
+         
             <TouchableOpacity style={styles.card} onPress={handleAddClinicClick}>
               <View style={styles.iconContainer}>
                 <MaterialIcons name="add" size={40} color={Colors.primary} />
@@ -183,6 +194,11 @@ const DashboardScreen: React.FC = () => {
       <Modal visible={showCreatePharmacyForm} animationType="slide" onRequestClose={handleClosePharmacyForm}>
         <CreatePharmacy onClose={handleClosePharmacyForm} />
       </Modal>
+
+      {/* Join Clinic Modal */}
+      <Modal visible={showJoinClinicForm} animationType="slide" onRequestClose={handleCloseJoinClinicForm}>
+        <JoinClinicForm onClose={handleCloseJoinClinicForm} />
+      </Modal>
     </ScrollView>
   );
 };
@@ -247,21 +263,27 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   todayText: {
-    color: Colors.primary,
     fontWeight: 'bold',
+    color: Colors.primary,
+  },
+  subtitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: Colors.textPrimary,
   },
   appointmentCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
     backgroundColor: Colors.white,
-    padding: 8,
     borderRadius: 8,
     marginBottom: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   patientImage: {
     width: 40,
@@ -281,14 +303,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
   },
-  showMoreText: {
-    color: Colors.primary,
-    textAlign: 'center',
-    marginTop: 8,
-  },
   noAppointmentsText: {
     textAlign: 'center',
     color: Colors.textSecondary,
     marginTop: 16,
+  },
+  showMoreText: {
+    textAlign: 'center',
+    color: Colors.primary,
+    marginTop: 8,
   },
 });

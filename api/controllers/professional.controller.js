@@ -45,11 +45,9 @@ exports.getProfessionalByUserId = async (req, res) => {
         console.error("Error fetching professional:", error);
         res.status(500).json({ error: 'Internal server error' });
     }
-};
-
-// Update professional profile
+};// Update professional profile
 exports.updateProfessionalProfile = async (req, res) => {
-    const { userId } = req.params;
+    const { professionalId } = req.params; // Assume that the `professionalId` is being sent as a parameter
     const { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage, emailNotifications, pushNotifications, location } = req.body;
 
     try {
@@ -70,10 +68,11 @@ exports.updateProfessionalProfile = async (req, res) => {
             if (location.longitude !== undefined) updateFields['location.longitude'] = location.longitude;
         }
 
+        // Update the professional profile by professionalId
         const professional = await Professional.findOneAndUpdate(
-            { user: userId },
+            { _id: professionalId }, // Query by `professionalId` instead of `userId`
             { $set: updateFields },
-            { new: true, upsert: true }
+            { new: true } // Return the updated document
         );
 
         if (!professional) {
@@ -85,7 +84,7 @@ exports.updateProfessionalProfile = async (req, res) => {
             professional
         });
     } catch (error) {
-        console.log("Error updating professional profile", error);
+        console.error('Error updating professional profile:', error);
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
