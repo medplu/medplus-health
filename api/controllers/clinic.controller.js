@@ -1,11 +1,11 @@
 const Clinic = require('../models/clinic.model');
+const Professional = require('../models/professional.model'); 
 const cloudinary = require('cloudinary').v2; // Use require for cloudinary
 
 const generateReferenceCode = () => {
   // Simple example: generating a unique reference code
   return 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-};
-const registerClinic = async (req, res) => {
+};const registerClinic = async (req, res) => {
   const { userId } = req.params; // Expecting userId in the request parameters
   const { name, contactInfo, address, category } = req.body; // Include category in the request body
 
@@ -41,14 +41,26 @@ const registerClinic = async (req, res) => {
 
     await clinic.save();
 
+    // Update the professional model to associate it with the clinic
+    const professional = await Professional.findOneAndUpdate(
+      { user: userId }, // Find the professional with the given userId
+      {
+        clinic: clinic._id, // Link the clinic ID to the professional's clinic field
+        attachedToClinic: true, // Set attachedToClinic to true
+      },
+      { new: true } // Return the updated document
+    );
+
+    if (!professional) {
+      console.warn(`No professional found for userId: ${userId}`); // Debugging log if no professional is found
+    }
+
     res.status(201).send(clinic);
   } catch (error) {
     console.error('Error creating clinic:', error); // Debugging log
     res.status(400).send(error);
   }
 };
-
-
 const fetchClinics = async (req, res) => {
   try {
     const clinics = await Clinic.find().populate('professionals'); // Populate professionals
