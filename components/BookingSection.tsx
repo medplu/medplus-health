@@ -5,6 +5,7 @@ import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack } from 'react-native-paystack-webview';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import useBooking from '../hooks/useBooking';
 import Colors from './Shared/Colors';
 
@@ -60,8 +61,24 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     }
   };
 
+  const getUserEmail = async () => {
+    try {
+      const email = await AsyncStorage.getItem('userEmail');
+      if (email) {
+        setUserEmail(email);
+      } else {
+        // Fallback to getUser function if email is not found in AsyncStorage
+        const user = await getUser();
+        setUserEmail(user.email);
+      }
+    } catch (error) {
+      console.error('Failed to load user email', error);
+    }
+  };
+
   useEffect(() => {
     fetchSchedule(doctorId);
+    getUserEmail();
   }, [doctorId]);
 
   const handleShowPatientNameInput = () => {
@@ -171,12 +188,11 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         onConfirmPressed={() => setShowAlert(false)}
       />
 
-    
-<Paystack
+      <Paystack
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
         amount={consultationFee}
-        billingEmail={user.email}
-        subaccount={subaccountCode} // Add this line
+        billingEmail={userEmail}
+        subaccount={subaccountCode}
         currency='KES'
         activityIndicatorColor={Colors.primary}
         onCancel={handlePaymentCancel}
@@ -191,6 +207,12 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   );
 };
 
+const getUser = async () => {
+  // Mock function to simulate fetching user details
+  return {
+    email: 'user@example.com',
+  };
+};
 
 const styles = StyleSheet.create({
   sectionTitle: {
