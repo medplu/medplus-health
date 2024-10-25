@@ -41,7 +41,7 @@ const HospitalAppointementInfo: React.FC<HospitalAppointementInfoProps> = ({ cli
       <View style={styles.headerRow}>
         <Text style={styles.title}>{clinic.name}</Text>
         <View style={styles.infoRow}>
-          <EvilIcons name="location" size={20} color={Colors.gray} />
+          <EvilIcons name="location" size={16} color={Colors.gray} />
           <Text style={styles.title}>{clinic.address}</Text>
         </View>
       </View>
@@ -71,7 +71,7 @@ const HospitalAppointementInfo: React.FC<HospitalAppointementInfoProps> = ({ cli
 
 const styles = StyleSheet.create({
   container: {
-    padding: 15,
+    padding: 10,
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
     shadowColor: '#000',
@@ -80,31 +80,37 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 15,
   },
   image: {
     width: '100%',
-    height: 180,
-    borderRadius: 10,
+    height: 150,
+    borderRadius: 8,
     marginBottom: 10,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 5,
   },
   title: {
-    fontSize: 20,
+    fontSize: 16,
     fontFamily: 'Inter-Black-Semi',
-    flex: 1,
-    flexWrap: 'wrap',
+    flexShrink: 1,
+    marginRight: 10,
+  },
+  address: {
+    fontSize: 14,
+    fontFamily: 'Inter-Black',
+    color: Colors.gray,
+    flexShrink: 1,
   },
   category: {
-    marginTop: 10,
+    marginTop: 5,
     color: Colors.gray,
     marginRight: 6,
-    fontSize: 14,
+    fontSize: 13,
   },
   categoryList: {
     marginBottom: 10,
@@ -113,16 +119,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  infoText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Black',
-    color: Colors.gray,
-    marginLeft: 5,
-  },
   description: {
     fontSize: 14,
     color: '#555',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   seeMoreText: {
     color: Colors.primary,
