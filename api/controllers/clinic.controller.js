@@ -1,5 +1,4 @@
 const Clinic = require('../models/clinic.model');
-const Professional = require('../models/professional.model');
 const cloudinary = require('cloudinary').v2; // Use require for cloudinary
 
 const generateReferenceCode = () => {
