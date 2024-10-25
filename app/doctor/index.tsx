@@ -13,7 +13,7 @@ import { AirbnbRating } from 'react-native-ratings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RouteParams = {
-  doctor: Doctor;
+  doctor: string; // JSON string
 };
 
 type Doctor = {
@@ -37,7 +37,7 @@ type Review = {
 const DoctorProfile: React.FC = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
-  const { doctor } = route.params;
+  const doctor: Doctor = JSON.parse(route.params.doctor); // Deserialize the doctor object
 
   // Log the doctor object to verify it is being passed correctly
   console.log('Received doctor:', doctor);
@@ -110,8 +110,7 @@ const DoctorProfile: React.FC = () => {
                 <Text style={styles.readMoreText}>{showFullBio ? 'Read Less' : 'Read More'}</Text>
               </TouchableOpacity>
             </View>
-                       <BookingSection 
-              doctor={item} 
+            <BookingSection 
               doctorId={item._id} 
               userId={item.user} 
               consultationFee={item.consultationFee} 

@@ -9,6 +9,8 @@ import { Paystack } from 'react-native-paystack-webview';
 import { FontAwesome } from '@expo/vector-icons';
 import { useSchedule } from '../../context/ScheduleContext';
 import moment from 'moment';
+import ClinicSubHeading from '../clinics/ClinicSubHeading';
+import HorizontalLine from '../common/HorizontalLine';
 
 const BookingSection = ({ clinic, navigation }) => {
   const { schedule } = useSchedule();
@@ -113,14 +115,15 @@ const BookingSection = ({ clinic, navigation }) => {
     setShowAlert(true);
   };
 
-  const filteredTimeSlots = schedule
-    .filter(slot => moment(slot.date).format('YYYY-MM-DD') === selectedDate)
-    .flatMap(slot => slot.slots);
+  const predeterminedTimeSlots = [
+    '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'
+  ];
 
   return (
     <View>
-      <Text style={{ fontSize: 18, color: Colors.gray, marginBottom: 10 }}>Book Appointment</Text>
-      <SubHeading subHeadingTitle="Day" seeAll={false} />
+     <ClinicSubHeading subHeadingTitle="Schedule a Visit" />
+     <HorizontalLine />
+      <ClinicSubHeading subHeadingTitle="Day" />
       <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
         {next7Days.map((day) => (
           <TouchableOpacity
@@ -137,26 +140,22 @@ const BookingSection = ({ clinic, navigation }) => {
           </TouchableOpacity>
         ))}
       </ScrollView>
-      <SubHeading subHeadingTitle="Time" seeAll={false} />
+      <ClinicSubHeading subHeadingTitle="Time" seeAll={false} />
       <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
-        {filteredTimeSlots.length > 0 ? (
-          filteredTimeSlots.map((slot, index) => (
-            <TouchableOpacity
-              key={`${selectedDate}-${slot.time}-${index}`} // Ensure unique key
-              style={[
-                styles.timeButton,
-                selectedTime === slot.time && styles.selectedButton,
-              ]}
-              onPress={() => setSelectedTime(slot.time)}
-            >
-              <Text style={selectedTime === slot.time ? styles.selectedText : styles.text}>
-                {slot.time}
-              </Text>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <Text style={{ color: Colors.primary, marginLeft: 10 }}>No available time slots for this date.</Text>
-        )}
+        {predeterminedTimeSlots.map((time, index) => (
+          <TouchableOpacity
+            key={`${selectedDate}-${time}-${index}`} // Ensure unique key
+            style={[
+              styles.timeButton,
+              selectedTime === time && styles.selectedButton,
+            ]}
+            onPress={() => setSelectedTime(time)}
+          >
+            <Text style={selectedTime === time ? styles.selectedText : styles.text}>
+              {time}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
       <TextInput
         style={styles.textInput}

@@ -25,7 +25,7 @@ interface BookingHook {
   handlePaymentCancel: () => void;
 }
 
-const useBooking = (professionalId: string): BookingHook => {
+const useBooking = (userId: string): BookingHook => {
   const PAYSTACK_SECRET_KEY = process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
   const paystackWebViewRef = useRef<paystackProps.PayStackRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,16 +37,25 @@ const useBooking = (professionalId: string): BookingHook => {
   const [subaccountCode, setSubaccountCode] = useState<string | null>(null);
 
   useEffect(() => {
-    getUserData();
-    fetchSubaccountCode(professionalId);
-  }, [professionalId]);
+    if (validateUserId(userId)) {
+      getUserData();
+      fetchSubaccountCode(userId);
+    } else {
+      console.error('Invalid user ID format');
+    }
+  }, [userId]);
+
+  const validateUserId = (id: string): boolean => {
+    // Add your validation logic here (e.g., regex for ObjectId format)
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    return objectIdRegex.test(id);
+  };
 
   const getUserData = async () => {
     try {
       const firstName = await AsyncStorage.getItem('firstName');
       const lastName = await AsyncStorage.getItem('lastName');
       const email = await AsyncStorage.getItem('email');
-      const userId = await AsyncStorage.getItem('userId');
       if (firstName && lastName && email && userId) {
         setUser({ firstName, lastName, email, userId });
         console.log('Fetched user data:', { firstName, lastName, email, userId });
@@ -56,9 +65,9 @@ const useBooking = (professionalId: string): BookingHook => {
     }
   };
 
-  const fetchSubaccountCode = async (professionalId: string) => {
+  const fetchSubaccountCode = async (userId: string) => {
     try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${professionalId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
       if (response.data.status === 'Success') {
         const { subaccount_code } = response.data.data; 
         setSubaccountCode(subaccount_code); 
@@ -70,15 +79,16 @@ const useBooking = (professionalId: string): BookingHook => {
       console.error('Failed to fetch subaccount code:', error);
     }
   };
+
   const handleBookPress = async (consultationFee: number, selectedTimeSlot: string, selectedDate: string) => {
     setIsSubmitting(true);
     try {
-      console.log('Booking appointment with professionalId:', professionalId, 'and userId:', user.userId);
-  
+      console.log('Booking appointment with userId:', user.userId);
+
       if (!subaccountCode || !user.email) {
         throw new Error('Missing subaccount code or user email.');
       }
-  
+
       // Initialize payment with Paystack
       const paymentResponse = await axios.post('https://api.paystack.co/transaction/initialize', {
         email: user.email,
@@ -91,29 +101,29 @@ const useBooking = (professionalId: string): BookingHook => {
           'Content-Type': 'application/json'
         }
       });
-  
+
       if (paymentResponse.data.status) {
         console.log('Payment initialized:', paymentResponse.data);
-  
+
         // Proceed with booking appointment after initializing payment
         const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', {
-          doctorId: professionalId,
+          doctorId: userId,
           userId: user.userId,
           patientName: `${user.firstName} ${user.lastName}`,
           date: selectedDate,
           time: selectedTimeSlot,
           status: 'pending', // Set initial status to pending
         });
-  
+
         console.log('Appointment response:', appointmentResponse.data);
-  
+
         const newAppointmentId = appointmentResponse.data.appointment._id; // Access the nested appointment object
         if (!newAppointmentId) {
           throw new Error('Failed to retrieve appointmentId from response');
         }
         setAppointmentId(newAppointmentId);
         console.log('Created appointment with appointmentId:', newAppointmentId);
-  
+
         // Start the Paystack transaction
         if (paystackWebViewRef.current) {
           paystackWebViewRef.current.startTransaction();
@@ -131,6 +141,7 @@ const useBooking = (professionalId: string): BookingHook => {
       setIsSubmitting(false);
     }
   };
+
   const handlePaymentSuccess = async (response: any) => {
     const currentAppointmentId = appointmentId; // Capture the appointmentId from state
     if (!currentAppointmentId) {

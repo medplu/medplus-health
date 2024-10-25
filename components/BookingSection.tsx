@@ -1,43 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Alert, FlatList, TextInput, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, FlatList, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import moment from 'moment';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import AwesomeAlert from 'react-native-awesome-alerts';
-import { Paystack, paystackProps } from 'react-native-paystack-webview';
+import { Paystack } from 'react-native-paystack-webview';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
+import axios from 'axios';
 import useBooking from '../hooks/useBooking';
-import useSchedule from '../hooks/useSchedule';
 import Colors from './Shared/Colors';
 
-type Day = {
-  date: moment.Moment;
-  formattedDate: string;
+// Configure the calendar locale
+LocaleConfig.locales['en'] = {
+  monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  monthNamesShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  today: 'Today'
 };
-
-type Slot = {
-  date: string;
-  time: string;
-  isBooked: boolean;
-  _id: string; // Ensure _id is part of the Slot type
-};
+LocaleConfig.defaultLocale = 'en';
 
 const BookingSection: React.FC<{ doctorId: string, userId: string, consultationFee: number }> = ({ doctorId, userId, consultationFee }) => {
-  const [selectedDate, setSelectedDate] = useState<moment.Moment | null>(moment());
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [next7Days, setNext7Days] = useState<Day[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>(moment().format('YYYY-MM-DD'));
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ id: string; time: string } | null>(null);
   const [patientName, setPatientName] = useState<string>('');
   const [showPatientNameInput, setShowPatientNameInput] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>('');
-  const [userFirstName, setUserFirstName] = useState<string>('');
-  const [userLastName, setUserLastName] = useState<string>('');
-  const [showAlert, setShowAlert] = useState<boolean>(false); // Define showAlert state
+  const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [schedule, setSchedule] = useState([]);
 
-  const { schedule, fetchSchedule } = useSchedule();
   const {
     isSubmitting,
     alertMessage,
     alertType,
     appointmentId,
-    user,
     subaccountCode,
     paystackWebViewRef,
     handleBookPress,
@@ -46,45 +40,34 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
   } = useBooking(userId);
 
   useEffect(() => {
-    console.log('doctorId:', doctorId);
-    getDays();
-    getUserData();
+    console.log('doctorId in BookingSection:', doctorId); // Log the doctorId to verify it's being received
     fetchSchedule(doctorId);
   }, [doctorId]);
 
-  const getDays = () => {
-    const nextSevenDays: Day[] = [];
-    for (let i = 0; i < 7; i++) {
-      const date = moment().add(i, 'days');
-      nextSevenDays.push({
-        date: date,
-        formattedDate: date.format('Do MMM'),
-      });
-    }
-    setNext7Days(nextSevenDays);
-  };
+  useEffect(() => {
+    // Log the schedule data
+    console.log('Schedule Data:', schedule);
+  }, [schedule]);
 
-  const getUserData = async () => {
+  const fetchSchedule = async (doctorId: string) => {
+    console.log('doctorId before fetch:', doctorId); // Log the doctorId before the fetch request
     try {
-      const firstName = await AsyncStorage.getItem('firstName');
-      const lastName = await AsyncStorage.getItem('lastName');
-      const email = await AsyncStorage.getItem('email');
-      setUserFirstName(firstName || '');
-      setUserLastName(lastName || '');
-      setUserEmail(email || '');
+      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${doctorId}`);
+      console.log('Fetch response:', response); // Log the entire response object
+  
+      if (response.status === 200 && response.data.slots) {
+        setSchedule(response.data.slots);
+        console.log('Fetched schedule:', response.data.slots);
+      } else {
+        console.error('Failed to fetch schedule:', response.data.message);
+      }
     } catch (error) {
-      console.error('Failed to load user data', error);
+      console.error('Error fetching schedule:', error.message); // Log the error message
     }
   };
-
-  const handleDateSelect = (date: moment.Moment) => {
-    setSelectedDate(date);
-    setSelectedTime(null);
-  };
-
   const handleShowPatientNameInput = () => {
-    if (!selectedDate || !selectedTime) {
-      Alert.alert('Error', 'Please select a date and time.');
+    if (!selectedTimeSlot) {
+      Alert.alert('Error', 'Please select a time slot.');
       return;
     }
     setShowPatientNameInput(true);
@@ -95,40 +78,57 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
       Alert.alert('Error', 'Please enter the patient\'s name.');
       return;
     }
-    await handleBookPress(consultationFee, selectedDate?.format('YYYY-MM-DD') || '', selectedTime || '');
+    await handleBookPress(consultationFee, selectedTimeSlot?.id || '');
   };
 
-  const screenWidth = Dimensions.get('window').width;
-  const filteredTimeSlots = schedule?.slots?.filter(slot => moment(slot.date).isSame(selectedDate, 'day')) || [];
+  const groupedSlots = schedule.reduce((acc, slot) => {
+    const date = moment(slot.date).format('YYYY-MM-DD');
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(slot);
+    return acc;
+  }, {});
+
+  const markedDates = Object.keys(groupedSlots).reduce((acc, date) => {
+    acc[date] = { marked: true };
+    return acc;
+  }, {});
+
+  // Log the marked dates
+  console.log('Marked Dates:', markedDates);
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>Pick a Day</Text>
-      <FlatList
-        data={next7Days}
-        numColumns={7}
-        keyExtractor={(item) => item.date.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => handleDateSelect(item.date)}
-            style={[styles.dateButton, selectedDate?.isSame(item.date, 'day') ? { backgroundColor: '#1f6f78' } : null, { width: screenWidth / 7 - 10 }]}
-          >
-            <Text style={styles.dayInitial}>{item.date.format('ddd').toUpperCase()}</Text>
-            <Text style={styles.dateText}>{item.date.format('D')}</Text>
-          </TouchableOpacity>
-        )}
+      <Calendar
+        current={selectedDate}
+        minDate={moment().startOf('week').format('YYYY-MM-DD')}
+        maxDate={moment().endOf('week').format('YYYY-MM-DD')}
+        onDayPress={(day) => setSelectedDate(day.dateString)}
+        markedDates={{
+          ...markedDates,
+          [selectedDate]: { selected: true, marked: true, selectedColor: '#1f6f78' },
+        }}
+        theme={{
+          selectedDayBackgroundColor: '#1f6f78',
+          todayTextColor: '#1f6f78',
+          arrowColor: '#1f6f78',
+        }}
       />
 
-      <Text style={styles.sectionTitle}>Pick a Time</Text>
-      {filteredTimeSlots.length > 0 ? (
+      <View>
+        <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
         <FlatList
           horizontal
-          data={filteredTimeSlots}
+          data={groupedSlots[selectedDate] || []}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              onPress={() => setSelectedTime(item.time)}
-              style={[styles.timeSlotButton, selectedTime === item.time ? { backgroundColor: '#1f6f78' } : null]}
+              onPress={() => setSelectedTimeSlot({ id: item._id, time: item.time })}
+              style={[
+                styles.timeSlotButton,
+                selectedTimeSlot?.id === item._id ? { backgroundColor: '#1f6f78' } : null,
+              ]}
             >
               <Text style={styles.timeSlotText}>{item.time}</Text>
             </TouchableOpacity>
@@ -136,11 +136,7 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
           showsHorizontalScrollIndicator={false}
           style={{ marginBottom: 15 }}
         />
-      ) : (
-        <Text style={styles.noScheduleText}>
-          No available time slots for the selected doctor. Please try another date or doctor.
-        </Text>
-      )}
+      </View>
 
       {showPatientNameInput ? (
         <View>
@@ -184,7 +180,7 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
         amount={consultationFee}
         billingEmail={userEmail}
         subaccount={subaccountCode}
-        currency='KES'
+        currency="KES"
         activityIndicatorColor={Colors.primary}
         ref={paystackWebViewRef}
         onCancel={handlePaymentCancel}
@@ -200,20 +196,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  dateButton: {
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: '#e0e0e0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 5,
-  },
-  dayInitial: {
-    fontSize: 12,
+  dateTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-  },
-  dateText: {
-    fontSize: 14,
+    marginVertical: 10,
   },
   timeSlotButton: {
     padding: 10,

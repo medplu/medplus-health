@@ -59,40 +59,41 @@ const Doctors = ({ searchQuery, selectedCategory, onViewAll }) => {
 
     setFilteredDoctors(filtered);
   };
+
   const handleConsult = (doctor) => {
-    navigation.navigate('doctor/index', { doctor });
+    navigation.navigate('doctor/index', { doctor: JSON.stringify(doctor) });
   };
 
   return (
     <View style={{ marginTop: 10 }}>
       <SubHeading subHeadingTitle={'Discover Doctors Near You'} onViewAll={() => onViewAll('Doctors')}  />
       <FlatList
-  data={filteredDoctors}
-  horizontal={true}
-  renderItem={({ item }) => (
-    <View style={styles.doctorItem}>
-      <Image 
-        source={{ 
-          uri: item.profileImage ? item.profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' 
-        }} 
-        style={styles.doctorImage} 
+        data={filteredDoctors}
+        horizontal={true}
+        renderItem={({ item }) => (
+          <View style={styles.doctorItem}>
+            <Image 
+              source={{ 
+                uri: item.profileImage ? item.profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' 
+              }} 
+              style={styles.doctorImage} 
+            />
+            <View style={styles.nameCategoryContainer}>
+              <Text style={styles.doctorName}>{`${item.firstName} ${item.lastName}`}</Text>
+              <Text style={styles.doctorSpecialty}>{item.category}</Text>
+            </View>
+            <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
+            <TouchableOpacity
+              style={[styles.button, styles.consultButton]}
+              onPress={() => handleConsult(item)}
+            >
+              <Text style={styles.buttonText}>Book</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        keyExtractor={(item) => item._id.toString()}
+        showsHorizontalScrollIndicator={false}
       />
-      <View style={styles.nameCategoryContainer}>
-        <Text style={styles.doctorName}>{`${item.firstName} ${item.lastName}`}</Text>
-        <Text style={styles.doctorSpecialty}>{item.category}</Text>
-      </View>
-      <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
-      <TouchableOpacity
-        style={[styles.button, styles.consultButton]}
-        onPress={() => handleConsult(item)}
-      >
-        <Text style={styles.buttonText}>Book</Text>
-      </TouchableOpacity>
-    </View>
-  )}
-  keyExtractor={(item) => item._id.toString()}
-  showsHorizontalScrollIndicator={false}
-/>
     </View>
   );
 };

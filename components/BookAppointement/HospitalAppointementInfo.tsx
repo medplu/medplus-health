@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import ActionButton from '../common/ActionButton';
 import EvilIcons from '@expo/vector-icons/EvilIcons';
-import { AntDesign } from '@expo/vector-icons';
-import HorizontalLine from '../common/HorizontalLine';
 import Colors from '../Shared/Colors';
-import SubHeading from '../../components/dashboard/SubHeading';
+import ClinicSubHeading from '../clinics/ClinicSubHeading';
 
 interface Doctor {
   _id: string;
@@ -22,6 +19,7 @@ interface Clinic {
   image?: string;
   category: string;
   doctors: Doctor[];
+  description?: string;
   __v: number;
 }
 
@@ -39,7 +37,14 @@ const HospitalAppointementInfo: React.FC<HospitalAppointementInfoProps> = ({ cli
   return (
     <View style={styles.container}>
       {clinic.image && <Image source={{ uri: clinic.image }} style={styles.image} />}
-      <Text style={styles.title}>{clinic.name}</Text>
+      
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>{clinic.name}</Text>
+        <View style={styles.infoRow}>
+          <EvilIcons name="location" size={20} color={Colors.gray} />
+          <Text style={styles.title}>{clinic.address}</Text>
+        </View>
+      </View>
 
       <FlatList
         data={[{ name: clinic.category }]}
@@ -48,25 +53,10 @@ const HospitalAppointementInfo: React.FC<HospitalAppointementInfoProps> = ({ cli
           <Text style={styles.category}>{item.name}</Text>
         )}
         keyExtractor={(item, index) => index.toString()}
+        contentContainerStyle={styles.categoryList}
       />
 
-      <HorizontalLine />
-
-      <View style={styles.infoRow}>
-        <EvilIcons name="location" size={24} color="black" />
-        <Text style={styles.infoText}>{clinic.address}</Text>
-      </View>
-
-      <View style={styles.infoRow}>
-        <AntDesign name="clockcircle" size={16} color={Colors.primary} />
-        <Text style={styles.infoText}>Mon - Sun | 11 AM - 8 PM</Text>
-      </View>
-
-      <ActionButton />
-
-      <HorizontalLine />
-
-      <SubHeading subHeadingTitle={'About'} />
+      <ClinicSubHeading subHeadingTitle={'About'} />
 
       <Text style={styles.description}>{truncatedDesc}</Text>
 
@@ -81,7 +71,7 @@ const HospitalAppointementInfo: React.FC<HospitalAppointementInfoProps> = ({ cli
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 15,
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
     shadowColor: '#000',
@@ -89,43 +79,55 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
-    width: '100%'
+    width: '100%',
+    marginBottom: 20,
   },
   image: {
     width: '100%',
-    height: 200,
+    height: 180,
     borderRadius: 10,
     marginBottom: 10,
   },
-  title: {
-    fontSize: 23,
-    fontFamily: 'Inter-Black-Semi',
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 10,
+  },
+  title: {
+    fontSize: 20,
+    fontFamily: 'Inter-Black-Semi',
+    flex: 1,
+    flexWrap: 'wrap',
   },
   category: {
     marginTop: 10,
     color: Colors.gray,
     marginRight: 6,
+    fontSize: 14,
+  },
+  categoryList: {
+    marginBottom: 10,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 6,
   },
   infoText: {
-    fontSize: 18,
+    fontSize: 14,
     fontFamily: 'Inter-Black',
     color: Colors.gray,
-    marginLeft: 9,
+    marginLeft: 5,
   },
   description: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#555',
     marginBottom: 10,
   },
   seeMoreText: {
     color: Colors.primary,
     fontFamily: 'Inter-Black-Semi',
+    fontSize: 14,
   },
 });
 
