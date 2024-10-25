@@ -5,7 +5,6 @@ const generateReferenceCode = () => {
   // Simple example: generating a unique reference code
   return 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 };
-
 const registerClinic = async (req, res) => {
   const { userId } = req.params; // Expecting userId in the request parameters
   const { name, contactInfo, address, category } = req.body; // Include category in the request body
@@ -23,7 +22,7 @@ const registerClinic = async (req, res) => {
       image = uploadedResponse.secure_url;
       console.log('Image uploaded to Cloudinary:', image); // Debugging log
     } else {
-      console.error('No image file detected in the request'); // Debugging log
+      console.warn('No image file detected, proceeding without it.'); // Changed to warn log for clarity
     }
 
     // Generate a unique reference code for the clinic
@@ -34,7 +33,7 @@ const registerClinic = async (req, res) => {
       name,
       contactInfo,
       address,
-      image,
+      image, // Can be null if no image was uploaded
       category, // Include category in the clinic creation
       referenceCode, // Store the reference code in the clinic
       professionals: [], // Start with an empty array for professionals
@@ -48,6 +47,7 @@ const registerClinic = async (req, res) => {
     res.status(400).send(error);
   }
 };
+
 
 const fetchClinics = async (req, res) => {
   try {
