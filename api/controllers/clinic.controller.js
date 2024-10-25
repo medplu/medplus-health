@@ -14,12 +14,16 @@ const registerClinic = async (req, res) => {
     let image = null;
 
     // Check if an image file is uploaded
-    if (req.files?.image) {
+    if (req.files && req.files.image) {
+      console.log('Image file detected:', req.files.image); // Debugging log
       const file = req.files.image;
       const uploadedResponse = await cloudinary.uploader.upload(file.tempFilePath, {
         folder: 'clinics', // Optionally, specify a folder in Cloudinary
       });
       image = uploadedResponse.secure_url;
+      console.log('Image uploaded to Cloudinary:', image); // Debugging log
+    } else {
+      console.error('No image file detected in the request'); // Debugging log
     }
 
     // Generate a unique reference code for the clinic
@@ -40,6 +44,7 @@ const registerClinic = async (req, res) => {
 
     res.status(201).send(clinic);
   } catch (error) {
+    console.error('Error creating clinic:', error); // Debugging log
     res.status(400).send(error);
   }
 };
