@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, FlatList, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import moment from 'moment';
 import AwesomeAlert from 'react-native-awesome-alerts';
@@ -14,11 +14,15 @@ LocaleConfig.locales['en'] = {
   monthNamesShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
   dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
   dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-  today: 'Today'
+  today: 'Today',
 };
 LocaleConfig.defaultLocale = 'en';
 
-const BookingSection: React.FC<{ doctorId: string, userId: string, consultationFee: number }> = ({ doctorId, userId, consultationFee }) => {
+const BookingSection: React.FC<{ doctorId: string; userId: string; consultationFee: number }> = ({
+  doctorId,
+  userId,
+  consultationFee,
+}) => {
   const [selectedDate, setSelectedDate] = useState<string>(moment().format('YYYY-MM-DD'));
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ id: string; time: string } | null>(null);
   const [patientName, setPatientName] = useState<string>('');
@@ -39,32 +43,23 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
     handlePaymentCancel,
   } = useBooking(userId);
 
-  useEffect(() => {
-    console.log('doctorId in BookingSection:', doctorId); // Log the doctorId to verify it's being received
-    fetchSchedule(doctorId);
-  }, [doctorId]);
-
-  useEffect(() => {
-    // Log the schedule data
-    console.log('Schedule Data:', schedule);
-  }, [schedule]);
-
   const fetchSchedule = async (doctorId: string) => {
-    console.log('doctorId before fetch:', doctorId); // Log the doctorId before the fetch request
     try {
       const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${doctorId}`);
-      console.log('Fetch response:', response); // Log the entire response object
-  
       if (response.status === 200 && response.data.slots) {
         setSchedule(response.data.slots);
-        console.log('Fetched schedule:', response.data.slots);
       } else {
         console.error('Failed to fetch schedule:', response.data.message);
       }
     } catch (error) {
-      console.error('Error fetching schedule:', error.message); // Log the error message
+      console.error('Error fetching schedule:', error.message);
     }
   };
+
+  useEffect(() => {
+    fetchSchedule(doctorId);
+  }, [doctorId]);
+
   const handleShowPatientNameInput = () => {
     if (!selectedTimeSlot) {
       Alert.alert('Error', 'Please select a time slot.');
@@ -75,7 +70,7 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
 
   const handleBookAppointment = async () => {
     if (!patientName) {
-      Alert.alert('Error', 'Please enter the patient\'s name.');
+      Alert.alert('Error', "Please enter the patient's name.");
       return;
     }
     await handleBookPress(consultationFee, selectedTimeSlot?.id || '');
@@ -95,11 +90,8 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
     return acc;
   }, {});
 
-  // Log the marked dates
-  console.log('Marked Dates:', markedDates);
-
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <Calendar
         current={selectedDate}
         minDate={moment().startOf('week').format('YYYY-MM-DD')}
@@ -177,7 +169,7 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
 
       <Paystack
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-        amount={consultationFee}
+        amount={consultationFee * 100} // Ensure the amount is in the smallest unit (e.g., kobo for Naira)
         billingEmail={userEmail}
         subaccount={subaccountCode}
         currency="KES"
@@ -185,10 +177,65 @@ const BookingSection: React.FC<{ doctorId: string, userId: string, consultationF
         ref={paystackWebViewRef}
         onCancel={handlePaymentCancel}
         onSuccess={(response) => handlePaymentSuccess(response, appointmentId!)}
+        autoStart={false} // Prevent auto-start of the transaction
       />
+
+      <TouchableOpacity onPress={() => paystackWebViewRef.current.startTransaction()}>
+        <Text style={styles.buttonText}>Proceed to Payment</Text>
+      </TouchableOpacity>
     </View>
   );
 };
+
+export default BookingSection;
+
+const styles = StyleSheet.create({
+  dateTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  timeSlotButton: {
+    padding: 10,
+    borderRadius: 5,
+    marginRight: 10,
+    backgroundColor: '#ddd',
+  },
+  timeSlotText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  bookButton: {
+    backgroundColor: '#1f6f78',
+    padding: 15,
+    borderRadius: 5,
+  },
+  showNameInputButton: {
+    backgroundColor: '#1f6f78',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+});
+
 
 const styles = StyleSheet.create({
   sectionTitle: {
