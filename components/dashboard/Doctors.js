@@ -23,7 +23,7 @@ const Doctors = ({ searchQuery, selectedCategory, onViewAll }) => {
 
   const getDoctors = async () => {
     try {
-      const resp = await axios.get('https://medplus-app.onrender.com/api/professionals');
+      const resp = await axios.get('https://medplus-health.onrender.com/api/professionals');
       if (resp?.data) {
         setDoctorList(resp.data);
         await AsyncStorage.setItem('doctorList', JSON.stringify(resp.data)); // Save data to AsyncStorage

@@ -45,7 +45,22 @@ exports.handleGoogleOAuth = async (req, res) => {
 
 exports.register = async (req, res) => {
   try {
-    const { userType, profession, ...userData } = req.body;  // Destructure userType and profession from request body
+    const { 
+      userType, 
+      profession, 
+      consultationFee, 
+      category, 
+      yearsOfExperience, 
+      certifications, 
+      bio, 
+      profileImage, 
+      emailNotifications, 
+      pushNotifications, 
+      location, 
+      attachedToClinic, 
+      ...userData 
+    } = req.body; // Destructure relevant fields from request body
+
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit code
     userData.verificationCode = verificationCode;
     userData.isVerified = false;
@@ -74,6 +89,17 @@ exports.register = async (req, res) => {
         email: newUser.email,
         user: newUser._id,  // Associate with the base User model
         profession, // Save the profession field (doctor, pharmacist, nurse, etc.)
+        consultationFee, 
+        category,
+        yearsOfExperience,
+        certifications,
+        bio,
+        profileImage,
+        emailNotifications,
+        pushNotifications,
+        location,
+        attachedToClinic: attachedToClinic || false,  // Default to false if not provided
+        clinic: null  // Default to null
       });
       await newProfessional.save();
     } else if (userType === 'student') {
@@ -113,6 +139,7 @@ exports.register = async (req, res) => {
     }
   }
 };
+
 
 
 exports.checkUserExists = async (req, res) => {
@@ -167,51 +194,48 @@ exports.verifyEmail = async (req, res) => {
 
 // Login logic
 exports.login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
+  try {
+      const { email, password } = req.body;
+      const user = await User.findOne({ email });
 
-        if (!user) {
-            return res.status(400).json({ error: 'Invalid email or password' });
-        }
+      if (!user) {
+          return res.status(400).json({ error: 'Invalid email or password' });
+      }
 
-        if (!user.isVerified) {
-            return res.status(400).json({ error: 'Email not verified' });
-        }
+      if (!user.isVerified) {
+          return res.status(400).json({ error: 'Email not verified' });
+      }
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ error: 'Invalid email or password' });
-        }
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+          return res.status(400).json({ error: 'Invalid email or password' });
+      }
 
-        // Generate JWT token
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      // Generate JWT token
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        // Initialize doctorId to null
-        let doctorId = null;
-        
-        // Check if the user is a professional and retrieve doctorId
-        if (user.userType === 'professional') {
-            const professional = await Professional.findOne({ user: user._id }); // Fetch the professional record
-            if (professional) {
-                doctorId = professional._id; // Get the doctorId from the professional model
-            }
-        }
+      // Initialize professionalObject to null
+      let professionalObject = null;
+      
+      // Check if the user is a professional and retrieve the entire professional object
+      if (user.userType === 'professional') {
+          professionalObject = await Professional.findOne({ user: user._id }); // Fetch the professional record
+      }
 
-        // Include userId, firstName, lastName, and doctorId in the response
-          res.status(200).json({ 
-            token, 
-            userId: user._id, 
-            firstName: user.firstName, 
-            lastName: user.lastName, 
-            email: user.email, // Added email field
-            doctorId, 
-            userType: user.userType 
-        });
-    } catch (error) {
-        console.log("Error logging in", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+      // Include userId, firstName, lastName, and the professional object in the response
+      res.status(200).json({ 
+          token, 
+          userId: user._id, 
+          firstName: user.firstName, 
+          lastName: user.lastName, 
+          email: user.email, 
+          professional: professionalObject,  // Include the entire professional object
+          userType: user.userType 
+      });
+  } catch (error) {
+      console.log("Error logging in", error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
 exports.getProfessionals = async (req, res) => {

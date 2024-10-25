@@ -37,23 +37,6 @@ const professionalSchema = new Schema({
         type: Number,
     },
     certifications: [String],
-    slots: [
-        {
-            day: { 
-                type: String, 
-                required: true,
-                enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] // Restrict to valid days
-            },  
-            time: { 
-                type: String, 
-                required: true 
-            }, 
-            isBooked: { 
-                type: Boolean, 
-                default: false 
-            }
-        }
-    ],
     bio: {
         type: String,
         required: false
@@ -79,15 +62,18 @@ const professionalSchema = new Schema({
             type: Number,
             required: false
         }
+    },
+    clinic: {  // Reference to the Clinic model
+        type: Schema.Types.ObjectId,
+        ref: 'Clinic',  // This ensures that a professional can be linked to a specific clinic
+        default: null // Default to null when not attached to a clinic
+    },
+    attachedToClinic: {  // New field to track clinic attachment status
+        type: Boolean,
+        default: false // Initialize as false
     }
 }, { timestamps: true });
 
-// Virtual field to determine availability based on slots
-professionalSchema.virtual('isAvailable').get(function() {
-    return this.slots.some(slot => !slot.isBooked);
-});
-
 // Create and export the 'Professional' model
 const Professional = mongoose.model('Professional', professionalSchema);
-
 module.exports = Professional;

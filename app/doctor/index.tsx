@@ -101,7 +101,7 @@ const DoctorProfile: React.FC = () => {
               <FontAwesome name="arrow-left" size={24} color="black" />
             </TouchableOpacity>
             <DoctorCard doctor={item} userId={item.user} consultationFee={item.consultationFee} />
-            <HorizontalLine />
+          
             <View style={styles.descriptionContainer}>
               <Text style={styles.descriptionText}>
                 {showFullBio ? item.bio : `${item.bio?.substring(0, 100) || ''}...`}

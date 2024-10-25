@@ -1,20 +1,6 @@
 const mongoose = require('mongoose');
 
-const doctorSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-    },
-    specialties: {
-        type: [String],
-        required: true,
-    },
-    experience: {
-        type: String,
-        required: true,
-    },
-});
-
+// Define the clinic schema
 const clinicSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -36,14 +22,13 @@ const clinicSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    doctors: [doctorSchema],
-    professional: {
+    professionals: [{  // This allows multiple professionals to be attached to a clinic
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Professional',
-        required: true,
-    },
+        ref: 'Professional'
+    }],
 }, {
     timestamps: true // Automatically creates `createdAt` and `updatedAt` fields
 });
 
+// Create and export the 'Clinic' model
 module.exports = mongoose.model('Clinic', clinicSchema);

@@ -123,21 +123,21 @@ const styles = StyleSheet.create({
   },
   clinicName: {
     fontWeight: 'bold',
-    color: Colors.GRAY,
+    color: Colors.primary,
     width: '100%',
   },
   clinicAddress: {
-    color: Colors.GRAY,
+    color: Colors.primary,
     width: '100%',
   },
   clinicCategory: {
-    color: Colors.GRAY,
+    color: Colors.primary,
     marginTop: 5,
     width: '100%',
   },
   noImageText: {
     textAlign: 'center',
-    color: Colors.GRAY,
+    color: Colors.primary,
     marginTop: 20,
   },
 });

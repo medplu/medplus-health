@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { Card, Avatar, Button, Icon, Divider } from 'react-native-elements';
 import Colors from '../Shared/Colors';
 import { Paystack } from 'react-native-paystack-webview';
 import AwesomeAlert from 'react-native-awesome-alerts';
@@ -14,17 +13,17 @@ interface Doctor {
   category: string;
   availability: boolean;
   user: string;
-  profileImage?: string; // Add profileImage to the Doctor interface
+  profileImage?: string;
 }
 
 interface DoctorCardItemProps {
   doctor: Doctor;
-  userId: string; // Professional's ID
+  userId: string;
   consultationFee: number;
 }
 
 const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consultationFee }) => {
-  const { firstName, lastName, category, availability, _id, profileImage } = doctor;
+  const { firstName, lastName, category, availability, profileImage } = doctor;
   const {
     isSubmitting,
     showAlert,
@@ -37,46 +36,46 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
     handleBookPress,
     handlePaymentSuccess,
     handlePaymentCancel,
-  } = useBooking(userId); // Pass professional ID to the hook
+  } = useBooking(userId);
 
   return (
-    <View style={styles.container}>
+    <Card containerStyle={styles.card}>
       <View style={styles.header}>
-        <Image
-          source={{ 
-            uri: profileImage ? profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' 
-          }} 
-          style={styles.profileImage}
+        <Avatar
+          rounded
+          size="medium"
+          source={{ uri: profileImage ? profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }}
         />
         <View style={styles.headerText}>
-          <Text style={styles.doctorName}>Dr. {firstName} {lastName}</Text>
+          <Text style={styles.doctorName}>{firstName} {lastName}</Text>
           <Text style={styles.categoryName}>{category}</Text>
-          <Text style={[styles.categoryName, { color: Colors.primary }]}>
+          <Text style={[styles.categoryName, { color: availability ? Colors.success : Colors.error }]}>
             {availability ? 'Available' : 'Not Available'}
           </Text>
         </View>
-        <FontAwesome name="heart" size={20} color={Colors.primary} />
+        <Icon name="heart" type="font-awesome" color={Colors.primary} />
       </View>
 
+      <Divider style={styles.divider} />
+
       <View style={styles.ratingContainer}>
-        <Text style={styles.ratingText}>⭐⭐⭐⭐ 4.8 </Text>
+        <Text style={styles.ratingText}>⭐⭐⭐⭐ 4.8</Text>
         <Text style={styles.reviewText}>49 Reviews</Text>
       </View>
 
-      <TouchableOpacity style={styles.bookButton} onPress={() => handleBookPress(consultationFee)} disabled={isSubmitting}>
-        {isSubmitting ? (
-          <ActivityIndicator size="small" color={Colors.primary} />
-        ) : (
-          <Text style={styles.bookButtonText}>Book Appointment</Text>
-        )}
-      </TouchableOpacity>
+      <Button
+        title={isSubmitting ? <ActivityIndicator color="#FFF" /> : 'Book Appointment'}
+        onPress={() => handleBookPress(consultationFee)}
+        disabled={isSubmitting}
+        buttonStyle={styles.bookButton}
+      />
 
       <Paystack
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
         amount={consultationFee}
         billingEmail={user.email}
-        subaccount={subaccountCode} // Add this line
-        currency='KES'
+        subaccount={subaccountCode}
+        currency="KES"
         activityIndicatorColor={Colors.primary}
         onCancel={handlePaymentCancel}
         onSuccess={(response) => handlePaymentSuccess(response, appointmentId!)}
@@ -89,66 +88,64 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor, userId, consult
         message={alertMessage}
         closeOnTouchOutside={true}
         closeOnHardwareBackPress={false}
-        showCancelButton={false}
         showConfirmButton={true}
         confirmText="OK"
         confirmButtonColor={Colors.primary}
         onConfirmPressed={() => setShowAlert(false)}
       />
-    </View>
+    </Card>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  card: {
+    borderRadius: 10,
     padding: 15,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.lightGray,
+    marginBottom: 15,
+    backgroundColor: Colors.ligh_gray,
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
   },
-  profileImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 15,
-  },
   headerText: {
     flex: 1,
+    marginLeft: 10,
   },
   doctorName: {
     fontSize: 16,
-    fontFamily: 'Inter-Black-Semi',
+    fontWeight: 'bold',
   },
   categoryName: {
     fontSize: 14,
-    fontFamily: 'Inter-Regular',
+    color: Colors.gray,
   },
   ratingContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    alignItems: 'center',
+    marginVertical: 10,
   },
   ratingText: {
-    fontFamily: 'Inter-Black-Semi',
+    fontWeight: 'bold',
   },
   reviewText: {
     color: Colors.gray,
   },
-  bookButton: {
+  divider: {
     backgroundColor: Colors.lightGray,
-    padding: 10,
-    borderRadius: 10,
-    alignItems: 'center',
+    marginVertical: 10,
   },
-  bookButtonText: {
-    color: Colors.primary,
-    fontFamily: 'Inter-Black-Semi',
-    fontSize: 15,
+  bookButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: 10,
   },
 });
 

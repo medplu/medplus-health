@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, FlatList, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react'; 
+import { View, Text, TouchableOpacity, FlatList, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
 import moment from 'moment';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack } from 'react-native-paystack-webview';
@@ -7,6 +7,7 @@ import { Calendar, LocaleConfig } from 'react-native-calendars';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import useBooking from '../hooks/useBooking';
+import { Button, Input } from 'react-native-elements';
 import Colors from './Shared/Colors';
 
 // Configure the calendar locale
@@ -53,24 +54,14 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         console.error('Failed to fetch schedule:', response.data.message);
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Error fetching schedule:', error.message);
-      } else {
-        console.error('Error fetching schedule:', error);
-      }
+      console.error('Error fetching schedule:', axios.isAxiosError(error) ? error.message : error);
     }
   };
 
   const getUserEmail = async () => {
     try {
       const email = await AsyncStorage.getItem('userEmail');
-      if (email) {
-        setUserEmail(email);
-      } else {
-        // Fallback to getUser function if email is not found in AsyncStorage
-        const user = await getUser();
-        setUserEmail(user.email);
-      }
+      setUserEmail(email || (await getUser()).email);
     } catch (error) {
       console.error('Failed to load user email', error);
     }
@@ -124,7 +115,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   }, {});
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <Calendar
         current={selectedDate}
         minDate={moment().startOf('week').format('YYYY-MM-DD')}
@@ -132,59 +123,60 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         onDayPress={(day) => setSelectedDate(day.dateString)}
         markedDates={{
           ...markedDates,
-          [selectedDate]: { selected: true, marked: true, selectedColor: '#1f6f78' },
+          [selectedDate]: { selected: true, marked: true, selectedColor: Colors.primary },
         }}
         theme={{
-          selectedDayBackgroundColor: '#1f6f78',
-          todayTextColor: '#1f6f78',
-          arrowColor: '#1f6f78',
+          selectedDayBackgroundColor: Colors.primary,
+          todayTextColor: Colors.primary,
+          arrowColor: Colors.primary,
         }}
       />
 
-      <View>
-        <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
-        <FlatList
-          horizontal
-          data={groupedSlots[selectedDate] || []}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => setSelectedTimeSlot({ id: item._id, time: item.time })}
-              style={[
-                styles.timeSlotButton,
-                selectedTimeSlot?.id === item._id ? { backgroundColor: '#1f6f78' } : null,
-              ]}
-            >
-              <Text style={styles.timeSlotText}>{item.time}</Text>
-            </TouchableOpacity>
-          )}
-          showsHorizontalScrollIndicator={false}
-          style={{ marginBottom: 15 }}
-        />
-      </View>
+      <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
+
+      <FlatList
+        horizontal
+        data={groupedSlots[selectedDate] || []}
+        keyExtractor={(item) => item._id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => setSelectedTimeSlot({ id: item._id, time: item.time })}
+            style={[
+              styles.timeSlotButton,
+              selectedTimeSlot?.id === item._id ? { backgroundColor: Colors.primary } : null,
+            ]}
+          >
+            <Text style={styles.timeSlotText}>{item.time}</Text>
+          </TouchableOpacity>
+        )}
+        showsHorizontalScrollIndicator={false}
+        style={styles.timeSlotList}
+      />
 
       {showPatientNameInput ? (
         <View>
           <Text style={styles.sectionTitle}>Patient Name:</Text>
-          <TextInput
-            style={styles.input}
+          <Input
             placeholder="Enter your name"
             value={patientName}
             onChangeText={setPatientName}
+            containerStyle={styles.inputContainer}
+            inputStyle={styles.input}
           />
 
-          <TouchableOpacity
-            style={styles.bookButton}
+          <Button
+            title={isSubmitting ? <ActivityIndicator color="#fff" /> : 'Book Appointment'}
             onPress={handleBookAppointment}
             disabled={isSubmitting}
-          >
-            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Book Appointment</Text>}
-          </TouchableOpacity>
+            buttonStyle={styles.bookButton}
+          />
         </View>
       ) : (
-        <TouchableOpacity style={styles.showNameInputButton} onPress={handleShowPatientNameInput}>
-          <Text style={styles.buttonText}>Proceed to Book</Text>
-        </TouchableOpacity>
+        <Button
+          title="Proceed to Book"
+          onPress={handleShowPatientNameInput}
+          buttonStyle={styles.showNameInputButton}
+        />
       )}
 
       <AwesomeAlert
@@ -212,7 +204,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         ref={paystackWebViewRef}
       />
 
-      <TouchableOpacity onPress={() => paystackWebViewRef.current && paystackWebViewRef.current.startTransaction()}>
+      <TouchableOpacity onPress={() => paystackWebViewRef.current && paystackWebViewRef.current.startTransaction()} style={styles.paymentButton}>
         <Text style={styles.buttonText}>Proceed to Payment</Text>
       </TouchableOpacity>
     </View>
@@ -227,6 +219,11 @@ const getUser = async () => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -246,30 +243,27 @@ const styles = StyleSheet.create({
   timeSlotText: {
     fontSize: 14,
   },
-  noScheduleText: {
-    fontSize: 14,
-    color: '#ff0000',
-    marginTop: 10,
+  timeSlotList: {
+    marginBottom: 15,
+  },
+  inputContainer: {
+    marginBottom: 10,
   },
   input: {
     height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
   },
   bookButton: {
-    backgroundColor: '#1f6f78',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
+    backgroundColor: Colors.primary,
   },
   showNameInputButton: {
-    backgroundColor: '#1f6f78',
-    padding: 15,
+    backgroundColor: Colors.secondary,
+  },
+  paymentButton: {
+    padding: 12,
     borderRadius: 5,
-    alignItems: 'center',
+    backgroundColor: Colors.primary,
     marginTop: 10,
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
