@@ -1,5 +1,5 @@
 const Professional = require('../models/professional.model');
-
+const mongoose = require('mongoose'); // Import mongoose
 // Fetch all professionals
 exports.getProfessionals = async (req, res) => {
     try {
