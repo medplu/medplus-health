@@ -29,7 +29,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const [showPatientNameInput, setShowPatientNameInput] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
-  const [schedule, setSchedule] = useState([]);
+  const [schedule, setSchedule] = useState<{ date: string; _id: string; time: string }[]>([]);
 
   const {
     isSubmitting,
@@ -52,7 +52,11 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         console.error('Failed to fetch schedule:', response.data.message);
       }
     } catch (error) {
-      console.error('Error fetching schedule:', error.message);
+      if (axios.isAxiosError(error)) {
+        console.error('Error fetching schedule:', error.message);
+      } else {
+        console.error('Error fetching schedule:', error);
+      }
     }
   };
 
@@ -73,10 +77,10 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
       Alert.alert('Error', "Please enter the patient's name.");
       return;
     }
-    await handleBookPress(consultationFee, selectedTimeSlot?.id || '');
+    await handleBookPress(consultationFee, selectedTimeSlot?.id || '', selectedDate);
   };
 
-  const groupedSlots = schedule.reduce((acc, slot) => {
+  const groupedSlots = schedule.reduce((acc: Record<string, { date: string; _id: string; time: string }[]>, slot) => {
     const date = moment(slot.date).format('YYYY-MM-DD');
     if (!acc[date]) {
       acc[date] = [];
@@ -85,7 +89,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     return acc;
   }, {});
 
-  const markedDates = Object.keys(groupedSlots).reduce((acc, date) => {
+  const markedDates = Object.keys(groupedSlots).reduce((acc: Record<string, { marked: boolean }>, date) => {
     acc[date] = { marked: true };
     return acc;
   }, {});
@@ -176,65 +180,16 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         activityIndicatorColor={Colors.primary}
         ref={paystackWebViewRef}
         onCancel={handlePaymentCancel}
-        onSuccess={(response) => handlePaymentSuccess(response, appointmentId!)}
+        onSuccess={handlePaymentSuccess}
         autoStart={false} // Prevent auto-start of the transaction
       />
 
-      <TouchableOpacity onPress={() => paystackWebViewRef.current.startTransaction()}>
+      <TouchableOpacity onPress={() => paystackWebViewRef.current && paystackWebViewRef.current.startTransaction()}>
         <Text style={styles.buttonText}>Proceed to Payment</Text>
       </TouchableOpacity>
     </View>
   );
 };
-
-export default BookingSection;
-
-const styles = StyleSheet.create({
-  dateTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  timeSlotButton: {
-    padding: 10,
-    borderRadius: 5,
-    marginRight: 10,
-    backgroundColor: '#ddd',
-  },
-  timeSlotText: {
-    fontSize: 16,
-    color: '#000',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    marginBottom: 5,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 15,
-  },
-  bookButton: {
-    backgroundColor: '#1f6f78',
-    padding: 15,
-    borderRadius: 5,
-  },
-  showNameInputButton: {
-    backgroundColor: '#1f6f78',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontSize: 16,
-  },
-});
 
 
 const styles = StyleSheet.create({
