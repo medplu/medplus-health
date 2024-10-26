@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'; 
-import { View, Text, TouchableOpacity, FlatList, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import moment from 'moment';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack } from 'react-native-paystack-webview';
@@ -20,8 +20,7 @@ LocaleConfig.locales['en'] = {
 };
 LocaleConfig.defaultLocale = 'en';
 
-const BookingSection: React.FC<{ doctorId: string; userId: string; consultationFee: number }> = ({
-  doctorId,
+const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
   userId,
   consultationFee,
 }) => {
@@ -32,6 +31,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const [userEmail, setUserEmail] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [schedule, setSchedule] = useState<{ date: string; _id: string; time: string }[]>([]);
+  const [professionalId, setProfessionalId] = useState<string | null>(null);
 
   const {
     isSubmitting,
@@ -45,9 +45,9 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     handlePaymentCancel,
   } = useBooking(userId);
 
-  const fetchSchedule = async (doctorId: string) => {
+  const fetchSchedule = async (professionalId: string) => {
     try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${doctorId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);
       if (response.status === 200 && response.data.slots) {
         setSchedule(response.data.slots);
       } else {
@@ -68,9 +68,21 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   };
 
   useEffect(() => {
-    fetchSchedule(doctorId);
+    const fetchProfessionalId = async () => {
+      try {
+        const storedProfessionalId = await AsyncStorage.getItem('professionalId');
+        setProfessionalId(storedProfessionalId);
+        if (storedProfessionalId) {
+          fetchSchedule(storedProfessionalId);
+        }
+      } catch (error) {
+        console.error('Error fetching professional ID from AsyncStorage:', error);
+      }
+    };
+
+    fetchProfessionalId();
     getUserEmail();
-  }, [doctorId]);
+  }, []);
 
   const handleShowPatientNameInput = () => {
     if (!selectedTimeSlot) {

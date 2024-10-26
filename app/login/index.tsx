@@ -25,7 +25,6 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
-  
   const handleLoginPress = async () => {
     if (email === '' || password === '') {
       setErrorMessage('Please enter both email and password.');
@@ -51,9 +50,10 @@ const LoginScreen: React.FC = () => {
         await AsyncStorage.setItem('lastName', lastName);
         await AsyncStorage.setItem('email', userEmail);
   
-        // Store professionalId if the userType is 'professional'
+        // Store professionalId and attachedToClinic if the userType is 'professional'
         if (userType === 'professional' && professional?._id) {
           await AsyncStorage.setItem('professionalId', professional._id);
+          await AsyncStorage.setItem('attachedToClinic', professional.attachedToClinic.toString());
         }
   
         // Determine the appropriate route based on the userType
@@ -71,7 +71,6 @@ const LoginScreen: React.FC = () => {
       }
     }
   };
-  
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

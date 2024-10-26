@@ -1,19 +1,8 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  ActivityIndicator,
-  Button,
-  ScrollView,
-  TouchableOpacity,
-  FlatList,
-  Modal,
-} from 'react-native';
 import React, { useEffect, useState } from 'react';
+import { View, Text, ActivityIndicator, Button, ScrollView, TouchableOpacity, FlatList, Modal, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import { MaterialIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import AddClinicForm from '../../components/AddClinicForm';
 import Colors from '@/components/Shared/Colors';
 import CreatePharmacy from '@/components/CreatePharmacy';
@@ -39,16 +28,18 @@ const DashboardScreen: React.FC = () => {
   const [showJoinClinicForm, setShowJoinClinicForm] = useState(false);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
   const [isAttachedToClinic, setIsAttachedToClinic] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchProfessionalData = async () => {
+    const fetchUserData = async () => {
       const id = await AsyncStorage.getItem('professionalId');
       const attachedToClinic = await AsyncStorage.getItem('attachedToClinic');
       setProfessionalId(id);
       setIsAttachedToClinic(attachedToClinic === 'true');
+      setIsLoading(false);
     };
 
-    fetchProfessionalData();
+    fetchUserData();
   }, []);
 
   const handleAddPharmacyClick = () => {
@@ -88,7 +79,7 @@ const DashboardScreen: React.FC = () => {
     });
   }
 
-  if (loading) {
+  if (loading || isLoading) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -96,93 +87,92 @@ const DashboardScreen: React.FC = () => {
     );
   }
 
+  if (!isAttachedToClinic) {
+    return (
+      <View style={styles.promptContainer}>
+        <Text style={styles.promptText}>
+          Please create or join a clinic to proceed with your professional activities.
+        </Text>
+        <Button title="Create Clinic" onPress={handleAddClinicClick} />
+        <Button title="Join Existing Clinic" onPress={handleJoinClinicClick} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      {!isAttachedToClinic ? (
-        <View style={styles.promptContainer}>
-          <Text style={styles.promptText}>
-            Please create or join a clinic to proceed with your professional activities.
-          </Text>
-          <Button title="Create Clinic" onPress={handleAddClinicClick} />
-          <Button title="Join Existing Clinic" onPress={handleJoinClinicClick} />
-        </View>
-      ) : (
-        <>
-          <FlatList
-            data={days}
-            horizontal
-            keyExtractor={(item) => item.label}
-            renderItem={({ item }) => (
-              <View style={styles.dayContainer}>
-                <Text style={[styles.dayLabel, item.isToday && styles.todayText]}>{item.label}</Text>
-                <Text style={[styles.dateLabel, item.isToday && styles.todayText]}>{item.date}</Text>
-              </View>
-            )}
-            showsHorizontalScrollIndicator={false}
-          />
-
-          <View style={styles.cardContainer}>
-         
-            <TouchableOpacity style={styles.card} onPress={handleAddClinicClick}>
-              <View style={styles.iconContainer}>
-                <MaterialIcons name="add" size={40} color={Colors.primary} />
-              </View>
-              <Text style={styles.details}>Add Clinic</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.card} onPress={handleAddPharmacyClick}>
-              <View style={styles.iconContainer}>
-                <MaterialIcons name="local-pharmacy" size={40} color={Colors.primary} />
-              </View>
-              <Text style={styles.details}>Add Pharmacy</Text>
-            </TouchableOpacity>
-            <View style={styles.card}>
-              <View style={styles.iconContainer}>
-                <MaterialIcons name="folder" size={40} color={Colors.primary} />
-              </View>
-              <Text style={styles.details}>Patient Records</Text>
-            </View>
+      <FlatList
+        data={days}
+        horizontal
+        keyExtractor={(item) => item.label}
+        renderItem={({ item }) => (
+          <View style={styles.dayContainer}>
+            <Text style={[styles.dayLabel, item.isToday && styles.todayText]}>{item.label}</Text>
+            <Text style={[styles.dateLabel, item.isToday && styles.todayText]}>{item.date}</Text>
           </View>
+        )}
+        showsHorizontalScrollIndicator={false}
+      />
 
-          <AppointmentOverview
-            totalAppointments={totalAppointments}
-            completedAppointments={completedAppointments}
-            upcomingAppointments={upcomingAppointments}
-            requestAppointments={requestAppointments}
-          />
+      <View style={styles.cardContainer}>
+        <TouchableOpacity style={styles.card} onPress={handleAddClinicClick}>
+          <View style={styles.iconContainer}>
+            <MaterialIcons name="add" size={40} color={Colors.primary} />
+          </View>
+          <Text style={styles.details}>Add Clinic</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.card} onPress={handleAddPharmacyClick}>
+          <View style={styles.iconContainer}>
+            <MaterialIcons name="local-pharmacy" size={40} color={Colors.primary} />
+          </View>
+          <Text style={styles.details}>Add Pharmacy</Text>
+        </TouchableOpacity>
+        <View style={styles.card}>
+          <View style={styles.iconContainer}>
+            <MaterialIcons name="folder" size={40} color={Colors.primary} />
+          </View>
+          <Text style={styles.details}>Patient Records</Text>
+        </View>
+      </View>
 
-          <Text style={styles.subtitle}>Recent Appointments</Text>
-          {recentAppointments.length > 0 ? (
-            <FlatList
-              data={showAllRecentAppointments ? recentAppointments : recentAppointments.slice(0, 5)}
-              keyExtractor={(item) => item._id}
-              renderItem={({ item }) => (
-                <View style={styles.appointmentCard}>
-                  <Image source={{ uri: item.patientImage }} style={styles.patientImage} />
-                  <View style={styles.detailsContainer}>
-                    <Text style={styles.name}>{item.patientName}</Text>
-                    <Text style={styles.dateTime}>
-                      {moment(item.date).format('MMMM Do, YYYY')} - {item.time}
-                    </Text>
-                  </View>
-                  {item.status !== 'confirmed' && (
-                    <Button title="Confirm" onPress={() => confirmAppointment(item._id)} />
-                  )}
-                </View>
+      <AppointmentOverview
+        totalAppointments={totalAppointments}
+        completedAppointments={completedAppointments}
+        upcomingAppointments={upcomingAppointments}
+        requestAppointments={requestAppointments}
+      />
+
+      <Text style={styles.subtitle}>Recent Appointments</Text>
+      {recentAppointments.length > 0 ? (
+        <FlatList
+          data={showAllRecentAppointments ? recentAppointments : recentAppointments.slice(0, 5)}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => (
+            <View style={styles.appointmentCard}>
+              <Image source={{ uri: item.patientImage }} style={styles.patientImage} />
+              <View style={styles.detailsContainer}>
+                <Text style={styles.name}>{item.patientName}</Text>
+                <Text style={styles.dateTime}>
+                  {moment(item.date).format('MMMM Do, YYYY')} - {item.time}
+                </Text>
+              </View>
+              {item.status !== 'confirmed' && (
+                <Button title="Confirm" onPress={() => confirmAppointment(item._id)} />
               )}
-              ListFooterComponent={
-                recentAppointments.length > 5 && (
-                  <TouchableOpacity onPress={() => setShowAllRecentAppointments((prev) => !prev)}>
-                    <Text style={styles.showMoreText}>
-                      {showAllRecentAppointments ? 'Show Less' : 'Show All'}
-                    </Text>
-                  </TouchableOpacity>
-                )
-              }
-            />
-          ) : (
-            <Text style={styles.noAppointmentsText}>No recent appointments.</Text>
+            </View>
           )}
-        </>
+          ListFooterComponent={
+            recentAppointments.length > 5 && (
+              <TouchableOpacity onPress={() => setShowAllRecentAppointments((prev) => !prev)}>
+                <Text style={styles.showMoreText}>
+                  {showAllRecentAppointments ? 'Show Less' : 'Show All'}
+                </Text>
+              </TouchableOpacity>
+            )
+          }
+        />
+      ) : (
+        <Text style={styles.noAppointmentsText}>No recent appointments.</Text>
       )}
 
       {/* Add Clinic Modal */}

@@ -24,14 +24,15 @@ const SettingsScreen = () => {
     firstName: '',
     lastName: '',
     email: '',
-    category: '',
-    yearsOfExperience: '',
-    certifications: '',
-    bio: '',
-    profileImage: '',
+    profession: '',
+    certifications: [],
     emailNotifications: false,
     pushNotifications: false,
+    clinic: '',
+    attachedToClinic: false,
+    profileImage: '',
     location: { latitude: null as number | null, longitude: null as number | null },
+    consultationFee: '',
   });
   const [userId, setUserId] = useState(null);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
@@ -45,6 +46,7 @@ const SettingsScreen = () => {
         const storedEmail = await AsyncStorage.getItem('email');
         const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
         const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
+        const storedConsultationFee = await AsyncStorage.getItem('consultationFee');
 
         setUserId(storedUserId);
         setProfessionalId(storedProfessionalId);
@@ -55,6 +57,7 @@ const SettingsScreen = () => {
           email: storedEmail ? storedEmail : prevForm.email,
           emailNotifications: storedEmailNotifications ? JSON.parse(storedEmailNotifications) : prevForm.emailNotifications,
           pushNotifications: storedPushNotifications ? JSON.parse(storedPushNotifications) : prevForm.pushNotifications,
+          consultationFee: storedConsultationFee ? storedConsultationFee : prevForm.consultationFee,
         }));
 
         if (storedProfessionalId) {
@@ -78,7 +81,14 @@ const SettingsScreen = () => {
         firstName: profile.firstName,
         lastName: profile.lastName,
         email: profile.email,
+        profession: profile.profession,
+        certifications: profile.certifications,
+        emailNotifications: profile.emailNotifications,
+        pushNotifications: profile.pushNotifications,
+        clinic: profile.clinic,
+        attachedToClinic: profile.attachedToClinic,
         profileImage: profile.profileImage,
+        consultationFee: profile.consultationFee,
       }));
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -91,7 +101,7 @@ const SettingsScreen = () => {
       [key]: value,
     }));
 
-    if (key === 'emailNotifications' || key === 'pushNotifications' || key === 'email') {
+    if (key === 'emailNotifications' || key === 'pushNotifications' || key === 'email' || key === 'consultationFee') {
       await AsyncStorage.setItem(key, JSON.stringify(value));
     }
   };
@@ -126,7 +136,7 @@ const SettingsScreen = () => {
         if (key === 'profileImage' && form[key] instanceof FormData) {
           formData.append(key, form[key].get('profileImage'));
         } else {
-          formData.append(key, form[key as keyof FormData]);
+          formData.append(key, form[key as keyof typeof form]);
         }
       });
 
@@ -172,6 +182,16 @@ const SettingsScreen = () => {
       location: { latitude, longitude },
     }));
     await AsyncStorage.setItem('location', JSON.stringify({ latitude, longitude }));
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      // Navigate to login screen or perform any other logout actions
+      console.log('User logged out successfully');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   return (
@@ -240,6 +260,22 @@ const SettingsScreen = () => {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Consultation Fee</Text>
+          <View style={styles.sectionBody}>
+            <TextInput
+              style={styles.input}
+              placeholder="Consultation Fee"
+              value={form.consultationFee}
+              onChangeText={(text) => handleProfileChange('consultationFee', text)}
+              keyboardType="numeric"
+            />
+            <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
+              <Text style={styles.buttonText}>Update Fee</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Resources</Text>
           <View style={styles.sectionBody}>
             <View style={styles.rowWrapper}>
@@ -279,6 +315,15 @@ const SettingsScreen = () => {
             <Text style={styles.sectionLabel}>Version 1.0.0</Text>
           </View>
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Logout</Text>
+          <View style={styles.sectionBody}>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.buttonText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
 
       <Modal
@@ -307,6 +352,18 @@ const SettingsScreen = () => {
               placeholder="Email"
               value={form.email}
               onChangeText={(text) => handleProfileChange('email', text)}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Profession"
+              value={form.profession}
+              onChangeText={(text) => handleProfileChange('profession', text)}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Certifications"
+              value={form.certifications.join(', ')}
+              onChangeText={(text) => handleProfileChange('certifications', text.split(', '))}
             />
             <TouchableOpacity onPress={pickImage} style={styles.imageButton}>
               <Text style={styles.buttonText}>Choose Profile Image</Text>
@@ -463,6 +520,14 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     backgroundColor: '#6c757d',
+    borderRadius: 5,
+    padding: 10,
+    marginVertical: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  logoutButton: {
+    backgroundColor: '#dc3545',
     borderRadius: 5,
     padding: 10,
     marginVertical: 8,

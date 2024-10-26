@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Slot {
   date: string;
@@ -15,25 +16,41 @@ interface UseScheduleHook {
 
 const useSchedule = (): UseScheduleHook => {
   const [schedule, setSchedule] = useState<Slot[]>([]);
+  const [professionalId, setProfessionalId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfessionalId = async () => {
+      try {
+        const storedProfessionalId = await AsyncStorage.getItem('professionalId');
+        setProfessionalId(storedProfessionalId);
+        if (storedProfessionalId) {
+          fetchSchedule(storedProfessionalId);
+        }
+      } catch (error) {
+        console.error('Error fetching professional ID from AsyncStorage:', error);
+      }
+    };
+
+    fetchProfessionalId();
+  }, []);
+
+
+
+
 
   const fetchSchedule = async (professionalId: string) => {
-    if (!validateProfessionalId(professionalId)) {
-      console.error('Invalid professional ID format');
-      return;
-    }
-
     try {
       const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);
-      if (response.data.status === 'Success' && response.data.slots) {
+      if (response.status === 200 && response.data.slots) {
         setSchedule(response.data.slots);
-        console.log('Fetched schedule:', response.data.slots);
       } else {
         console.error('Failed to fetch schedule:', response.data.message);
       }
     } catch (error) {
-      console.error('Error fetching schedule:', error);
+      console.error('Error fetching schedule:', axios.isAxiosError(error) ? error.message : error);
     }
   };
+
 
   const validateProfessionalId = (id: string): boolean => {
     // Add your validation logic here (e.g., regex for ObjectId format)

@@ -7,10 +7,11 @@ import DoctorCard from '../../components/common/DoctorCardItem';
 import HorizontalLine from '../../components/common/HorizontalLine';
 import Colors from '../../components/Shared/Colors';
 import BookingSection from '../../components/BookingSection';
-import DoctorServices from '../../components/DoctorServices';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AirbnbRating } from 'react-native-ratings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DoctorCardItem from '../../components/common/DoctorCardItem';
 
 type RouteParams = {
   doctor: string; // JSON string
@@ -100,7 +101,7 @@ const DoctorProfile: React.FC = () => {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <FontAwesome name="arrow-left" size={24} color="black" />
             </TouchableOpacity>
-            <DoctorCard doctor={item} userId={item.user} consultationFee={item.consultationFee} />
+            <DoctorCardItem doctor={item} userId={item.user} consultationFee={item.consultationFee} />
           
             <View style={styles.descriptionContainer}>
               <Text style={styles.descriptionText}>
@@ -115,7 +116,7 @@ const DoctorProfile: React.FC = () => {
               userId={item.user} 
               consultationFee={item.consultationFee} 
             />
-            <DoctorServices />
+         
             <HorizontalLine />
             <Text style={styles.sectionTitle}>Reviews</Text>
             <FlatList

@@ -11,36 +11,6 @@ const timeToString = (time: number): string => {
   return date.toISOString().split('T')[0];
 };
 
-const generateTimeSlots = (start: string, duration: number, slots: number) => {
-  const startTime = moment(start, 'HH:mm');
-  const timeSlots = [];
-
-  for (let i = 0; i < slots; i++) {
-    const endSlot = moment(startTime).add(duration, 'minutes');
-    timeSlots.push(`${startTime.format('HH:mm')} - ${endSlot.format('HH:mm')}`);
-    startTime.add(duration, 'minutes');
-  }
-
-  return timeSlots;
-};
-
-const getDates = (selectedDate: string, repeatPattern: string, repeatDuration: number) => {
-  const dates = [];
-  const startDate = moment(selectedDate);
-
-  for (let i = 0; i < repeatDuration; i++) {
-    if (repeatPattern === 'daily') {
-      dates.push(startDate.clone().add(i, 'days').format('YYYY-MM-DD'));
-    } else if (repeatPattern === 'weekly') {
-      dates.push(startDate.clone().add(i * 7, 'days').format('YYYY-MM-DD'));
-    } else if (repeatPattern === 'monthly') {
-      dates.push(startDate.clone().add(i, 'months').format('YYYY-MM-DD'));
-    }
-  }
-
-  return dates;
-};
-
 const Schedule: React.FC = () => {
   const { schedule, fetchSchedule } = useSchedule();
   const [items, setItems] = useState<AgendaSchedule>({});
@@ -53,34 +23,48 @@ const Schedule: React.FC = () => {
   const [repeatDuration, setRepeatDuration] = useState(1);
   const [step, setStep] = useState(1);
   const [todayAppointments, setTodayAppointments] = useState<AgendaEntry[]>([]);
+  const [professionalId, setProfessionalId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfessionalId = async () => {
+      try {
+        const storedProfessionalId = await AsyncStorage.getItem('professionalId');
+        setProfessionalId(storedProfessionalId);
+        if (storedProfessionalId) {
+          fetchSchedule(storedProfessionalId);
+        }
+      } catch (error) {
+        console.error('Error fetching professional ID from AsyncStorage:', error);
+      }
+    };
+
+    fetchProfessionalId();
+  }, []);
 
   useEffect(() => {
     const transformSchedule = () => {
       const newItems: AgendaSchedule = {};
       const todayAppointments: AgendaEntry[] = [];
 
-      schedule.forEach((slot: any) => {
+      schedule.forEach((slot: Slot) => {
         const strTime = moment(slot.date).format('YYYY-MM-DD');
         if (!newItems[strTime]) {
           newItems[strTime] = [];
         }
         if (slot.isBooked) {
           newItems[strTime].push({
-            name: slot.patientName || 'Booked Slot',
+            name: 'Booked Slot',
             type: 'appointment',
             height: 80,
             time: slot.time,
-            patientImage: slot.patientImage || 'https://via.placeholder.com/40',
           });
 
-          // Add to today's appointments if the date matches
           if (strTime === moment().format('YYYY-MM-DD')) {
             todayAppointments.push({
-              name: slot.patientName || 'Booked Slot',
+              name: 'Booked Slot',
               type: 'appointment',
               height: 80,
               time: slot.time,
-              patientImage: slot.patientImage || 'https://via.placeholder.com/40',
             });
           }
         } else {
@@ -103,15 +87,12 @@ const Schedule: React.FC = () => {
 
   const handleAddAvailability = async () => {
     try {
-      const professionalId = await AsyncStorage.getItem('doctorId');
+      const professionalId = await AsyncStorage.getItem('professionalId');
       if (!professionalId) {
         throw new Error('Professional ID not found in AsyncStorage');
       }
 
-      // Generate time slots based on input
       const timeSlots = generateTimeSlots(timeRange.start, eventDetails.duration, eventDetails.slots);
-
-      // Generate dates based on repeat pattern and duration
       const dates = getDates(selectedDate, repeatPattern, repeatDuration);
       const availability = dates.flatMap((date) => timeSlots.map((time) => ({
         date,
@@ -148,7 +129,7 @@ const Schedule: React.FC = () => {
       setItems(newItems);
       setModalVisible(false);
       setEventDetails({ time: '', slots: 1, duration: 30 });
-      setStep(1); // Reset step to 1
+      setStep(1);
     } catch (error) {
       console.error('Error updating availability:', error);
     }
@@ -256,7 +237,7 @@ const Schedule: React.FC = () => {
             <Card.Content>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text>{appointment.name}</Text>
-                <Avatar.Image source={{ uri: appointment.patientImage || 'https://via.placeholder.com/40' }} size={40} />
+                <Avatar.Image source={{ uri: 'https://via.placeholder.com/40' }} size={40} />
               </View>
               <Text>{appointment.time}</Text>
             </Card.Content>
@@ -273,9 +254,6 @@ const Schedule: React.FC = () => {
           <Card.Content>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text>{item.name}</Text>
-              {item.type === 'appointment' && (
-                <Avatar.Image source={{ uri: item.patientImage || 'https://via.placeholder.com/40' }} size={40} />
-              )}
             </View>
             <Text>{item.time}</Text>
           </Card.Content>

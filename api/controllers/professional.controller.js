@@ -125,18 +125,18 @@ exports.createOrUpdateAvailability = async (req, res) => {
 
 // Create or update consultation fee
 exports.createOrUpdateConsultationFee = async (req, res) => {
-    const { userId } = req.params;
+    const { professionalId } = req.params;
     const { consultationFee } = req.body;
 
     if (typeof consultationFee !== 'number' || consultationFee < 0) {
         return res.status(400).json({ error: 'Invalid consultation fee' });
     }
 
-    console.log('Request Payload:', { userId, consultationFee });
+    console.log('Request Payload:', { professionalId, consultationFee });
 
     try {
         const professional = await Professional.findOneAndUpdate(
-            { user: userId },
+            { _id: professionalId },
             { consultationFee },
             { new: true, upsert: true }
         );
