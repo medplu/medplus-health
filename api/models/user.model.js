@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require('bcrypt');
 
 const Schema = mongoose.Schema;
 
@@ -32,16 +33,40 @@ const userSchema = new Schema({
     },
     profileImage: {
         type: String,
-        required: false // This field is optional
+        required: false // URL of the profile image
     },
     verificationCode: {
         type: String,
         required: false
     },
+    verificationCodeExpiry: {
+        type: Date,
+        required: false // Useful if you want the code to expire after a set time
+    },
     isVerified: {
         type: Boolean,
         default: false
+    },
+    status: {
+        type: String,
+        enum: ['active', 'suspended', 'deactivated'],
+        default: 'active' // Indicates the user's account status
     }
+}, {
+    timestamps: true // Automatically adds createdAt and updatedAt fields
 });
+
+// Pre-save middleware to hash password before saving to the database
+userSchema.pre('save', async function (next) {
+    if (this.isModified('password')) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
+    next();
+});
+
+// Method to check if the entered password matches the stored hashed password
+userSchema.methods.comparePassword = async function (candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+};
 
 module.exports = mongoose.model('User', userSchema);
