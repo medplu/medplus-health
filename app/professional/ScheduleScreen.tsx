@@ -4,12 +4,55 @@ import { Agenda, AgendaEntry, AgendaSchedule } from 'react-native-calendars';
 import { Card, Avatar, TextInput, Button, Modal, Portal, Provider, RadioButton } from 'react-native-paper';
 import moment from 'moment';
 import useSchedule from '../../hooks/useSchedule';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { selectUser } from '../store/userSlice'; // Import your selector for user
 import { useSelector } from 'react-redux';
+
 const timeToString = (time: number): string => {
   const date = new Date(time);
   return date.toISOString().split('T')[0];
+};
+
+const generateTimeSlots = (startTime: string, duration: number, slots: number): string[] => {
+  const timeSlots: string[] = [];
+  let [hours, minutes] = startTime.split(':').map(Number);
+
+  for (let i = 0; i < slots; i++) {
+    const time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    timeSlots.push(time);
+
+    minutes += duration;
+    if (minutes >= 60) {
+      hours += Math.floor(minutes / 60);
+      minutes = minutes % 60;
+    }
+  }
+
+  return timeSlots;
+};
+
+const getDates = (startDate: string, pattern: string, duration: number): string[] => {
+  const dates: string[] = [];
+  const start = moment(startDate);
+
+  for (let i = 0; i < duration; i++) {
+    dates.push(start.format('YYYY-MM-DD'));
+
+    switch (pattern) {
+      case 'daily':
+        start.add(1, 'days');
+        break;
+      case 'weekly':
+        start.add(1, 'weeks');
+        break;
+      case 'monthly':
+        start.add(1, 'months');
+        break;
+      default:
+        break;
+    }
+  }
+
+  return dates;
 };
 
 const Schedule: React.FC = () => {
@@ -27,7 +70,6 @@ const Schedule: React.FC = () => {
   const [step, setStep] = useState(1);
   const [todayAppointments, setTodayAppointments] = useState<AgendaEntry[]>([]);
 
- 
   const fetchProfessionalId = async () => {
     try {
       const professionalId = user?.professional?._id; // Safely access professionalId
@@ -35,13 +77,13 @@ const Schedule: React.FC = () => {
 
       fetchSchedule(professionalId);
     } catch (error) {
-      console.error('Error fetching professional ID from AsyncStorage:', error);
+      console.error('Error fetching professional ID from Redux:', error);
     }
   };
 
   useEffect(() => {
     fetchProfessionalId();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const transformSchedule = () => {
@@ -89,9 +131,9 @@ const Schedule: React.FC = () => {
 
   const handleAddAvailability = async () => {
     try {
-      const professionalId = await AsyncStorage.getItem('professionalId');
+      const professionalId = user?.professional?._id; // Safely access professionalId
       if (!professionalId) {
-        throw new Error('Professional ID not found in AsyncStorage');
+        throw new Error('Professional ID not found');
       }
 
       const timeSlots = generateTimeSlots(timeRange.start, eventDetails.duration, eventDetails.slots);
@@ -155,7 +197,7 @@ const Schedule: React.FC = () => {
             <TextInput
               label="Start Time"
               value={timeRange.start}
-              onChangeText={(text) => setTimeRange((prev) => ({ ...prev, start: text }))}
+              onChangeText={(text) => setTimeRange((prev) => ({ ...prev, start: text }))} 
               style={styles.input}
             />
             <Button mode="contained" onPress={() => setStep(3)} style={styles.button}>
@@ -170,7 +212,7 @@ const Schedule: React.FC = () => {
             <TextInput
               label="Duration (minutes)"
               value={eventDetails.duration.toString()}
-              onChangeText={(text) => setEventDetails((prev) => ({ ...prev, duration: Number(text) }))}
+              onChangeText={(text) => setEventDetails((prev) => ({ ...prev, duration: Number(text) }))} 
               keyboardType="numeric"
               style={styles.input}
             />
@@ -186,7 +228,7 @@ const Schedule: React.FC = () => {
             <TextInput
               label="Number of Slots"
               value={eventDetails.slots.toString()}
-              onChangeText={(text) => setEventDetails((prev) => ({ ...prev, slots: Number(text) }))}
+              onChangeText={(text) => setEventDetails((prev) => ({ ...prev, slots: Number(text) }))} 
               keyboardType="numeric"
               style={styles.input}
             />
@@ -216,7 +258,7 @@ const Schedule: React.FC = () => {
             <TextInput
               label="Repeat Duration"
               value={repeatDuration.toString()}
-              onChangeText={(text) => setRepeatDuration(Number(text))}
+              onChangeText={(text) => setRepeatDuration(Number(text))} 
               keyboardType="numeric"
               style={styles.input}
             />
