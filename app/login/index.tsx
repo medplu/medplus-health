@@ -17,7 +17,6 @@ const LoginScreen: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
   const dispatch = useDispatch(); // Initialize the useDispatch hook
-
   const handleLoginPress = async () => {
     if (email === '' || password === '') {
       setErrorMessage('Please enter both email and password.');
@@ -33,15 +32,17 @@ const LoginScreen: React.FC = () => {
           firstName,
           lastName,
           email: userEmail,
+          profileImage, // Extract profileImage from the response
         } = response.data;
   
-        // Dispatch the login action with professional information if it exists
+        // Dispatch the login action with profileImage
         dispatch(
           login({
             name: `${firstName} ${lastName}`,
             email: userEmail,
             userType,
-            professional: professional || null, // Include professional data or set to null
+            professional: professional || null,
+            profileImage: profileImage || null, // Include profileImage or set to null
           })
         );
   
@@ -60,7 +61,6 @@ const LoginScreen: React.FC = () => {
       }
     }
   };
-  
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

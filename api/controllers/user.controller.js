@@ -137,41 +137,45 @@ exports.verifyEmail = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-
 // Login
 exports.login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
+  try {
+      const { email, password } = req.body;
+      const user = await User.findOne({ email });
 
-        if (!user) {
-            return res.status(400).json({ error: 'Invalid email or password' });
-        }
+      if (!user) {
+          return res.status(400).json({ error: 'Invalid email or password' });
+      }
 
-        if (!user.isVerified) {
-            return res.status(400).json({ error: 'Email not verified' });
-        }
+      if (!user.isVerified) {
+          return res.status(400).json({ error: 'Email not verified' });
+      }
 
-        if (!(await bcrypt.compare(password, user.password))) {
-            return res.status(400).json({ error: 'Invalid email or password' });
-        }
+      if (!(await bcrypt.compare(password, user.password))) {
+          return res.status(400).json({ error: 'Invalid email or password' });
+      }
 
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        const professional = user.userType === 'professional' ? await Professional.findOne({ user: user._id }) : null;
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      const professional = user.userType === 'professional' ? await Professional.findOne({ user: user._id }) : null;
 
-        res.status(200).json({
-            token,
-            userId: user._id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            professional,
-            userType: user.userType,
-        });
-    } catch (error) {
-        console.log("Error logging in", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+      // Return the entire user object along with the token
+      res.status(200).json({
+          token,
+          user: {
+              _id: user._id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+              userType: user.userType,
+              profileImage: user.profileImage,
+              professional,
+              // Include any additional fields from the User model as needed
+          },
+      });
+  } catch (error) {
+      console.log("Error logging in", error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
 // Get all professionals

@@ -1,59 +1,36 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView, StatusBar } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Image, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import Colors from '../Shared/Colors'; // Import the Colors object
+import Colors from '../Shared/Colors';
 import { useClerk } from '@clerk/clerk-expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
+import { selectUser, logout } from '../../app/store/userSlice';
 
 export default function Header() {
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [user, setUser] = useState({ firstName: '', lastName: '', profileImage: '' });
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const { signOut } = useClerk();
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userId = await AsyncStorage.getItem('userId');
-        const response = await axios.get(`https://medplus-app.onrender.com/api/users/${userId}`);
-        setUser(response.data.user);
-      } catch (error) {
-        console.error('Failed to fetch user data', error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
+  
+  // Obtain user data from Redux state
+  const user = useSelector(selectUser);
 
   const handleLogout = async () => {
     try {
-      setLoading(true);
-      await AsyncStorage.removeItem('userId');
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('authToken');
       await signOut();
-      setSuccessMessage('Successfully logged out');
+      dispatch(logout()); // Dispatch logout action
       navigation.navigate('login/index');
     } catch (error) {
       console.error('Failed to logout', error);
-      setErrorMessage('Logout failed. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => {}} style={{ marginLeft: 20 }}>
+        <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={{ marginLeft: 20 }}>
           <Image
-            source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
+            source={{ uri: user.professional?.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
             style={styles.profileImage}
           />
         </TouchableOpacity>
@@ -80,13 +57,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 15,
-    paddingTop: 30, // Add padding to move the icons down slightly
+    paddingTop: 30,
     backgroundColor: Colors.ligh_gray,
   },
   profileImage: {
-    width: 40, // Increased size for better visibility
-    height: 40, // Increased size for better visibility
-    borderRadius: 20, // Adjusted for new size
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 12,
   },
   iconContainer: {
