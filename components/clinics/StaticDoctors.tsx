@@ -38,8 +38,8 @@ const StaticDoctors: React.FC<StaticDoctorsProps> = ({ doctors, loading, onBookP
                 style={styles.doctorImage} 
               />
               <View style={styles.nameCategoryContainer}>
-                <Text style={styles.doctorName}>{item.name}</Text> {/* Update: Use name directly */}
-                <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text> {/* Update: Use specialties */}
+                <Text style={styles.doctorName}>{item.name}</Text> 
+                <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text> 
               </View>
               <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
               <TouchableOpacity
