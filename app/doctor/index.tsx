@@ -112,9 +112,9 @@ const DoctorProfile: React.FC = () => {
               </TouchableOpacity>
             </View>
             <BookingSection 
-              doctorId={item._id} 
-              userId={item.user} 
-              consultationFee={item.consultationFee} 
+               doctorId={item._id} 
+               userId={item.user} 
+               consultationFee={item.consultationFee} 
             />
          
             <HorizontalLine />

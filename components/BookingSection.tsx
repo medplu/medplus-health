@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'; 
-import { View, Text, TouchableOpacity, FlatList, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import moment from 'moment';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack } from 'react-native-paystack-webview';
@@ -20,7 +20,8 @@ LocaleConfig.locales['en'] = {
 };
 LocaleConfig.defaultLocale = 'en';
 
-const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
+const BookingSection: React.FC<{ doctorId: string; userId: string; consultationFee: number }> = ({
+  doctorId,
   userId,
   consultationFee,
 }) => {
@@ -31,7 +32,7 @@ const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
   const [userEmail, setUserEmail] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [schedule, setSchedule] = useState<{ date: string; _id: string; time: string }[]>([]);
-  const [professionalId, setProfessionalId] = useState<string | null>(null);
+  const paystackWebViewRef = useRef(null);
 
   const {
     isSubmitting,
@@ -39,50 +40,37 @@ const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
     alertType,
     appointmentId,
     subaccountCode,
-    paystackWebViewRef,
     handleBookPress,
     handlePaymentSuccess,
     handlePaymentCancel,
   } = useBooking(userId);
 
-  const fetchSchedule = async (professionalId: string) => {
+  const fetchSchedule = async () => {
     try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${doctorId}`);
       if (response.status === 200 && response.data.slots) {
         setSchedule(response.data.slots);
       } else {
         console.error('Failed to fetch schedule:', response.data.message);
       }
     } catch (error) {
-      console.error('Error fetching schedule:', axios.isAxiosError(error) ? error.message : error);
+      console.error('Error fetching schedule:', error.message);
     }
   };
 
   const getUserEmail = async () => {
     try {
       const email = await AsyncStorage.getItem('userEmail');
-      setUserEmail(email || (await getUser()).email);
+      setUserEmail(email || '');
     } catch (error) {
       console.error('Failed to load user email', error);
     }
   };
 
   useEffect(() => {
-    const fetchProfessionalId = async () => {
-      try {
-        const storedProfessionalId = await AsyncStorage.getItem('professionalId');
-        setProfessionalId(storedProfessionalId);
-        if (storedProfessionalId) {
-          fetchSchedule(storedProfessionalId);
-        }
-      } catch (error) {
-        console.error('Error fetching professional ID from AsyncStorage:', error);
-      }
-    };
-
-    fetchProfessionalId();
+    fetchSchedule();
     getUserEmail();
-  }, []);
+  }, [doctorId]);
 
   const handleShowPatientNameInput = () => {
     if (!selectedTimeSlot) {
@@ -107,16 +95,14 @@ const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
     setShowPatientNameInput(false);
   };
 
-  const handlePaymentSuccessWithReset = (response: any, appointmentId: string) => {
+  const handlePaymentSuccessWithReset = (response: any) => {
     handlePaymentSuccess(response, appointmentId);
     resetForm();
   };
 
   const groupedSlots = schedule.reduce((acc: Record<string, { date: string; _id: string; time: string }[]>, slot) => {
     const date = moment(slot.date).format('YYYY-MM-DD');
-    if (!acc[date]) {
-      acc[date] = [];
-    }
+    if (!acc[date]) acc[date] = [];
     acc[date].push(slot);
     return acc;
   }, {});
@@ -143,9 +129,7 @@ const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
           arrowColor: Colors.primary,
         }}
       />
-
       <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
-
       <FlatList
         horizontal
         data={groupedSlots[selectedDate] || []}
@@ -164,7 +148,6 @@ const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
         showsHorizontalScrollIndicator={false}
         style={styles.timeSlotList}
       />
-
       {showPatientNameInput ? (
         <View>
           <Text style={styles.sectionTitle}>Patient Name:</Text>
@@ -175,7 +158,6 @@ const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
             containerStyle={styles.inputContainer}
             inputStyle={styles.input}
           />
-
           <Button
             title={isSubmitting ? <ActivityIndicator color="#fff" /> : 'Book Appointment'}
             onPress={handleBookAppointment}
@@ -190,7 +172,6 @@ const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
           buttonStyle={styles.showNameInputButton}
         />
       )}
-
       <AwesomeAlert
         show={showAlert}
         showProgress={true}
@@ -203,7 +184,6 @@ const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
         confirmButtonColor="#DD6B55"
         onConfirmPressed={() => setShowAlert(false)}
       />
-
       <Paystack
         paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
         amount={consultationFee}
@@ -212,10 +192,9 @@ const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
         currency='KES'
         activityIndicatorColor={Colors.primary}
         onCancel={handlePaymentCancel}
-        onSuccess={(response) => handlePaymentSuccessWithReset(response, appointmentId!)}
+        onSuccess={handlePaymentSuccessWithReset}
         ref={paystackWebViewRef}
       />
-
       <TouchableOpacity onPress={() => paystackWebViewRef.current && paystackWebViewRef.current.startTransaction()} style={styles.paymentButton}>
         <Text style={styles.buttonText}>Proceed to Payment</Text>
       </TouchableOpacity>
@@ -223,64 +202,15 @@ const BookingSection: React.FC<{ userId: string; consultationFee: number }> = ({
   );
 };
 
-const getUser = async () => {
-  // Mock function to simulate fetching user details
-  return {
-    email: 'user@example.com',
-  };
-};
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  dateTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
-  },
-  timeSlotButton: {
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: '#e0e0e0',
-    marginRight: 5,
-  },
-  timeSlotText: {
-    fontSize: 14,
-  },
-  timeSlotList: {
-    marginBottom: 15,
-  },
-  inputContainer: {
-    marginBottom: 10,
-  },
-  input: {
-    height: 40,
-  },
-  bookButton: {
-    backgroundColor: Colors.primary,
-  },
-  showNameInputButton: {
-    backgroundColor: Colors.secondary,
-  },
-  paymentButton: {
-    padding: 12,
-    borderRadius: 5,
-    backgroundColor: Colors.primary,
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
+  container: { padding: 10 },
+  dateTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.primary, textAlign: 'center' },
+  timeSlotButton: { padding: 10, margin: 5, borderRadius: 5, borderWidth: 1, borderColor: Colors.primary },
+  timeSlotText: { color: Colors.primary },
+  bookButton: { backgroundColor: Colors.primary, marginTop: 10 },
+  showNameInputButton: { backgroundColor: Colors.primary, marginTop: 20 },
+  paymentButton: { backgroundColor: Colors.primary, padding: 15, borderRadius: 5, marginTop: 20 },
+  buttonText: { color: '#fff', textAlign: 'center' },
 });
 
 export default BookingSection;
