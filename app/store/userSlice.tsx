@@ -1,7 +1,7 @@
-// userSlice.js
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from '../store/configureStore';
+import { RootState } from '../store/configureStore'; // Adjust the path based on your project structure
 
+// Define the Professional interface
 interface Professional {
   _id: string;
   firstName: string;
@@ -16,29 +16,31 @@ interface Professional {
   attachedToClinic: boolean;
   createdAt: string;
   updatedAt: string;
-  profileImage?: string; // Add profileImage to the Professional interface if necessary
 }
 
+// Define the UserState interface
 interface UserState {
   name: string | null;
   email: string | null;
   userType: 'client' | 'professional' | 'student' | null;
   isLoggedIn: boolean;
-  isAuthenticated: boolean;
-  professional: Professional | null;
-  profileImage: string | null; // Add profileImage here
+  isAuthenticated: boolean; // Tracks if the user is authenticated
+  professional: Professional | null; // Holds professional details
+  profileImage: string | null; // Holds profile image URL
 }
 
+// Initialize the state
 const initialState: UserState = {
   name: null,
   email: null,
   userType: null,
   isLoggedIn: false,
-  isAuthenticated: false,
-  professional: null,
-  profileImage: null, // Initialize with null
+  isAuthenticated: false, // Start as not authenticated
+  professional: null, // Default professional to null
+  profileImage: null, // Initialize profile image to null
 };
 
+// Create the user slice
 const userSlice = createSlice({
   name: 'user',
   initialState,
@@ -49,32 +51,32 @@ const userSlice = createSlice({
         name: string;
         email: string;
         userType: 'client' | 'professional' | 'student';
-        professional?: Professional | null;
-        profileImage?: string | null; // Add profileImage to the payload
+        professional?: Professional | null; // Optional professional details
+        profileImage?: string | null; // Include profile image
       }>
     ) => {
       state.name = action.payload.name;
       state.email = action.payload.email;
       state.userType = action.payload.userType;
-      state.isLoggedIn = true;
-      state.isAuthenticated = true;
-      state.professional = action.payload.professional || null;
-      state.profileImage = action.payload.profileImage || null; // Store profileImage
+      state.isLoggedIn = true; // User is logged in
+      state.isAuthenticated = true; // User is authenticated
+      state.professional = action.payload.professional || null; // Store professional info
+      state.profileImage = action.payload.profileImage || null; // Store profile image URL
     },
     logout: (state) => {
-      state.name = null;
-      state.email = null;
-      state.userType = null;
-      state.isLoggedIn = false;
-      state.isAuthenticated = false;
-      state.professional = null;
-      state.profileImage = null; // Clear profileImage on logout
+      state.name = null; // Clear name on logout
+      state.email = null; // Clear email on logout
+      state.userType = null; // Clear user type on logout
+      state.isLoggedIn = false; // Set logged in status to false
+      state.isAuthenticated = false; // Set authentication status to false
+      state.professional = null; // Clear professional details
+      state.profileImage = null; // Clear profile image on logout
     },
   },
 });
 
 // Selector to get user data from the state
-export const selectUser = (state: RootState) => state.user;
+export const selectUser = (state: RootState) => state.user; // Adjust the state path as needed
 
 export const { login, logout } = userSlice.actions;
 

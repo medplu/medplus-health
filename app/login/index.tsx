@@ -17,6 +17,7 @@ const LoginScreen: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
   const dispatch = useDispatch(); // Initialize the useDispatch hook
+
   const handleLoginPress = async () => {
     if (email === '' || password === '') {
       setErrorMessage('Please enter both email and password.');
@@ -24,37 +25,50 @@ const LoginScreen: React.FC = () => {
       try {
         const response = await GlobalApi.loginUser(email, password);
         setErrorMessage(null);
+    
+        // Access the user data from the response
+        const user = response.data.user; // Get the user object from the response
   
+        // Destructure user details
         const {
-          userId,
+          _id: userId,
           userType,
           professional,
           firstName,
           lastName,
           email: userEmail,
-          profileImage, // Extract profileImage from the response
-        } = response.data;
+          profileImage,
+        } = user; // Extract properties from the user object
   
-        // Dispatch the login action with profileImage
+        // Check if firstName and lastName are defined
+        if (!firstName || !lastName) {
+          console.error('First name or last name is missing:', { firstName, lastName });
+        }
+  
+        // Dispatch login action
         dispatch(
           login({
             name: `${firstName} ${lastName}`,
             email: userEmail,
             userType,
             professional: professional || null,
-            profileImage: profileImage || null, // Include profileImage or set to null
+            profileImage: profileImage || null,
           })
         );
-  
+        
         // Determine the appropriate route based on the userType
-        const route =
-          userType === 'professional'
-            ? '/professional/tabs'
-            : userType === 'client'
-            ? '/client/tabs'
-            : '/student/tabs';
+        let route = '';
+        if (userType === 'professional') {
+          route = '/professional/tabs';
+        } else if (userType === 'client') {
+          route = '/client/tabs';
+        } else if (userType === 'student') {
+          route = '/student/tabs';
+        } else {
+          route = '/student/tabs'; // Default route if userType is not recognized
+        }
   
-        router.push(route as const);
+        router.push(route);
       } catch (error) {
         console.error('Error during login:', error);
         setErrorMessage('Invalid email or password. Please try again.');
