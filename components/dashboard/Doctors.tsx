@@ -1,47 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import axios from 'axios';
 import { useNavigation } from '@react-navigation/native'; 
 import SubHeading from '../dashboard/SubHeading';
-import Colors from '../Shared/Colors';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import Colors from '../../components/Shared/Colors';	
+import useDoctors from '../../hooks/useDoctors';
 
-const Doctors = ({ searchQuery, selectedCategory, onViewAll }) => {
-  const [doctorList, setDoctorList] = useState([]);
-  const [filteredDoctors, setFilteredDoctors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+interface Doctor {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  category: string;
+  profileImage?: string;
+  consultationFee: number;
+}
+
+interface DoctorsProps {
+  searchQuery: string;
+  selectedCategory: string;
+  onViewAll: (category: string) => void;
+}
+
+const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onViewAll }) => {
+  const { doctorList, loading, error } = useDoctors();
+  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const navigation = useNavigation();
-
-  useEffect(() => {
-    getDoctors();
-  }, []);
 
   useEffect(() => {
     filterDoctors();
   }, [searchQuery, selectedCategory, doctorList]);
 
-  const getDoctors = async () => {
-    try {
-      const resp = await axios.get('https://medplus-health.onrender.com/api/professionals');
-      if (resp?.data) {
-        setDoctorList(resp.data);
-        await AsyncStorage.setItem('doctorList', JSON.stringify(resp.data)); // Save data to AsyncStorage
-      } else {
-        setError('Failed to fetch doctor data');
-      }
-    } catch (error) {
-      setError('Error fetching doctors');
-      console.error('Error fetching doctors:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const filterDoctors = () => {
     let filtered = doctorList;
 
-    // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter((doctor) =>
         doctor.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -50,43 +40,51 @@ const Doctors = ({ searchQuery, selectedCategory, onViewAll }) => {
       );
     }
 
-    // Filter by selected category
     if (selectedCategory) {
-      filtered = filtered.filter((doctor) =>
-        doctor.category === selectedCategory
-      );
+      filtered = filtered.filter((doctor) => doctor.category === selectedCategory);
     }
 
     setFilteredDoctors(filtered);
   };
 
-  const handleConsult = (doctor) => {
+  const handleConsult = (doctor: Doctor) => {
     navigation.navigate('doctor/index', { doctor: JSON.stringify(doctor) });
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.PRIMARY} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Error fetching doctors: {error}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ marginTop: 10 }}>
-      <SubHeading subHeadingTitle={'Discover Doctors Near You'} onViewAll={() => onViewAll('Doctors')}  />
+      <SubHeading subHeadingTitle="Discover Doctors Near You" onViewAll={() => onViewAll('Doctors')} />
       <FlatList
         data={filteredDoctors}
-        horizontal={true}
+        horizontal
         renderItem={({ item }) => (
           <View style={styles.doctorItem}>
-            <Image 
-              source={{ 
-                uri: item.profileImage ? item.profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' 
-              }} 
-              style={styles.doctorImage} 
+            <Image
+              source={{ uri: item.profileImage || 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }}
+              style={styles.doctorImage}
             />
             <View style={styles.nameCategoryContainer}>
               <Text style={styles.doctorName}>{`${item.firstName} ${item.lastName}`}</Text>
               <Text style={styles.doctorSpecialty}>{item.category}</Text>
             </View>
             <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
-            <TouchableOpacity
-              style={[styles.button, styles.consultButton]}
-              onPress={() => handleConsult(item)}
-            >
+            <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
               <Text style={styles.buttonText}>Book</Text>
             </TouchableOpacity>
           </View>

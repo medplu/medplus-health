@@ -5,9 +5,8 @@ import Colors from '../Shared/Colors';
 
 interface Doctor {
   _id: string;
-  firstName: string;
-  lastName: string;
-  category: string;
+  name: string; // Update: name is a single string now
+  specialties: string[];
   profileImage?: string;
   consultationFee: number;
 }
@@ -39,8 +38,8 @@ const StaticDoctors: React.FC<StaticDoctorsProps> = ({ doctors, loading, onBookP
                 style={styles.doctorImage} 
               />
               <View style={styles.nameCategoryContainer}>
-                <Text style={styles.doctorName}>{`${item.firstName} ${item.lastName}`}</Text>
-                <Text style={styles.doctorSpecialty}>{item.category}</Text>
+                <Text style={styles.doctorName}>{item.name}</Text> {/* Update: Use name directly */}
+                <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text> {/* Update: Use specialties */}
               </View>
               <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
               <TouchableOpacity

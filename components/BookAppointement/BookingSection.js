@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack } from 'react-native-paystack-webview';
 import { FontAwesome } from '@expo/vector-icons';
-import { useSchedule } from '../../context/ScheduleContext';
+import { useSchedule } from '../../app/context/ScheduleContext';
 import moment from 'moment';
 import ClinicSubHeading from '../clinics/ClinicSubHeading';
 import HorizontalLine from '../common/HorizontalLine';

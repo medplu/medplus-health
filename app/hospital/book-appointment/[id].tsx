@@ -1,71 +1,37 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import HospitalAppointementInfo from '../../../components/BookAppointement/HospitalAppointementInfo';
 import HorizontalLine from '../../../components/common/HorizontalLine';
 import BookingSection from '../../../components/BookAppointement/BookingSection';
 import ActionButton from '../../../components/common/ActionButton';
-import StaticCategory from '@/components/clinics/StaticCategory';
 import StaticDoctors from '@/components/clinics/StaticDoctors';
 import Colors from '../../../components/Shared/Colors';
-
-interface Doctor {
-  _id: string;
-  name: string;
-  specialties: string[];
-  experience: string;
-  profileImage?: string;
-  consultationFee: number;
-}
-
-interface Clinic {
-  _id: string;
-  name: string;
-  contactInfo: string;
-  address: string;
-  image?: string;
-  category: string;
-  doctors: Doctor[];
-  professional: {
-    firstName: string;
-    lastName: string;
-    category: string;
-    profileImage?: string;
-    consultationFee: number;
-  };
-  __v: number;
-}
+import { fetchClinicById, selectClinicDetails, selectClinicLoading, selectClinicError } from '../../store/clinicSlice';
 
 const BookAppointment = () => {
-  const [clinic, setClinic] = useState<Clinic | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const { id: clinicId } = useLocalSearchParams();
   const scrollViewRef = useRef<ScrollView>(null);
   const bookingSectionRef = useRef<View>(null);
   const navigation = useNavigation();
+  
+  const dispatch = useDispatch();
+  const clinic = useSelector(selectClinicDetails);
+  const loading = useSelector(selectClinicLoading);
+  const error = useSelector(selectClinicError);
 
   useEffect(() => {
-    const fetchClinicData = async () => {
-      try {
-        const storedClinicData = await AsyncStorage.getItem(`clinic_${clinicId}`);
-        if (storedClinicData) {
-          const parsedClinicData = JSON.parse(storedClinicData);
-          setClinic(parsedClinicData);
-        }
-      } catch (error) {
-        console.error('Failed to load clinic data', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (clinicId) {
-      fetchClinicData();
+      dispatch(fetchClinicById(clinicId));
     }
-  }, [clinicId]);
+  }, [clinicId, dispatch]);
+
+  console.log('Clinic Data:', clinic);
+  console.log('Loading:', loading);
+  console.log('Error:', error);
 
   const handleBookPress = () => {
     if (bookingSectionRef.current && scrollViewRef.current) {
@@ -85,7 +51,7 @@ const BookAppointment = () => {
     );
   }
 
-  if (!clinic) {
+  if (error) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Failed to load clinic data.</Text>
@@ -93,29 +59,34 @@ const BookAppointment = () => {
     );
   }
 
-  const categories = [
-    clinic.professional.category,
-    ...clinic.doctors.map(doctor => doctor.specialties).flat()
-  ];
+  if (!clinic) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>No clinic found.</Text>
+      </View>
+    );
+  }
 
-  const doctors = [
-    {
-      _id: clinic.professional._id,
-      firstName: clinic.professional.firstName,
-      lastName: clinic.professional.lastName,
-      category: clinic.professional.category,
-      profileImage: clinic.professional.profileImage,
-      consultationFee: clinic.professional.consultationFee,
-    },
-    ...clinic.doctors.map(doctor => ({
+  const { professionals = [], doctors = [] } = clinic;
+
+  const doctorsData = [
+    ...professionals.map(professional => ({
+      _id: professional._id,
+      name: `${professional.firstName} ${professional.lastName}`,
+      specialties: [professional.category || professional.profession],
+      profileImage: professional.profileImage,
+      consultationFee: professional.consultationFee || 0,
+    })),
+    ...doctors.map(doctor => ({
       _id: doctor._id,
-      firstName: doctor.name.split(' ')[0],
-      lastName: doctor.name.split(' ')[1],
-      category: doctor.specialties[0],
+      name: doctor.name,
+      specialties: doctor.specialties || [],
       profileImage: doctor.profileImage,
-      consultationFee: doctor.consultationFee,
+      consultationFee: doctor.consultationFee || 0,
     }))
   ];
+
+  console.log('Doctors Data:', doctorsData);
 
   return (
     <ScrollView ref={scrollViewRef} contentContainerStyle={styles.container}>
@@ -126,8 +97,7 @@ const BookAppointment = () => {
       <View ref={bookingSectionRef}>
         <BookingSection clinic={clinic} navigation={undefined} />
       </View>
-      <StaticCategory categories={categories} />
-      <StaticDoctors doctors={doctors} loading={loading} onBookPress={handleBookPress} />
+      <StaticDoctors doctors={doctorsData} loading={loading} onBookPress={handleBookPress} />
       <ActionButton />
       <HorizontalLine />
     </ScrollView>

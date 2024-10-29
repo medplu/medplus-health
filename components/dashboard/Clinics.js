@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from 'react';
+// Clinics.tsx
+import React, { useEffect } from 'react';
 import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import GlobalApi from '../../Services/GlobalApi';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchClinics, filterClinics, selectClinics } from '../../app/store/clinicSlice'; // Update the import path as needed
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 
 SplashScreen.preventAutoHideAsync();
 
 const Clinics = ({ searchQuery, onViewAll }) => {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [fontsLoaded] = useFonts({
     'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
   });
@@ -22,45 +24,27 @@ const Clinics = ({ searchQuery, onViewAll }) => {
     }
   }, [fontsLoaded]);
 
-  const [clinicList, setClinicList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { filteredClinicList, loading, error } = useSelector(state => ({
+    filteredClinicList: selectClinics(state),
+    loading: state.clinics.loading,
+    error: state.clinics.error,
+  }));
 
   useEffect(() => {
-    fetchClinics();
-  }, []);
+    dispatch(fetchClinics()); // Fetch clinics when component mounts
+  }, [dispatch]);
 
-  const fetchClinics = async () => {
-    try {
-      const resp = await GlobalApi.getClinics();
-      if (resp.status === 200 && Array.isArray(resp.data)) {
-        setClinicList(resp.data);
-        await AsyncStorage.setItem('clinicList', JSON.stringify(resp.data)); // Save data to AsyncStorage
-      } else {
-        setError('Failed to fetch clinic data');
-      }
-    } catch (error) {
-      setError('Error fetching clinics');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (searchQuery) {
+      dispatch(filterClinics({ searchQuery })); // Filter clinics when searchQuery changes
     }
-  };
-
-  const filteredClinics = clinicList.filter(clinic =>
-    clinic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    clinic.address.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  }, [searchQuery, dispatch]);
 
   const handlePress = async (item) => {
-    try {
-      await AsyncStorage.setItem(`clinic_${item._id}`, JSON.stringify(item));
-      router.push({
-        pathname: `/hospital/book-appointment/${item._id}`,
-        params: { clinicId: item._id }
-      });
-    } catch (error) {
-      console.error('Failed to store clinic data', error);
-    }
+    router.push({
+      pathname: `/hospital/book-appointment/${item._id}`,
+      params: { clinicId: item._id },
+    });
   };
 
   const renderClinicItem = ({ item }) => {
@@ -93,7 +77,7 @@ const Clinics = ({ searchQuery, onViewAll }) => {
     <View style={{ marginTop: 10 }}>
       <SubHeading subHeadingTitle={'Discover Clinics Near You'} onViewAll={onViewAll} />
       <FlatList
-        data={filteredClinics}
+        data={filteredClinicList}
         horizontal={true}
         renderItem={renderClinicItem}
         keyExtractor={item => item._id.toString()}

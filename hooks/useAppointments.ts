@@ -1,112 +1,121 @@
-// app/professional/hooks/useAppointments.ts
-import { useState, useEffect } from 'react';
+// src/hooks/useAppointments.ts
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import io, { Socket } from 'socket.io-client';
 import PushNotification from 'react-native-push-notification';
-
-interface Appointment {
-  _id: string;
-  patientName: string;
-  patientImage?: string;
-  date: string;
-  time: string;
-  status: string;
-}
+import {
+    setAppointments,
+    setError,
+    setLoading,
+    setUpcomingAppointments,
+    setRequestedAppointments,
+    setCompletedAppointments,
+} from '@/app/store/appointmentsSlice';
+import { selectUser } from '../app/store/userSlice'; // Import your selector for user
 
 const useAppointments = () => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [recentAppointments, setRecentAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+    const dispatch = useDispatch();
+    const { appointments, loading, error } = useSelector((state) => state.appointments);
+    const user = useSelector(selectUser); // Use the same selector to access the user
 
-  useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const doctorId = await AsyncStorage.getItem('doctorId'); // Retrieve doctorId from AsyncStorage
-        if (!doctorId) {
-          throw new Error('Doctor ID not found in AsyncStorage');
+    useEffect(() => {
+        const fetchAppointments = async () => {
+            dispatch(setLoading(true));
+            dispatch(setError(null));
+
+            try {
+                const professionalId = user?.professional?._id; // Safely access professionalId
+                if (!professionalId) throw new Error('Professional ID not found');
+
+                // Fetch all appointments for the doctor
+                const response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${professionalId}/all`);
+                const allData = await response.json();
+                console.log('Fetched Appointments:', allData);
+
+                // Dispatch all appointments to Redux state
+                dispatch(setAppointments(allData));
+
+                // Filter appointments based on status
+                const upcomingAppointments = allData.filter((appointment) => appointment.status === 'confirmed');
+                const requestedAppointments = allData.filter((appointment) => appointment.status === 'pending');
+                const completedAppointments = allData.filter((appointment) => appointment.status === 'completed');
+
+                // Dispatch filtered appointments to Redux state
+                dispatch(setUpcomingAppointments(upcomingAppointments));
+                dispatch(setRequestedAppointments(requestedAppointments));
+                dispatch(setCompletedAppointments(completedAppointments));
+            } catch (err) {
+                console.error('Error fetching appointments:', err.message);
+                dispatch(setError('Error fetching appointments'));
+            } finally {
+                dispatch(setLoading(false));
+            }
+        };
+
+        // Fetch appointments only if the user has a professional role
+        if (user && user.professional) { // Check if user is defined and has a professional role
+            fetchAppointments();
         }
 
-        // Fetch upcoming appointments
-        const upcomingResponse = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${doctorId}`);
-        const upcomingData: Appointment[] = await upcomingResponse.json();
+        // Setting up Socket.IO for real-time updates
+        const socket: Socket = io('https://medplus-health.onrender.com');
 
-        // Fetch all appointments
-        const allResponse = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${doctorId}/all`);
-        const allData: Appointment[] = await allResponse.json();
+        socket.on('newAppointment', (appointment) => {
+            dispatch(setAppointments((prev) => {
+                const exists = prev.some((a) => a._id === appointment._id);
+                if (!exists) {
+                    return [...prev, appointment];
+                }
+                return prev;
+            }));
+            PushNotification.localNotification({
+                title: 'New Appointment',
+                message: `New appointment with ${appointment.patientName} on ${moment(appointment.createdAt).format('MMMM Do YYYY')} at ${appointment.time}`,
+            });
+        });
 
-        // Filter for upcoming appointments
-        const upcomingAppointments = upcomingData.filter(
-          (appointment) => moment(appointment.date).isSameOrAfter(moment(), 'day') && appointment.status === 'confirmed'
-        );
+        // Cleanup function to disconnect the socket
+        return () => {
+            socket.disconnect();
+        };
+    }, [dispatch, user]); // Add user as a dependency
 
-        // Filter for recent (overdue) appointments
-        const overdueAppointments = allData.filter((appointment) =>
-          moment(appointment.date).isBefore(moment(), 'day')
-        );
+    // Function to confirm an appointment
+    const confirmAppointment = async (appointmentId) => {
+        try {
+            const response = await fetch(
+                `https://medplus-health.onrender.com/api/appointments/confirm/${appointmentId}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
 
-        setAppointments(upcomingAppointments);
-        setRecentAppointments(overdueAppointments);
-      } catch (error) {
-        console.error('Error fetching appointments:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAppointments();
-
-    // Connect to WebSocket server
-    const socket: Socket = io('https://medplus-health.onrender.com');
-
-    // Listen for new appointments
-    socket.on('newAppointment', (appointment: Appointment) => {
-      setAppointments((prevAppointments) => [...prevAppointments, appointment]);
-      PushNotification.localNotification({
-        title: 'New Appointment',
-        message: `New appointment with ${appointment.patientName} on ${moment(appointment.date).format(
-          'MMMM Do YYYY'
-        )} at ${appointment.time}`,
-      });
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-
-  const confirmAppointment = async (appointmentId: string) => {
-    try {
-      const response = await fetch(
-        `https://medplus-health.onrender.com/api/appointments/confirm/${appointmentId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+            if (response.ok) {
+                // Update the appointment status in Redux state
+                dispatch(setAppointments((prev) =>
+                    prev.map((appointment) =>
+                        appointment._id === appointmentId ? { ...appointment, status: 'confirmed' } : appointment
+                    )
+                ));
+            } else {
+                throw new Error('Failed to confirm appointment');
+            }
+        } catch (err) {
+            console.error(err);
+            dispatch(setError('Error confirming appointment'));
         }
-      );
+    };
 
-      if (response.ok) {
-        setAppointments((prevAppointments) =>
-          prevAppointments.map((appointment) =>
-            appointment._id === appointmentId ? { ...appointment, status: 'confirmed' } : appointment
-          )
-        );
-      } else {
-        throw new Error('Failed to confirm appointment');
-      }
-    } catch (error) {
-      console.error('Error confirming appointment:', error);
-    }
-  };
-
-  return {
-    appointments,
-    recentAppointments,
-    loading,
-    confirmAppointment,
-  };
+    return {
+        appointments,
+        loading,
+        error,
+        confirmAppointment,
+    };
 };
 
 export default useAppointments;

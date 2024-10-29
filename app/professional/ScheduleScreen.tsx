@@ -5,13 +5,16 @@ import { Card, Avatar, TextInput, Button, Modal, Portal, Provider, RadioButton }
 import moment from 'moment';
 import useSchedule from '../../hooks/useSchedule';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { selectUser } from '../store/userSlice'; // Import your selector for user
+import { useSelector } from 'react-redux';
 const timeToString = (time: number): string => {
   const date = new Date(time);
   return date.toISOString().split('T')[0];
 };
 
 const Schedule: React.FC = () => {
+  const user = useSelector(selectUser); // Use the same selector to access the user
+
   const { schedule, fetchSchedule } = useSchedule();
   const [items, setItems] = useState<AgendaSchedule>({});
   const [loading, setLoading] = useState(true);
@@ -23,21 +26,20 @@ const Schedule: React.FC = () => {
   const [repeatDuration, setRepeatDuration] = useState(1);
   const [step, setStep] = useState(1);
   const [todayAppointments, setTodayAppointments] = useState<AgendaEntry[]>([]);
-  const [professionalId, setProfessionalId] = useState<string | null>(null);
+
+ 
+  const fetchProfessionalId = async () => {
+    try {
+      const professionalId = user?.professional?._id; // Safely access professionalId
+      if (!professionalId) throw new Error('Professional ID not found');
+
+      fetchSchedule(professionalId);
+    } catch (error) {
+      console.error('Error fetching professional ID from AsyncStorage:', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfessionalId = async () => {
-      try {
-        const storedProfessionalId = await AsyncStorage.getItem('professionalId');
-        setProfessionalId(storedProfessionalId);
-        if (storedProfessionalId) {
-          fetchSchedule(storedProfessionalId);
-        }
-      } catch (error) {
-        console.error('Error fetching professional ID from AsyncStorage:', error);
-      }
-    };
-
     fetchProfessionalId();
   }, []);
 

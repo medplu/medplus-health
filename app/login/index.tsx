@@ -1,21 +1,12 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-} from 'react-native';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import GlobalApi from '../../Services/GlobalApi';
+import { useDispatch } from 'react-redux';
+import { login } from '../store/userSlice'; // Import the login action
+import { LinearGradient } from 'expo-linear-gradient';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import SignInWithOAuth from '../../components/SignInWithOAuth';
+import GlobalApi from '../../Services/GlobalApi';
 
 const { width } = Dimensions.get('window');
 
@@ -25,6 +16,8 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
+  const dispatch = useDispatch(); // Initialize the useDispatch hook
+
   const handleLoginPress = async () => {
     if (email === '' || password === '') {
       setErrorMessage('Please enter both email and password.');
@@ -34,7 +27,6 @@ const LoginScreen: React.FC = () => {
         setErrorMessage(null);
   
         const {
-          token,
           userId,
           userType,
           professional,
@@ -43,18 +35,15 @@ const LoginScreen: React.FC = () => {
           email: userEmail,
         } = response.data;
   
-        await AsyncStorage.setItem('authToken', token);
-        await AsyncStorage.setItem('userId', userId);
-        await AsyncStorage.setItem('userType', userType);
-        await AsyncStorage.setItem('firstName', firstName);
-        await AsyncStorage.setItem('lastName', lastName);
-        await AsyncStorage.setItem('email', userEmail);
-  
-        // Store professionalId and attachedToClinic if the userType is 'professional'
-        if (userType === 'professional' && professional?._id) {
-          await AsyncStorage.setItem('professionalId', professional._id);
-          await AsyncStorage.setItem('attachedToClinic', professional.attachedToClinic.toString());
-        }
+        // Dispatch the login action with professional information if it exists
+        dispatch(
+          login({
+            name: `${firstName} ${lastName}`,
+            email: userEmail,
+            userType,
+            professional: professional || null, // Include professional data or set to null
+          })
+        );
   
         // Determine the appropriate route based on the userType
         const route =
@@ -71,6 +60,7 @@ const LoginScreen: React.FC = () => {
       }
     }
   };
+  
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -190,70 +180,49 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
   },
-  inputIcon: {
-    marginRight: 10,
-  },
   input: {
     flex: 1,
+    marginLeft: 10,
     fontSize: 16,
     color: '#333',
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   eyeIcon: {
     marginLeft: 10,
   },
+  errorMessage: {
+    color: 'red',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
   loginButton: {
-    backgroundColor: '#00796B',
+    backgroundColor: '#43C6AC',
     paddingVertical: 15,
     borderRadius: 8,
-    alignItems: 'center',
     marginTop: 10,
   },
   loginButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    textAlign: 'center',
   },
   forgotPassword: {
-    color: '#00796B',
+    color: '#43C6AC',
     textAlign: 'center',
-    marginVertical: 15,
-    fontSize: 14,
-  },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  googleIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 10,
-  },
-  googleButtonText: {
-    color: '#333',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  errorMessage: {
-    color: 'red',
-    textAlign: 'center',
-    marginBottom: 10,
+    marginTop: 10,
   },
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 15,
+    marginTop: 20,
   },
   signupText: {
-    fontSize: 14,
     color: '#666',
   },
   signupLink: {
-    fontSize: 14,
-    color: '#00796B',
+    color: '#43C6AC',
     fontWeight: 'bold',
   },
 });

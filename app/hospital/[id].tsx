@@ -20,7 +20,7 @@ interface Clinic {
   contactInfo: string;
   address: string;
   image?: string;
-  category: string;
+ 
   doctors: Doctor[];
   __v: number;
 }

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import SubHeading from './SubHeading';
 import Colors from '../Shared/Colors';
 import GlobalApi from '../../Services/GlobalApi';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Category() {
   const [categoryList, setCategoryList] = useState([]);
@@ -17,8 +18,21 @@ export default function Category() {
 
   const getCategories = async () => {
     try {
+      // Check AsyncStorage for cached categories
+      const cachedCategories = await AsyncStorage.getItem('categories');
+      if (cachedCategories) {
+        setCategoryList(JSON.parse(cachedCategories));
+        setLoading(false);
+        return;
+      }
+
+      // Fetch categories from API if not in AsyncStorage
       const resp = await GlobalApi.getCategories();
-      setCategoryList(resp.data || []);
+      const categories = resp.data || [];
+      setCategoryList(categories);
+
+      // Store categories in AsyncStorage
+      await AsyncStorage.setItem('categories', JSON.stringify(categories));
     } catch (error) {
       setCategoryList([]);
     } finally {
@@ -48,7 +62,7 @@ export default function Category() {
             <TouchableOpacity 
               style={styles.categoryItem} 
               onPress={() => {
-                setActiveIndex(index); // Set active index on press
+              
                 router.push(`/clinics/${item.name}`);
               }}
             >

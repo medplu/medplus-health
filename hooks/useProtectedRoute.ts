@@ -1,6 +1,6 @@
 // hooks/useProtectedRoute.ts
 import { useContext, useEffect } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../app/context/AuthContext';
 import { useRouter } from 'expo-router';
 
 const useProtectedRoute = () => {
