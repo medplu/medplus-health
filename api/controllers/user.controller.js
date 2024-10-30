@@ -26,35 +26,11 @@ const sendVerificationEmail = async (email, verificationCode) => {
     return transporter.sendMail(mailOptions);
 };
 
-// Handle Google OAuth
-exports.handleGoogleOAuth = async (req, res) => {
-    try {
-        const { firstName, lastName, email, profileImage } = req.body;
-
-        let user = await User.findOne({ email }) || new User({
-            firstName,
-            lastName,
-            email,
-            password: 'oauth_password',
-            gender: 'Other',
-            userType: 'client',
-            profileImage,
-            isVerified: true,
-        });
-
-        await user.save();
-        res.status(201).json({ userId: user._id, user });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-};
-
 // Register a new user
-
 exports.register = async (req, res) => {
     try {
         const {
-            userType, profession, consultationFee = 5000, category, // Set default value here
+            userType, profession, consultationFee = 5000, category,
             yearsOfExperience, certifications, bio, profileImage,
             emailNotifications, pushNotifications, location,
             attachedToClinic, ...userData
@@ -62,11 +38,12 @@ exports.register = async (req, res) => {
 
         // Generate a verification code and hash the password
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const expirationTime = Date.now() + 15 * 60 * 1000; // Set expiration time to 15 minutes
         userData.verificationCode = verificationCode;
+        userData.verificationCodeExpires = expirationTime; // Store expiration time
         userData.isVerified = false;
         userData.password = await bcrypt.hash(userData.password, await bcrypt.genSalt(10));
 
-        // Create the base user
         const newUser = await new User({ ...userData, userType }).save();
 
         // Conditional model saving based on userType
@@ -78,7 +55,6 @@ exports.register = async (req, res) => {
                 user: newUser._id
             }).save();
         } else if (userType === 'professional') {
-            // Ensure that 'profession' is provided for professionals
             if (!profession) {
                 return res.status(400).json({ error: 'Profession is required for professionals.' });
             }
@@ -87,7 +63,7 @@ exports.register = async (req, res) => {
                 ...userData,
                 user: newUser._id,
                 profession,
-                consultationFee, // Default of 5000 if not provided
+                consultationFee,
                 category,
                 yearsOfExperience,
                 certifications,
@@ -120,31 +96,6 @@ exports.register = async (req, res) => {
     }
 };
 
-
-// Check if user exists
-exports.checkUserExists = async (req, res) => {
-    try {
-        const { email } = req.query;
-        const user = await User.findOne({ email });
-
-        if (user) {
-            return res.status(200).json({
-                exists: true,
-                user: {
-                    userId: user._id,
-                    userType: user.userType,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    email: user.email,
-                },
-            });
-        }
-        return res.status(200).json({ exists: false });
-    } catch (error) {
-        return res.status(500).json({ message: 'Server error' });
-    }
-};
-
 // Verify email
 exports.verifyEmail = async (req, res) => {
     try {
@@ -155,12 +106,18 @@ exports.verifyEmail = async (req, res) => {
             return res.status(400).json({ error: 'Invalid email' });
         }
 
+        // Check if the code is correct and not expired
         if (user.verificationCode !== verificationCode) {
             return res.status(400).json({ error: 'Invalid verification code' });
         }
 
+        if (Date.now() > user.verificationCodeExpires) {
+            return res.status(400).json({ error: 'Verification code has expired' });
+        }
+
         user.isVerified = true;
         user.verificationCode = undefined;
+        user.verificationCodeExpires = undefined; // Clear the expiration time
         await user.save();
 
         res.status(200).json({ message: 'Email verified successfully!' });
@@ -169,96 +126,51 @@ exports.verifyEmail = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-// Login
+// Login logic
 exports.login = async (req, res) => {
-  try {
-      const { email, password } = req.body;
-      const user = await User.findOne({ email });
-
-      if (!user) {
-          return res.status(400).json({ error: 'Invalid email or password' });
-      }
-
-      if (!user.isVerified) {
-          return res.status(400).json({ error: 'Email not verified' });
-      }
-
-      if (!(await bcrypt.compare(password, user.password))) {
-          return res.status(400).json({ error: 'Invalid email or password' });
-      }
-
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      const professional = user.userType === 'professional' ? await Professional.findOne({ user: user._id }) : null;
-
-      // Return the entire user object along with the token
-      res.status(200).json({
-          token,
-          user: {
-              _id: user._id,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              email: user.email,
-              userType: user.userType,
-              profileImage: user.profileImage,
-              professional,
-              // Include any additional fields from the User model as needed
-          },
-      });
-  } catch (error) {
-      console.log("Error logging in", error);
-      res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-// Get all professionals
-exports.getProfessionals = async (req, res) => {
     try {
-        const professionals = await User.find({ userType: 'professional' });
-        res.status(200).json(professionals);
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid email or password' });
+        }
+
+        if (!user.isVerified) {
+            return res.status(400).json({ error: 'Email not verified' });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Invalid email or password' });
+        }
+
+        // Generate JWT token
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // Initialize doctorId to null
+        let doctorId = null;
+        
+        // Check if the user is a professional and retrieve doctorId
+        if (user.userType === 'professional') {
+            const professional = await Professional.findOne({ user: user._id }); // Fetch the professional record
+            if (professional) {
+                doctorId = professional._id; // Get the doctorId from the professional model
+            }
+        }
+
+        // Include userId, firstName, lastName, and doctorId in the response
+          res.status(200).json({ 
+            token, 
+            userId: user._id, 
+            firstName: user.firstName, 
+            lastName: user.lastName, 
+            email: user.email, // Added email field
+            doctorId, 
+            userType: user.userType 
+        });
     } catch (error) {
-        console.log("Error fetching professionals", error);
+        console.log("Error logging in", error);
         res.status(500).json({ error: 'Internal server error' });
     }
-};
-
-// Get user profile
-exports.getUserProfile = async (req, res) => {
-    const { userId } = req.params;
-
-    try {
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        return res.status(200).json({ user });
-    } catch (error) {
-        console.log("Error fetching user profile", error);
-        return res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-exports.updateUserProfile = async (req, res) => {
-  const { userId } = req.params;
-  const { firstName, lastName, profileImage, gender } = req.body;
-
-  try {
-      // Find the user by userId and update the profile fields
-      const user = await User.findOneAndUpdate(
-          { _id: userId }, // Query to find the user
-          { $set: { firstName, lastName, profileImage, gender } },
-          { new: true, runValidators: true } // Return the updated document and run validators
-      );
-
-      if (!user) {
-          return res.status(404).json({ error: 'User not found' });
-      }
-
-      return res.status(200).json({
-          message: 'Profile updated successfully',
-          user
-      });
-  } catch (error) {
-      console.log("Error updating profile", error);
-      return res.status(500).json({ error: 'Internal server error' });
-  }
 };
