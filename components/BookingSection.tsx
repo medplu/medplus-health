@@ -45,7 +45,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     handleBookPress,
     handlePaymentSuccess,
     handlePaymentCancel,
-  } = useBooking(userId);
+  } = useBooking(doctorId);
 
   const fetchSchedule = async () => {
     try {
