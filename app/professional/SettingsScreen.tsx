@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
 import {
   StyleSheet,
@@ -16,12 +17,12 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';
 import { TextInput } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateUserProfile, selectUser } from '../store/userSlice'; // Adjust the import based on your project structure
+import { updateUserProfile, selectUser } from '../store/userSlice';
 
 const SettingsScreen = () => {
   const dispatch = useDispatch();
-  const user = useSelector(selectUser); // Use the same selector to access the user
-  const professionalId = user?.professional?._id; // Safely access professionalId
+  const user = useSelector(selectUser);
+  const professionalId = user?.professional?._id;
 
   const [modalVisible, setModalVisible] = useState(false);
   const [form, setForm] = useState({
@@ -36,10 +37,10 @@ const SettingsScreen = () => {
     attachedToClinic: false,
     profileImage: '',
     consultationFee: '',
-    availability: [],
+    availability: [], // Default to an empty array
   });
-
-  const [isProfileUpdated, setIsProfileUpdated] = useState(false); // State to manage success feedback
+  
+  const [isProfileUpdated, setIsProfileUpdated] = useState(false);
 
   useEffect(() => {
     if (user?.professional) {
@@ -54,12 +55,13 @@ const SettingsScreen = () => {
         pushNotifications: user.professional.pushNotifications,
         clinic: user.professional.clinic,
         attachedToClinic: user.professional.attachedToClinic,
-        profileImage: user.professional.profileImage,
+        profileImage: user.professional.profileImage?.uri || user.professional.profileImage,
         consultationFee: user.professional.consultationFee,
-        availability: user.professional.availability || [],
+        availability: user.professional.availability || [], // Fallback to empty array
       }));
     }
   }, [user]);
+  
 
   const handleProfileChange = (key, value) => {
     setForm((prevForm) => ({
@@ -69,76 +71,65 @@ const SettingsScreen = () => {
   };
 
   const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission to access camera roll is required!');
+      return;
+    }
+  
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-
-    if (!result.canceled && result.assets) {
-      const localUri = result.assets[0].uri;
-      const filename = localUri.split('/').pop();
-      const match = /\.(\w+)$/.exec(filename || '');
-      const type = match ? `image/${match[1]}` : `image`;
-
-      const imageData = {
-        uri: localUri,
-        name: filename,
-        type,
-      };
-
-      handleProfileChange('profileImage', imageData);
+  
+    if (!result.canceled) {
+      const { uri } = result.assets[0]; // Get the URI directly
+      const base64Image = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+  
+      // Set the form to just the base64 string
+      setForm((prevForm) => ({
+        ...prevForm,
+        profileImage: `data:image/jpeg;base64,${base64Image}`, // Store the string directly
+      }));
     }
   };
+  
 
   const updateProfile = async () => {
     if (!professionalId) {
-      Alert.alert('Error', 'Professional ID is missing.'); // Ensure professionalId is present
+      Alert.alert('Error', 'Professional ID is missing.');
       return;
     }
-
+  
     try {
-      const formData = new FormData();
-
-      // Populate formData with the correct structure
-      Object.keys(form).forEach((key) => {
-        if (key === 'profileImage' && form[key]) {
-          formData.append('profileImage', form[key]);
-        } else if (Array.isArray(form[key])) {
-          form[key].forEach((item) => formData.append(key, item)); // Handle array values
-        } else {
-          formData.append(key, form[key]);
-        }
-      });
-
-      // Set up the request to your API endpoint
-      const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${professionalId}`, {
-        method: 'PUT',
-        headers: {
-          'Accept': 'application/json',
-          // 'Content-Type' should be left out for FormData; the browser will set it automatically
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
+      // Assume form.profileImage is already a Base64 string as shown in the working example
+      const response = await axios.put(
+        `https://medplus-health.onrender.com/api/professionals/update-profile/${professionalId}`,
+        form // Sending the form directly as JSON
+      );
+  
+      if (response.status === 200) {
+        dispatch(updateUserProfile({
+          name: `${form.firstName} ${form.lastName}`,
+          email: form.email,
+          profileImage: form.profileImage,
+        }));
+        Alert.alert('Success', 'Profile updated successfully');
+        setIsProfileUpdated(true);
+        resetForm();
+        setModalVisible(false);
       }
-
-      const updatedProfile = await response.json();
-      dispatch(updateUserProfile(updatedProfile)); // Dispatch to Redux store
-      console.log('Profile updated successfully:', updatedProfile);
-
-      // Provide feedback and reset form state
-      setIsProfileUpdated(true);
-      resetForm();
-      setModalVisible(false);
     } catch (error) {
       console.error('Error updating profile:', error.message);
-      Alert.alert('Error', 'Failed to update profile. Please try again.'); // Show alert on error
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
+  
 
   const resetForm = () => {
     setForm({
@@ -155,7 +146,7 @@ const SettingsScreen = () => {
       consultationFee: user.professional.consultationFee,
       availability: user.professional.availability || [],
     });
-    setIsProfileUpdated(false); // Reset feedback state
+    setIsProfileUpdated(false);
   };
 
   return (
@@ -168,7 +159,7 @@ const SettingsScreen = () => {
               <View style={styles.profileImageContainer}>
                 <Image
                   source={{
-                    uri: form.profileImage || 'https://via.placeholder.com/150',
+                    uri: form.profileImage.uri || form.profileImage || 'https://via.placeholder.com/150',
                   }}
                   style={styles.profileAvatar}
                 />
@@ -220,17 +211,15 @@ const SettingsScreen = () => {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Availability</Text>
-          <View style={styles.sectionBody}>
-            {form.availability.map((time, index) => (
-              <Text key={index}>{time}</Text>
-            ))}
-            <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
-              <Text style={styles.buttonText}>Update Profile</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <View style={styles.sectionBody}>
+  {(form.availability || []).map((time, index) => (
+    <Text key={index}>{time}</Text>
+  ))}
+  <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
+    <Text style={styles.buttonText}>Update Profile</Text>
+  </TouchableOpacity>
+</View>
+
 
         {isProfileUpdated && (
           <Text style={styles.successMessage}>Profile updated successfully!</Text>
