@@ -81,9 +81,11 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
             />
             <View style={styles.nameCategoryContainer}>
               <Text style={styles.doctorName}>{`${item.firstName} ${item.lastName}`}</Text>
-              <Text style={styles.doctorSpecialty}>{item.category}</Text>
+              <Text >{item.category}</Text>
             </View>
-            <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
+            <Text style={styles.consultationFee}>
+          {item.consultationFee ? `Consultation Fee: ${item.consultationFee}` : 'Consultation Fee: Not available'}
+        </Text>
             <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
               <Text style={styles.buttonText}>Book</Text>
             </TouchableOpacity>

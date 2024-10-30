@@ -1,7 +1,7 @@
 // hooks/useDoctors.ts
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../app/store/configureStore'; // Adjust these paths to your store setup
+import { AppDispatch, RootState } from '../app/store/configureStore';
 import { fetchDoctors } from '../app/store/doctorSlice';
 
 const useDoctors = () => {
