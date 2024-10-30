@@ -49,10 +49,12 @@ exports.getProfessionalByUserId = async (req, res) => {
 };
 
 
-
 exports.updateProfile = async (req, res) => {
     const { professionalId } = req.params; // Get the professional ID from the request parameters
     const { consultationFee, availability } = req.body; // Get the consultation fee and availability from the request body
+
+    // Log the professionalId for debugging
+    console.log('Updating profile for professionalId:', professionalId);
 
     try {
         // Check if professional exists
@@ -62,9 +64,9 @@ exports.updateProfile = async (req, res) => {
         }
 
         // Handle profile image upload if provided
-        if (req.file) {
+        if (req.files && req.files.profileImage) { // Check for uploaded file correctly
             // Upload to Cloudinary
-            const uploadResult = await cloudinary.uploader.upload(req.file.path);
+            const uploadResult = await cloudinary.uploader.upload(req.files.profileImage.tempFilePath); // Use tempFilePath for express-fileupload
             professional.profileImage = uploadResult.secure_url; // Store the Cloudinary URL
         }
 
@@ -90,6 +92,7 @@ exports.updateProfile = async (req, res) => {
         return res.status(500).json({ message: 'Error updating profile' });
     }
 };
+
 // Create or update availability
 exports.createOrUpdateAvailability = async (req, res) => {
     const { userId } = req.params;
