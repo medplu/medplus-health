@@ -169,28 +169,33 @@ exports.verifyEmail = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-// Login
 exports.login = async (req, res) => {
   try {
       const { email, password } = req.body;
+      console.log("Login attempt with email:", email); // Log email attempt
       const user = await User.findOne({ email });
 
       if (!user) {
+          console.log("User not found");
           return res.status(400).json({ error: 'Invalid email or password' });
       }
+
+      console.log("Retrieved user:", user); // Log the retrieved user
 
       if (!user.isVerified) {
           return res.status(400).json({ error: 'Email not verified' });
       }
 
-      if (!(await bcrypt.compare(password, user.password))) {
+      const match = await bcrypt.compare(password, user.password);
+      console.log("Password match:", match); // Log password match result
+
+      if (!match) {
           return res.status(400).json({ error: 'Invalid email or password' });
       }
 
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
       const professional = user.userType === 'professional' ? await Professional.findOne({ user: user._id }) : null;
 
-      // Return the entire user object along with the token
       res.status(200).json({
           token,
           user: {
@@ -201,7 +206,6 @@ exports.login = async (req, res) => {
               userType: user.userType,
               profileImage: user.profileImage,
               professional,
-              // Include any additional fields from the User model as needed
           },
       });
   } catch (error) {
