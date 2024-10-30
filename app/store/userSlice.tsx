@@ -22,6 +22,7 @@ interface Professional {
 interface UserState {
   name: string | null;
   email: string | null;
+  userId: string | null; // Add userId property
   userType: 'client' | 'professional' | 'student' | null;
   isLoggedIn: boolean;
   isAuthenticated: boolean; // Tracks if the user is authenticated
@@ -33,6 +34,7 @@ interface UserState {
 const initialState: UserState = {
   name: null,
   email: null,
+  userId: null, // Initialize userId to null
   userType: null,
   isLoggedIn: false,
   isAuthenticated: false, // Start as not authenticated
@@ -50,6 +52,7 @@ const userSlice = createSlice({
       action: PayloadAction<{
         name: string;
         email: string;
+        userId: string; // Add userId to the payload
         userType: 'client' | 'professional' | 'student';
         professional?: Professional | null; // Optional professional details
         profileImage?: string | null; // Include profile image
@@ -57,6 +60,7 @@ const userSlice = createSlice({
     ) => {
       state.name = action.payload.name;
       state.email = action.payload.email;
+      state.userId = action.payload.userId; // Store userId
       state.userType = action.payload.userType;
       state.isLoggedIn = true; // User is logged in
       state.isAuthenticated = true; // User is authenticated
@@ -66,6 +70,7 @@ const userSlice = createSlice({
     logout: (state) => {
       state.name = null; // Clear name on logout
       state.email = null; // Clear email on logout
+      state.userId = null; // Clear userId on logout
       state.userType = null; // Clear user type on logout
       state.isLoggedIn = false; // Set logged in status to false
       state.isAuthenticated = false; // Set authentication status to false
@@ -81,6 +86,6 @@ const userSlice = createSlice({
 // Selector to get user data from the state
 export const selectUser = (state: RootState) => state.user; // Adjust the state path as needed
 
-export const { login, logout,  updateUserProfile } = userSlice.actions;
+export const { login, logout, updateUserProfile } = userSlice.actions;
 
 export default userSlice.reducer;

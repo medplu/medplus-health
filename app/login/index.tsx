@@ -20,60 +20,63 @@ const LoginScreen: React.FC = () => {
 
   const handleLoginPress = async () => {
     if (email === '' || password === '') {
-      setErrorMessage('Please enter both email and password.');
+        setErrorMessage('Please enter both email and password.');
     } else {
-      try {
-        const response = await GlobalApi.loginUser(email, password);
-        setErrorMessage(null);
-    
-        const user = response.data.user; 
-  
-       
-        const {
-          _id: userId,
-          userType,
-          professional,
-          firstName,
-          lastName,
-          email: userEmail,
-          profileImage,
-        } = user;
-  
-        
-        if (!firstName || !lastName) {
-          console.error('First name or last name is missing:', { firstName, lastName });
+        try {
+            const response = await GlobalApi.loginUser(email, password);
+            setErrorMessage(null);
+
+            const user = response.data.user;
+
+            // Destructure user properties, including userId
+            const {
+                _id: userId,
+                userType,
+                professional,
+                firstName,
+                lastName,
+                email: userEmail,
+                profileImage,
+            } = user;
+
+            // Check for missing names
+            if (!firstName || !lastName) {
+                console.error('First name or last name is missing:', { firstName, lastName });
+            }
+
+            // Dispatch login action with userId included
+            dispatch(
+                login({
+                    name: `${firstName} ${lastName}`,
+                    email: userEmail,
+                    userType,
+                    professional: professional || null,
+                    profileImage: profileImage || null,
+                    userId,  // Include userId in the dispatched action
+                })
+            );
+
+            // Determine the route based on userType
+            let route = '';
+            if (userType === 'professional') {
+                route = '/professional/tabs';
+            } else if (userType === 'client') {
+                route = '/client/tabs';
+            } else if (userType === 'student') {
+                route = '/student/tabs';
+            } else {
+                route = '/student/tabs'; 
+            }
+
+            // Navigate to the determined route
+            router.push(route);
+        } catch (error) {
+            console.error('Error during login:', error);
+            setErrorMessage('Invalid email or password. Please try again.');
         }
-  
-        
-        dispatch(
-          login({
-            name: `${firstName} ${lastName}`,
-            email: userEmail,
-            userType,
-            professional: professional || null,
-            profileImage: profileImage || null,
-          })
-        );
-        
-        
-        let route = '';
-        if (userType === 'professional') {
-          route = '/professional/tabs';
-        } else if (userType === 'client') {
-          route = '/client/tabs';
-        } else if (userType === 'student') {
-          route = '/student/tabs';
-        } else {
-          route = '/student/tabs'; 
-        }
-  
-        router.push(route);
-      } catch (error) {
-        console.error('Error during login:', error);
-        setErrorMessage('Invalid email or password. Please try again.');
-      }
     }
-  };
+};
+
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

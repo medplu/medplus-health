@@ -10,6 +10,7 @@ import {
   TextInput,
   Button,
   Alert,
+  Platform,
 } from 'react-native';
 import { Feather as Icon } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
@@ -19,6 +20,8 @@ import SSBold from '../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser, updateUserProfile } from '../store/userSlice';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 
 export default function ProfileScreen() {
   const [loaded] = useFonts({ SSLight, SSRegular, SSBold });
@@ -26,7 +29,7 @@ export default function ProfileScreen() {
 
   // Access user state from Redux
   const user = useSelector(selectUser);
-  const { name, email, profileImage } = user;
+  const { name, email, profileImage, userId } = user; // Extract userId from Redux state
 
   const [form, setForm] = useState({
     firstName: name?.split(' ')[0] || '',
@@ -51,11 +54,39 @@ export default function ProfileScreen() {
     setForm((prevForm) => ({ ...prevForm, [name]: value }));
   };
 
+  // Function to handle image picking
+  const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission to access camera roll is required!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      if (Platform.OS !== 'web') {
+        const base64Image = await FileSystem.readAsStringAsync(result.assets[0].uri, { encoding: FileSystem.EncodingType.Base64 });
+        setForm((prevForm) => ({ ...prevForm, profileImage: `data:image/jpeg;base64,${base64Image}` }));
+      } else {
+        setForm((prevForm) => ({ ...prevForm, profileImage: result.assets[0].uri }));
+      }
+    }
+  };
+
   const handleUpdateProfile = async () => {
     try {
-      const response = await axios.put(`https://medplus-app.onrender.com/api/users/update-profile/${user.userId}`, form);
+      const response = await axios.put(
+        `https://medplus-app.onrender.com/api/users/update-profile/${userId}`, // Use userId for the request
+        form
+      );
       if (response.status === 200) {
-        // Dispatch updateUserProfile action to update Redux store
         dispatch(updateUserProfile({
           name: `${form.firstName} ${form.lastName}`,
           email: form.email,
@@ -84,8 +115,11 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.profileContainer}>
           <View style={styles.avatarContainer}>
-            <Image style={styles.avatar} source={{ uri: form.profileImage || 'https://www.bootdey.com/img/Content/avatar/avatar3.png' }} />
-            <TouchableOpacity style={styles.changeAvatarButton} onPress={() => {/* open image picker */}}>
+            <Image
+              style={styles.avatar}
+              source={{ uri: form.profileImage || 'https://www.bootdey.com/img/Content/avatar/avatar3.png' }}
+            />
+            <TouchableOpacity style={styles.changeAvatarButton} onPress={pickImage}>
               <Text style={styles.changeAvatarButtonText}>Change profile</Text>
             </TouchableOpacity>
           </View>
@@ -108,9 +142,9 @@ export default function ProfileScreen() {
             />
             <TextInput
               style={styles.input}
-              placeholder="Profile Image URL"
+              placeholder="Profile Image URL (optional)"
               value={form.profileImage}
-              onChangeText={(value) => handleInputChange('profileImage', value)}
+              editable={false} // Prevent manual editing since it's set by picking an image
             />
             <Button title="Update Profile" onPress={handleUpdateProfile} />
           </View>
