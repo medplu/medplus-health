@@ -126,6 +126,16 @@ exports.verifyEmail = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+exports.checkUserExists = async (req, res) => {
+    const { email } = req.query; // Assuming you're passing email as a query parameter
+    const user = await User.findOne({ email });
+    if (user) {
+        return res.status(200).json({ exists: true });
+    }
+    return res.status(404).json({ exists: false });
+};
+
 // Login logic
 exports.login = async (req, res) => {
     try {
