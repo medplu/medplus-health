@@ -67,42 +67,36 @@ const SignupScreen: React.FC = () => {
       setErrorMessage('Passwords do not match.');
       return;
     }
-    if (userType === 'professional' && profession === '') {  // Check for profession instead of category
+  
+    // Check for profession if userType is professional
+    if (userType === 'professional' && (profession === '' || !profession)) {
       setErrorMessage('Please select a profession.');
       return;
     }
-
+  
     try {
-      await registerUser({
+      // Prepare user registration data
+      const userData = {
         firstName,
         lastName,
         email,
         password,
         gender,
         userType,
-        profession: userType === 'professional' ? profession : undefined,  // Send profession only if professional
-      });
-
+        // Send profession only if userType is professional
+        ...(userType === 'professional' ? { profession } : {}),
+      };
+  
+      await registerUser(userData); // Pass user data
+  
       setErrorMessage(null);
       setSuccessMessage('Signup successful! Please check your email for verification.');
       setIsVerifying(true);
     } catch (error) {
-      setErrorMessage(error);
+      setErrorMessage(error.message || 'Error creating user'); // Set error message
     }
   };
-
-  const handleVerificationPress = async () => {
-    try {
-      await verifyEmail(email, verificationCode);
-
-      setErrorMessage(null);
-      setSuccessMessage('Verification successful! You can now log in.');
-      setIsVerifying(false);
-      router.push('/login'); // Route to login page after successful verification
-    } catch (error) {
-      setErrorMessage(error);
-    }
-  };
+  
 
   return (
     <KeyboardAvoidingView

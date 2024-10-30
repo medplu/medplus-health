@@ -18,6 +18,10 @@ import { TextInput } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateUserProfile, selectUser } from '../store/userSlice'; // Adjust the import based on your project structure
 
+const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dws2bgxg4/image/medplus';
+const CLOUDINARY_UPLOAD_PRESET = 'medplus';
+
+
 const SettingsScreen = () => {
   const dispatch = useDispatch();
   const user = useSelector(selectUser); // Use the same selector to access the user
@@ -68,53 +72,65 @@ const SettingsScreen = () => {
     }));
   };
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+ const pickImage = async () => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 1,
+  });
 
-    if (!result.canceled && result.assets) {
-      const localUri = result.assets[0].uri;
-      const filename = localUri.split('/').pop();
-      const match = /\.(\w+)$/.exec(filename || '');
-      const type = match ? `image/${match[1]}` : `image`;
+  if (!result.canceled && result.assets) {
+    const localUri = result.assets[0].uri;
+    const filename = localUri.split('/').pop();
+    const match = /\.(\w+)$/.exec(filename || '');
+    const type = match ? `image/${match[1]}` : `image`;
 
-      const imageData = {
-        uri: localUri,
-        name: filename,
-        type,
-      };
+    const formData = new FormData();
+    formData.append('file', { uri: localUri, name: filename, type });
+    formData.append('upload_preset', 'medplus'); // Make sure this is the correct unsigned preset
 
-      handleProfileChange('profileImage', imageData);
+    try {
+      const response = await fetch(CLOUDINARY_URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.secure_url) {
+        handleProfileChange('profileImage', data.secure_url);
+      } else {
+        Alert.alert('Error', 'Failed to upload image to Cloudinary.');
+      }
+    } catch (error) {
+      console.error('Error uploading image to Cloudinary:', error);
+      Alert.alert('Error', 'Failed to upload image. Please try again.');
     }
-  };
+  }
+};
+
+  
+  
 
   const updateProfile = async () => {
     if (!professionalId) {
       Alert.alert('Error', 'Professional ID is missing.');
       return;
     }
-  
+
     try {
       const formData = new FormData();
-  
+
       Object.keys(form).forEach((key) => {
-        if (key === 'profileImage' && form[key] && form[key].uri) {
-          formData.append('profileImage', {
-            uri: form[key].uri,
-            name: form[key].name,
-            type: form[key].type,
-          });
+        if (key === 'profileImage') {
+          formData.append(key, form[key]);
         } else if (Array.isArray(form[key])) {
           form[key].forEach((item) => formData.append(key, item));
         } else {
           formData.append(key, form[key]);
         }
       });
-  
+
       const response = await fetch(
         `https://medplus-health.onrender.com/api/professionals/update-profile/${professionalId}`,
         {
@@ -126,15 +142,15 @@ const SettingsScreen = () => {
           body: formData,
         }
       );
-  
+
       if (!response.ok) {
         throw new Error('Failed to update profile');
       }
-  
+
       const updatedProfile = await response.json();
       dispatch(updateUserProfile(updatedProfile.professional));
       console.log('Profile updated successfully:', updatedProfile);
-  
+
       setIsProfileUpdated(true);
       resetForm();
       setModalVisible(false);

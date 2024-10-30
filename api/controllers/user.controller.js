@@ -50,44 +50,76 @@ exports.handleGoogleOAuth = async (req, res) => {
 };
 
 // Register a new user
+
 exports.register = async (req, res) => {
     try {
         const {
-            userType, profession, consultationFee, category,
+            userType, profession, consultationFee = 5000, category, // Set default value here
             yearsOfExperience, certifications, bio, profileImage,
             emailNotifications, pushNotifications, location,
             attachedToClinic, ...userData
         } = req.body;
 
+        // Generate a verification code and hash the password
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         userData.verificationCode = verificationCode;
         userData.isVerified = false;
-
         userData.password = await bcrypt.hash(userData.password, await bcrypt.genSalt(10));
+
+        // Create the base user
         const newUser = await new User({ ...userData, userType }).save();
 
-        // Save to specific model based on userType
+        // Conditional model saving based on userType
         if (userType === 'client') {
-            await new Client({ firstName: newUser.firstName, lastName: newUser.lastName, email: newUser.email, user: newUser._id }).save();
+            await new Client({
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+                email: newUser.email,
+                user: newUser._id
+            }).save();
         } else if (userType === 'professional') {
-            await new Professional({ ...userData, user: newUser._id }).save();
+            // Ensure that 'profession' is provided for professionals
+            if (!profession) {
+                return res.status(400).json({ error: 'Profession is required for professionals.' });
+            }
+
+            await new Professional({
+                ...userData,
+                user: newUser._id,
+                profession,
+                consultationFee, // Default of 5000 if not provided
+                category,
+                yearsOfExperience,
+                certifications,
+                bio,
+                profileImage,
+                location,
+                attachedToClinic
+            }).save();
         } else if (userType === 'student') {
-            await new Student({ firstName: newUser.firstName, lastName: newUser.lastName, email: newUser.email, user: newUser._id }).save();
+            await new Student({
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+                email: newUser.email,
+                user: newUser._id
+            }).save();
         } else {
             return res.status(400).json({ error: 'Invalid user type' });
         }
 
+        // Send verification email
         await sendVerificationEmail(newUser.email, verificationCode);
         res.status(200).json({ message: 'Signup successful! Please check your email for the verification code.' });
     } catch (error) {
         if (error.code === 11000) {
             res.status(400).json({ error: 'Email already registered' });
         } else {
-            console.log("Error creating user", error);
+            console.error("Error creating user:", error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
 };
+
 
 // Check if user exists
 exports.checkUserExists = async (req, res) => {
