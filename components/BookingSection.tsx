@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import moment from 'moment';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack } from 'react-native-paystack-webview';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import useBooking from '../hooks/useBooking';
 import { Button, Input } from 'react-native-elements';
 import Colors from './Shared/Colors';
@@ -29,10 +29,12 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ id: string; time: string } | null>(null);
   const [patientName, setPatientName] = useState<string>('');
   const [showPatientNameInput, setShowPatientNameInput] = useState<boolean>(false);
-  const [userEmail, setUserEmail] = useState<string>('');
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [schedule, setSchedule] = useState<{ date: string; _id: string; time: string }[]>([]);
   const paystackWebViewRef = useRef(null);
+
+  // Access userEmail from Redux
+  const userEmail = useSelector((state) => state.user.email);
 
   const {
     isSubmitting,
@@ -58,19 +60,10 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     }
   };
 
-  const getUserEmail = async () => {
-    try {
-      const email = await AsyncStorage.getItem('userEmail');
-      setUserEmail(email || '');
-    } catch (error) {
-      console.error('Failed to load user email', error);
-    }
-  };
-
   useEffect(() => {
     fetchSchedule();
-    getUserEmail();
-  }, [doctorId]);
+    console.log('User email from Redux:', userEmail); // Log the userEmail from Redux
+  }, [doctorId, userEmail]);
 
   const handleShowPatientNameInput = () => {
     if (!selectedTimeSlot) {
