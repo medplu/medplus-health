@@ -45,54 +45,47 @@ exports.getProfessionalByUserId = async (req, res) => {
         console.error("Error fetching professional:", error);
         res.status(500).json({ error: 'Internal server error' });
     }
-};
-exports.updateProfessionalProfile = async (req, res) => {
-    const { professionalId } = req.params; // Get the professionalId from the request params
-    const { firstName, lastName, email, category, yearsOfExperience, certifications, bio, profileImage, emailNotifications, pushNotifications, location } = req.body;
-
-    console.log('Incoming professionalId:', professionalId); // Log incoming ID
+};// Function to handle updating the professional profile
+exports.updateProfile = async (req, res) => {
+    const { professionalId } = req.params; // Get the professional ID from the request parameters
+    const { consultationFee, availability } = req.body; // Get the consultation fee and availability from the request body
 
     try {
-        // Build the update object dynamically
-        const updateFields = {};
-        if (firstName) updateFields.firstName = firstName;
-        if (lastName) updateFields.lastName = lastName;
-        if (email) updateFields.email = email;
-        if (category) updateFields.category = category;
-        if (yearsOfExperience) updateFields.yearsOfExperience = yearsOfExperience;
-        if (certifications) updateFields.certifications = certifications;
-        if (bio) updateFields.bio = bio;
-        if (profileImage) updateFields.profileImage = profileImage;
-        if (emailNotifications !== undefined) updateFields.emailNotifications = emailNotifications;
-        if (pushNotifications !== undefined) updateFields.pushNotifications = pushNotifications;
-        if (location) {
-            if (location.latitude !== undefined) updateFields['location.latitude'] = location.latitude;
-            if (location.longitude !== undefined) updateFields['location.longitude'] = location.longitude;
-        }
-
-        console.log('Update fields:', updateFields); // Log update fields
-
-        // Update the professional profile by professionalId
-        const professional = await Professional.findOneAndUpdate(
-            { _id: mongoose.Types.ObjectId(professionalId) }, // Ensure proper ID type
-            { $set: updateFields },
-            { new: true } // Return the updated document
-        );
-
+        // Check if professional exists
+        const professional = await Professional.findById(professionalId);
         if (!professional) {
-            return res.status(404).json({ error: 'Professional not found' });
+            return res.status(404).json({ message: 'Professional not found' });
         }
+
+        // Handle profile image upload if provided
+        if (req.file) {
+            // Assuming you're using Multer for file uploads
+            const uploadResult = await cloudinary.uploader.upload(req.file.path);
+            professional.profileImage = uploadResult.secure_url; // Store the Cloudinary URL
+        }
+
+        // Update consultation fee if provided
+        if (consultationFee) {
+            professional.consultationFee = consultationFee;
+        }
+
+        // Update availability if provided
+        if (availability) {
+            professional.availability = availability;
+        }
+
+        // Save the updated professional data
+        await professional.save();
 
         return res.status(200).json({
-            message: 'Professional profile updated successfully',
-            professional
+            message: 'Profile updated successfully',
+            professional,
         });
     } catch (error) {
-        console.error('Error updating professional profile:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        console.error('Error updating profile:', error);
+        return res.status(500).json({ message: 'Error updating profile' });
     }
 };
-
 // Create or update availability
 exports.createOrUpdateAvailability = async (req, res) => {
     const { userId } = req.params;

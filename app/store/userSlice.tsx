@@ -72,12 +72,15 @@ const userSlice = createSlice({
       state.professional = null; // Clear professional details
       state.profileImage = null; // Clear profile image on logout
     },
+    updateUserProfile(state, action: PayloadAction<Partial<UserState>>) {
+      return { ...state, ...action.payload };
+    },
   },
 });
 
 // Selector to get user data from the state
 export const selectUser = (state: RootState) => state.user; // Adjust the state path as needed
 
-export const { login, logout } = userSlice.actions;
+export const { login, logout,  updateUserProfile } = userSlice.actions;
 
 export default userSlice.reducer;

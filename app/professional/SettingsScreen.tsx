@@ -10,15 +10,19 @@ import {
   Switch,
   Image,
   Modal,
-  Platform,
+  Alert,
 } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput } from 'react-native-paper';
-import * as Location from 'expo-location';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateUserProfile, selectUser } from '../store/userSlice'; // Adjust the import based on your project structure
 
 const SettingsScreen = () => {
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser); // Use the same selector to access the user
+  const professionalId = user?.professional?._id; // Safely access professionalId
+
   const [modalVisible, setModalVisible] = useState(false);
   const [form, setForm] = useState({
     firstName: '',
@@ -31,79 +35,35 @@ const SettingsScreen = () => {
     clinic: '',
     attachedToClinic: false,
     profileImage: '',
-    location: { latitude: null as number | null, longitude: null as number | null },
     consultationFee: '',
+    availability: [],
   });
-  const [userId, setUserId] = useState(null);
-  const [professionalId, setProfessionalId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const storedUserId = await AsyncStorage.getItem('userId');
-        const storedProfessionalId = await AsyncStorage.getItem('professionalId');
-        const storedLocation = await AsyncStorage.getItem('location');
-        const storedEmail = await AsyncStorage.getItem('email');
-        const storedEmailNotifications = await AsyncStorage.getItem('emailNotifications');
-        const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
-        const storedConsultationFee = await AsyncStorage.getItem('consultationFee');
-
-        setUserId(storedUserId);
-        setProfessionalId(storedProfessionalId);
-
-        setForm((prevForm) => ({
-          ...prevForm,
-          location: storedLocation ? JSON.parse(storedLocation) : prevForm.location,
-          email: storedEmail ? storedEmail : prevForm.email,
-          emailNotifications: storedEmailNotifications ? JSON.parse(storedEmailNotifications) : prevForm.emailNotifications,
-          pushNotifications: storedPushNotifications ? JSON.parse(storedPushNotifications) : prevForm.pushNotifications,
-          consultationFee: storedConsultationFee ? storedConsultationFee : prevForm.consultationFee,
-        }));
-
-        if (storedProfessionalId) {
-          fetchProfile(storedProfessionalId);
-        }
-      } catch (error) {
-        console.error('Error fetching user data from AsyncStorage:', error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  const fetchProfile = async (professionalId: string) => {
-    console.log(`Fetching profile for professionalId: ${professionalId}`);
-    try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/professionals/${professionalId}`);
-      const profile = response.data;
+    if (user?.professional) {
       setForm((prevForm) => ({
         ...prevForm,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        email: profile.email,
-        profession: profile.profession,
-        certifications: profile.certifications,
-        emailNotifications: profile.emailNotifications,
-        pushNotifications: profile.pushNotifications,
-        clinic: profile.clinic,
-        attachedToClinic: profile.attachedToClinic,
-        profileImage: profile.profileImage,
-        consultationFee: profile.consultationFee,
+        firstName: user.professional.firstName,
+        lastName: user.professional.lastName,
+        email: user.professional.email,
+        profession: user.professional.profession,
+        certifications: user.professional.certifications,
+        emailNotifications: user.professional.emailNotifications,
+        pushNotifications: user.professional.pushNotifications,
+        clinic: user.professional.clinic,
+        attachedToClinic: user.professional.attachedToClinic,
+        profileImage: user.professional.profileImage,
+        consultationFee: user.professional.consultationFee,
+        availability: user.professional.availability || [],
       }));
-    } catch (error) {
-      console.error('Error fetching profile:', error);
     }
-  };
+  }, [user]);
 
-  const handleProfileChange = async (key: keyof typeof form, value: any) => {
+  const handleProfileChange = (key, value) => {
     setForm((prevForm) => ({
       ...prevForm,
       [key]: value,
     }));
-
-    if (key === 'emailNotifications' || key === 'pushNotifications' || key === 'email' || key === 'consultationFee') {
-      await AsyncStorage.setItem(key, JSON.stringify(value));
-    }
   };
 
   const pickImage = async () => {
@@ -120,8 +80,11 @@ const SettingsScreen = () => {
       const match = /\.(\w+)$/.exec(filename || '');
       const type = match ? `image/${match[1]}` : `image`;
 
-      const imageData = new FormData();
-      imageData.append('profileImage', { uri: localUri, name: filename, type } as any);
+      const imageData = {
+        uri: localUri,
+        name: filename,
+        type,
+      };
 
       handleProfileChange('profileImage', imageData);
     }
@@ -133,10 +96,10 @@ const SettingsScreen = () => {
     try {
       const formData = new FormData();
       Object.keys(form).forEach((key) => {
-        if (key === 'profileImage' && form[key] instanceof FormData) {
-          formData.append(key, form[key].get('profileImage'));
+        if (key === 'profileImage' && form[key]) {
+          formData.append('profileImage', form[key]);
         } else {
-          formData.append(key, form[key as keyof typeof form]);
+          formData.append(key, form[key]);
         }
       });
 
@@ -152,45 +115,13 @@ const SettingsScreen = () => {
         throw new Error('Failed to update profile');
       }
 
-      const data = await response.json();
-      console.log('Profile updated successfully:', data);
+      const updatedProfile = await response.json();
+      dispatch(updateUserProfile(updatedProfile));
+      console.log('Profile updated successfully:', updatedProfile);
       setModalVisible(false);
-      fetchProfile(professionalId);
     } catch (error) {
-      console.error('Error updating profile:', error);
-    }
-  };
-
-  const requestLocationPermission = async () => {
-    if (Platform.OS === 'android') {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      return status === 'granted';
-    } else {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      return status === 'granted';
-    }
-  };
-
-  const fetchLocation = async () => {
-    const hasPermission = await requestLocationPermission();
-    if (!hasPermission) return;
-
-    const location = await Location.getCurrentPositionAsync({});
-    const { latitude, longitude } = location.coords;
-    setForm((prevForm) => ({
-      ...prevForm,
-      location: { latitude, longitude },
-    }));
-    await AsyncStorage.setItem('location', JSON.stringify({ latitude, longitude }));
-  };
-
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.clear();
-      // Navigate to login screen or perform any other logout actions
-      console.log('User logged out successfully');
-    } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('Error updating profile:', error.message);
+      Alert.alert('Error', 'Failed to update profile. Please try again.'); // Show alert on error
     }
   };
 
@@ -203,18 +134,16 @@ const SettingsScreen = () => {
             <View style={styles.profile}>
               <View style={styles.profileImageContainer}>
                 <Image
-                  alt=""
                   source={{
                     uri: form.profileImage || 'https://via.placeholder.com/150',
                   }}
-                  style={styles.profileAvatar} />
+                  style={styles.profileAvatar}
+                />
                 <TouchableOpacity
                   style={styles.editIconContainer}
-                  onPress={() => setModalVisible(true)}>
-                  <FeatherIcon
-                    color="#fff"
-                    name="edit"
-                    size={16} />
+                  onPress={pickImage}
+                >
+                  <FeatherIcon color="#fff" name="edit" size={16} />
                 </TouchableOpacity>
               </View>
               <View style={styles.profileBody}>
@@ -228,33 +157,19 @@ const SettingsScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.sectionBody}>
-            <View style={styles.rowWrapper}>
-              <TouchableOpacity style={styles.row} onPress={fetchLocation}>
-                <Text style={styles.rowLabel}>Location</Text>
-                <View style={styles.rowSpacer} />
-                <FeatherIcon color="#bcbcbc" name="map-pin" size={19} />
-                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
-              </TouchableOpacity>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Email Notifications</Text>
+              <Switch
+                onValueChange={(value) => handleProfileChange('emailNotifications', value)}
+                value={form.emailNotifications}
+              />
             </View>
-            <View style={styles.rowWrapper}>
-              <View style={styles.row}>
-                <Text style={styles.rowLabel}>Email Notifications</Text>
-                <View style={styles.rowSpacer} />
-                <Switch
-                  onValueChange={(value) => handleProfileChange('emailNotifications', value)}
-                  value={form.emailNotifications}
-                />
-              </View>
-            </View>
-            <View style={styles.rowWrapper}>
-              <View style={styles.row}>
-                <Text style={styles.rowLabel}>Push Notifications</Text>
-                <View style={styles.rowSpacer} />
-                <Switch
-                  onValueChange={(value) => handleProfileChange('pushNotifications', value)}
-                  value={form.pushNotifications}
-                />
-              </View>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Push Notifications</Text>
+              <Switch
+                onValueChange={(value) => handleProfileChange('pushNotifications', value)}
+                value={form.pushNotifications}
+              />
             </View>
           </View>
         </View>
@@ -269,148 +184,46 @@ const SettingsScreen = () => {
               onChangeText={(text) => handleProfileChange('consultationFee', text)}
               keyboardType="numeric"
             />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Availability</Text>
+          <View style={styles.sectionBody}>
+            {form.availability.map((time, index) => (
+              <Text key={index}>{time}</Text>
+            ))}
             <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
-              <Text style={styles.buttonText}>Update Fee</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Resources</Text>
-          <View style={styles.sectionBody}>
-            <View style={styles.rowWrapper}>
-              <TouchableOpacity style={styles.row}>
-                <Text style={styles.rowLabel}>Contact Us</Text>
-                <View style={styles.rowSpacer} />
-                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.rowWrapper}>
-              <TouchableOpacity style={styles.row}>
-                <Text style={styles.rowLabel}>Report Bug</Text>
-                <View style={styles.rowSpacer} />
-                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.rowWrapper}>
-              <TouchableOpacity style={styles.row}>
-                <Text style={styles.rowLabel}>Rate in App Store</Text>
-                <View style={styles.rowSpacer} />
-                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.rowWrapper}>
-              <TouchableOpacity style={styles.row}>
-                <Text style={styles.rowLabel}>Privacy Policy</Text>
-                <View style={styles.rowSpacer} />
-                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <View style={styles.sectionBody}>
-            <Text style={styles.sectionLabel}>Version 1.0.0</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Logout</Text>
-          <View style={styles.sectionBody}>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Text style={styles.buttonText}>Logout</Text>
+              <Text style={styles.buttonText}>Update Profile</Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(!modalVisible)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>Update Profile</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="First Name"
-              value={form.firstName}
-              onChangeText={(text) => handleProfileChange('firstName', text)}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Last Name"
-              value={form.lastName}
-              onChangeText={(text) => handleProfileChange('lastName', text)}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={form.email}
-              onChangeText={(text) => handleProfileChange('email', text)}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Profession"
-              value={form.profession}
-              onChangeText={(text) => handleProfileChange('profession', text)}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Certifications"
-              value={form.certifications.join(', ')}
-              onChangeText={(text) => handleProfileChange('certifications', text.split(', '))}
-            />
-            <TouchableOpacity onPress={pickImage} style={styles.imageButton}>
-              <Text style={styles.buttonText}>Choose Profile Image</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.updateButton} onPress={updateProfile}>
-              <Text style={styles.buttonText}>Update</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(!modalVisible)}>
-              <Text style={styles.buttonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+      <Modal visible={modalVisible} animationType="slide">
+        <TouchableOpacity onPress={() => setModalVisible(false)}>
+          <Text>Close Modal</Text>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    elevation: 4,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
   content: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    padding: 20,
   },
   section: {
-    marginBottom: 16,
+    marginBottom: 20,
     backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 2,
-    padding: 16,
+    borderRadius: 10,
+    padding: 15,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
+  },
+  sectionBody: {
+    marginTop: 10,
   },
   profile: {
     flexDirection: 'row',
@@ -420,123 +233,54 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   profileAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderColor: '#bcbcbc',
-    borderWidth: 2,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   editIconContainer: {
     position: 'absolute',
-    right: -5,
-    bottom: -5,
-    backgroundColor: '#007bff',
-    borderRadius: 20,
-    padding: 4,
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#007AFF',
+    borderRadius: 15,
+    padding: 5,
   },
   profileBody: {
-    marginLeft: 12,
+    marginLeft: 15,
   },
   profileName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
   },
   profileHandle: {
-    color: '#666',
-  },
-  sectionBody: {
-    marginTop: 8,
-  },
-  rowWrapper: {
-    marginVertical: 4,
+    fontSize: 14,
+    color: '#555',
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
   rowLabel: {
     fontSize: 16,
   },
-  rowValue: {
-    color: '#666',
-  },
-  rowSpacer: {
-    flex: 1,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
-  },
-  modalView: {
-    width: '90%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333', // Darker text color
-  },
   input: {
-    width: '100%',
-    padding: 10,
-    marginVertical: 8,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
-    backgroundColor: '#f9f9f9', // Light background for inputs
-  },
-  imageButton: {
-    backgroundColor: '#007bff',
-    borderRadius: 5,
     padding: 10,
-    marginVertical: 8,
-    alignItems: 'center',
-    width: '100%',
+    marginBottom: 10,
   },
   updateButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#007AFF',
     borderRadius: 5,
     padding: 10,
-    marginVertical: 8,
     alignItems: 'center',
-    width: '100%',
-  },
-  closeButton: {
-    backgroundColor: '#6c757d',
-    borderRadius: 5,
-    padding: 10,
-    marginVertical: 8,
-    alignItems: 'center',
-    width: '100%',
-  },
-  logoutButton: {
-    backgroundColor: '#dc3545',
-    borderRadius: 5,
-    padding: 10,
-    marginVertical: 8,
-    alignItems: 'center',
-    width: '100%',
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 

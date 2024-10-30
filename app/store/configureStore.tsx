@@ -1,28 +1,32 @@
-// store.ts
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import userReducer from './userSlice';
 import appointmentsReducer from './appointmentsSlice';
 import scheduleReducer from './scheduleSlice';
-import doctorReducer from './doctorSlice'; // Import doctorSlice reducer
-import clinicsReducer from './clinicSlice'; // Import the clinics reducer
+import doctorReducer from './doctorSlice';
+import clinicsReducer from './clinicSlice';
+
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['user'], // Persist only the user slice data here
+  whitelist: ['user'], // Persist only the user slice
 };
 
-const persistedUserReducer = persistReducer(persistConfig, userReducer);
+// Combine all reducers into a root reducer
+const rootReducer = combineReducers({
+  user: userReducer,
+  appointments: appointmentsReducer,
+  schedules: scheduleReducer,
+  doctors: doctorReducer,
+  clinics: clinicsReducer,
+});
+
+// Apply persistReducer to the rootReducer, not just the user slice
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
-  reducer: {
-    user: persistedUserReducer,
-    appointments: appointmentsReducer,
-    schedules: scheduleReducer,
-    doctors: doctorReducer, // Add doctorReducer to store configuration
-    clinics: clinicsReducer, // Add the clinics reducer
-  },
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,

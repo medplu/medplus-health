@@ -30,7 +30,7 @@ export default function Header() {
       <View style={styles.container}>
         <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={{ marginLeft: 20 }}>
           <Image
-            source={{ uri: user.professional?.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
+            source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
             style={styles.profileImage}
           />
         </TouchableOpacity>

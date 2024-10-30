@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
-import { login } from '../store/userSlice'; // Import the login action
+import { login } from '../store/userSlice';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import SignInWithOAuth from '../../components/SignInWithOAuth';
@@ -16,7 +16,7 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
-  const dispatch = useDispatch(); // Initialize the useDispatch hook
+  const dispatch = useDispatch(); 
 
   const handleLoginPress = async () => {
     if (email === '' || password === '') {
@@ -26,10 +26,9 @@ const LoginScreen: React.FC = () => {
         const response = await GlobalApi.loginUser(email, password);
         setErrorMessage(null);
     
-        // Access the user data from the response
-        const user = response.data.user; // Get the user object from the response
+        const user = response.data.user; 
   
-        // Destructure user details
+       
         const {
           _id: userId,
           userType,
@@ -38,14 +37,14 @@ const LoginScreen: React.FC = () => {
           lastName,
           email: userEmail,
           profileImage,
-        } = user; // Extract properties from the user object
+        } = user;
   
-        // Check if firstName and lastName are defined
+        
         if (!firstName || !lastName) {
           console.error('First name or last name is missing:', { firstName, lastName });
         }
   
-        // Dispatch login action
+        
         dispatch(
           login({
             name: `${firstName} ${lastName}`,
@@ -56,7 +55,7 @@ const LoginScreen: React.FC = () => {
           })
         );
         
-        // Determine the appropriate route based on the userType
+        
         let route = '';
         if (userType === 'professional') {
           route = '/professional/tabs';
@@ -65,7 +64,7 @@ const LoginScreen: React.FC = () => {
         } else if (userType === 'student') {
           route = '/student/tabs';
         } else {
-          route = '/student/tabs'; // Default route if userType is not recognized
+          route = '/student/tabs'; 
         }
   
         router.push(route);
