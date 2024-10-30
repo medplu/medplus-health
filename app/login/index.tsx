@@ -21,59 +21,62 @@ const LoginScreen: React.FC = () => {
   const handleLoginPress = async () => {
     if (email === '' || password === '') {
         setErrorMessage('Please enter both email and password.');
-    } else {
-        try {
-            const response = await GlobalApi.loginUser(email, password);
-            setErrorMessage(null);
+        return; // Prevent further execution
+    }
 
-            const user = response.data.user;
+    try {
+        const response = await GlobalApi.loginUser(email, password);
+        setErrorMessage(null);
 
-            // Destructure user properties, including userId
-            const {
-                _id: userId,
-                userType,
-                professional,
-                firstName,
-                lastName,
-                email: userEmail,
-                profileImage,
-            } = user;
+        // Destructure properties directly from the response
+        const {
+            token,          // JWT token
+            userId,        // User ID
+            firstName,     // User's first name
+            lastName,      // User's last name
+            email: userEmail, // User's email
+            userType,      // User type (e.g., client, professional)
+            doctorId       // Doctor ID (may be null)
+        } = response.data; // Adjusted to directly destructure from response.data
 
-            // Check for missing names
-            if (!firstName || !lastName) {
-                console.error('First name or last name is missing:', { firstName, lastName });
-            }
-
-            // Dispatch login action with userId included
-            dispatch(
-                login({
-                    name: `${firstName} ${lastName}`,
-                    email: userEmail,
-                    userType,
-                    professional: professional || null,
-                    profileImage: profileImage || null,
-                    userId,  // Include userId in the dispatched action
-                })
-            );
-
-            // Determine the route based on userType
-            let route = '';
-            if (userType === 'professional') {
-                route = '/professional/tabs';
-            } else if (userType === 'client') {
-                route = '/client/tabs';
-            } else if (userType === 'student') {
-                route = '/student/tabs';
-            } else {
-                route = '/student/tabs'; 
-            }
-
-            // Navigate to the determined route
-            router.push(route);
-        } catch (error) {
-            console.error('Error during login:', error);
-            setErrorMessage('Invalid email or password. Please try again.');
+        // Check for missing names
+        if (!firstName || !lastName) {
+            console.error('First name or last name is missing:', { firstName, lastName });
         }
+
+        // Dispatch login action with userId included
+        dispatch(
+            login({
+                name: `${firstName} ${lastName}`,
+                email: userEmail,
+                userType,
+                professional: null,  // Adjust based on your app's requirements
+                profileImage: null,   // Adjust if profile image is available
+                userId,  // Include userId in the dispatched action
+            })
+        );
+
+        // Determine the route based on userType
+        let route = '';
+        switch (userType) {
+            case 'professional':
+                route = '/professional/tabs';
+                break;
+            case 'client':
+                route = '/client/tabs';
+                break;
+            case 'student':
+                route = '/student/tabs';
+                break;
+            default:
+                route = '/student/tabs'; 
+        }
+
+        // Navigate to the determined route
+        router.push(route);
+    } catch (error) {
+        console.error('Error during login:', error);
+        setErrorMessage('Invalid email or password. Please try again.');
     }
 };
 

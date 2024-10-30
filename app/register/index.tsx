@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,11 @@ import {
   Platform,
   ScrollView,
   Animated,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
-import { registerUser, verifyEmail } from '@/Services/auth';
+import { registerUser } from '@/Services/auth';
 import axios from 'axios';
-
 
 const { width } = Dimensions.get('window');
 
@@ -28,12 +26,14 @@ const SignupScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | null>(null);
   const [userType, setUserType] = useState<'client' | 'professional' | 'student' | null>(null);
-  const [profession, setProfession] = useState('');  // Changed from category to profession
+  const [profession, setProfession] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [buttonAnimation] = useState(new Animated.Value(1));
+  const [countdown, setCountdown] = useState(60); // Countdown timer state
+  const [timerActive, setTimerActive] = useState(false); // Timer active state
 
   const router = useRouter();
 
@@ -53,6 +53,7 @@ const SignupScreen: React.FC = () => {
   };
 
   const handleSignupPress = async () => {
+    // ... (existing code for validation)
     if (
       firstName === '' ||
       lastName === '' ||
@@ -77,7 +78,6 @@ const SignupScreen: React.FC = () => {
     }
   
     try {
-      // Prepare user registration data
       const userData = {
         firstName,
         lastName,
@@ -85,20 +85,20 @@ const SignupScreen: React.FC = () => {
         password,
         gender,
         userType,
-        // Send profession only if userType is professional
         ...(userType === 'professional' ? { profession } : {}),
       };
-  
-      await registerUser(userData); // Pass user data
-  
+
+      await registerUser(userData);
       setErrorMessage(null);
       setSuccessMessage('Signup successful! Please check your email for verification.');
       setIsVerifying(true);
+      setCountdown(60); // Reset countdown to 60 seconds
+      setTimerActive(true); // Start the timer
     } catch (error) {
-      setErrorMessage(error.message || 'Error creating user'); // Set error message
+      setErrorMessage(error.message || 'Error creating user');
     }
   };
-  
+
   const handleVerificationPress = async () => {
     try {
       const response = await axios.post('https://medplus-health.onrender.com/api/verify-email', {
@@ -114,6 +114,25 @@ const SignupScreen: React.FC = () => {
       setErrorMessage('Verification failed. Please try again.');
     }
   };
+
+  // Effect to handle countdown
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+
+    if (timerActive && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+
+    if (countdown === 0) {
+      setTimerActive(false);
+      setErrorMessage('Verification code has expired.');
+    }
+
+    return () => clearInterval(timer); // Clear interval on cleanup
+  }, [timerActive, countdown]);
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -126,6 +145,7 @@ const SignupScreen: React.FC = () => {
 
           {!isVerifying ? (
             <>
+              {/* ... (existing input fields) */}
               <TextInput
                 style={styles.input}
                 placeholder="First Name"
@@ -254,7 +274,6 @@ const SignupScreen: React.FC = () => {
           ) : (
             <>
               <Text style={styles.subHeading}>Enter the verification code sent to your email</Text>
-
               <TextInput
                 style={styles.input}
                 placeholder="Verification Code"
@@ -263,6 +282,10 @@ const SignupScreen: React.FC = () => {
                 placeholderTextColor="#888"
                 keyboardType="numeric"
               />
+
+              <Text style={styles.countdownText}>
+                {countdown > 0 ? `Time remaining: ${countdown}s` : 'Code expired!'}
+              </Text>
 
               {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
               {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
@@ -277,6 +300,7 @@ const SignupScreen: React.FC = () => {
     </KeyboardAvoidingView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
