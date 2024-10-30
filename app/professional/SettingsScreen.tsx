@@ -39,6 +39,8 @@ const SettingsScreen = () => {
     availability: [],
   });
 
+  const [isProfileUpdated, setIsProfileUpdated] = useState(false); // State to manage success feedback
+
   useEffect(() => {
     if (user?.professional) {
       setForm((prevForm) => ({
@@ -95,10 +97,10 @@ const SettingsScreen = () => {
       Alert.alert('Error', 'Professional ID is missing.'); // Ensure professionalId is present
       return;
     }
-  
+
     try {
       const formData = new FormData();
-  
+
       // Populate formData with the correct structure
       Object.keys(form).forEach((key) => {
         if (key === 'profileImage' && form[key]) {
@@ -109,7 +111,7 @@ const SettingsScreen = () => {
           formData.append(key, form[key]);
         }
       });
-  
+
       // Set up the request to your API endpoint
       const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${professionalId}`, {
         method: 'PUT',
@@ -119,19 +121,41 @@ const SettingsScreen = () => {
         },
         body: formData,
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to update profile');
       }
-  
+
       const updatedProfile = await response.json();
       dispatch(updateUserProfile(updatedProfile)); // Dispatch to Redux store
       console.log('Profile updated successfully:', updatedProfile);
+
+      // Provide feedback and reset form state
+      setIsProfileUpdated(true);
+      resetForm();
       setModalVisible(false);
     } catch (error) {
       console.error('Error updating profile:', error.message);
       Alert.alert('Error', 'Failed to update profile. Please try again.'); // Show alert on error
     }
+  };
+
+  const resetForm = () => {
+    setForm({
+      firstName: user.professional.firstName,
+      lastName: user.professional.lastName,
+      email: user.professional.email,
+      profession: user.professional.profession,
+      certifications: user.professional.certifications,
+      emailNotifications: user.professional.emailNotifications,
+      pushNotifications: user.professional.pushNotifications,
+      clinic: user.professional.clinic,
+      attachedToClinic: user.professional.attachedToClinic,
+      profileImage: user.professional.profileImage,
+      consultationFee: user.professional.consultationFee,
+      availability: user.professional.availability || [],
+    });
+    setIsProfileUpdated(false); // Reset feedback state
   };
 
   return (
@@ -207,6 +231,10 @@ const SettingsScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+        {isProfileUpdated && (
+          <Text style={styles.successMessage}>Profile updated successfully!</Text>
+        )}
       </ScrollView>
       <Modal visible={modalVisible} animationType="slide">
         <TouchableOpacity onPress={() => setModalVisible(false)}>
@@ -255,21 +283,21 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   profileBody: {
-    marginLeft: 15,
+    marginLeft: 10,
   },
   profileName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   profileHandle: {
     fontSize: 14,
-    color: '#555',
+    color: '#666',
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    marginVertical: 10,
   },
   rowLabel: {
     fontSize: 16,
@@ -279,17 +307,22 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     padding: 10,
-    marginBottom: 10,
   },
   updateButton: {
     backgroundColor: '#007AFF',
     borderRadius: 5,
     padding: 10,
-    alignItems: 'center',
+    marginTop: 10,
   },
   buttonText: {
     color: '#fff',
+    textAlign: 'center',
+  },
+  successMessage: {
+    color: 'green',
     fontWeight: 'bold',
+    marginTop: 10,
+    textAlign: 'center',
   },
 });
 
