@@ -36,14 +36,14 @@ exports.register = async (req, res) => {
             attachedToClinic, ...userData
         } = req.body;
 
-        // Generate a verification code and hash the password
+        // Generate a verification code
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         const expirationTime = Date.now() + 15 * 60 * 1000; // Set expiration time to 15 minutes
         userData.verificationCode = verificationCode;
         userData.verificationCodeExpires = expirationTime; // Store expiration time
         userData.isVerified = false;
-        userData.password = await bcrypt.hash(userData.password, await bcrypt.genSalt(10));
 
+        // Create a new user without hashing the password here
         const newUser = await new User({ ...userData, userType }).save();
 
         // Conditional model saving based on userType
@@ -170,7 +170,7 @@ exports.login = async (req, res) => {
         }
 
         // Include userId, firstName, lastName, and doctorId in the response
-          res.status(200).json({ 
+        res.status(200).json({ 
             token, 
             userId: user._id, 
             firstName: user.firstName, 
