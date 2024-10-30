@@ -1,5 +1,6 @@
 const Professional = require('../models/professional.model');
 const mongoose = require('mongoose'); // Import mongoose
+const cloudinary = require('cloudinary').v2; // Make sure cloudinary is properly configured
 // Fetch all professionals
 exports.getProfessionals = async (req, res) => {
     try {
@@ -45,7 +46,10 @@ exports.getProfessionalByUserId = async (req, res) => {
         console.error("Error fetching professional:", error);
         res.status(500).json({ error: 'Internal server error' });
     }
-};// Function to handle updating the professional profile
+};
+
+
+
 exports.updateProfile = async (req, res) => {
     const { professionalId } = req.params; // Get the professional ID from the request parameters
     const { consultationFee, availability } = req.body; // Get the consultation fee and availability from the request body
@@ -59,13 +63,13 @@ exports.updateProfile = async (req, res) => {
 
         // Handle profile image upload if provided
         if (req.file) {
-            // Assuming you're using Multer for file uploads
+            // Upload to Cloudinary
             const uploadResult = await cloudinary.uploader.upload(req.file.path);
             professional.profileImage = uploadResult.secure_url; // Store the Cloudinary URL
         }
 
         // Update consultation fee if provided
-        if (consultationFee) {
+        if (consultationFee !== undefined) {
             professional.consultationFee = consultationFee;
         }
 

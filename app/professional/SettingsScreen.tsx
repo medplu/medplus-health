@@ -91,32 +91,41 @@ const SettingsScreen = () => {
   };
 
   const updateProfile = async () => {
-    if (!professionalId) return;
-
+    if (!professionalId) {
+      Alert.alert('Error', 'Professional ID is missing.'); // Ensure professionalId is present
+      return;
+    }
+  
     try {
       const formData = new FormData();
+  
+      // Populate formData with the correct structure
       Object.keys(form).forEach((key) => {
         if (key === 'profileImage' && form[key]) {
           formData.append('profileImage', form[key]);
+        } else if (Array.isArray(form[key])) {
+          form[key].forEach((item) => formData.append(key, item)); // Handle array values
         } else {
           formData.append(key, form[key]);
         }
       });
-
+  
+      // Set up the request to your API endpoint
       const response = await fetch(`https://medplus-health.onrender.com/api/professionals/update-profile/${professionalId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json',
+          // 'Content-Type' should be left out for FormData; the browser will set it automatically
         },
         body: formData,
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to update profile');
       }
-
+  
       const updatedProfile = await response.json();
-      dispatch(updateUserProfile(updatedProfile));
+      dispatch(updateUserProfile(updatedProfile)); // Dispatch to Redux store
       console.log('Profile updated successfully:', updatedProfile);
       setModalVisible(false);
     } catch (error) {
