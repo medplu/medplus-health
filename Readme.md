@@ -1,139 +1,383 @@
-const fetchSchedule = async (doctorId: string) => {
-    console.log('doctorId before fetch:', doctorId); // Log the doctorId before the fetch request
-    try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${doctorId}`);
-      console.log('Fetch response:', response); // Log the entire response object
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Animated,
+  Alert,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Picker } from '@react-native-picker/picker';
+import { registerUser, verifyEmail } from '@/Services/auth';
+
+
+const { width } = Dimensions.get('window');
+
+const SignupScreen: React.FC = () => {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | null>(null);
+  const [userType, setUserType] = useState<'client' | 'professional' | 'student' | null>(null);
+  const [profession, setProfession] = useState('');  // Changed from category to profession
+  const [verificationCode, setVerificationCode] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [buttonAnimation] = useState(new Animated.Value(1));
+
+  const router = useRouter();
+
+  const animateButton = () => {
+    Animated.sequence([
+      Animated.timing(buttonAnimation, {
+        toValue: 0.9,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(buttonAnimation, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handleSignupPress = async () => {
+    if (
+      firstName === '' ||
+      lastName === '' ||
+      email === '' ||
+      password === '' ||
+      confirmPassword === '' ||
+      !gender ||
+      !userType
+    ) {
+      setErrorMessage('Please fill all fields.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match.');
+      return;
+    }
   
-      if (response.status === 200 && response.data.slots) {
-        setSchedule(response.data.slots);
-        console.log('Fetched schedule:', response.data.slots);
-      } else {
-        console.error('Failed to fetch schedule:', response.data.message);
-      }
+    // Check for profession if userType is professional
+    if (userType === 'professional' && (profession === '' || !profession)) {
+      setErrorMessage('Please select a profession.');
+      return;
+    }
+  
+    try {
+      // Prepare user registration data
+      const userData = {
+        firstName,
+        lastName,
+        email,
+        password,
+        gender,
+        userType,
+        // Send profession only if userType is professional
+        ...(userType === 'professional' ? { profession } : {}),
+      };
+  
+      await registerUser(userData); // Pass user data
+  
+      setErrorMessage(null);
+      setSuccessMessage('Signup successful! Please check your email for verification.');
+      setIsVerifying(true);
     } catch (error) {
-      console.error('Error fetching schedule:', error.message); // Log the error message
+      setErrorMessage(error.message || 'Error creating user'); // Set error message
     }
   };
-
-  In the context of the doctorsSlice in your Redux setup, caching helps improve performance by reducing unnecessary network requests and speeding up data access. Here’s how caching specifically benefits the doctorsSlice and how it works:
-
-Overview of the doctorsSlice Caching Workflow
-Initial Fetch and Storage:
-
-When the doctorsSlice first mounts or is accessed, it triggers the fetchDoctors action. This action checks if the list of doctors is already available in the cache (i.e., in the Redux store or in persistent storage like AsyncStorage).
-If the doctor data is not present (e.g., the user is opening the app for the first time), it makes an API call to fetch the doctor data.
-The fetched doctor data is then stored in:
-Redux State: This enables quick, in-memory access to the data within the current app session.
-Persistent Storage (via redux-persist and AsyncStorage): This enables the data to persist between app sessions, meaning that even if the user closes and reopens the app, the data remains available without requiring a new network request.
-Subsequent Requests and Cache Check:
-
-When the user navigates back to the component that depends on the doctorsSlice, the app checks if doctor data is already available in the Redux store.
-If the data is present, it bypasses the network request and uses the cached data in Redux (which is much faster than an API call).
-If the data is not present (e.g., it was cleared from memory or it’s a new session), Redux retrieves it from the persisted storage (AsyncStorage) and loads it into memory, making it available instantly to the app.
-Filtering and Sorting in Cached Data:
-
-The filterDoctors selector function in doctorsSlice filters and sorts the cached doctor data based on the searchQuery and selectedCategory values. Since this function works on the cached data in Redux, it doesn’t trigger new API requests.
-This local filtering makes interactions feel responsive and avoids hitting the API repeatedly for small changes.
-Updating or Invalidating Cache:
-
-If doctor data changes on the server (e.g., new doctors are added or existing ones are updated), the app needs to refresh the cache. This can be done with an action that clears and refetches the data, like refreshDoctors, or by invalidating the cache when certain conditions are met (e.g., after a specific time interval).
-After invalidation, the next time fetchDoctors is called, it will detect the absence of cached data, make a fresh API call, and update both Redux and persistent storage with the new data.
-
-
-
-
-import * as React from 'react';
-import { View, StyleSheet, FlatList, Text, ActivityIndicator } from 'react-native';
-import { Searchbar } from 'react-native-paper';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store/configureStore';
-import { fetchDoctors, selectDoctors, filterDoctors } from '../store/doctorSlice';
-import { fetchClinics, selectClinics, filterClinics } from '../store/clinicSlice';
-import AllDoctorCardItem from '../../components/common/AllDoctorCardItem';
-import ClinicCardItem from '../../components/common/ClinicCardItem';
-
-const FullScreenSearch: React.FC = () => {
-  const [searchQuery, setSearchQuery] = React.useState<string>('');
-  const dispatch = useDispatch();
   
-  const doctors = useSelector((state: RootState) => selectDoctors(state));
-  const clinics = useSelector((state: RootState) => selectClinics(state));
-  const loading = useSelector((state: RootState) => state.doctors.loading || state.clinics.loading);
+  const handleVerificationPress = async () => {
+    try {
+      const response = await axios.post('https://medplus-app.onrender.com/api/verify-email', {
+        email,
+        verificationCode,
+      });
 
-  // Fetch doctors and clinics on mount
-  React.useEffect(() => {
-    dispatch(fetchDoctors());
-    dispatch(fetchClinics());
-  }, [dispatch]);
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    dispatch(filterDoctors({ searchQuery: query, selectedCategory: '' }));
-    dispatch(filterClinics({ searchQuery }));
+      setErrorMessage(null);
+      setSuccessMessage('Verification successful! You can now log in.');
+      setIsVerifying(false);
+      router.push('/login'); // Route to login page after successful verification
+    } catch (error) {
+      setErrorMessage('Verification failed. Please try again.');
+    }
   };
-
-  const filteredDoctors = doctors.filter(doctor =>
-    doctor.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doctor.lastName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredClinics = clinics.filter(clinic =>
-    clinic.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <View style={styles.container}>
-      <Searchbar
-        placeholder="Search Doctors or Clinics"
-        onChangeText={handleSearch}
-        value={searchQuery}
-        autoFocus
-        style={styles.searchBar}
-      />
-      {loading ? (
-        <ActivityIndicator size="large" color="#6200ea" />
-      ) : (
-        <FlatList
-          data={[...filteredDoctors, ...filteredClinics]} // Combine results
-          keyExtractor={(item) => item._id || item.id} // Ensure unique key
-          renderItem={({ item }) => (
-            item._id ? (
-              <ClinicCardItem clinic={item} />
-            ) : (
-              <AllDoctorCardItem
-                profileImage={item.profileImage}
-                firstName={item.firstName}
-                lastName={item.lastName}
-                profession={item.profession}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.formContainer}>
+          <Text style={styles.heading}>Create an Account</Text>
+          <Text style={styles.subHeading}>Sign up to get started</Text>
+
+          {!isVerifying ? (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="First Name"
+                value={firstName}
+                onChangeText={setFirstName}
+                placeholderTextColor="#888"
               />
-            )
+
+              <TextInput
+                style={styles.input}
+                placeholder="Last Name"
+                value={lastName}
+                onChangeText={setLastName}
+                placeholderTextColor="#888"
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholderTextColor="#888"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholderTextColor="#888"
+                secureTextEntry
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholderTextColor="#888"
+                secureTextEntry
+              />
+
+              {/* Gender Selection */}
+              <View style={styles.genderContainer}>
+                <TouchableOpacity
+                  style={[styles.genderButton, gender === 'Male' && styles.selectedGender]}
+                  onPress={() => setGender('Male')}
+                >
+                  <Text style={styles.genderText}>Male</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.genderButton, gender === 'Female' && styles.selectedGender]}
+                  onPress={() => setGender('Female')}
+                >
+                  <Text style={styles.genderText}>Female</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.genderButton, gender === 'Other' && styles.selectedGender]}
+                  onPress={() => setGender('Other')}
+                >
+                  <Text style={styles.genderText}>Other</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Account Type Selection */}
+              <View style={styles.accountTypeContainer}>
+                <TouchableOpacity
+                  style={[styles.accountTypeButton, userType === 'client' && styles.selectedAccountType]}
+                  onPress={() => setUserType('client')}
+                >
+                  <Text style={styles.accountTypeText}>Client</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.accountTypeButton, userType === 'professional' && styles.selectedAccountType]}
+                  onPress={() => setUserType('professional')}
+                >
+                  <Text style={styles.accountTypeText}>Professional</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.accountTypeButton, userType === 'student' && styles.selectedAccountType]}
+                  onPress={() => setUserType('student')}
+                >
+                  <Text style={styles.accountTypeText}>Student</Text>
+                </TouchableOpacity>
+              </View>
+
+              {userType === 'professional' && (
+                <Picker
+                  selectedValue={profession}
+                  style={styles.input}
+                  onValueChange={(itemValue) => setProfession(itemValue)}  // Update to profession
+                >
+                  <Picker.Item label="Select Profession" value="" />
+                  <Picker.Item label="Doctor" value="doctor" />
+                  <Picker.Item label="Dentist" value="dentist" />
+                  <Picker.Item label="Pharmacist" value="pharmacist" />
+                  <Picker.Item label="Nurse" value="nurse" />
+                  <Picker.Item label="Other" value="other" />
+                </Picker>
+              )}
+
+              {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+              {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
+
+              <Animated.View style={{ transform: [{ scale: buttonAnimation }] }}>
+                <TouchableOpacity
+                  style={styles.signupButton}
+                  onPress={() => {
+                    animateButton();
+                    handleSignupPress();
+                  }}
+                >
+                  <Text style={styles.signupButtonText}>Sign Up</Text>
+                </TouchableOpacity>
+              </Animated.View>
+
+              <View style={styles.signupContainer}>
+                <Text style={styles.signupText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => router.push('/login')}>
+                  <Text style={styles.signupLink}>Login</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.subHeading}>Enter the verification code sent to your email</Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Verification Code"
+                value={verificationCode}
+                onChangeText={setVerificationCode}
+                placeholderTextColor="#888"
+                keyboardType="numeric"
+              />
+
+              {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+              {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
+
+              <TouchableOpacity style={styles.signupButton} onPress={handleVerificationPress}>
+                <Text style={styles.signupButtonText}>Verify</Text>
+              </TouchableOpacity>
+            </>
           )}
-          ListEmptyComponent={() => (
-            <View style={styles.emptyContainer}>
-              <Text>No results found</Text>
-            </View>
-          )}
-        />
-      )}
-    </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f4f4',
+    backgroundColor: '#fff',
   },
-  searchBar: {
-    margin: 10,
-    borderRadius: 8,
-  },
-  emptyContainer: {
-    flex: 1,
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
+    padding: 20,
+  },
+  formContainer: {
+    width: width * 0.8,
+    alignSelf: 'center',
+  },
+  heading: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  subHeading: {
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  genderButton: {
+    flex: 1,
     alignItems: 'center',
-    paddingVertical: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  selectedGender: {
+    backgroundColor: '#cce5ff',
+  },
+  genderText: {
+    fontSize: 16,
+  },
+  accountTypeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  accountTypeButton: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  selectedAccountType: {
+    backgroundColor: '#cce5ff',
+  },
+  accountTypeText: {
+    fontSize: 16,
+  },
+  errorMessage: {
+    color: 'red',
+    marginBottom: 10,
+  },
+  successMessage: {
+    color: 'green',
+    marginBottom: 10,
+  },
+  signupButton: {
+    backgroundColor: '#007BFF',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  signupButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  signupText: {
+    fontSize: 14,
+  },
+  signupLink: {
+    fontSize: 14,
+    color: '#007BFF',
   },
 });
 
-export default FullScreenSearch;
+export default SignupScreen;
