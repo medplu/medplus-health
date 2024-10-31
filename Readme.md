@@ -709,3 +709,196 @@ export default DashboardScreen;
 function rgba(arg0: number, arg1: number, arg2: number, $: any, arg4: { opacity: number; }) {
     throw new Error('Function not implemented.');
 }
+
+
+
+
+
+
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, Alert, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { useSelector } from 'react-redux';
+import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import Colors from '../../components/Shared/Colors';
+import HorizontalLine from '../../components/common/HorizontalLine';
+import { fetchTransactions } from '../../Services/paystackService';
+import { selectUser } from '../../app/store/userSlice';
+
+const TransactionScreen: React.FC = () => {
+  const PAYSTACK_SECRET_KEY = process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
+
+  // Obtain user data from Redux
+  const user = useSelector(selectUser);
+  const userId = user?.id; // Access userId directly from user object
+
+  const [isPaymentSetupCompleted, setIsPaymentSetupCompleted] = useState(false);
+  const [showPaymentSetupModal, setShowPaymentSetupModal] = useState(false);
+  const [showSubaccountModal, setShowSubaccountModal] = useState(false);
+  const [subaccountData, setSubaccountData] = useState({
+    business_name: '',
+    settlement_bank: '',
+    account_number: '',
+    subaccount_code: '',
+  });
+  const [banks, setBanks] = useState([]);
+  const [isAccountInfoVisible, setIsAccountInfoVisible] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+
+  useEffect(() => {
+    if (!isPaymentSetupCompleted) setShowPaymentSetupModal(true);
+    fetchBanks();
+    fetchSubaccountInfo();
+  }, [userId]);
+
+  useEffect(() => {
+    if (subaccountData.subaccount_code) {
+      fetchTransactionsData(subaccountData.subaccount_code);
+    }
+  }, [subaccountData]);
+
+  const fetchBanks = async () => {
+    try {
+      const response = await axios.get('https://api.paystack.co/bank?country=kenya', {
+        headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` },
+      });
+      setBanks(response.data.data);
+    } catch (error) {
+      console.error('Error fetching banks:', error);
+      Alert.alert('Error', 'Failed to fetch banks.');
+    }
+  };
+
+  const fetchSubaccountInfo = async () => {
+    if (!userId) {
+      Alert.alert('Error', 'User ID not found. Please log in again.');
+      return;
+    }
+
+    try {
+      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
+      if (response.data.status === 'Success') {
+        setSubaccountData(response.data.data);
+        console.log('Fetched subaccount data:', response.data.data);
+      } else {
+        Alert.alert('Error', 'Failed to fetch subaccount info.');
+      }
+    } catch (error) {
+      console.error('Error fetching subaccount info:', error);
+      Alert.alert('Error', 'Failed to fetch subaccount info.');
+    }
+  };
+
+  const fetchTransactionsData = async (subaccountCode) => {
+    try {
+      const transactions = await fetchTransactions(subaccountCode);
+      const successfulTransactions = transactions.filter((t) => t.status === 'success');
+      setTransactions(successfulTransactions);
+      console.log('Fetched transactions:', successfulTransactions);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      Alert.alert('Error', 'Failed to fetch transactions.');
+    }
+  };
+
+  const handleCreateSubaccount = async () => {
+    if (!userId) {
+      Alert.alert('Error', 'User ID not found. Please log in again.');
+      return;
+    }
+
+    try {
+      const subaccountPayload = {
+        ...subaccountData,
+        userId,
+        percentage_charge: '10', // Default to 10%
+      };
+
+      const response = await axios.post('https://medplus-health.onrender.com/api/payment/create-subaccount', subaccountPayload);
+      Alert.alert('Subaccount Creation', 'Subaccount created successfully.');
+      setShowSubaccountModal(false);
+    } catch (error) {
+      console.error('Error creating subaccount:', error.response ? error.response.data : error.message);
+      Alert.alert('Subaccount Creation Failed', 'There was an error creating the subaccount.');
+    }
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Transactions</Text>
+      <HorizontalLine />
+      <View style={styles.accountInfoContainer}>
+        <Text style={styles.sectionTitle}>Account Info</Text>
+        {isAccountInfoVisible ? (
+          <View style={styles.accountDetails}>
+            <Text>Bank: {subaccountData.settlement_bank}</Text>
+            <Text>Account Number: {subaccountData.account_number}</Text>
+            <Text>Business Name: {subaccountData.business_name}</Text>
+          </View>
+        ) : (
+          <Text style={styles.infoText}>No account info available</Text>
+        )}
+      </View>
+
+      <Modal visible={showSubaccountModal} animationType="slide">
+        <View style={styles.modalContent}>
+          <TextInput
+            placeholder="Business Name"
+            style={styles.input}
+            value={subaccountData.business_name}
+            onChangeText={(text) => setSubaccountData({ ...subaccountData, business_name: text })}
+          />
+          <TextInput
+            placeholder="Account Number"
+            style={styles.input}
+            value={subaccountData.account_number}
+            onChangeText={(text) => setSubaccountData({ ...subaccountData, account_number: text })}
+          />
+          <Picker
+            selectedValue={subaccountData.settlement_bank}
+            onValueChange={(itemValue) => setSubaccountData({ ...subaccountData, settlement_bank: itemValue })}
+          >
+            {banks.map((bank) => (
+              <Picker.Item key={bank.code} label={bank.name} value={bank.code} />
+            ))}
+          </Picker>
+          <TouchableOpacity onPress={handleCreateSubaccount} style={styles.submitButton}>
+            <Text style={styles.submitButtonText}>Create Subaccount</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      <View style={styles.transactionsContainer}>
+        <Text style={styles.sectionTitle}>Transaction History</Text>
+        {transactions.length ? (
+          transactions.map((transaction) => (
+            <View key={transaction.id} style={styles.transactionItem}>
+              <Text>Amount: {transaction.amount}</Text>
+              <Text>Date: {transaction.date}</Text>
+            </View>
+          ))
+        ) : (
+          <Text>No transactions available</Text>
+        )}
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flexGrow: 1, padding: 20 },
+  title: { fontSize: 24, fontWeight: 'bold', color: Colors.primary, marginBottom: 10 },
+  accountInfoContainer: { marginVertical: 20 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  accountDetails: { paddingVertical: 10 },
+  infoText: { color: Colors.secondary },
+  modalContent: { padding: 20, backgroundColor: 'white', flex: 1, justifyContent: 'center' },
+  input: { borderWidth: 1, borderColor: Colors.primary, padding: 10, marginVertical: 10, borderRadius: 5 },
+  submitButton: { backgroundColor: Colors.primary, padding: 15, borderRadius: 5, alignItems: 'center' },
+  submitButtonText: { color: 'white', fontWeight: 'bold' },
+  transactionsContainer: { marginTop: 20 },
+  transactionItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: Colors.lightGray },
+});
+
+export default TransactionScreen;

@@ -121,20 +121,29 @@ const useBooking = (userId: string): BookingHook => {
   };
 
   const handlePaymentSuccess = async (response: any) => {
+    // Indicate that the submission process is complete
     setIsSubmitting(false);
     setAlertMessage('Payment successful and appointment confirmed!');
     setAlertType('success');
     setShowAlert(true);
     console.log('Payment successful:', response);
 
+    // Log the appointmentId for debugging
+    console.log('Appointment ID for updating status:', appointmentId);
+
     try {
-      await axios.patch(`https://medplus-health.onrender.com/api/appointments/${appointmentId}`, {
-        status: 'confirmed',
-      });
+        // Update the appointment status to 'confirmed'
+        await axios.patch(`https://medplus-health.onrender.com/api/appointments/${appointmentId}`, {
+            status: 'confirmed',
+        });
     } catch (error) {
-      console.error('Error updating appointment status:', error);
+        console.error('Error updating appointment status:', error);
+        // Optional: Set an error message if updating fails
+        setAlertMessage('Failed to update appointment status.');
+        setAlertType('error');
+        setShowAlert(true);
     }
-  };
+};
 
   const handlePaymentCancel = () => {
     setIsSubmitting(false);
