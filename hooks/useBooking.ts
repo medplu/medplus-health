@@ -16,7 +16,7 @@ interface BookingHook {
     selectedTimeSlot: string,
     selectedDate: string
   ) => Promise<void>;
-  handlePaymentSuccess: (response: any) => Promise<void>;
+  handlePaymentSuccess: (appointmentId: string, response: any) => Promise<void>;
   handlePaymentCancel: () => void;
 }
 
@@ -30,7 +30,6 @@ const useBooking = (userId: string): BookingHook => {
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const [subaccountCode, setSubaccountCode] = useState<string | null>(null);
 
-  // Access user data from Redux
   const user = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
@@ -66,94 +65,81 @@ const useBooking = (userId: string): BookingHook => {
   const handleBookPress = async (consultationFee: number, selectedTimeSlot: string, selectedDate: string) => {
     setIsSubmitting(true);
     try {
-        console.log('Booking appointment with professionalId:', userId);
+      console.log('Booking appointment with professionalId:', userId);
 
-        // Check if subaccountCode and user.email are valid
-        if (!subaccountCode || !user.email) {
-            throw new Error('Missing subaccount code or user email.');
+      if (!subaccountCode || !user.email) {
+        throw new Error('Missing subaccount code or user email.');
+      }
+
+      const paymentResponse = await axios.post('https://api.paystack.co/transaction/initialize', {
+        email: user.email,
+        amount: consultationFee * 100,
+        subaccount: subaccountCode,
+        currency: 'KES',
+      }, {
+        headers: {
+          'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json'
         }
+      });
 
-        // Initialize payment
-        const paymentResponse = await axios.post('https://api.paystack.co/transaction/initialize', {
-            email: user.email,
-            amount: consultationFee * 100,
-            subaccount: subaccountCode,
-            currency: 'KES',
-        }, {
-            headers: {
-                'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
-                'Content-Type': 'application/json'
-            }
+      if (paymentResponse.data.status) {
+        console.log('Payment initialized:', paymentResponse.data);
+
+        const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', {
+          doctorId: userId,
+          userId: user.userId,
+          patientName: `${user.firstName} ${user.lastName}`,
+          date: selectedDate,
+          time: selectedTimeSlot,
+          status: 'pending',
         });
 
-        // Check if payment initialization was successful
-        if (paymentResponse.data.status) {
-            console.log('Payment initialized:', paymentResponse.data);
+        const newAppointmentId = appointmentResponse.data.appointment._id;
+        console.log('New Appointment ID:', newAppointmentId);
 
-            // Create appointment
-            const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', {
-                doctorId: userId,
-                userId: user.userId,
-                patientName: `${user.firstName} ${user.lastName}`,
-                date: selectedDate,
-                time: selectedTimeSlot,
-                status: 'pending',
-            });
-
-            console.log('Appointment response:', appointmentResponse.data); // Log the entire response
-
-            const newAppointmentId = appointmentResponse.data._id; // Extract the appointmentId from the response
-            console.log('New Appointment ID:', newAppointmentId); // Log the ID
-
-            if (!newAppointmentId) {
-                throw new Error('Failed to retrieve appointmentId from response');
-            }
-            setAppointmentId(newAppointmentId);
-            console.log('Created appointment with appointmentId:', newAppointmentId);
-
-            // Start payment transaction
-            if (paystackWebViewRef.current) {
-                paystackWebViewRef.current.startTransaction();
-            } else {
-                console.error('paystackWebViewRef.current is undefined');
-            }
-        } else {
-            throw new Error('Payment initialization failed');
+        if (!newAppointmentId) {
+          throw new Error('Failed to retrieve appointmentId from response');
         }
+
+        setAppointmentId(newAppointmentId);
+        console.log('Created appointment with appointmentId:', newAppointmentId);
+
+        if (paystackWebViewRef.current) {
+          paystackWebViewRef.current.startTransaction();
+        } else {
+          console.error('paystackWebViewRef.current is undefined');
+        }
+      } else {
+        throw new Error('Payment initialization failed');
+      }
     } catch (error) {
-        console.error('Failed to book appointment:', error);
-        setAlertMessage('Failed to book appointment. Please try again.');
-        setAlertType('error');
-        setShowAlert(true);
-        setIsSubmitting(false);
+      console.error('Failed to book appointment:', error);
+      setAlertMessage('Failed to book appointment. Please try again.');
+      setAlertType('error');
+      setShowAlert(true);
+      setIsSubmitting(false);
     }
-};
+  };
 
-
-  const handlePaymentSuccess = async (response: any) => {
-    // Indicate that the submission process is complete
+  const handlePaymentSuccess = async (appointmentId: string, response: any) => {
     setIsSubmitting(false);
     setAlertMessage('Payment successful and appointment confirmed!');
     setAlertType('success');
     setShowAlert(true);
     console.log('Payment successful:', response);
 
-    // Log the appointmentId for debugging
-    console.log('Appointment ID for updating status:', appointmentId);
-
     try {
-        // Update the appointment status to 'confirmed'
-        await axios.patch(`https://medplus-health.onrender.com/api/appointments/${appointmentId}`, {
-            status: 'confirmed',
-        });
+      await axios.patch(`https://medplus-health.onrender.com/api/appointments/${appointmentId}`, {
+        status: 'confirmed',
+      });
     } catch (error) {
-        console.error('Error updating appointment status:', error);
-        // Optional: Set an error message if updating fails
-        setAlertMessage('Failed to update appointment status.');
-        setAlertType('error');
-        setShowAlert(true);
+      console.error('Error updating appointment status:', error);
+      setAlertMessage('Failed to update appointment status.');
+      setAlertType('error');
+      setShowAlert(true);
     }
-};
+  };
 
   const handlePaymentCancel = () => {
     setIsSubmitting(false);
