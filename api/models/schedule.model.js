@@ -12,9 +12,13 @@ const scheduleSchema = new mongoose.Schema({
         type: Date,
         required: true,  // Specific date for the slot
       },
-      time: {
+      startTime: {
         type: String,
-        required: true,  // Example: '09:00 AM - 10:00 AM'
+        required: true,  // Example: '09:00 AM'
+      },
+      endTime: {
+        type: String,
+        required: true,  // Example: '10:00 AM'
       },
       isBooked: {
         type: Boolean,
@@ -25,7 +29,6 @@ const scheduleSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
-
 
 const Schedule = mongoose.model('Schedule', scheduleSchema);
 module.exports = Schedule;

@@ -1,25 +1,31 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { Agenda, AgendaEntry, AgendaSchedule } from 'react-native-calendars';
-import { Card, Avatar, TextInput, Button, Modal, Portal, Provider, RadioButton } from 'react-native-paper';
+import { Agenda } from 'react-native-calendars';
+import { Card, TextInput, Button, Modal, Portal, Provider, RadioButton } from 'react-native-paper';
 import moment from 'moment';
 import useSchedule from '../../hooks/useSchedule';
-import { selectUser } from '../store/userSlice'; // Import your selector for user
+import { selectUser } from '../store/userSlice'; 
 import { useSelector } from 'react-redux';
 
-const timeToString = (time: number): string => {
+const timeToString = (time) => {
   const date = new Date(time);
   return date.toISOString().split('T')[0];
 };
 
-const generateTimeSlots = (startTime: string, duration: number, slots: number): string[] => {
-  const timeSlots: string[] = [];
+// Update the function to generate time slots with start and end times
+const generateTimeSlots = (startTime, duration, slots) => {
+  const timeSlots = [];
   let [hours, minutes] = startTime.split(':').map(Number);
 
   for (let i = 0; i < slots; i++) {
-    const time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    timeSlots.push(time);
+    const start = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    const endMinutes = minutes + duration;
+    const endHours = Math.floor(endMinutes / 60);
+    const end = `${String(hours + endHours).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}`;
+    
+    timeSlots.push({ startTime: start, endTime: end, status: 'available' });
 
+    // Increment the start time for the next slot
     minutes += duration;
     if (minutes >= 60) {
       hours += Math.floor(minutes / 60);
@@ -30,8 +36,8 @@ const generateTimeSlots = (startTime: string, duration: number, slots: number): 
   return timeSlots;
 };
 
-const getDates = (startDate: string, pattern: string, duration: number): string[] => {
-  const dates: string[] = [];
+const getDates = (startDate, pattern, duration) => {
+  const dates = [];
   const start = moment(startDate);
 
   for (let i = 0; i < duration; i++) {
@@ -55,29 +61,28 @@ const getDates = (startDate: string, pattern: string, duration: number): string[
   return dates;
 };
 
-const Schedule: React.FC = () => {
-  const user = useSelector(selectUser); // Use the same selector to access the user
-
+const Schedule = () => {
+  const user = useSelector(selectUser);
   const { schedule, fetchSchedule } = useSchedule();
-  const [items, setItems] = useState<AgendaSchedule>({});
+  const [items, setItems] = useState({});
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>(timeToString(Date.now()));
-  const [eventDetails, setEventDetails] = useState({ time: '', slots: 1, duration: 30 });
+  const [selectedDate, setSelectedDate] = useState(timeToString(Date.now()));
+  const [eventDetails, setEventDetails] = useState({ slots: 1, duration: 30 });
   const [timeRange, setTimeRange] = useState({ start: '08:00', duration: 30 });
   const [repeatPattern, setRepeatPattern] = useState('daily');
   const [repeatDuration, setRepeatDuration] = useState(1);
   const [step, setStep] = useState(1);
-  const [todayAppointments, setTodayAppointments] = useState<AgendaEntry[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState([]);
 
   const fetchProfessionalId = async () => {
     try {
-      const professionalId = user?.professional?._id; // Safely access professionalId
+      const professionalId = user?.professional?._id; 
       if (!professionalId) throw new Error('Professional ID not found');
 
       fetchSchedule(professionalId);
     } catch (error) {
-      console.error('Error fetching professional ID from Redux:', error);
+      console.error('Error fetching professional ID:', error);
     }
   };
 
@@ -87,37 +92,28 @@ const Schedule: React.FC = () => {
 
   useEffect(() => {
     const transformSchedule = () => {
-      const newItems: AgendaSchedule = {};
-      const todayAppointments: AgendaEntry[] = [];
+      const newItems = {};
+      const todayAppointments = [];
 
-      schedule.forEach((slot: Slot) => {
+      schedule.forEach((slot) => {
         const strTime = moment(slot.date).format('YYYY-MM-DD');
         if (!newItems[strTime]) {
           newItems[strTime] = [];
         }
-        if (slot.isBooked) {
-          newItems[strTime].push({
-            name: 'Booked Slot',
-            type: 'appointment',
-            height: 80,
-            time: slot.time,
-          });
 
-          if (strTime === moment().format('YYYY-MM-DD')) {
-            todayAppointments.push({
-              name: 'Booked Slot',
-              type: 'appointment',
-              height: 80,
-              time: slot.time,
-            });
-          }
-        } else {
-          newItems[strTime].push({
-            name: 'Available Slot',
-            type: 'availability',
-            height: 80,
-            time: slot.time,
-          });
+        const { startTime, endTime, status } = slot; // Assume slot now has startTime, endTime, and status
+        const slotInfo = {
+          name: status === 'booked' ? 'Booked Slot' : 'Available Slot',
+          type: status === 'booked' ? 'appointment' : 'availability',
+          height: 80,
+          startTime,
+          endTime,
+        };
+
+        newItems[strTime].push(slotInfo);
+
+        if (strTime === moment().format('YYYY-MM-DD') && status === 'booked') {
+          todayAppointments.push(slotInfo);
         }
       });
 
@@ -131,17 +127,21 @@ const Schedule: React.FC = () => {
 
   const handleAddAvailability = async () => {
     try {
-      const professionalId = user?.professional?._id; // Safely access professionalId
+      const professionalId = user?.professional?._id; 
       if (!professionalId) {
         throw new Error('Professional ID not found');
       }
 
       const timeSlots = generateTimeSlots(timeRange.start, eventDetails.duration, eventDetails.slots);
       const dates = getDates(selectedDate, repeatPattern, repeatDuration);
-      const availability = dates.flatMap((date) => timeSlots.map((time) => ({
-        date,
-        time,
-      })));
+      const availability = dates.flatMap((date) => 
+        timeSlots.map(({ startTime, endTime }) => ({
+          date,
+          startTime,
+          endTime,
+          status: 'available', // Set status as available by default
+        }))
+      );
 
       const response = await fetch(`https://medplus-health.onrender.com/api/schedule`, {
         method: 'PUT',
@@ -160,19 +160,20 @@ const Schedule: React.FC = () => {
         if (!newItems[date]) {
           newItems[date] = [];
         }
-        timeSlots.forEach((time) => {
+        timeSlots.forEach(({ startTime, endTime }) => {
           newItems[date].push({
             name: 'Available Slot',
             height: 80,
             type: 'availability',
-            time,
+            startTime,
+            endTime,
           });
         });
       });
 
       setItems(newItems);
       setModalVisible(false);
-      setEventDetails({ time: '', slots: 1, duration: 30 });
+      setEventDetails({ slots: 1, duration: 30 });
       setStep(1);
     } catch (error) {
       console.error('Error updating availability:', error);
@@ -197,7 +198,7 @@ const Schedule: React.FC = () => {
             <TextInput
               label="Start Time"
               value={timeRange.start}
-              onChangeText={(text) => setTimeRange((prev) => ({ ...prev, start: text }))} 
+              onChangeText={(text) => setTimeRange((prev) => ({ ...prev, start: text }))}
               style={styles.input}
             />
             <Button mode="contained" onPress={() => setStep(3)} style={styles.button}>
@@ -212,7 +213,7 @@ const Schedule: React.FC = () => {
             <TextInput
               label="Duration (minutes)"
               value={eventDetails.duration.toString()}
-              onChangeText={(text) => setEventDetails((prev) => ({ ...prev, duration: Number(text) }))} 
+              onChangeText={(text) => setEventDetails((prev) => ({ ...prev, duration: Number(text) }))}
               keyboardType="numeric"
               style={styles.input}
             />
@@ -228,7 +229,7 @@ const Schedule: React.FC = () => {
             <TextInput
               label="Number of Slots"
               value={eventDetails.slots.toString()}
-              onChangeText={(text) => setEventDetails((prev) => ({ ...prev, slots: Number(text) }))} 
+              onChangeText={(text) => setEventDetails((prev) => ({ ...prev, slots: Number(text) }))}
               keyboardType="numeric"
               style={styles.input}
             />
@@ -256,14 +257,14 @@ const Schedule: React.FC = () => {
               </View>
             </RadioButton.Group>
             <TextInput
-              label="Repeat Duration"
+              label="Duration (times)"
               value={repeatDuration.toString()}
-              onChangeText={(text) => setRepeatDuration(Number(text))} 
+              onChangeText={(text) => setRepeatDuration(Number(text))}
               keyboardType="numeric"
               style={styles.input}
             />
             <Button mode="contained" onPress={handleAddAvailability} style={styles.button}>
-              Finish
+              Submit
             </Button>
           </View>
         );
@@ -272,126 +273,45 @@ const Schedule: React.FC = () => {
     }
   };
 
-  const renderTodayAppointments = () => {
-    return (
-      <View style={styles.todayAppointmentsContainer}>
-        <Text style={styles.sectionTitle}>Today's Appointments</Text>
-        {todayAppointments.map((appointment, index) => (
-          <Card key={index} style={styles.appointmentCard}>
-            <Card.Content>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text>{appointment.name}</Text>
-                <Avatar.Image source={{ uri: 'https://via.placeholder.com/40' }} size={40} />
-              </View>
-              <Text>{appointment.time}</Text>
-            </Card.Content>
-          </Card>
-        ))}
-      </View>
-    );
-  };
-
-  const renderItem = useCallback(
-    (item: AgendaEntry) => (
-      <TouchableOpacity style={{ marginRight: 10, marginTop: 17 }}>
-        <Card style={{ backgroundColor: item.type === 'appointment' ? '#f8d7da' : '#d4edda' }}>
-          <Card.Content>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text>{item.name}</Text>
-            </View>
-            <Text>{item.time}</Text>
-          </Card.Content>
-        </Card>
-      </TouchableOpacity>
-    ),
-    []
-  );
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#6200ee" />
-      </View>
-    );
-  }
-
   return (
     <Provider>
-      <View style={{ flex: 1 }}>
-        {renderTodayAppointments()}
-        <Agenda
-          items={items}
-          loadItemsForMonth={() => {}}
-          selected={new Date().toISOString().split('T')[0]}
-          renderItem={renderItem}
-          onDayPress={(day) => setSelectedDate(day.dateString)}
-        />
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.fabIcon}>+</Text>
-        </TouchableOpacity>
-        <Portal>
-          <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modalContainer}>
-            {renderStepContent()}
-          </Modal>
-        </Portal>
+      <View style={styles.container}>
+        {loading ? (
+          <ActivityIndicator size="large" />
+        ) : (
+          <Agenda
+            items={items}
+            renderItem={(item) => (
+              <Card style={styles.card}>
+                <Card.Content>
+                  <Text>{item.name}</Text>
+                  <Text>{item.startTime} - {item.endTime}</Text>
+                </Card.Content>
+              </Card>
+            )}
+            renderEmptyData={() => <View><Text>No Availability</Text></View>}
+            onDayPress={(day) => {
+              setSelectedDate(day.dateString);
+              setModalVisible(true);
+            }}
+          />
+        )}
+        <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modalContainer}>
+          {renderStepContent()}
+        </Modal>
       </View>
     </Provider>
   );
 };
 
 const styles = StyleSheet.create({
-  fab: {
-    position: 'absolute',
-    bottom: 30,
-    right: 30,
-    backgroundColor: '#6200ee',
-    borderRadius: 50,
-    width: 60,
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fabIcon: {
-    color: '#fff',
-    fontSize: 30,
-  },
-  modalContainer: {
-    backgroundColor: 'white',
-    padding: 20,
-    margin: 20,
-    borderRadius: 10,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  input: {
-    marginBottom: 12,
-  },
-  radioButtonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  button: {
-    marginTop: 10,
-  },
-  todayAppointmentsContainer: {
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  appointmentCard: {
-    marginBottom: 10,
-  },
+  container: { flex: 1, padding: 10 },
+  card: { margin: 5 },
+  modalContainer: { padding: 20 },
+  modalTitle: { fontSize: 20, marginBottom: 20 },
+  input: { marginBottom: 10 },
+  button: { marginTop: 10 },
+  radioButtonContainer: { flexDirection: 'row', alignItems: 'center' },
 });
 
 export default Schedule;

@@ -1,13 +1,28 @@
 const Schedule = require('../models/schedule.model');
 const Professional = require('../models/professional.model');
 
-// Create or update the schedule for a professional
 exports.createOrUpdateSchedule = async (req, res) => {
     const { professionalId, availability } = req.body;
 
     // Validate the incoming data
     if (!professionalId || !Array.isArray(availability)) {
         return res.status(400).json({ message: 'Invalid data. Professional ID and availability are required.' });
+    }
+
+    // Validate each availability entry
+    for (const slot of availability) {
+        const { date, startTime, endTime, status } = slot;
+
+        // Check for required fields
+        if (!date || !startTime || !endTime || !status) {
+            return res.status(400).json({ message: 'Each availability entry must have date, startTime, endTime, and status.' });
+        }
+
+        // Optional: Validate the status field (for example, must be "available" or "booked")
+        const validStatuses = ['available', 'booked'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: `Invalid status: ${status}. Must be one of ${validStatuses.join(', ')}.` });
+        }
     }
 
     try {
@@ -24,7 +39,13 @@ exports.createOrUpdateSchedule = async (req, res) => {
         // Update or create the schedule
         const schedule = await Schedule.findOneAndUpdate(
             { doctorId: professionalId },
-            { doctorId: professionalId, slots: availability.map(slot => ({ ...slot, isBooked: false })) },
+            { doctorId: professionalId, slots: availability.map(slot => ({ 
+                date: slot.date, 
+                startTime: slot.startTime, 
+                endTime: slot.endTime, 
+                status: slot.status, 
+                isBooked: false 
+            })) },
             { new: true, upsert: true }
         );
 
@@ -34,6 +55,7 @@ exports.createOrUpdateSchedule = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error.' });
     }
 };
+
 
 // Fetch the schedule for a professional by their ID
 exports.getScheduleByProfessionalId = async (req, res) => {
