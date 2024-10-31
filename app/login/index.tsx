@@ -36,7 +36,8 @@ const LoginScreen: React.FC = () => {
             lastName,      // User's last name
             email: userEmail, // User's email
             userType,      // User type (e.g., client, professional)
-            doctorId       // Doctor ID (may be null)
+            doctorId,       // Doctor ID (may be null)
+            professional    // Professional object (may be null)
         } = response.data; // Adjusted to directly destructure from response.data
 
         // Check for missing names
@@ -50,8 +51,8 @@ const LoginScreen: React.FC = () => {
                 name: `${firstName} ${lastName}`,
                 email: userEmail,
                 userType,
-                professional: null,  // Adjust based on your app's requirements
-                profileImage: null,   // Adjust if profile image is available
+                professional,  // Include the professional object
+                profileImage: professional?.profileImage || null, // Adjust if profile image is available
                 userId,  // Include userId in the dispatched action
             })
         );

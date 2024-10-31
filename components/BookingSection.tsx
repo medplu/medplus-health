@@ -48,8 +48,9 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   } = useBooking(userId);
 
   const fetchSchedule = async () => {
+    console.log(doctorId)
     try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${userId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${doctorId}`);
       if (response.status === 200 && response.data.slots) {
         setSchedule(response.data.slots);
       } else {

@@ -40,7 +40,7 @@ exports.getScheduleByProfessionalId = async (req, res) => {
     const { professionalId } = req.params;
 
     try {
-        const schedule = await Schedule.findOne({ user: professionalId });
+        const schedule = await Schedule.findOne({ doctorId: professionalId });
 
         if (!schedule) {
             return res.status(404).json({ message: 'Schedule not found.' });
