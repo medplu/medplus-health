@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Alert, ScrollView, TouchableOpacity, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSelector } from 'react-redux';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Ionicons } from '@expo/vector-icons'; // Import the eye icon
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import Colors from '../../components/Shared/Colors';
 import HorizontalLine from '../../components/common/HorizontalLine';
-import { fetchTransactions } from '../../Services/paystackService'; // Import the fetchTransactions function
+import { fetchTransactions } from '../../Services/paystackService';
+import { selectUser } from '../../app/store/userSlice'; // Import the user selector
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TransactionScreen: React.FC = () => {
   const PAYSTACK_SECRET_KEY = process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
@@ -21,11 +22,12 @@ const TransactionScreen: React.FC = () => {
     subaccount_code: '',
   });
   const [banks, setBanks] = useState<{ name: string, code: string }[]>([]);
-  const [isAccountInfoVisible, setIsAccountInfoVisible] = useState<boolean>(false); // Add state for toggling visibility
-  const [transactions, setTransactions] = useState<any[]>([]); // Add state for transactions
+  const [isAccountInfoVisible, setIsAccountInfoVisible] = useState<boolean>(false);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  
+  const user = useSelector(selectUser); // Get user data from Redux
 
   useEffect(() => {
-    console.log('useEffect triggered'); // Debug log to check if useEffect is firing
     const checkPaymentSetupStatus = async () => {
       const status = await AsyncStorage.getItem('isPaymentSetupCompleted');
       if (!status) {
@@ -63,7 +65,7 @@ const TransactionScreen: React.FC = () => {
 
   const fetchSubaccountInfo = async () => {
     try {
-      const userId = await AsyncStorage.getItem('userId');
+      const userId = user?.userId; // Retrieve userId from Redux state
       if (!userId) {
         Alert.alert('Error', 'User ID not found. Please log in again.');
         return;
@@ -72,7 +74,7 @@ const TransactionScreen: React.FC = () => {
       const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
       if (response.data.status === 'Success') {
         setSubaccountData(response.data.data);
-        console.log('Fetched subaccount data:', response.data.data); // Log subaccount data
+        console.log('Fetched subaccount data:', response.data.data);
       } else {
         Alert.alert('Error', 'Failed to fetch subaccount info.');
       }
@@ -87,7 +89,7 @@ const TransactionScreen: React.FC = () => {
       const transactions = await fetchTransactions(subaccountCode);
       const successfulTransactions = transactions.filter(transaction => transaction.status === 'success');
       setTransactions(successfulTransactions);
-      console.log('Fetched transactions:', successfulTransactions); // Log transactions
+      console.log('Fetched transactions:', successfulTransactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       Alert.alert('Error', 'Failed to fetch transactions.');
@@ -103,7 +105,7 @@ const TransactionScreen: React.FC = () => {
 
   const handleCreateSubaccount = async () => {
     try {
-      const userId = await AsyncStorage.getItem('userId');
+      const userId = user?.userId; // Use Redux userId here
       if (!userId) {
         Alert.alert('Error', 'User ID not found. Please log in again.');
         return;
@@ -123,6 +125,7 @@ const TransactionScreen: React.FC = () => {
       Alert.alert('Subaccount Creation Failed', 'There was an error creating the subaccount.');
     }
   };
+
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
