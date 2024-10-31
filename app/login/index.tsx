@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import { login } from '../store/userSlice';
@@ -15,72 +15,75 @@ const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false); // New state for loading
   const router = useRouter();
   const dispatch = useDispatch(); 
 
   const handleLoginPress = async () => {
     if (email === '' || password === '') {
-        setErrorMessage('Please enter both email and password.');
-        return; // Prevent further execution
+      setErrorMessage('Please enter both email and password.');
+      return; // Prevent further execution
     }
 
+    setIsLoggingIn(true); // Set loading state to true
     try {
-        const response = await GlobalApi.loginUser(email, password);
-        setErrorMessage(null);
+      const response = await GlobalApi.loginUser(email, password);
+      setErrorMessage(null);
 
-        // Destructure properties directly from the response
-        const {
-            token,          // JWT token
-            userId,        // User ID
-            firstName,     // User's first name
-            lastName,      // User's last name
-            email: userEmail, // User's email
-            userType,      // User type (e.g., client, professional)
-            doctorId,       // Doctor ID (may be null)
-            professional    // Professional object (may be null)
-        } = response.data; // Adjusted to directly destructure from response.data
+      // Destructure properties directly from the response
+      const {
+        token,          // JWT token
+        userId,        // User ID
+        firstName,     // User's first name
+        lastName,      // User's last name
+        email: userEmail, // User's email
+        userType,      // User type (e.g., client, professional)
+        doctorId,       // Doctor ID (may be null)
+        professional    // Professional object (may be null)
+      } = response.data; // Adjusted to directly destructure from response.data
 
-        // Check for missing names
-        if (!firstName || !lastName) {
-            console.error('First name or last name is missing:', { firstName, lastName });
-        }
+      // Check for missing names
+      if (!firstName || !lastName) {
+        console.error('First name or last name is missing:', { firstName, lastName });
+      }
 
-        // Dispatch login action with userId included
-        dispatch(
-            login({
-                name: `${firstName} ${lastName}`,
-                email: userEmail,
-                userType,
-                professional,  // Include the professional object
-                profileImage: professional?.profileImage || null, // Adjust if profile image is available
-                userId,  // Include userId in the dispatched action
-            })
-        );
+      // Dispatch login action with userId included
+      dispatch(
+        login({
+          name: `${firstName} ${lastName}`,
+          email: userEmail,
+          userType,
+          professional,  // Include the professional object
+          profileImage: professional?.profileImage || null, // Adjust if profile image is available
+          userId,  // Include userId in the dispatched action
+        })
+      );
 
-        // Determine the route based on userType
-        let route = '';
-        switch (userType) {
-            case 'professional':
-                route = '/professional/tabs';
-                break;
-            case 'client':
-                route = '/client/tabs';
-                break;
-            case 'student':
-                route = '/student/tabs';
-                break;
-            default:
-                route = '/student/tabs'; 
-        }
+      // Determine the route based on userType
+      let route = '';
+      switch (userType) {
+        case 'professional':
+          route = '/professional/tabs';
+          break;
+        case 'client':
+          route = '/client/tabs';
+          break;
+        case 'student':
+          route = '/student/tabs';
+          break;
+        default:
+          route = '/student/tabs'; 
+      }
 
-        // Navigate to the determined route
-        router.push(route);
+      // Navigate to the determined route
+      router.push(route);
     } catch (error) {
-        console.error('Error during login:', error);
-        setErrorMessage('Invalid email or password. Please try again.');
+      console.error('Error during login:', error);
+      setErrorMessage('Invalid email or password. Please try again.');
+    } finally {
+      setIsLoggingIn(false); // Set loading state back to false
     }
-};
-
+  };
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -127,8 +130,16 @@ const LoginScreen: React.FC = () => {
           {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
 
           {/* Login Button */}
-          <TouchableOpacity style={styles.loginButton} onPress={handleLoginPress}>
-            <Text style={styles.loginButtonText}>Login</Text>
+          <TouchableOpacity 
+            style={styles.loginButton} 
+            onPress={handleLoginPress} 
+            disabled={isLoggingIn} // Disable button when logging in
+          >
+            {isLoggingIn ? (
+              <ActivityIndicator size="small" color="#fff" /> // Show loading indicator
+            ) : (
+              <Text style={styles.loginButtonText}>Login</Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity>
@@ -222,11 +233,13 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 8,
     marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loginButtonText: {
     color: '#fff',
     fontSize: 18,
-    textAlign: 'center',
   },
   forgotPassword: {
     color: '#43C6AC',
