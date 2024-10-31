@@ -1,4 +1,3 @@
-// src/store/appointmentsSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface Appointment {
@@ -11,11 +10,19 @@ interface Appointment {
   updatedAt: string;
 }
 
+interface Notification {
+  _id: string; // Unique ID for the notification
+  patientName: string; // Name of the patient for the notification
+  date: string; // Appointment date
+  time: string; // Appointment time
+}
+
 interface AppointmentsState {
   appointments: Appointment[];
   upcomingAppointments: Appointment[];
   requestedAppointments: Appointment[];
   completedAppointments: Appointment[];
+  notifications: Notification[]; // New state for notifications
   loading: boolean;
   error: string | null;
 }
@@ -25,6 +32,7 @@ const initialState: AppointmentsState = {
   upcomingAppointments: [],
   requestedAppointments: [],
   completedAppointments: [],
+  notifications: [], // Initialize notifications state
   loading: false,
   error: null,
 };
@@ -51,8 +59,24 @@ const appointmentsSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
+    setNotifications: (state, action: PayloadAction<Notification[]>) => {
+      state.notifications = action.payload; // Set notifications in the state
+    },
+    addNotification: (state, action: PayloadAction<Notification>) => {
+      state.notifications.push(action.payload); // Add a single notification
+    },
+    clearNotifications: (state) => {
+      state.notifications = []; // Clear notifications
+    },
   },
 });
+
+// Selectors
+export const selectAppointments = (state: { appointments: AppointmentsState }) => state.appointments.appointments;
+export const selectUpcomingAppointments = (state: { appointments: AppointmentsState }) => state.appointments.upcomingAppointments;
+export const selectRequestedAppointments = (state: { appointments: AppointmentsState }) => state.appointments.requestedAppointments;
+export const selectCompletedAppointments = (state: { appointments: AppointmentsState }) => state.appointments.completedAppointments;
+export const selectNotifications = (state: { appointments: AppointmentsState }) => state.appointments.notifications;
 
 export const {
   setAppointments,
@@ -61,6 +85,9 @@ export const {
   setCompletedAppointments,
   setLoading,
   setError,
+  setNotifications,
+  addNotification,
+  clearNotifications,
 } = appointmentsSlice.actions;
 
 export default appointmentsSlice.reducer;

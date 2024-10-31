@@ -27,6 +27,7 @@ const Layout = () => {
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
                   <Stack.Screen name="clinics/index" options={{ title: 'Clinics' }} />
+                  <Stack.Screen name="notifications/index" options={{ title: 'Notifications' }} />
                   <Stack.Screen name="search/index" options={{ title: 'Search' }} />
                   <Stack.Screen name="clinics/[name]" options={{ title: '' }} />
                   <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '' }} />
