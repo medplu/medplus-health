@@ -7,7 +7,7 @@ import { Paystack } from 'react-native-paystack-webview';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import axios from 'axios';
 import useBooking from '../hooks/useBooking';
-import { Button, Input } from 'react-native-elements';
+import { Button } from 'react-native-elements';
 import Colors from './Shared/Colors';
 
 // Configure the calendar locale
@@ -27,14 +27,13 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 }) => {
   const [selectedDate, setSelectedDate] = useState<string>(moment().format('YYYY-MM-DD'));
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ id: string; time: string } | null>(null);
-  const [patientName, setPatientName] = useState<string>('');
-  const [showPatientNameInput, setShowPatientNameInput] = useState<boolean>(false);
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [schedule, setSchedule] = useState<{ date: string; _id: string; time: string }[]>([]);
   const paystackWebViewRef = useRef(null);
 
-  // Access userEmail from Redux
+  // Access userEmail and patientName from Redux
   const userEmail = useSelector((state) => state.user.email);
+  const patientName = useSelector((state) => state.user.name); // Assuming name is stored in Redux
 
   const {
     isSubmitting,
@@ -48,7 +47,6 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   } = useBooking(userId);
 
   const fetchSchedule = async () => {
-    console.log(doctorId)
     try {
       const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${doctorId}`);
       if (response.status === 200 && response.data.slots) {
@@ -63,20 +61,11 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 
   useEffect(() => {
     fetchSchedule();
-    console.log('User email from Redux:', userEmail); // Log the userEmail from Redux
-  }, [doctorId, userEmail]);
-
-  const handleShowPatientNameInput = () => {
-    if (!selectedTimeSlot) {
-      Alert.alert('Error', 'Please select a time slot.');
-      return;
-    }
-    setShowPatientNameInput(true);
-  };
+  }, [doctorId]);
 
   const handleBookAppointment = async () => {
-    if (!patientName) {
-      Alert.alert('Error', "Please enter the patient's name.");
+    if (!selectedTimeSlot) {
+      Alert.alert('Error', 'Please select a time slot.');
       return;
     }
     await handleBookPress(consultationFee, selectedTimeSlot?.id || '', selectedDate);
@@ -85,8 +74,6 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const resetForm = () => {
     setSelectedDate(moment().format('YYYY-MM-DD'));
     setSelectedTimeSlot(null);
-    setPatientName('');
-    setShowPatientNameInput(false);
   };
 
   const handlePaymentSuccessWithReset = (response: any) => {
@@ -142,29 +129,13 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         showsHorizontalScrollIndicator={false}
         style={styles.timeSlotList}
       />
-      {showPatientNameInput ? (
-        <View>
-          <Text style={styles.sectionTitle}>Patient Name:</Text>
-          <Input
-            placeholder="Enter your name"
-            value={patientName}
-            onChangeText={setPatientName}
-            containerStyle={styles.inputContainer}
-            inputStyle={styles.input}
-          />
-          <Button
-            title={isSubmitting ? <ActivityIndicator color="#fff" /> : 'Book Appointment'}
-            onPress={handleBookAppointment}
-            disabled={isSubmitting}
-            buttonStyle={styles.bookButton}
-          />
-        </View>
-      ) : (
-        <Button
-          title="Proceed to Book"
-          onPress={handleShowPatientNameInput}
-          buttonStyle={styles.showNameInputButton}
-        />
+      {selectedTimeSlot && (
+        <TouchableOpacity
+          onPress={() => paystackWebViewRef.current && paystackWebViewRef.current.startTransaction()}
+          style={styles.paymentButton}
+        >
+          <Text style={styles.buttonText}>Proceed to Payment</Text>
+        </TouchableOpacity>
       )}
       <AwesomeAlert
         show={showAlert}
@@ -189,9 +160,6 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         onSuccess={handlePaymentSuccessWithReset}
         ref={paystackWebViewRef}
       />
-      <TouchableOpacity onPress={() => paystackWebViewRef.current && paystackWebViewRef.current.startTransaction()} style={styles.paymentButton}>
-        <Text style={styles.buttonText}>Proceed to Payment</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -201,8 +169,6 @@ const styles = StyleSheet.create({
   dateTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.primary, textAlign: 'center' },
   timeSlotButton: { padding: 10, margin: 5, borderRadius: 5, borderWidth: 1, borderColor: Colors.primary },
   timeSlotText: { color: Colors.primary },
-  bookButton: { backgroundColor: Colors.primary, marginTop: 10 },
-  showNameInputButton: { backgroundColor: Colors.primary, marginTop: 20 },
   paymentButton: { backgroundColor: Colors.primary, padding: 15, borderRadius: 5, marginTop: 20 },
   buttonText: { color: '#fff', textAlign: 'center' },
 });
