@@ -1,4 +1,3 @@
-// src/hooks/useAppointments.ts
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
@@ -25,26 +24,35 @@ const useAppointments = () => {
             dispatch(setError(null));
 
             try {
-                const professionalId = user?.professional?._id; // Safely access professionalId
-                if (!professionalId) throw new Error('Professional ID not found');
+                if (user) {
+                    let response;
 
-                // Fetch all appointments for the doctor
-                const response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${professionalId}/all`);
-                const allData = await response.json();
-                console.log('Fetched Appointments:', allData);
+                    if (user.professional) {
+                        // Fetch all appointments for the doctor
+                        const professionalId = user.professional._id; // Safely access professionalId
+                        response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${professionalId}/all`);
+                    } else {
+                        // Fetch appointments for the user
+                        const userId = user._id; // Access userId
+                        response = await fetch(`https://medplus-health.onrender.com/api/appointments/user/${userId}`);
+                    }
 
-                // Dispatch all appointments to Redux state
-                dispatch(setAppointments(allData));
+                    const allData = await response.json();
+                    console.log('Fetched Appointments:', allData);
 
-                // Filter appointments based on status
-                const upcomingAppointments = allData.filter((appointment) => appointment.status === 'confirmed');
-                const requestedAppointments = allData.filter((appointment) => appointment.status === 'pending');
-                const completedAppointments = allData.filter((appointment) => appointment.status === 'completed');
+                    // Dispatch all appointments to Redux state
+                    dispatch(setAppointments(allData));
 
-                // Dispatch filtered appointments to Redux state
-                dispatch(setUpcomingAppointments(upcomingAppointments));
-                dispatch(setRequestedAppointments(requestedAppointments));
-                dispatch(setCompletedAppointments(completedAppointments));
+                    // Filter appointments based on status
+                    const upcomingAppointments = allData.filter((appointment) => appointment.status === 'confirmed');
+                    const requestedAppointments = allData.filter((appointment) => appointment.status === 'pending');
+                    const completedAppointments = allData.filter((appointment) => appointment.status === 'completed');
+
+                    // Dispatch filtered appointments to Redux state
+                    dispatch(setUpcomingAppointments(upcomingAppointments));
+                    dispatch(setRequestedAppointments(requestedAppointments));
+                    dispatch(setCompletedAppointments(completedAppointments));
+                }
             } catch (err) {
                 console.error('Error fetching appointments:', err.message);
                 dispatch(setError('Error fetching appointments'));
@@ -53,26 +61,31 @@ const useAppointments = () => {
             }
         };
 
-        // Fetch appointments only if the user has a professional role
-        if (user && user.professional) { // Check if user is defined and has a professional role
+        // Fetch appointments only if the user is defined
+        if (user) {
             fetchAppointments();
         }
 
         // Setting up Socket.IO for real-time updates
         const socket: Socket = io('https://medplus-health.onrender.com');
 
-        socket.on('newAppointment', (appointment) => {
-            dispatch(setAppointments((prev) => {
-                const exists = prev.some((a) => a._id === appointment._id);
-                if (!exists) {
-                    return [...prev, appointment];
-                }
-                return prev;
-            }));
-            PushNotification.localNotification({
-                title: 'New Appointment',
-                message: `New appointment with ${appointment.patientName} on ${moment(appointment.createdAt).format('MMMM Do YYYY')} at ${appointment.time}`,
-            });
+        socket.on('newAppointment', ({ appointment, userId, doctorId }) => {
+            // Check if the notification is for the current user
+            if (user._id === userId || (user.professional && user.professional._id === doctorId)) {
+                dispatch(setAppointments((prev) => {
+                    const exists = prev.some((a) => a._id === appointment._id);
+                    if (!exists) {
+                        return [...prev, appointment];
+                    }
+                    return prev;
+                }));
+
+                // Send a local notification
+                PushNotification.localNotification({
+                    title: 'New Appointment',
+                    message: `New appointment with ${appointment.patientName} on ${moment(appointment.createdAt).format('MMMM Do YYYY')} at ${appointment.time}`,
+                });
+            }
         });
 
         // Cleanup function to disconnect the socket

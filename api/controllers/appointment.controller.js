@@ -33,50 +33,72 @@ exports.getAppointmentsByDoctor = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+// Fetch appointments by user ID
+exports.getAppointmentsByUser = async (req, res) => {
+  const { userId } = req.params; // Get userId from request parameters
 
+  try {
+    // Fetch appointments for the given userId
+    const appointments = await Appointment.find({ userId });
+
+    if (!appointments.length) {
+      return res.status(404).json({ error: 'No appointments found for this user' });
+    }
+
+    res.status(200).json(appointments);
+  } catch (error) {
+    console.error('Error fetching appointments by user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
   const { doctorId, userId, patientName, status } = req.body;
 
   try {
-    if (!doctorId || !userId || !patientName || !status) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Check if the client already exists
-    let client = await Client.findOne({ user: userId });
-    if (!client) {
-      // Create a new client if not exists
-      client = new Client({
-        firstName: patientName.split(' ')[0],
-        lastName: patientName.split(' ').slice(1).join(' '),
-        user: userId,
-        doctors: [doctorId]  // Add the doctorId to the doctors array
-      });
-    } else {
-      // Add the doctorId to the doctors array if not already present
-      if (!client.doctors.includes(doctorId)) {
-        client.doctors.push(doctorId);
+      if (!doctorId || !userId || !patientName || !status) {
+          return res.status(400).json({ error: 'Missing required fields' });
       }
-    }
-    await client.save();
 
-    const newAppointment = new Appointment({
-      doctorId,
-      userId,
-      patientName,
-      status
-    });
+      // Check if the client already exists
+      let client = await Client.findOne({ user: userId });
+      if (!client) {
+          // Create a new client if not exists
+          client = new Client({
+              firstName: patientName.split(' ')[0],
+              lastName: patientName.split(' ').slice(1).join(' '),
+              user: userId,
+              doctors: [doctorId]  // Add the doctorId to the doctors array
+          });
+      } else {
+          // Add the doctorId to the doctors array if not already present
+          if (!client.doctors.includes(doctorId)) {
+              client.doctors.push(doctorId);
+          }
+      }
+      await client.save();
 
-    await newAppointment.save();
+      const newAppointment = new Appointment({
+          doctorId,
+          userId,
+          patientName,
+          status
+      });
 
-    const io = req.app.get("socketio");
-    io.emit("newAppointment", newAppointment);
+      await newAppointment.save();
 
-    res.status(201).json({ appointment: newAppointment, client });
+      const io = req.app.get("socketio");
+      // Emit the appointment to both doctor and patient
+      io.emit("newAppointment", {
+          appointment: newAppointment,
+          userId: userId, // Notify the patient
+          doctorId: doctorId // Notify the doctor
+      });
+
+      res.status(201).json({ appointment: newAppointment, client });
   } catch (error) {
-    console.error('Error booking appointment:', error);
-    res.status(500).json({ error: 'Internal server error' });
+      console.error('Error booking appointment:', error);
+      res.status(500).json({ error: 'Internal server error' });
   }
 };
 

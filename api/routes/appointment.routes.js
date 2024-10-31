@@ -11,4 +11,7 @@ router.get('/appointments/doctor/:doctorId/all', appointmentController.getAllApp
 
 router.put('/appointments/confirm/:appointmentId', appointmentController.confirmAppointment);
 
+// Define the route for fetching appointments by user ID
+router.get('/appointments/user/:userId', appointmentController.getAppointmentsByUser);
+
 module.exports = router;
