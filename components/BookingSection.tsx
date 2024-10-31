@@ -31,6 +31,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const [alertType, setAlertType] = useState<'success' | 'error'>('success');
   const [schedule, setSchedule] = useState<{ date: string; _id: string; time: string }[]>([]);
   const paystackWebViewRef = useRef<PayStackRef>(null);
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
 
   // Access userEmail and patientName from Redux
   const userEmail = useSelector((state) => state.user.email);
@@ -115,7 +116,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 
       if (!newAppointmentId) {
         throw new Error('Failed to retrieve appointmentId from response');
-      }
+      setAppointmentId(newAppointmentId);
       appointmentId = newAppointmentId;
       console.log('Created appointment with appointmentId:', newAppointmentId);
 
@@ -161,7 +162,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     setShowAlert(true);
     console.log('Payment successful:', response);
 
-    try {
+      await axios.patch(`https://medplus-health.onrender.com/api/appointments/${appointmentId!}`, {
       await axios.patch(`https://medplus-health.onrender.com/api/appointments/${appointmentId}`, {
         status: 'confirmed',
       });
@@ -256,7 +257,8 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
       <Paystack
         paystackKey={process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY}
         billingEmail={userEmail}
-        amount={consultationFee * 100}
+        amount={consultationFee}
+        currency='KES'
         onCancel={handlePaymentCancel}
         onSuccess={handlePaymentSuccess}
         ref={paystackWebViewRef}
