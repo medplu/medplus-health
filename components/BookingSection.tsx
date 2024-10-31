@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react-native';
 import moment from 'moment';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack, PayStackRef } from 'react-native-paystack-webview';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import axios from 'axios';
-import { Button } from 'react-native-elements';
 import Colors from './Shared/Colors';
 
 // Configure the calendar locale
@@ -30,8 +29,8 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const [alertMessage, setAlertMessage] = useState<string>('');
   const [alertType, setAlertType] = useState<'success' | 'error'>('success');
   const [schedule, setSchedule] = useState<{ date: string; _id: string; time: string }[]>([]);
+  const [appointmentId, setAppointmentId] = useState<string | null>(null); // Track appointment ID
   const paystackWebViewRef = useRef<PayStackRef>(null);
-
 
   // Access userEmail and patientName from Redux
   const userEmail = useSelector((state) => state.user.email);
@@ -64,22 +63,14 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     let showAlert = false;
     let alertMessage = '';
     let alertType: 'success' | 'error' = 'success';
-    let appointmentId: string | null = null;
     let subaccountCode: string | null = null;
-
-    const validateUserId = (id: string): boolean => {
-      const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-      return objectIdRegex.test(id);
-    };
 
     const fetchSubaccountCode = async (userId: string) => {
       try {
-        console.log('Fetching subaccount code for userId:', userId);
         const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
         if (response.data.status === 'Success') {
           const { subaccount_code } = response.data.data;
           subaccountCode = subaccount_code;
-          console.log('Fetched subaccount code:', subaccount_code);
         } else {
           console.error('Failed to fetch subaccount code:', response.data.message);
         }
@@ -92,9 +83,6 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 
     isSubmitting = true;
     try {
-      console.log('Booking appointment with professionalId:', userId);
-
-      // Check if subaccountCode and userEmail are valid
       if (!subaccountCode || !userEmail) {
         throw new Error('Missing subaccount code or user email.');
       }
@@ -109,37 +97,32 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         status: 'pending',
       });
 
-      console.log('Appointment response:', appointmentResponse.data); // Log the entire response
-
-      const newAppointmentId = appointmentResponse.data.appointment._id; // Extract the appointmentId from the response
-      console.log('New Appointment ID:', newAppointmentId); // Log the ID
-
+      const newAppointmentId = appointmentResponse.data.appointment._id;
       if (!newAppointmentId) {
         throw new Error('Failed to retrieve appointmentId from response');
       }
-      appointmentId = newAppointmentId;
-      console.log('Created appointment with appointmentId:', newAppointmentId);
+      setAppointmentId(newAppointmentId); // Set appointmentId for later use
 
       // Initialize Paystack payment
-      const paymentResponse = await axios.post('https://api.paystack.co/transaction/initialize', {
-        email: userEmail,
-        amount: consultationFee * 100,
-        subaccount: subaccountCode,
-        currency: 'KES',
-      }, {
-        headers: {
-          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY}`,
-          'Content-Type': 'application/json'
+      const paymentResponse = await axios.post(
+        'https://api.paystack.co/transaction/initialize',
+        {
+          email: userEmail,
+          amount: consultationFee * 100,
+          subaccount: subaccountCode,
+          currency: 'KES',
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY}`,
+            'Content-Type': 'application/json',
+          },
         }
-      });
+      );
 
       if (paymentResponse.data.status) {
-        console.log('Payment initialized:', paymentResponse.data);
-
         if (paystackWebViewRef.current) {
           paystackWebViewRef.current.startTransaction();
-        } else {
-          console.error('paystackWebViewRef.current is undefined');
         }
       } else {
         throw new Error('Payment initialization failed');
@@ -163,7 +146,10 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     console.log('Payment successful:', response);
 
     try {
-      await axios.patch(`https://medplus-health.onrender.com/api/appointments/${appointmentId}`, {
+      if (!appointmentId) {
+        throw new Error('No appointment ID available for status update.');
+      }
+      await axios.patch(`https://medplus-health.onrender.com/api/appointments/confirms${appointmentId}`, {
         status: 'confirmed',
       });
     } catch (error) {
@@ -235,10 +221,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         style={styles.timeSlotList}
       />
       {selectedTimeSlot && (
-        <TouchableOpacity
-          onPress={handleBookPress}
-          style={styles.paymentButton}
-        >
+        <TouchableOpacity onPress={handleBookPress} style={styles.paymentButton}>
           <Text style={styles.buttonText}>Book Appointment</Text>
         </TouchableOpacity>
       )}
@@ -247,37 +230,42 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         showProgress={true}
         title={alertType === 'success' ? 'Success' : 'Error'}
         message={alertMessage}
-        closeOnTouchOutside={true}
-        closeOnHardwareBackPress={false}
-        showConfirmButton={true}
-        confirmText="OK"
-        confirmButtonColor="#DD6B55"
-        onConfirmPressed={() => setShowAlert(false)}
+        closeOnTouchOutside
+        onDismiss={() => setShowAlert(false)}
       />
       <Paystack
-       paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-        billingEmail={userEmail}
-        amount={consultationFee}
-        currency='KES'
-        onCancel={handlePaymentCancel}
-        onSuccess={handlePaymentSuccess}
-        ref={paystackWebViewRef}
+      paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+      billingEmail={userEmail}
+      amount={consultationFee}
+      currency='KES'
+      onCancel={handlePaymentCancel}
+      onSuccess={handlePaymentSuccess}
+      ref={paystackWebViewRef}
       />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: { padding: 10 },
-  dateTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.primary, textAlign: 'center' },
-  timeSlotButton: { padding: 10, margin: 5, borderRadius: 5, borderWidth: 1, borderColor: Colors.primary },
-  timeSlotText: { color: Colors.primary },
-  paymentButton: { backgroundColor: Colors.primary, padding: 15, borderRadius: 5, marginTop: 20 },
-  buttonText: { color: '#fff', textAlign: 'center' },
-});
-
 export default BookingSection;
 
-function setIsSubmitting(arg0: boolean) {
-  throw new Error('Function not implemented.');
-}
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 10 },
+  dateTitle: { textAlign: 'center', fontSize: 16, fontWeight: 'bold', color: Colors.primary },
+  timeSlotList: { paddingVertical: 10 },
+  timeSlotButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginHorizontal: 5,
+    borderRadius: 8,
+    backgroundColor: Colors.lightGray,
+  },
+  timeSlotText: { color: Colors.textPrimary },
+  paymentButton: {
+    marginVertical: 20,
+    padding: 15,
+    borderRadius: 8,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+  },
+  buttonText: { color: 'white', fontWeight: 'bold' },
+});
