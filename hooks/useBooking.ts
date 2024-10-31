@@ -102,7 +102,7 @@ const useBooking = (userId: string): BookingHook => {
 
             console.log('Appointment response:', appointmentResponse.data); // Log the entire response
 
-            const newAppointmentId = appointmentResponse.data.appointment._id;
+            const newAppointmentId = appointmentResponse.data._id; // Extract the appointmentId from the response
             console.log('New Appointment ID:', newAppointmentId); // Log the ID
 
             if (!newAppointmentId) {
