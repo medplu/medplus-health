@@ -20,7 +20,7 @@ interface BookingHook {
   handlePaymentCancel: () => void;
 }
 
-const useBooking = (doctorId: string): BookingHook => {
+const useBooking = (userId: string): BookingHook => {
   const PAYSTACK_SECRET_KEY = process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
   const paystackWebViewRef = useRef<paystackProps.PayStackRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,21 +34,23 @@ const useBooking = (doctorId: string): BookingHook => {
   const user = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
-    if (validateUserId(doctorId)) {
-      fetchSubaccountCode(doctorId);
+    console.log('useEffect triggered with userId:', userId);
+    if (validateUserId(userId)) {
+      fetchSubaccountCode(userId);
     } else {
       console.error('Invalid doctor ID format');
     }
-  }, [doctorId]);
+  }, [userId]);
 
   const validateUserId = (id: string): boolean => {
     const objectIdRegex = /^[0-9a-fA-F]{24}$/;
     return objectIdRegex.test(id);
   };
 
-  const fetchSubaccountCode = async (doctorId: string) => {
+  const fetchSubaccountCode = async (userId: string) => {
     try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${doctorId}`);
+      console.log('Fetching subaccount code for userId:', userId);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
       if (response.data.status === 'Success') {
         const { subaccount_code } = response.data.data;
         setSubaccountCode(subaccount_code);
@@ -64,7 +66,7 @@ const useBooking = (doctorId: string): BookingHook => {
   const handleBookPress = async (consultationFee: number, selectedTimeSlot: string, selectedDate: string) => {
     setIsSubmitting(true);
     try {
-      console.log('Booking appointment with doctorId:', doctorId);
+      console.log('Booking appointment with professionalId:', userId);
 
       if (!subaccountCode || !user.email) {
         throw new Error('Missing subaccount code or user email.');
@@ -86,7 +88,7 @@ const useBooking = (doctorId: string): BookingHook => {
         console.log('Payment initialized:', paymentResponse.data);
 
         const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', {
-          doctorId,
+          doctorId: userId,
           userId: user.userId,
           patientName: `${user.firstName} ${user.lastName}`,
           date: selectedDate,

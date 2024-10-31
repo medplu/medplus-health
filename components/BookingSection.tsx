@@ -45,11 +45,11 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     handleBookPress,
     handlePaymentSuccess,
     handlePaymentCancel,
-  } = useBooking(doctorId);
+  } = useBooking(userId);
 
   const fetchSchedule = async () => {
     try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${doctorId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${userId}`);
       if (response.status === 200 && response.data.slots) {
         setSchedule(response.data.slots);
       } else {

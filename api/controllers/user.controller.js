@@ -158,18 +158,20 @@ exports.login = async (req, res) => {
         // Generate JWT token
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        // Initialize doctorId to null
+        // Initialize doctorId and professional to null
         let doctorId = null;
+        let professional = null;
         
-        // Check if the user is a professional and retrieve doctorId
+        // Check if the user is a professional and retrieve doctorId and professional object
         if (user.userType === 'professional') {
-            const professional = await Professional.findOne({ user: user._id }); // Fetch the professional record
-            if (professional) {
-                doctorId = professional._id; // Get the doctorId from the professional model
+            const professionalRecord = await Professional.findOne({ user: user._id }); // Fetch the professional record
+            if (professionalRecord) {
+                doctorId = professionalRecord._id; // Get the doctorId from the professional model
+                professional = professionalRecord; // Attach the professional object
             }
         }
 
-        // Include userId, firstName, lastName, and doctorId in the response
+        // Include userId, firstName, lastName, doctorId, and professional in the response
         res.status(200).json({ 
             token, 
             userId: user._id, 
@@ -177,7 +179,8 @@ exports.login = async (req, res) => {
             lastName: user.lastName, 
             email: user.email, // Added email field
             doctorId, 
-            userType: user.userType 
+            userType: user.userType,
+            professional // Attach the professional object if userType is professional
         });
     } catch (error) {
         console.log("Error logging in", error);
