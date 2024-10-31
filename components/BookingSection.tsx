@@ -32,6 +32,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const [schedule, setSchedule] = useState<{ date: string; _id: string; time: string }[]>([]);
   const paystackWebViewRef = useRef<PayStackRef>(null);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Access userEmail and patientName from Redux
   const userEmail = useSelector((state) => state.user.email);
