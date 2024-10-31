@@ -28,7 +28,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<string>('');
   const [alertType, setAlertType] = useState<'success' | 'error'>('success');
-  const [schedule, setSchedule] = useState<{ date: string; _id: string; time: string }[]>([]);
+  const [schedule, setSchedule] = useState<{ date: string; startTime: string; endTime: string; isBooked: boolean; _id: string }[]>([]);
   const [appointmentId, setAppointmentId] = useState<string | null>(null); // Track appointment ID
   const paystackWebViewRef = useRef<PayStackRef>(null);
 
@@ -149,7 +149,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
       if (!appointmentId) {
         throw new Error('No appointment ID available for status update.');
       }
-      await axios.patch(`https://medplus-health.onrender.com/api/appointments/confirms${appointmentId}`, {
+      await axios.patch(`https://medplus-health.onrender.com/api/appointments/confirm/${appointmentId}`, {
         status: 'confirmed',
       });
     } catch (error) {
@@ -172,7 +172,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     setSelectedTimeSlot(null);
   };
 
-  const groupedSlots = schedule.reduce((acc: Record<string, { date: string; _id: string; time: string }[]>, slot) => {
+  const groupedSlots = schedule.reduce((acc: Record<string, { date: string; startTime: string; endTime: string; isBooked: boolean; _id: string }[]>, slot) => {
     const date = moment(slot.date).format('YYYY-MM-DD');
     if (!acc[date]) acc[date] = [];
     acc[date].push(slot);
@@ -208,32 +208,37 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => setSelectedTimeSlot({ id: item._id, time: item.time })}
+            onPress={() => {
+              if (!item.isBooked) {
+                setSelectedTimeSlot({ id: item._id, time: `${item.startTime} - ${item.endTime}` });
+              } else {
+                Alert.alert('Slot Unavailable', 'This time slot is already booked.');
+              }
+            }}
             style={[
               styles.timeSlotButton,
               selectedTimeSlot?.id === item._id ? { backgroundColor: Colors.primary } : null,
             ]}
           >
-            <Text style={styles.timeSlotText}>{item.time}</Text>
+            <Text style={styles.timeSlotText}>{`${item.startTime} - ${item.endTime}`}</Text>
           </TouchableOpacity>
         )}
         showsHorizontalScrollIndicator={false}
-        style={styles.timeSlotList}
       />
-      {selectedTimeSlot && (
-        <TouchableOpacity onPress={handleBookPress} style={styles.paymentButton}>
-          <Text style={styles.buttonText}>Book Appointment</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity onPress={handleBookPress} style={styles.bookButton}>
+        <Text style={styles.bookButtonText}>Book Appointment</Text>
+      </TouchableOpacity>
       <AwesomeAlert
         show={showAlert}
-        showProgress={true}
+        showProgress={false}
         title={alertType === 'success' ? 'Success' : 'Error'}
         message={alertMessage}
-        closeOnTouchOutside
+        closeOnTouchOutside={true}
+        closeOnHardwareBackPress={false}
         onDismiss={() => setShowAlert(false)}
+        contentContainerStyle={{ backgroundColor: alertType === 'success' ? Colors.success : Colors.error }}
       />
-      <Paystack
+     <Paystack
       paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
       billingEmail={userEmail}
       amount={consultationFee}
@@ -246,26 +251,37 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   );
 };
 
-export default BookingSection;
-
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10 },
-  dateTitle: { textAlign: 'center', fontSize: 16, fontWeight: 'bold', color: Colors.primary },
-  timeSlotList: { paddingVertical: 10 },
-  timeSlotButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginHorizontal: 5,
-    borderRadius: 8,
-    backgroundColor: Colors.lightGray,
+  container: {
+    padding: 16,
+    backgroundColor: '#fff',
   },
-  timeSlotText: { color: Colors.textPrimary },
-  paymentButton: {
-    marginVertical: 20,
-    padding: 15,
-    borderRadius: 8,
+  dateTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
+  },
+  timeSlotButton: {
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  timeSlotText: {
+    color: '#000',
+  },
+  bookButton: {
+    marginTop: 20,
     backgroundColor: Colors.primary,
+    padding: 15,
+    borderRadius: 5,
     alignItems: 'center',
   },
-  buttonText: { color: 'white', fontWeight: 'bold' },
+  bookButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
+
+export default BookingSection;
