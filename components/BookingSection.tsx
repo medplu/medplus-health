@@ -31,8 +31,6 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const [alertType, setAlertType] = useState<'success' | 'error'>('success');
   const [schedule, setSchedule] = useState<{ date: string; _id: string; time: string }[]>([]);
   const paystackWebViewRef = useRef<PayStackRef>(null);
-  const [appointmentId, setAppointmentId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Access userEmail and patientName from Redux
   const userEmail = useSelector((state) => state.user.email);
@@ -117,7 +115,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 
       if (!newAppointmentId) {
         throw new Error('Failed to retrieve appointmentId from response');
-      setAppointmentId(newAppointmentId);
+      }
       appointmentId = newAppointmentId;
       console.log('Created appointment with appointmentId:', newAppointmentId);
 
@@ -163,7 +161,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     setShowAlert(true);
     console.log('Payment successful:', response);
 
-      await axios.patch(`https://medplus-health.onrender.com/api/appointments/${appointmentId!}`, {
+    try {
       await axios.patch(`https://medplus-health.onrender.com/api/appointments/${appointmentId}`, {
         status: 'confirmed',
       });
@@ -278,3 +276,7 @@ const styles = StyleSheet.create({
 });
 
 export default BookingSection;
+
+function setIsSubmitting(arg0: boolean) {
+  throw new Error('Function not implemented.');
+}
