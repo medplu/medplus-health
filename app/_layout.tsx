@@ -1,12 +1,13 @@
 // src/app/_layout.tsx
 import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store/configureStore'; // Adjust the path based on your project structure
 import { ScheduleProvider } from './context/ScheduleContext'; // Adjust the path based on your project structure
+import * as NavigationBar from 'expo-navigation-bar';
 
 const Layout = () => {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -15,14 +16,19 @@ const Layout = () => {
     throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env');
   }
 
+  useEffect(() => {
+    // Hide the Android navigation bar
+    NavigationBar.setVisibilityAsync('hidden');
+  }, []);
+
   return (
     <ClerkProvider publishableKey={publishableKey}>
       <ClerkLoaded>
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
             <ScheduleProvider>
-              <SafeAreaView style={{ flex: 1, paddingTop: StatusBar.currentHeight }}>
-                <StatusBar barStyle="dark-content" />
+              <SafeAreaView style={{ flex: 1, paddingTop: StatusBar.currentHeight, backgroundColor: '#ffffff' }}>
+                <StatusBar backgroundColor="#feffdf" barStyle="dark-content" />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
