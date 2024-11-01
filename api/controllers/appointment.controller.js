@@ -139,8 +139,12 @@ exports.confirmAppointment = async (req, res) => {
       return res.status(404).json({ error: 'Appointment not found' });
     }
 
+    console.log('Appointment found:', appointment); // Log appointment details
+
     appointment.status = 'confirmed';
     await appointment.save();
+
+    console.log('Appointment confirmed:', appointment); // Log confirmation
 
     res.status(200).json(appointment);
   } catch (error) {

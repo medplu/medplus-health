@@ -43,7 +43,7 @@ export default function Header() {
 
   const handleNotificationPress = () => {
     setNewAppointmentCount(0); // Reset count when notifications are viewed
-    navigation.navigate('Notifications'); // Navigate to the Notifications screen
+    navigation.navigate('notifications/index'); // Navigate to the Notifications screen
   };
 
   return (

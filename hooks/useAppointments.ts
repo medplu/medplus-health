@@ -10,6 +10,7 @@ import {
     setUpcomingAppointments,
     setRequestedAppointments,
     setCompletedAppointments,
+    addNotification, // Import addNotification
 } from '@/app/store/appointmentsSlice';
 import { selectUser } from '../app/store/userSlice'; // Import your selector for user
 
@@ -78,6 +79,14 @@ const useAppointments = () => {
                         return [...prev, appointment];
                     }
                     return prev;
+                }));
+
+                // Dispatch addNotification with relevant details
+                dispatch(addNotification({
+                    _id: appointment._id,
+                    patientName: appointment.patientName,
+                    date: moment(appointment.createdAt).format('MMMM Do YYYY'),
+                    time: appointment.time,
                 }));
 
                 // Send a local notification
