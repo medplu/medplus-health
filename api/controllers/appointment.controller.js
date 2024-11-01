@@ -1,3 +1,4 @@
+const mongoose = require('mongoose'); // Add mongoose import
 const Appointment = require('../models/appointment.model');
 const Schedule = require('../models/schedule.model');
 const Client = require('../models/client.model'); // Import the Client model
@@ -124,7 +125,12 @@ exports.bookAppointment = async (req, res) => {
 // Confirm an appointment
 exports.confirmAppointment = async (req, res) => {
   const { appointmentId } = req.params;
+  
   console.log('Received appointmentId:', appointmentId); // Log the appointmentId
+
+  if (!mongoose.Types.ObjectId.isValid(appointmentId)) { // Validate appointmentId
+    return res.status(400).json({ error: 'Invalid appointment ID' });
+  }
 
   try {
     const appointment = await Appointment.findById(appointmentId).populate('timeSlotId'); // Populate timeSlotId
