@@ -253,7 +253,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
      <Paystack
       paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
       billingEmail={userEmail}
-      amount={consultationFee * 100} // Ensure amount is in smallest currency unit
+      amount={consultationFee} // Ensure amount is in smallest currency unit
       currency='KES'
       onCancel={handlePaymentCancel}
       onSuccess={handlePaymentSuccess}
