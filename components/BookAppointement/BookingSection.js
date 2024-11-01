@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator,
 import SubHeading from '../dashboard/SubHeading';
 import axios from 'axios';
 import Colors from '../Shared/Colors';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack } from 'react-native-paystack-webview';
 import { FontAwesome } from '@expo/vector-icons';
@@ -11,15 +10,17 @@ import { useSchedule } from '../../app/context/ScheduleContext';
 import moment from 'moment';
 import ClinicSubHeading from '../clinics/ClinicSubHeading';
 import HorizontalLine from '../common/HorizontalLine';
+import { useSelector } from 'react-redux';
+import { selectUser } from '../../app/store/userSlice';
 
 const BookingSection = ({ clinic, navigation }) => {
   const { schedule } = useSchedule();
+  const user = useSelector(selectUser);
   const [next7Days, setNext7Days] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [user, setUser] = useState({ firstName: '', lastName: '', email: '', userId: '' });
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('success');
@@ -29,20 +30,7 @@ const BookingSection = ({ clinic, navigation }) => {
 
   useEffect(() => {
     getDays();
-    getUserData();
   }, []);
-
-  const getUserData = async () => {
-    try {
-      const firstName = await AsyncStorage.getItem('firstName');
-      const lastName = await AsyncStorage.getItem('lastName');
-      const email = await AsyncStorage.getItem('email');
-      const userId = await AsyncStorage.getItem('userId');
-      setUser({ firstName, lastName, email, userId });
-    } catch (error) {
-      console.error('Failed to load user data', error);
-    }
-  };
 
   const getDays = () => {
     const today = new Date();
@@ -68,7 +56,7 @@ const BookingSection = ({ clinic, navigation }) => {
     }
 
     try {
-      const appointmentResponse = await axios.post('https://medplus-app.onrender.com/api/clinic/appointments', {
+      const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/clinic/appointments', {
         userId: user.userId,
         clinicId: clinic._id,
         date: selectedDate,
