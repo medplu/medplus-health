@@ -78,7 +78,7 @@ const Clinics = ({ searchQuery, onViewAll }) => {
       <SubHeading subHeadingTitle={'Discover Clinics Near You'} onViewAll={onViewAll} />
       <FlatList
         data={filteredClinicList}
-        horizontal={true}
+        horizontal={true} // Ensure this orientation is different from parent lists
         renderItem={renderClinicItem}
         keyExtractor={item => item._id.toString()}
         showsHorizontalScrollIndicator={false}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native'; // Changed ScrollView to FlatList
 import { useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
@@ -88,8 +88,8 @@ const BookAppointment = () => {
 
   console.log('Doctors Data:', doctorsData);
 
-  return (
-    <ScrollView ref={scrollViewRef} contentContainerStyle={styles.container}>
+  const renderItem = () => (
+    <>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Ionicons name="arrow-back" size={24} color={Colors.WHITE} />
       </TouchableOpacity>
@@ -100,7 +100,18 @@ const BookAppointment = () => {
       <StaticDoctors doctors={doctorsData} loading={loading} onBookPress={handleBookPress} />
       <ActionButton />
       <HorizontalLine />
-    </ScrollView>
+    </>
+  );
+
+  return (
+    // Changed ScrollView to FlatList with vertical orientation
+    <FlatList
+      data={[clinic]} // Use a single-item array to render components
+      renderItem={renderItem}
+      keyExtractor={() => 'clinic'}
+      ListFooterComponent={<HorizontalLine />}
+      contentContainerStyle={styles.container}
+    />
   );
 }
 
