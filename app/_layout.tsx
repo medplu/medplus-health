@@ -23,23 +23,23 @@ const Layout = () => {
             <ScheduleProvider>
               <SafeAreaView style={{ flex: 1, paddingTop: StatusBar.currentHeight }}>
                 <StatusBar barStyle="dark-content" />
-                <Stack screenOptions={{ headerShown: true }}>
+                <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
-                  <Stack.Screen name="clinics/index" options={{ title: '' }} />
-                  <Stack.Screen name="notifications/index" options={{ title: '' }} />
-                  <Stack.Screen name="search/index" options={{ title: '' }} />
-                  <Stack.Screen name="clinics/[name]" options={{ title: '' }} />
-                  <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '' }} />
-                  <Stack.Screen name="hospital/index" options={{ title: '' }} />
-                  <Stack.Screen name="hospital/[id]" options={{ title: '' }} />
-                  <Stack.Screen name="student/index" options={{ title: '' }} />
-                  <Stack.Screen name="doctor/index" options={{ title: '' }} />
-                  <Stack.Screen name="doctor/[doctorId]" options={{ title: '' }} />
-                  <Stack.Screen name="alldoctors/index" options={{ title: '' }} />
-                  <Stack.Screen name="ClinicDoctorsList" options={{ title: '' }} />
-                  <Stack.Screen name="patient/[patientId]" options={{ title: '' }} />
-                  <Stack.Screen name="[missing]" options={{ title: '404' }} />
+                  <Stack.Screen name="clinics/index" options={{ title: 'Clinics', headerShown: true }} />
+                  <Stack.Screen name="notifications/index" options={{ title: 'Notifications', headerShown: true }} />
+                  <Stack.Screen name="search/index" options={{ title: 'Search', headerShown: true }} />
+                  <Stack.Screen name="clinics/[name]" options={{ title: '', headerShown: false }} />
+                  <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '', headerShown: false }} />
+                  <Stack.Screen name="hospital/index" options={{ title: '', headerShown: false }} />
+                  <Stack.Screen name="hospital/[id]" options={{ title: '', headerShown: false }} />
+                  <Stack.Screen name="student/index" options={{ title: 'Student', headerShown: true }} />
+                  <Stack.Screen name="doctor/index" options={{ title: 'Doctor', headerShown: true }} />
+                  <Stack.Screen name="doctor/[doctorId]" options={{ title: 'Doctor Booking', headerShown: true }} />
+                  <Stack.Screen name="alldoctors/index" options={{ title: 'All Doctors', headerShown: true }} />
+                  <Stack.Screen name="ClinicDoctorsList" options={{ title: 'Clinic Doctors List', headerShown: true }} />
+                  <Stack.Screen name="patient/[patientId]" options={{ title: 'Patient Profile', headerShown: true }} />
+                  <Stack.Screen name="[missing]" options={{ title: '404', headerShown: true }} />
                 </Stack>
               </SafeAreaView>
             </ScheduleProvider>
