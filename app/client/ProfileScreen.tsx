@@ -22,6 +22,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectUser, updateUserProfile } from '../store/userSlice';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export default function ProfileScreen() {
   const [loaded] = useFonts({ SSLight, SSRegular, SSBold });
@@ -54,7 +55,7 @@ export default function ProfileScreen() {
     setForm((prevForm) => ({ ...prevForm, [name]: value }));
   };
 
-  // Function to handle image picking
+  // Function to handle image picking with compression
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -67,12 +68,17 @@ export default function ProfileScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 0.5, // Compress the image
     });
 
     if (!result.canceled) {
       if (Platform.OS !== 'web') {
-        const base64Image = await FileSystem.readAsStringAsync(result.assets[0].uri, { encoding: FileSystem.EncodingType.Base64 });
+        const compressedImage = await ImageManipulator.manipulateAsync(
+          result.assets[0].uri,
+          [],
+          { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        const base64Image = await FileSystem.readAsStringAsync(compressedImage.uri, { encoding: FileSystem.EncodingType.Base64 });
         setForm((prevForm) => ({ ...prevForm, profileImage: `data:image/jpeg;base64,${base64Image}` }));
       } else {
         setForm((prevForm) => ({ ...prevForm, profileImage: result.assets[0].uri }));
