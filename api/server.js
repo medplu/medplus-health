@@ -31,8 +31,8 @@ const io = new Server(server, {
 });
 
 app.use(cors());
-app.use(bodyParser.urlencoded({ limit: '10mb', extended: false }));
-app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: false }));
+app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.json());
 
 // File upload middleware
