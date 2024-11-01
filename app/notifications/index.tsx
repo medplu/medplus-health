@@ -17,7 +17,7 @@ const Notifications = () => {
       <Text style={styles.appointmentText}>
         Appointment with {item.patientName} on {item.date} at {item.time}
       </Text>
-      <Text style={styles.statusText}>Status: {item.status}</Text> {/* Display status */}
+      <Text style={styles.statusText}>Status: {item.status}</Text> 
       <TouchableOpacity
         style={styles.actionButton}
         onPress={() => handleViewAppointment(item._id)}
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 5,
   },
-  statusText: { // New style for status
+  statusText: { 
     fontSize: 14,
     color: '#555',
     marginBottom: 10,
