@@ -106,6 +106,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
       if (!newAppointmentId) {
         throw new Error('Failed to retrieve appointmentId from response');
       }
+      console.log('New appointment ID:', newAppointmentId); // Log newAppointmentId
       setAppointmentId(newAppointmentId); // Set appointmentId for later use
 
       // Initialize Paystack payment
@@ -158,9 +159,19 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
       if (!appointmentId) {
         throw new Error('No appointment ID available for status update.');
       }
-      await axios.patch(`https://medplus-health.onrender.com/api/appointments/confirm/${appointmentId}`, {
-        status: 'confirmed',
-      });
+      console.log('Confirming appointment with ID:', appointmentId); // Log appointmentId
+
+      const confirmResponse = await axios.patch(
+        `https://medplus-health.onrender.com/api/appointments/confirm/${appointmentId}`, // Ensure this URL matches backend route
+        {}, // Send an empty body if not required
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            // Add any required authentication headers here
+          },
+        }
+      );
+      console.log('Confirm response:', confirmResponse.data); // Log confirmation response
 
       // Optionally, refetch the schedule to update booked slots
       fetchSchedule();

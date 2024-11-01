@@ -101,6 +101,10 @@ app.use('/api/pharmacies', pharmacyRoutes); // Added the new pharmacy routes
 // Use the schedule routes
 app.use('/api', scheduleRoutes); // Added the schedule routes
 
+// Import the appointments route
+const appointmentsRoute = require('./routes/appointments');
+app.use('/api/appointments', appointmentsRoute);
+
 // Handle WebSocket connections
 io.on("connection", (socket) => {
   console.log("New client connected");

@@ -20,10 +20,10 @@ const appointmentSchema = new mongoose.Schema({
     enum: ['pending', 'booked', 'confirmed', 'completed', 'cancelled'],
     default: 'pending',
   },
-  timeSlotId: { // New field to reference the selected time slot
+  timeSlotId: { // Corrected reference to Schedule model
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'Schedule.slots', // Reference to the slot within Schedule
+    ref: 'Schedule',
   },
   time: { // New field to store the time range of the slot
     type: String,
