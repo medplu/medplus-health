@@ -86,11 +86,11 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
             />
             <View style={styles.nameCategoryContainer}>
               <Text style={styles.doctorName}>{`${item.firstName} ${item.lastName}`}</Text>
-              <Text >{item.category}</Text>
+              <Text style={styles.consultationFee}>
+                {item.consultationFee ? `${item.consultationFee} KES` : 'Not available'}
+              </Text>
             </View>
-            <Text style={styles.consultationFee}>
-          {item.consultationFee ? `Consultation Fee: ${item.consultationFee}` : 'Consultation Fee: Not available'}
-        </Text>
+            <Text >{item.category}</Text>
             <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
               <Text style={styles.buttonText}>Book</Text>
             </TouchableOpacity>
@@ -118,8 +118,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   nameCategoryContainer: {
-    flexDirection: 'column',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 10,
   },
@@ -136,8 +136,7 @@ const styles = StyleSheet.create({
   consultationFee: {
     fontSize: 16,
     color: Colors.green,
-    marginTop: 5,
-    textAlign: 'center',
+    textAlign: 'right',
   },
   button: {
     paddingVertical: 10,
