@@ -39,8 +39,8 @@ exports.getAppointmentsByUser = async (req, res) => {
   const { userId } = req.params; // Get userId from request parameters
 
   try {
-    // Fetch appointments for the given userId
-    const appointments = await Appointment.find({ userId });
+    // Fetch appointments for the given userId and select desired fields
+    const appointments = await Appointment.find({ userId }).select('doctorId userId patientName status timeSlotId time createdAt updatedAt');
 
     if (!appointments.length) {
       return res.status(404).json({ error: 'No appointments found for this user' });

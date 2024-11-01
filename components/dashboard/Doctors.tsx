@@ -18,9 +18,10 @@ interface DoctorsProps {
   searchQuery: string;
   selectedCategory: string;
   onViewAll: (category: string) => void;
+  excludeDoctorId?: string; // Add this line
 }
 
-const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onViewAll }) => {
+const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onViewAll, excludeDoctorId }) => {
   const { doctorList, loading, error } = useDoctors();
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const navigation = useNavigation();
@@ -31,6 +32,10 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
 
   const filterDoctors = () => {
     let filtered = doctorList;
+
+    if (excludeDoctorId) { // Add this block
+      filtered = filtered.filter((doctor) => doctor._id !== excludeDoctorId);
+    }
 
     if (searchQuery) {
       filtered = filtered.filter((doctor) =>

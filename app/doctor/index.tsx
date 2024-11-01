@@ -7,6 +7,7 @@ import DoctorCard from '../../components/common/DoctorCardItem';
 import HorizontalLine from '../../components/common/HorizontalLine';
 import Colors from '../../components/Shared/Colors';
 import BookingSection from '../../components/BookingSection';
+import Doctors from '../../components/dashboard/Doctors'; // Add import statement
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AirbnbRating } from 'react-native-ratings';
@@ -77,32 +78,49 @@ const DoctorProfile: React.FC = () => {
     setNewRating(0);
   };
 
+  const handleViewAll = (category: string) => {
+    // Implement navigation or any other logic for viewing all professionals
+    console.log(`View all professionals in category: ${category}`);
+    // Example: navigation.navigate('ProfessionalsList', { category });
+  };
+
   if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
   }
 
   if (error) {
-    return <Text>{error}</Text>;
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
   }
 
-  // Check if doctor is null or undefined
   if (!doctor) {
-    return <Text>Error: Doctor information is missing.</Text>;
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Error: Doctor information is missing.</Text>
+      </View>
+    );
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
+       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <FontAwesome name="arrow-left" size={24} color="black" />
+            </TouchableOpacity>
       <FlatList
         contentContainerStyle={styles.scrollViewContent}
         data={[doctor]}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <FontAwesome name="arrow-left" size={24} color="black" />
-            </TouchableOpacity>
-            <DoctorCardItem doctor={item} userId={item.user} consultationFee={item.consultationFee} />
-          
+           
+            <DoctorCardItem doctor={item} />
             <View style={styles.descriptionContainer}>
               <Text style={styles.descriptionText}>
                 {showFullBio ? item.bio : `${item.bio?.substring(0, 100) || ''}...`}
@@ -111,12 +129,19 @@ const DoctorProfile: React.FC = () => {
                 <Text style={styles.readMoreText}>{showFullBio ? 'Read Less' : 'Read More'}</Text>
               </TouchableOpacity>
             </View>
-            <BookingSection 
-               doctorId={item._id} 
-               userId={item.user} 
-               consultationFee={item.consultationFee} 
+            <BookingSection
+              doctorId={item._id}
+              userId={item.user}
+              consultationFee={item.consultationFee}
             />
-         
+            <HorizontalLine />
+            <Text style={styles.sectionTitle}>View More Professionals</Text>
+            <Doctors
+              searchQuery=""
+              selectedCategory=""
+              onViewAll={handleViewAll}
+              excludeDoctorId={doctor._id} // Add this line
+            />
             <HorizontalLine />
             <Text style={styles.sectionTitle}>Reviews</Text>
             <FlatList
@@ -139,7 +164,9 @@ const DoctorProfile: React.FC = () => {
               style={styles.reviewList}
             />
             <TouchableOpacity onPress={() => setShowAllReviews(!showAllReviews)}>
-              <Text style={styles.viewMoreText}>{showAllReviews ? 'View Less Reviews' : 'View More Reviews'}</Text>
+              <Text style={styles.viewMoreText}>
+                {showAllReviews ? 'View Less Reviews' : 'View More Reviews'}
+              </Text>
             </TouchableOpacity>
             <View style={styles.addReviewContainer}>
               <Text style={styles.addReviewTitle}>Add Your Review</Text>
@@ -172,12 +199,13 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     padding: 20,
+    paddingTop: 60, // Adjust padding to accommodate back button
   },
   backButton: {
     position: 'absolute',
-    top: 40,
+    top: 20,
     left: 20,
-    zIndex: 1,
+    zIndex: 2, // Increase zIndex to ensure it's above other components
   },
   descriptionContainer: {
     marginVertical: 10,
@@ -190,12 +218,13 @@ const styles = StyleSheet.create({
   readMoreText: {
     color: Colors.primary,
     marginTop: 5,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
+    fontSize: 20,
+    fontWeight: '700',
+    marginVertical: 15,
+    color: '#333',
   },
   reviewList: {
     marginVertical: 10,
@@ -203,43 +232,38 @@ const styles = StyleSheet.create({
   reviewCard: {
     backgroundColor: '#fff',
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 8,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    // Flat design without shadow
   },
   reviewUser: {
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '600',
+    fontSize: 16,
+    color: '#333',
   },
   reviewComment: {
     marginTop: 5,
     color: '#555',
+    fontSize: 14,
   },
   viewMoreText: {
     color: Colors.primary,
     marginTop: 5,
-    fontWeight: 'bold',
+    fontWeight: '600',
     textAlign: 'center',
   },
   addReviewContainer: {
     marginTop: 20,
     padding: 15,
     backgroundColor: '#fff',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    borderRadius: 8,
+    // Flat design without shadow
   },
   addReviewTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     marginBottom: 10,
+    color: '#333',
   },
   reviewInput: {
     height: 40,
@@ -248,6 +272,22 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     marginVertical: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: Colors.error,
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
 

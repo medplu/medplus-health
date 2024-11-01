@@ -13,18 +13,18 @@ const screenHeight = Dimensions.get('window').height;
 
 const DashboardScreen: React.FC = () => {
     const router = useRouter();
-    const user = useSelector(selectUser);
-    const { appointments, loading, error } = useAppointments();
+    const user = useSelector(selectUser); // Retrieves the current user from Redux
+    const { appointments = [], loading, error } = useAppointments(); // Default to empty array
 
     const handleViewPatient = (patientId: string) => {
         router.push(`/patient/${patientId}`);
     };
 
     // Calculate statistics based on real data
-    const totalAppointments = appointments.length;
-    const upcomingAppointments = appointments.filter(appointment => appointment.status === 'confirmed');
-    const requestedAppointments = appointments.filter(appointment => appointment.status === 'requested').length;
-    const completedAppointments = appointments.filter(appointment => appointment.status === 'completed').length;
+    const totalAppointments = Array.isArray(appointments) ? appointments.length : 0;
+    const upcomingAppointments = Array.isArray(appointments) ? appointments.filter(appointment => appointment.status === 'confirmed') : [];
+    const requestedAppointments = Array.isArray(appointments) ? appointments.filter(appointment => appointment.status === 'requested').length : 0;
+    const completedAppointments = Array.isArray(appointments) ? appointments.filter(appointment => appointment.status === 'completed').length : 0;
 
     const patientData = [
         { name: 'Male', population: 40, color: '#4f8bc2', legendFontColor: '#7F7F7F', legendFontSize: 15 },

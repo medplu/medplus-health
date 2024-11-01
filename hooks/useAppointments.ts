@@ -17,7 +17,7 @@ import { selectUser } from '../app/store/userSlice'; // Import your selector for
 const useAppointments = () => {
     const dispatch = useDispatch();
     const { appointments, loading, error } = useSelector((state) => state.appointments);
-    const user = useSelector(selectUser); // Use the same selector to access the user
+    const user = useSelector(selectUser); // Use the selector to access the user
 
     useEffect(() => {
         const fetchAppointments = async () => {
@@ -34,20 +34,20 @@ const useAppointments = () => {
                         response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${professionalId}/all`);
                     } else {
                         // Fetch appointments for the user
-                        const userId = user._id; // Access userId
+                        const userId = user.userId; // Access userId
                         response = await fetch(`https://medplus-health.onrender.com/api/appointments/user/${userId}`);
                     }
 
                     const allData = await response.json();
-                    console.log('Fetched Appointments:', allData);
 
-                    // Dispatch all appointments to Redux state
-                    dispatch(setAppointments(allData));
+                    // Ensure that allData is an array
+                    const appointmentsArray = Array.isArray(allData) ? allData : [];
+                    dispatch(setAppointments(appointmentsArray));
 
                     // Filter appointments based on status
-                    const upcomingAppointments = allData.filter((appointment) => appointment.status === 'confirmed');
-                    const requestedAppointments = allData.filter((appointment) => appointment.status === 'pending');
-                    const completedAppointments = allData.filter((appointment) => appointment.status === 'completed');
+                    const upcomingAppointments = appointmentsArray.filter((appointment) => appointment.status === 'confirmed');
+                    const requestedAppointments = appointmentsArray.filter((appointment) => appointment.status === 'pending');
+                    const completedAppointments = appointmentsArray.filter((appointment) => appointment.status === 'completed');
 
                     // Dispatch filtered appointments to Redux state
                     dispatch(setUpcomingAppointments(upcomingAppointments));
@@ -86,10 +86,11 @@ const useAppointments = () => {
                     _id: appointment._id,
                     patientName: appointment.patientName,
                     date: moment(appointment.createdAt).format('MMMM Do YYYY'),
-                    time: appointment.time,
+                    time: appointment.time, // Ensure time is included
+                    status: appointment.status, // Include status
                 }));
 
-                // Send a local notification
+                // Use the correct PushNotification method
                 PushNotification.localNotification({
                     title: 'New Appointment',
                     message: `New appointment with ${appointment.patientName} on ${moment(appointment.createdAt).format('MMMM Do YYYY')} at ${appointment.time}`,

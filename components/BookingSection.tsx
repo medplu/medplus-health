@@ -4,26 +4,15 @@ import { View, Text, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react
 import moment from 'moment';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack, PayStackRef } from 'react-native-paystack-webview';
-import { Calendar, LocaleConfig } from 'react-native-calendars';
 import axios from 'axios';
 import Colors from './Shared/Colors';
-
-// Configure the calendar locale
-LocaleConfig.locales['en'] = {
-  monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-  monthNamesShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-  dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-  dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-  today: 'Today',
-};
-LocaleConfig.defaultLocale = 'en';
 
 const BookingSection: React.FC<{ doctorId: string; userId: string; consultationFee: number }> = ({
   doctorId,
   userId,
   consultationFee,
 }) => {
-  const [selectedDate, setSelectedDate] = useState<string>(moment().format('YYYY-MM-DD'));
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ id: string; time: string } | null>(null);
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<string>('');
@@ -96,7 +85,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         doctorId: doctorId, // Ensure correct doctorId
         userId: userId,
         patientName: patientName,
-        date: selectedDate,
+        date: moment(selectedDate).format('YYYY-MM-DD'),
         timeSlotId: selectedTimeSlot.id, // Include slot ID
         time: selectedTimeSlot.time,     // Include slot time
         status: 'pending',
@@ -185,7 +174,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   };
 
   const resetForm = () => {
-    setSelectedDate(moment().format('YYYY-MM-DD'));
+    setSelectedDate(new Date());
     setSelectedTimeSlot(null);
   };
 
@@ -201,27 +190,31 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     return acc;
   }, {});
 
+  const dateOptions = Array.from({ length: 7 }).map((_, i) => moment().add(i, 'days').toDate());
+
   return (
     <View style={styles.container}>
-      <Calendar
-        current={selectedDate}
-        minDate={moment().startOf('week').format('YYYY-MM-DD')}
-        maxDate={moment().endOf('week').format('YYYY-MM-DD')}
-        onDayPress={(day) => setSelectedDate(day.dateString)}
-        markedDates={{
-          ...markedDates,
-          [selectedDate]: { selected: true, marked: true, selectedColor: Colors.primary },
-        }}
-        theme={{
-          selectedDayBackgroundColor: Colors.primary,
-          todayTextColor: Colors.primary,
-          arrowColor: Colors.primary,
-        }}
+      <FlatList
+        horizontal
+        data={dateOptions}
+        keyExtractor={(item) => item.toISOString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => setSelectedDate(item)}
+            style={[
+              styles.dateButton,
+              selectedDate.toDateString() === item.toDateString() ? { backgroundColor: Colors.primary } : null,
+            ]}
+          >
+            <Text style={styles.dateText}>{moment(item).format('ddd, DD')}</Text>
+          </TouchableOpacity>
+        )}
+        showsHorizontalScrollIndicator={false}
       />
       <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
       <FlatList
         horizontal
-        data={groupedSlots[selectedDate] || []}
+        data={groupedSlots[moment(selectedDate).format('YYYY-MM-DD')] || []}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -272,6 +265,16 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#fff',
+  },
+  dateButton: {
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+    backgroundColor: '#f0f0f0',
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#000',
   },
   dateTitle: {
     fontSize: 18,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Avatar, Icon } from 'react-native-elements';
 import Colors from '../Shared/Colors';
 
@@ -7,8 +7,7 @@ interface Doctor {
   _id: string;
   firstName: string;
   lastName: string;
-  category: string;
-  availability: boolean;
+  profession: string;
   user: string;
   profileImage?: string;
 }
@@ -18,24 +17,24 @@ interface DoctorCardItemProps {
 }
 
 const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
-  const { firstName, lastName, category, availability, profileImage } = doctor;
+  const { firstName, lastName, profession, profileImage } = doctor;
 
   return (
-    <View style={styles.header}>
+    <View style={styles.profileContainer}>
       <Avatar
         rounded
         size="large"
-        source={{ uri: profileImage ? profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }}
+        source={{
+          uri: profileImage
+            ? profileImage
+            : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg',
+        }}
+        containerStyle={styles.avatar}
       />
-      <View style={styles.headerText}>
-        <Text style={styles.doctorName}>{firstName} {lastName}</Text>
-        <Text style={styles.categoryName}>{category}</Text>
-        <View style={styles.availabilityContainer}>
-          <View style={[styles.availabilityDot, { backgroundColor: availability ? Colors.success : Colors.error }]} />
-          <Text style={[styles.availabilityText, { color: availability ? Colors.success : Colors.error }]}>
-            {availability ? 'Available' : 'Not Available'}
-          </Text>
-        </View>
+      <View style={styles.profileInfo}>
+        <Text style={styles.doctorName}>{`${firstName} ${lastName}`}</Text>
+        <Text style={styles.categoryName}>{profession}</Text>
+      
       </View>
       <Icon name="heart" type="font-awesome" color={Colors.primary} />
     </View>
@@ -43,35 +42,33 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
 };
 
 const styles = StyleSheet.create({
-  header: {
+  profileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: Colors.lightGray,
-    borderRadius: 10,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: 15,
+    backgroundColor: Colors.ligh_gray,
+    borderRadius: 8,
+    marginBottom: 20,
   },
-  headerText: {
+  avatar: {
+    marginRight: 15,
+  },
+  profileInfo: {
     flex: 1,
-    marginLeft: 10,
   },
   doctorName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
   },
   categoryName: {
     fontSize: 16,
     color: Colors.gray,
+    marginVertical: 4,
   },
   availabilityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
   },
   availabilityDot: {
     width: 10,
@@ -81,6 +78,7 @@ const styles = StyleSheet.create({
   },
   availabilityText: {
     fontSize: 14,
+    fontWeight: '500',
   },
 });
 
