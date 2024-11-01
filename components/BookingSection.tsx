@@ -31,6 +31,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const [schedule, setSchedule] = useState<{ date: string; startTime: string; endTime: string; isBooked: boolean; _id: string }[]>([]);
   const [appointmentId, setAppointmentId] = useState<string | null>(null); // Track appointment ID
   const paystackWebViewRef = useRef<PayStackRef>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false); // Add isSubmitting state
 
   // Access userEmail and patientName from Redux
   const userEmail = useSelector((state) => state.user.email);
@@ -59,10 +60,14 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
       return;
     }
 
-    let isSubmitting = false;
-    let showAlert = false;
-    let alertMessage = '';
-    let alertType: 'success' | 'error' = 'success';
+    if (isSubmitting) {
+      return; // Prevent multiple submissions
+    }
+
+    setIsSubmitting(true);
+    setShowAlert(false);
+    setAlertMessage('');
+    setAlertType('success');
     let subaccountCode: string | null = null;
 
     const fetchSubaccountCode = async (userId: string) => {
@@ -81,7 +86,6 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 
     await fetchSubaccountCode(userId); // Ensure subaccountCode is fetched before booking
 
-    isSubmitting = true;
     try {
       if (!subaccountCode || !userEmail) {
         throw new Error('Missing subaccount code or user email.');
@@ -89,11 +93,12 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 
       // Create appointment
       const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', {
-        doctorId: userId,
+        doctorId: doctorId, // Ensure correct doctorId
         userId: userId,
         patientName: patientName,
         date: selectedDate,
-        time: selectedTimeSlot.time,
+        timeSlotId: selectedTimeSlot.id, // Include slot ID
+        time: selectedTimeSlot.time,     // Include slot time
         status: 'pending',
       });
 
@@ -108,9 +113,13 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         'https://api.paystack.co/transaction/initialize',
         {
           email: userEmail,
-          amount: consultationFee * 100,
+          amount: consultationFee * 100, // Convert to smallest currency unit
           subaccount: subaccountCode,
           currency: 'KES',
+          metadata: {
+            appointmentId: newAppointmentId, // Include appointmentId in metadata
+            timeSlotId: selectedTimeSlot.id,  // Include timeSlotId in metadata
+          },
         },
         {
           headers: {
@@ -128,13 +137,13 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         throw new Error('Payment initialization failed');
       }
 
-      isSubmitting = false;
+      setIsSubmitting(false);
     } catch (error) {
       console.error('Failed to book appointment:', error);
       setAlertMessage('Failed to book appointment. Please try again.');
       setAlertType('error');
       setShowAlert(true);
-      isSubmitting = false;
+      setIsSubmitting(false);
     }
   };
 
@@ -152,6 +161,9 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
       await axios.patch(`https://medplus-health.onrender.com/api/appointments/confirm/${appointmentId}`, {
         status: 'confirmed',
       });
+
+      // Optionally, refetch the schedule to update booked slots
+      fetchSchedule();
     } catch (error) {
       console.error('Error updating appointment status:', error);
       setAlertMessage('Failed to update appointment status.');
@@ -225,8 +237,8 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
         )}
         showsHorizontalScrollIndicator={false}
       />
-      <TouchableOpacity onPress={handleBookPress} style={styles.bookButton}>
-        <Text style={styles.bookButtonText}>Book Appointment</Text>
+      <TouchableOpacity onPress={handleBookPress} style={styles.bookButton} disabled={isSubmitting}>
+        <Text style={styles.bookButtonText}>{isSubmitting ? 'Booking...' : 'Book Appointment'}</Text>
       </TouchableOpacity>
       <AwesomeAlert
         show={showAlert}
@@ -241,7 +253,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
      <Paystack
       paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
       billingEmail={userEmail}
-      amount={consultationFee}
+      amount={consultationFee * 100} // Ensure amount is in smallest currency unit
       currency='KES'
       onCancel={handlePaymentCancel}
       onSuccess={handlePaymentSuccess}

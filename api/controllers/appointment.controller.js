@@ -53,10 +53,10 @@ exports.getAppointmentsByUser = async (req, res) => {
 };
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, patientName, status } = req.body;
+  const { doctorId, userId, patientName, status, timeSlotId, time } = req.body;
 
   try {
-      if (!doctorId || !userId || !patientName || !status) {
+      if (!doctorId || !userId || !patientName || !status || !timeSlotId || !time) {
           return res.status(400).json({ error: 'Missing required fields' });
       }
 
@@ -78,14 +78,33 @@ exports.bookAppointment = async (req, res) => {
       }
       await client.save();
 
+      // Check if the time slot is already booked
+      const schedule = await Schedule.findOne({ 'slots._id': timeSlotId, doctorId });
+      if (!schedule) {
+          return res.status(404).json({ error: 'Time slot not found for this doctor' });
+      }
+
+      const slot = schedule.slots.id(timeSlotId);
+      if (slot.isBooked) {
+          return res.status(400).json({ error: 'Time slot is already booked' });
+      }
+
       const newAppointment = new Appointment({
           doctorId,
           userId,
           patientName,
-          status
+          status,
+          timeSlotId, // Add timeSlotId to appointment
+          time,       // Add time to appointment
       });
 
       await newAppointment.save();
+
+      // Mark the slot as booked using positional operator
+      await Schedule.updateOne(
+        { 'slots._id': timeSlotId, doctorId },
+        { $set: { 'slots.$.isBooked': true } }
+      );
 
       const io = req.app.get("socketio");
       // Emit the appointment to both doctor and patient
@@ -108,7 +127,7 @@ exports.confirmAppointment = async (req, res) => {
   console.log('Received appointmentId:', appointmentId); // Log the appointmentId
 
   try {
-    const appointment = await Appointment.findById(appointmentId);
+    const appointment = await Appointment.findById(appointmentId).populate('timeSlotId'); // Populate timeSlotId
 
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
