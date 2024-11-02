@@ -3,23 +3,23 @@ const mongoose = require('mongoose');
 const patientSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true
+        required: false
     },
     age: {
         type: Number,
-        required: true
+        required: false
     },
     address: {
         type: String,
-        required: true
+        required: false
     },
     phone: {
         type: String,
-        required: true
+        required: false
     },
     email: {
         type: String,
-        required: true
+        required: false
     },
     medicalHistory: {
         type: [String], // Change to array of strings
