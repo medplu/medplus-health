@@ -8,12 +8,7 @@ const appointmentSchema = new mongoose.Schema({
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Client',  // Reference to the Client model
-    required: true,
-  },
-  patientId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Patient',
+    ref: 'User',
     required: true,
   },
   patientName: {
@@ -25,12 +20,12 @@ const appointmentSchema = new mongoose.Schema({
     enum: ['pending', 'booked', 'confirmed', 'completed', 'cancelled'],
     default: 'pending',
   },
-  timeSlotId: {
+  timeSlotId: { // Corrected reference to Schedule model
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'Schedule',
   },
-  time: {
+  time: { // New field to store the time range of the slot
     type: String,
     required: true,
   },

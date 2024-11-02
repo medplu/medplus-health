@@ -3,6 +3,7 @@ const Appointment = require('../models/appointment.model');
 const Schedule = require('../models/schedule.model');
 const Client = require('../models/client.model'); // Import the Client model
 const Patient = require('../models/patient.model'); // Import the Patient model
+const User = require('../models/user.model'); // Import the User model
 const moment = require('moment');
 
 // Fetch all appointments for a doctor
