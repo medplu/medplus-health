@@ -24,6 +24,11 @@ const patientSchema = new mongoose.Schema({
     medicalHistory: {
         type: [String], // Change to array of strings
         required: false
+    },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     }
 }, {
     timestamps: true

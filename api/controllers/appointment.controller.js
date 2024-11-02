@@ -67,7 +67,7 @@ exports.bookAppointment = async (req, res) => {
     }
 
     const user = await User.findById(userId);
-    const finalPatientName = patientName || user.name;
+    const finalPatientName = patientName || `${user.firstName} ${user.lastName}`;
     const finalAge = patientDetails.age || user.age;
     const finalEmail = patientDetails.email || user.email;
 
@@ -86,14 +86,15 @@ exports.bookAppointment = async (req, res) => {
     }
     await client.save();
 
-    let patient = await Patient.findOne({ email: finalEmail });
+    let patient = await Patient.findOne({ userId });
     if (!patient) {
       patient = new Patient({
         name: finalPatientName,
         age: finalAge,
         phone: patientDetails.phone,
         email: finalEmail,
-        medicalHistory: [] // Initialize medicalHistory to an empty array
+        medicalHistory: [], // Initialize medicalHistory to an empty array
+        userId: userId
       });
       await patient.save();
     }
