@@ -22,7 +22,7 @@ const patientSchema = new mongoose.Schema({
         required: true
     },
     medicalHistory: {
-        type: String,
+        type: [String], // Change to array of strings
         required: false
     }
 }, {
