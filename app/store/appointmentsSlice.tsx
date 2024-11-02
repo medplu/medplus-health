@@ -8,6 +8,12 @@ interface Appointment {
   status: string;
   createdAt: string;
   updatedAt: string;
+  patient: {
+    name: string;
+    age: number;
+    gender: string;
+    // Add other patient details as needed
+  };
 }
 
 interface Notification {

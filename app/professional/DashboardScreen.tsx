@@ -104,8 +104,16 @@ const DashboardScreen: React.FC = () => {
                                 upcomingAppointments.map((appointment) => (
                                     <View key={appointment._id} style={styles.appointmentCard}>
                                         <View style={styles.appointmentDetails}>
-                                            <Text style={styles.patientName}>{appointment.patientName}</Text>
-                                            <Text style={styles.appointmentTime}>{appointment.date}</Text>
+                                            {appointment.patient ? (
+                                                <>
+                                                    <Text style={styles.patientName}>{appointment.patient.name}</Text>
+                                                    <Text style={styles.appointmentTime}>{appointment.date}</Text>
+                                                    <Text style={styles.patientDetails}>Age: {appointment.patient.age}</Text>
+                                                    <Text style={styles.patientDetails}>Gender: {appointment.patient.gender}</Text>
+                                                </>
+                                            ) : (
+                                                <Text style={styles.patientName}>Patient details not available</Text>
+                                            )}
                                         </View>
                                         <TouchableOpacity
                                             style={styles.viewButton}
@@ -319,6 +327,10 @@ const styles = StyleSheet.create({
     errorText: {
         fontSize: 18,
         color: 'red',
+    },
+    patientDetails: {
+        fontSize: 14,
+        color: '#555',
     },
 });
 
