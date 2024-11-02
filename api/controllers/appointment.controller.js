@@ -62,17 +62,23 @@ exports.bookAppointment = async (req, res) => {
   const { doctorId, userId, patientName, status, timeSlotId, time, patientDetails } = req.body;
 
   try {
-      if (!doctorId || !userId || !patientName || !status || !timeSlotId || !time || !patientDetails) {
+      if (!doctorId || !userId || !status || !timeSlotId || !time) {
           return res.status(400).json({ error: 'Missing required fields' });
       }
+
+      // Fetch user details if not provided
+      const user = await User.findById(userId);
+      const finalPatientName = patientName || user.name;
+      const finalAge = patientDetails.age || user.age;
+      const finalEmail = patientDetails.email || user.email;
 
       // Check if the client already exists
       let client = await Client.findOne({ user: userId });
       if (!client) {
           // Create a new client if not exists
           client = new Client({
-              firstName: patientName.split(' ')[0],
-              lastName: patientName.split(' ').slice(1).join(' '),
+              firstName: finalPatientName.split(' ')[0],
+              lastName: finalPatientName.split(' ').slice(1).join(' '),
               user: userId,
               doctors: [doctorId]  // Add the doctorId to the doctors array
           });
@@ -85,10 +91,16 @@ exports.bookAppointment = async (req, res) => {
       await client.save();
 
       // Check if the patient already exists
-      let patient = await Patient.findOne({ email: patientDetails.email });
+      let patient = await Patient.findOne({ email: finalEmail });
       if (!patient) {
           // Create a new patient if not exists
-          patient = new Patient(patientDetails);
+          patient = new Patient({
+              name: finalPatientName,
+              age: finalAge,
+              phone: patientDetails.phone,
+              email: finalEmail,
+              medicalHistory: [] // Initialize medicalHistory to an empty array
+          });
           await patient.save();
       }
 
@@ -107,7 +119,7 @@ exports.bookAppointment = async (req, res) => {
           doctorId,
           userId,
           patientId: patient._id, // Add patientId to appointment
-          patientName,
+          patientName: finalPatientName,
           status,
           timeSlotId, // Add timeSlotId to appointment
           time,       // Add time to appointment
