@@ -194,6 +194,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Book an Appointment</Text>
       <FlatList
         horizontal
         data={dateOptions}
@@ -265,6 +266,13 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: Colors.primary,
   },
   dateButton: {
     padding: 10,

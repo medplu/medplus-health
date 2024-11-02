@@ -110,9 +110,7 @@ const DoctorProfile: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-              <FontAwesome name="arrow-left" size={24} color="black" />
-            </TouchableOpacity>
+      
       <FlatList
         contentContainerStyle={styles.scrollViewContent}
         data={[doctor]}

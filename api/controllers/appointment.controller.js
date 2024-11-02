@@ -2,6 +2,7 @@ const mongoose = require('mongoose'); // Add mongoose import
 const Appointment = require('../models/appointment.model');
 const Schedule = require('../models/schedule.model');
 const Client = require('../models/client.model'); // Import the Client model
+const Patient = require('../models/patient.model'); // Import the Patient model
 const moment = require('moment');
 
 // Fetch all appointments for a doctor
@@ -9,7 +10,7 @@ exports.getAllAppointmentsByDoctor = async (req, res) => {
   const { doctorId } = req.params;
 
   try {
-    const appointments = await Appointment.find({ doctorId });
+    const appointments = await Appointment.find({ doctorId }).populate('patientId');
     res.status(200).json(appointments);
   } catch (error) {
     console.error('Error fetching appointments:', error);
@@ -27,20 +28,23 @@ exports.getAppointmentsByDoctor = async (req, res) => {
       doctorId,
       status: 'confirmed',
       date: { $gte: today.toDate() } // Filter for dates that are today or in the future
-    });
+    }).populate('patientId');
     res.status(200).json(appointments);
   } catch (error) {
     console.error('Error fetching appointments:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 // Fetch appointments by user ID
 exports.getAppointmentsByUser = async (req, res) => {
   const { userId } = req.params; // Get userId from request parameters
 
   try {
     // Fetch appointments for the given userId and select desired fields
-    const appointments = await Appointment.find({ userId }).select('doctorId userId patientName status timeSlotId time createdAt updatedAt');
+    const appointments = await Appointment.find({ userId })
+      .select('doctorId userId patientName status timeSlotId time createdAt updatedAt')
+      .populate('patientId');
 
     if (!appointments.length) {
       return res.status(404).json({ error: 'No appointments found for this user' });
@@ -52,12 +56,13 @@ exports.getAppointmentsByUser = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, patientName, status, timeSlotId, time } = req.body;
+  const { doctorId, userId, patientName, status, timeSlotId, time, patientDetails } = req.body;
 
   try {
-      if (!doctorId || !userId || !patientName || !status || !timeSlotId || !time) {
+      if (!doctorId || !userId || !patientName || !status || !timeSlotId || !time || !patientDetails) {
           return res.status(400).json({ error: 'Missing required fields' });
       }
 
@@ -79,6 +84,14 @@ exports.bookAppointment = async (req, res) => {
       }
       await client.save();
 
+      // Check if the patient already exists
+      let patient = await Patient.findOne({ email: patientDetails.email });
+      if (!patient) {
+          // Create a new patient if not exists
+          patient = new Patient(patientDetails);
+          await patient.save();
+      }
+
       // Check if the time slot is already booked
       const schedule = await Schedule.findOne({ 'slots._id': timeSlotId, doctorId });
       if (!schedule) {
@@ -93,6 +106,7 @@ exports.bookAppointment = async (req, res) => {
       const newAppointment = new Appointment({
           doctorId,
           userId,
+          patientId: patient._id, // Add patientId to appointment
           patientName,
           status,
           timeSlotId, // Add timeSlotId to appointment
@@ -115,7 +129,7 @@ exports.bookAppointment = async (req, res) => {
           doctorId: doctorId // Notify the doctor
       });
 
-      res.status(201).json({ appointment: newAppointment, client });
+      res.status(201).json({ appointment: newAppointment, client, patient });
   } catch (error) {
       console.error('Error booking appointment:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -133,7 +147,7 @@ exports.confirmAppointment = async (req, res) => {
   }
 
   try {
-    const appointment = await Appointment.findById(appointmentId).populate('timeSlotId'); // Populate timeSlotId
+    const appointment = await Appointment.findById(appointmentId).populate('timeSlotId patientId'); // Populate timeSlotId and patientId
 
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
