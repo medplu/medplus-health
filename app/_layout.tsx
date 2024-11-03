@@ -19,7 +19,7 @@ const Layout = ({ user, isLoading }) => {
 
   useEffect(() => {
     // Set the bottom navigation bar color to match the screen background
-    const backgroundColor = '#FFFFFF'; // Set this to your desired background color
+    const backgroundColor = '#feffdf'; // Set this to your desired background color
     NavigationBar.setBackgroundColorAsync(backgroundColor);
     NavigationBar.setVisibilityAsync('visible'); // Make sure it's visible
 
