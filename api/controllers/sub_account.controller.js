@@ -28,42 +28,42 @@ exports.getSubaccountByProfessionalId = async (req, res) => {
   }
 };
 
-exports.createSubaccount = async (req, res) => {
-  const { professionalId, business_name, account_number, percentage_charge, settlement_bank, currency } = req.body;
+// exports.createSubaccount = async (req, res) => {
+//   const { professionalId, business_name, account_number, percentage_charge, settlement_bank, currency } = req.body;
 
-  try {
-    // Ensure that professionalId is a valid ObjectId before proceeding
-    if (!mongoose.Types.ObjectId.isValid(professionalId)) {
-      return res.status(400).json({ status: 'Failed', message: 'Invalid professional ID format' });
-    }
+//   try {
+//     // Ensure that professionalId is a valid ObjectId before proceeding
+//     if (!mongoose.Types.ObjectId.isValid(professionalId)) {
+//       return res.status(400).json({ status: 'Failed', message: 'Invalid professional ID format' });
+//     }
 
-    // Check if a subaccount already exists for this professional
-    const existingSubaccount = await Subaccount.findOne({ professional: professionalId });
-    if (existingSubaccount) {
-      return res.status(400).json({ status: 'Failed', message: 'Subaccount already exists for this professional' });
-    }
+//     // Check if a subaccount already exists for this professional
+//     const existingSubaccount = await Subaccount.findOne({ professional: professionalId });
+//     if (existingSubaccount) {
+//       return res.status(400).json({ status: 'Failed', message: 'Subaccount already exists for this professional' });
+//     }
 
-    // Generate a unique subaccount_code
-    const subaccount_code = uuidv4(); // Generates a unique identifier
+//     // Generate a unique subaccount_code
+//     const subaccount_code = uuidv4(); // Generates a unique identifier
 
-    // Create a new subaccount
-    const newSubaccount = new Subaccount({
-      professional: professionalId,
-      business_name,
-      account_number,
-      percentage_charge,
-      settlement_bank,
-      currency: currency || 'KES', // Default to 'KES' if currency not provided
-      subaccount_code, // Set the generated subaccount_code
-    });
+//     // Create a new subaccount
+//     const newSubaccount = new Subaccount({
+//       professional: professionalId,
+//       business_name,
+//       account_number,
+//       percentage_charge,
+//       settlement_bank,
+//       currency: currency || 'KES', // Default to 'KES' if currency not provided
+//       subaccount_code, // Set the generated subaccount_code
+//     });
 
-    // Save the new subaccount to the database
-    await newSubaccount.save();
+//     // Save the new subaccount to the database
+//     await newSubaccount.save();
 
-    // Return the created subaccount data
-    res.status(201).json({ status: 'Success', data: newSubaccount });
-  } catch (error) {
-    console.error('Error creating subaccount:', error);
-    res.status(500).json({ status: 'Failed', message: 'Internal server error' });
-  }
-};
+//     // Return the created subaccount data
+//     res.status(201).json({ status: 'Success', data: newSubaccount });
+//   } catch (error) {
+//     console.error('Error creating subaccount:', error);
+//     res.status(500).json({ status: 'Failed', message: 'Internal server error' });
+//   }
+// };
