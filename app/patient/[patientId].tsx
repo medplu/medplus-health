@@ -1,39 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux'; // Added useDispatch
+import { useSelector, useDispatch } from 'react-redux';
 import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Image, Animated } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as DocumentPicker from 'expo-document-picker';
 import { selectUser } from '../store/userSlice';
-import { selectAppointments } from '../store/appointmentsSlice';
-import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatientError } from '../store/patientSlice'; // Imported patient selectors and thunk
-import { AppDispatch } from '../store/configureStore'; // Import AppDispatch type
+import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatientError } from '../store/patientSlice';
+import { AppDispatch } from '../store/configureStore';
 
 interface RootState {
-    appointments: any; // Update with actual type
-    patient: any; // Update with actual type
-    // Add other state slices if necessary
+  patient: any; // Update with actual type
+  user: any; // Update with actual type
 }
 
 interface Patient {
-    _id: string;
-    name: string;
-    age: number;
-    gender: string;
-    image: string;
-    email: string;
-    prescriptions: string[];
-    diagnoses: string[];
-    treatment: string[];
-    labTests: string[];
-    // Add other patient details as needed
+  _id: string;
+  name: string;
+  age: number;
+  gender: string;
+  image: string;
+  email: string;
+  bio: string;
+  prescriptions: string[];
+  diagnoses: string[];
+  treatment: string[];
+  labTests: string[];
+  // Add other patient details as needed
 }
 
 const PatientDetails: React.FC = () => {
   const { patientId } = useLocalSearchParams();
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>(); // Initialize dispatch
+  const dispatch = useDispatch<AppDispatch>();
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
-  const fadeAnim = useState(new Animated.Value(0))[0]; // Initialize animated value
+  const fadeAnim = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -43,15 +41,11 @@ const PatientDetails: React.FC = () => {
     }).start();
   }, []);
 
-  // Retrieve patient data from Redux
+  // Retrieve patient and user data from Redux
   const patient = useSelector((state: RootState) => selectPatientById(state, patientId as string));
   const loading = useSelector(selectPatientLoading);
   const error = useSelector(selectPatientError);
-
-  // **Moved useSelector outside of JSX**
-  const relatedAppointments = useSelector((state: RootState) =>
-    state.appointments.appointments.filter((app: any) => app.patientId === patientId)
-  );
+  const user = useSelector(selectUser);
 
   useEffect(() => {
     if (patientId) {
@@ -82,62 +76,30 @@ const PatientDetails: React.FC = () => {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+      <View style={styles.header}>
+        <Image source={{ uri: user?.profileImage || 'placeholder_image_url' }} style={styles.userImage} />
+        <Text style={styles.userName}>{user?.name}</Text>
+      </View>
+
       <Text style={styles.title}>Patient Details</Text>
-      <Text style={styles.patientId}>Patient ID: {patientId}</Text>
 
-      <View style={styles.card}>
-        <View style={styles.profileSection}>
-          <Image source={{ uri: patient?.image }} style={styles.profileImage} />
-          <Text style={styles.profileText}>Name: {patient?.name}</Text>
-          <Text style={styles.profileText}>Age: {patient?.age}</Text>
-          <Text style={styles.profileText}>Gender: {patient?.gender}</Text>
-          <Text style={styles.profileText}>Email: {patient?.email}</Text>
-        </View>
+      <View style={styles.profileSection}>
+        <Image source={{ uri: patient?.image }} style={styles.profileImage} />
+        <Text style={styles.profileText}>Name: {patient?.name}</Text>
+        <Text style={styles.profileText}>Age: {patient?.age}</Text>
+        <Text style={styles.profileText}>Bio: {patient?.bio}</Text>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Consultation Options</Text>
-        <TouchableOpacity style={styles.optionButton} onPress={() => {/* Implement view medical history */}}>
-          <Text style={styles.optionButtonText}>View Medical History</Text>
+      <View style={styles.horizontalCardContainer}>
+        <TouchableOpacity style={styles.horizontalCard} onPress={() => router.push('/patient/MedicalHistory')}>
+          <Text style={styles.horizontalCardText}>Medical History</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.optionButton} onPress={() => {/* Implement take current history */}}>
-          <Text style={styles.optionButtonText}>Take Current History</Text>
+        <TouchableOpacity style={styles.horizontalCard} onPress={() => {/* Implement request labs/images */}}>
+          <Text style={styles.horizontalCardText}>Labs/Images</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.optionButton} onPress={() => {/* Implement request labs/images */}}>
-          <Text style={styles.optionButtonText}>Request Labs/Images</Text>
+        <TouchableOpacity style={styles.horizontalCard} onPress={() => {/* Implement refer to clinic */}}>
+          <Text style={styles.horizontalCardText}>Refer to Clinic</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.optionButton} onPress={() => {/* Implement refer to clinic */}}>
-          <Text style={styles.optionButtonText}>Refer to Clinic</Text>
-        </TouchableOpacity>
-      </View>
-
-      {patient ? ( // Display real patient data
-        <View style={styles.card}>
-          <View style={styles.profileSection}>
-            <Image source={{ uri: patient.image }} style={styles.profileImage} />
-            <Text style={styles.profileText}>Gender: {patient.gender}</Text>
-            <Text style={styles.profileText}>Email: {patient.email}</Text>
-          </View>
-        </View>
-      ) : (
-        <Text style={styles.noInfoText}>No patient information available.</Text>
-      )}
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Appointment Details</Text>
-        {/* Use the variable instead of calling useSelector here */}
-        <FlatList
-          data={relatedAppointments}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <View style={styles.appointmentCard}>
-              <Text style={styles.appointmentText}>Date: {item.date}</Text>
-              <Text style={styles.appointmentText}>Time: {item.time}</Text>
-              <Text style={styles.appointmentText}>Doctor: {item.doctorId}</Text> {/* Update as necessary */}
-            </View>
-          )}
-          ListEmptyComponent={<Text style={styles.noInfoText}>No appointments available.</Text>}
-        />
       </View>
 
       <View style={styles.card}>
@@ -178,17 +140,60 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#f0f4f7',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  userImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 8,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
   },
-  patientId: {
-    fontSize: 18,
-    color: '#333',
-    textAlign: 'center',
+  profileSection: {
+    alignItems: 'center',
     marginBottom: 16,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 8,
+  },
+  profileText: {
+    fontSize: 16,
+    color: '#555',
+    marginTop: 4,
+  },
+  horizontalCardContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 8,
+  },
+  horizontalCard: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginHorizontal: 4,
+    flex: 1,
+    alignItems: 'center',
+  },
+  horizontalCardText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
   },
   card: {
     backgroundColor: '#ffffff',
@@ -200,27 +205,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 3, // For Android shadow
-  },
-  profileSection: {
-    alignItems: 'center',
-  },
-  profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    marginBottom: 8,
-  },
-  profileText: {
-    fontSize: 16,
-    color: '#555',
-    marginTop: 4,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
+    elevation: 3,
   },
   segmentedControl: {
     flexDirection: 'row',
@@ -236,26 +221,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textDecorationLine: 'underline',
   },
-  appointmentCard: {
-    backgroundColor: '#e8f0fe',
-    borderRadius: 8,
-    padding: 12,
-    marginVertical: 4,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333',
   },
-  appointmentText: {
+  dataText: {
     fontSize: 14,
     color: '#333',
+    paddingVertical: 2,
   },
   noInfoText: {
     fontSize: 14,
     color: '#777',
     textAlign: 'center',
     marginTop: 8,
-  },
-  dataText: {
-    fontSize: 14,
-    color: '#333',
-    paddingVertical: 2,
   },
   loadingContainer: {
     flex: 1,
@@ -276,20 +257,6 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 8,
   },
-  optionButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginVertical: 8,
-  },
-  optionButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
 });
-
 
 export default PatientDetails;

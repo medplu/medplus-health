@@ -1,26 +1,26 @@
 import { StyleSheet, Text, View, Image } from 'react-native';
 import React, { useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const Index = () => {
-  const navigation = useNavigation();
+  const router = useRouter();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.navigate('Login'); // Navigate to the login screen after 3 seconds
-    }, 3000);
+      router.push('/login');
+    }, 10000); // Navigate to login screen after 3 seconds
 
-    return () => clearTimeout(timer); // Clear the timer if the component is unmounted
-  }, [navigation]);
+    return () => clearTimeout(timer);
+  }, [router]);
 
   return (
     <LinearGradient
-      colors={['#FFFFFF', '#E0E0E0']} // Updated gradient colors to shades of white
+      colors={['#4c669f', '#3b5998', '#192f6a']} // Updated gradient colors to a more medical-themed background
       style={styles.container}
     >
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <View style={styles.content}>
         <Image
           source={require('../assets/images/medical-symbol.png')} // Update the path to your logo image
@@ -47,15 +47,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
+    width: 120, // Adjust the width as needed
+    height: 120, // Adjust the height as needed
     marginBottom: 20,
+    borderRadius: 60, // Make the logo circular
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   companyName: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#333', // Darker color for better contrast
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    color: '#fff', // White color for better contrast
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 5,
   },

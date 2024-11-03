@@ -11,7 +11,23 @@ interface Patient {
   diagnoses: string[];
   treatment: string[];
   labTests: string[];
-  // Add other relevant fields as needed
+  name: string; // New field
+  medicalHistory: string[]; // New field
+  userId: string; // New field
+  createdAt: string; // New field
+  updatedAt: string; // New field
+  __v: number; // New field
+}
+
+interface MedicalHistory {
+  chiefComplaint: string;
+  historyOfPresentIllness: string;
+  pastMedicalHistory: string;
+  familyHistory: string;
+  socialHistory: string;
+  medications: string;
+  allergies: string;
+  reviewOfSystems: string;
 }
 
 // Define the PatientState interface
@@ -35,7 +51,7 @@ export const fetchPatientById = createAsyncThunk<
   { rejectValue: string }
 >('patient/fetchPatientById', async (patientId, thunkAPI) => {
   try {
-    const response = await fetch(`https://medplus-health.onrender.com/patients/${patientId}`);
+    const response = await fetch(`https://medplus-health.onrender.com/api/patients/${patientId}`);
     if (!response.ok) {
       return thunkAPI.rejectWithValue('Failed to fetch patient data.');
     }
@@ -43,6 +59,27 @@ export const fetchPatientById = createAsyncThunk<
     return data;
   } catch (error) {
     return thunkAPI.rejectWithValue('An error occurred while fetching patient data.');
+  }
+});
+
+export const saveMedicalHistory = createAsyncThunk<
+  void,
+  MedicalHistory,
+  { rejectValue: string }
+>('patient/saveMedicalHistory', async (medicalHistory, thunkAPI) => {
+  try {
+    const response = await fetch('https://medplus-health.onrender.com/api/medicalHistory', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(medicalHistory),
+    });
+    if (!response.ok) {
+      return thunkAPI.rejectWithValue('Failed to save medical history.');
+    }
+  } catch (error) {
+    return thunkAPI.rejectWithValue('An error occurred while saving medical history.');
   }
 });
 
@@ -64,6 +101,17 @@ const patientSlice = createSlice({
       .addCase(fetchPatientById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch patient data.';
+      })
+      .addCase(saveMedicalHistory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(saveMedicalHistory.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(saveMedicalHistory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to save medical history.';
       });
   },
 });

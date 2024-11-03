@@ -16,15 +16,19 @@ const DashboardScreen: React.FC = () => {
     const user = useSelector(selectUser); // Ensure 'selectUser' is correctly imported and defined
     const { appointments = [], loading, error } = useAppointments(); // Default to empty array
 
-    const handleViewPatient = (patient) => {
-        if (patient && patient._id) {
-            router.push({
-                pathname: `/patient/${patient._id}`,
-            });
+    const fetchPatientAppointments = (patientId: string) => {
+        return appointments.filter(appointment => appointment.patientId._id === patientId);
+    };
+
+    const handleViewPatient = (appointment) => {
+        if (appointment && appointment.patientId && appointment.patientId._id) {
+            const patientId = appointment.patientId._id; // Accessing the patient ID directly
+            router.push(`/patient/${patientId}`); // Pass only the patient ID
         } else {
-            console.error('Patient details are not available');
+            console.error('Patient ID is not available in the appointment data');
         }
     };
+    
 
     // Add handleAddToSchedule function
     const handleAddToSchedule = (appointmentId: string) => {
