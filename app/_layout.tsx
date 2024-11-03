@@ -11,12 +11,23 @@ import UnauthenticatedLayout from './UnauthenticatedLayout';
 import * as NavigationBar from 'expo-navigation-bar';
 
 const Layout = ({ user, isLoading }) => {
-  // Ensure to fetch the publishable key from environment variables
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {
     throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env');
   }
+
+  useEffect(() => {
+    // Set the bottom navigation bar color to match the screen background
+    const backgroundColor = '#FFFFFF'; // Set this to your desired background color
+    NavigationBar.setBackgroundColorAsync(backgroundColor);
+    NavigationBar.setVisibilityAsync('visible'); // Make sure it's visible
+
+    // Clean up function to reset navigation bar color on unmount
+    return () => {
+      NavigationBar.setBackgroundColorAsync('#FFFFFF'); // Reset to default or any other color
+    };
+  }, []);
 
   // Show loading state if the user data is being fetched
   if (isLoading) {
@@ -61,11 +72,6 @@ const LayoutWithProviders = ({ user, isLoading }) => {
   if (!publishableKey) {
     throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env');
   }
-
-  useEffect(() => {
-    // Hide the Android navigation bar
-    NavigationBar.setVisibilityAsync('hidden');
-  }, []);
 
   return (
     <ClerkProvider publishableKey={publishableKey}>
