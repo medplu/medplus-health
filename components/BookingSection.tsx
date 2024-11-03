@@ -232,11 +232,20 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
             }}
             style={[
               styles.slotButton,
-              item.isBooked ? { backgroundColor: Colors.primary } : { backgroundColor: Colors.LIGHT_GRAY },
-              selectedTimeSlot && selectedTimeSlot.id === item._id ? { borderColor: Colors.primary, borderWidth: 2 } : {},
+              item.isBooked ? { backgroundColor: Colors.SECONDARY } : { backgroundColor: Colors.goofy },
+              selectedTimeSlot && selectedTimeSlot.id === item._id
+                ? { borderColor: Colors.SECONDARY, borderWidth: 2, backgroundColor: Colors.selectedBackground }
+                : {},
             ]}
           >
-            <Text style={styles.slotText}>
+            <Text
+              style={[
+                styles.slotText,
+                selectedTimeSlot && selectedTimeSlot.id === item._id
+                  ? { color: Colors.selectedText }
+                  : {},
+              ]}
+            >
               {item.isBooked ? 'Booked' : `${item.startTime} - ${item.endTime}`}
             </Text>
           </TouchableOpacity>
@@ -302,7 +311,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   slotText: {
-    color: Colors.SECONDARY,
+    color: Colors.primary,
   },
   bookButton: {
     backgroundColor: Colors.SECONDARY,
@@ -312,7 +321,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   bookButtonText: {
-    color: Colors.SECONDARY,
+    color: Colors.primary,
     fontSize: 18,
   },
 });

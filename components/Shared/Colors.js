@@ -8,7 +8,7 @@ export default {
     ligh_gray: '#feffdf',
     lit: '#FBFF8F',
     light_gray: '#feffdf',
-    green: '#03fc62',
+    selectedBackground: '#91d690',
     gray: '#a6a4a4',
     goofy: '#8bffff',
     background: '#F8F9FA', // Background color used in scrollContainer
