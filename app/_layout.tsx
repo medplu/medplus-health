@@ -47,7 +47,7 @@ const Layout = ({ user, isLoading }) => {
     <SafeAreaView style={{ flex: 1 }}>
       <StatusBar barStyle="dark-content" />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+       
         <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
         <Stack.Screen name="clinics/index" options={{ title: 'Clinics', headerShown: true }} />
         <Stack.Screen name="clinics/[name]" options={{ title: '', headerShown: false }} />
