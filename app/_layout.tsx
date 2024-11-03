@@ -1,4 +1,3 @@
-// src/app/_layout.tsx
 import { StyleSheet, SafeAreaView, StatusBar, Text } from 'react-native';
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
@@ -9,7 +8,7 @@ import { store, persistor } from './store/configureStore'; // Adjust the path ba
 import { ScheduleProvider } from './context/ScheduleContext'; // Adjust the path based on your project structure
 import UnauthenticatedLayout from './UnauthenticatedLayout';
 import * as NavigationBar from 'expo-navigation-bar';
-import { useNavigationState } from '@react-navigation/native';
+
 const Layout = ({ user, isLoading }) => {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -17,32 +16,17 @@ const Layout = ({ user, isLoading }) => {
     throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env');
   }
 
-  const currentRouteName = useNavigationState(state => state.routes[state.index].name);
-  
-
   useEffect(() => {
-    let backgroundColor = '#191654'; // Default color
+    // Set the bottom navigation bar to transparent or translucent
+    NavigationBar.setBackgroundColorAsync('rgba(0, 0, 0, 0)'); // Fully transparent
+    NavigationBar.setVisibilityAsync('visible'); // Make sure it's visible
 
-    // Set background color based on the current route name
-    switch (true) {
-      case currentRouteName.startsWith('client/tabs'):
-        backgroundColor = '#feffdf'; // Change this color as needed
-        break;
-      case currentRouteName.startsWith('doctor/index'):
-        backgroundColor = '#e0e0e0'; // Another color for a different screen
-        break;
-      // Add more cases for different screens as needed
-      default:
-        backgroundColor = '#feffdf'; // Default color
-    }
-
-    NavigationBar.setBackgroundColorAsync(backgroundColor);
-    NavigationBar.setVisibilityAsync('visible');
-
+    // Clean up function to reset navigation bar color on unmount
     return () => {
-      NavigationBar.setBackgroundColorAsync('#FFFFFF'); // Reset on unmount
+      NavigationBar.setBackgroundColorAsync('#FFFFFF'); // Reset to default or any other color
     };
-  }, [currentRouteName]);
+  }, []);
+
   // Show loading state if the user data is being fetched
   if (isLoading) {
     return (
