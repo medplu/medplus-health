@@ -111,24 +111,15 @@ const TransactionScreen: React.FC = () => {
         return;
       }
 
-      const { subaccount_code, ...payload } = subaccountData; // Exclude subaccount_code from payload
       const subaccountPayload = {
-        ...payload,
+        ...subaccountData,
         professionalId,
         percentage_charge: '10', // Set default percentage charge to 10%
       };
 
       const response = await axios.post('https://medplus-health.onrender.com/api/payment/create-subaccount', subaccountPayload);
-      if (response.data.status === 'Success') {
-        setSubaccountData(prevData => ({
-          ...prevData,
-          subaccount_code: response.data.data.subaccount_code, // Set subaccount_code from response
-        }));
-        Alert.alert('Subaccount Creation', 'Subaccount created successfully.');
-        setShowSubaccountModal(false);
-      } else {
-        Alert.alert('Subaccount Creation Failed', 'There was an error creating the subaccount.');
-      }
+      Alert.alert('Subaccount Creation', 'Subaccount created successfully.');
+      setShowSubaccountModal(false);
     } catch (error) {
       console.error('Error creating subaccount:', error.response ? error.response.data : error.message);
       Alert.alert('Subaccount Creation Failed', 'There was an error creating the subaccount.');

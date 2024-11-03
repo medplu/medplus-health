@@ -185,9 +185,9 @@ exports.handlePaymentWebhook = async (req, res) => {
 
 // New method to create a subaccount
 exports.createSubaccount = async (req, res) => {
-    const { business_name, settlement_bank, account_number, percentage_charge, userId } = req.body;
+    const { business_name, settlement_bank, account_number, percentage_charge, professionalId } = req.body;
 
-    if (!business_name || !settlement_bank || !account_number || !percentage_charge || !userId) {
+    if (!business_name || !settlement_bank || !account_number || !percentage_charge || !professionalId) {
         return res.status(400).json({ status: 'Failed', message: 'Invalid input data. Business name, settlement bank, account number, percentage charge, and userId are required.' });
     }
 
@@ -199,7 +199,7 @@ exports.createSubaccount = async (req, res) => {
             settlement_bank,
             account_number,
             percentage_charge,
-            userId, // Include userId in the subaccount data
+            professionalId, // Include professionalId in the subaccount data
         };
 
         console.log('Subaccount data being sent:', subaccountData);
