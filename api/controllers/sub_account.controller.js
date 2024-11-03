@@ -5,6 +5,10 @@ const { v4: uuidv4 } = require('uuid'); // Import UUID for generating unique sub
 exports.getSubaccountByProfessionalId = async (req, res) => {
   let { professionalId } = req.params;
 
+  // Log the entire request object for debugging
+  console.log('Request params:', req.params);
+  console.log('Request URL:', req.originalUrl);
+
   try {
     // Log the received professionalId for debugging
     console.log('Received professionalId:', professionalId);

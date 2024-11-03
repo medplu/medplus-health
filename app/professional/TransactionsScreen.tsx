@@ -71,6 +71,9 @@ const TransactionScreen: React.FC = () => {
         return;
       }
 
+      // Log the professionalId for debugging
+      console.log('Fetching subaccount info for professionalId:', professionalId);
+
       const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${professionalId}`);
       if (response.data.status === 'Success') {
         setSubaccountData(response.data.data);
