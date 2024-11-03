@@ -21,13 +21,17 @@ const DashboardScreen: React.FC = () => {
     };
 
     const handleViewPatient = (appointment) => {
-        if (appointment && appointment.patientId && appointment.patientId._id) {
-            const patientId = appointment.patientId._id; // Accessing the patient ID directly
-            router.push(`/patient/${patientId}`); // Pass only the patient ID
+        console.log('Received appointment data:', appointment); // Log the entire appointment object
+    
+        // Access the patient ID directly from the appointment object
+        if (appointment && appointment._id) {
+            const patientId = appointment._id; // Use the correct property to get the ID
+            router.push(`/patient/${patientId}`); // Navigate to the patient page
         } else {
-            console.error('Patient ID is not available in the appointment data');
+            console.error('Patient ID is not available in the appointment data', appointment);
         }
     };
+    
     
 
     // Add handleAddToSchedule function
