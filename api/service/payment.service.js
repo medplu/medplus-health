@@ -160,7 +160,7 @@ class PaymentService {
                                 settlement_bank: response.data.settlement_bank,
                                 currency: response.data.currency,
                                 subaccount_code: response.data.subaccount_code,
-                                user: data.userId, // Reference userId from the incoming data
+                                professional: data.professionalId, // Changed from 'user' to 'professional'
                             };
     
                             // Save subaccount data to the database
