@@ -27,7 +27,7 @@ const Layout = () => {
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
             <ScheduleProvider>
-              <SafeAreaView style={{ flex: 1, paddingTop: StatusBar.currentHeight, backgroundColor: '#feffdf' }}>
+              <SafeAreaView style={{ flex: 1, paddingTop: StatusBar.currentHeight, backgroundColor: 'transparent' }}>
                 <StatusBar backgroundColor="#feffdf" barStyle="dark-content" />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -39,12 +39,12 @@ const Layout = () => {
                   <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '', headerShown: false }} />
                   <Stack.Screen name="hospital/index" options={{ title: '', headerShown: false }} />
                   <Stack.Screen name="hospital/[id]" options={{ title: '', headerShown: false }} />
-                  <Stack.Screen name="student/index" options={{ title: 'Student', headerShown: true }} />
-                  <Stack.Screen name="doctor/index" options={{ title: 'Doctor', headerShown: true }} />
+                  <Stack.Screen name="student/index" options={{ title: 'Student', headerShown: false }} />
+                  <Stack.Screen name="doctor/index" options={{ title: 'Doctor', headerShown: false }} />
                   <Stack.Screen name="doctor/[doctorId]" options={{ title: 'Doctor Booking', headerShown: true }} />
                   <Stack.Screen name="alldoctors/index" options={{ title: 'All Doctors', headerShown: true }} />
-                  <Stack.Screen name="ClinicDoctorsList" options={{ title: 'Clinic Doctors List', headerShown: true }} />
-                  <Stack.Screen name="patient/[patientId]" options={{ title: 'Patient Profile', headerShown: true }} />
+                  <Stack.Screen name="ClinicDoctorsList" options={{ title: 'Clinic Doctors List', headerShown: false }} />
+                  <Stack.Screen name="patient/[patientId]" options={{ title: 'Patient Profile', headerShown: false }} />
                   <Stack.Screen name="[missing]" options={{ title: '404', headerShown: true }} />
                 </Stack>
               </SafeAreaView>
