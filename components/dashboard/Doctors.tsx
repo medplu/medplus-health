@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
   consultationFee: {
     fontSize: 16,
-    color: Colors.green,
+    color: Colors.PRIMARY,
     textAlign: 'right',
   },
   button: {
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   consultButton: {
-    backgroundColor: Colors.GREEN,
+    backgroundColor: Colors.goofy,
     alignSelf: 'center',
   },
   buttonText: {

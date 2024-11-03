@@ -9,6 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 import Colors from '@/components/Shared/Colors';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context'; // Import SafeAreaView
+import { Ionicons } from '@expo/vector-icons'; // Add Ionicons import
 
 const FullScreenSearch: React.FC = () => {
     const router = useRouter();
@@ -44,6 +45,12 @@ const FullScreenSearch: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Ionicons name="arrow-back" size={24} color="black" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Search</Text>
+            </View>
             <Searchbar
                 placeholder="Search Doctors or Clinics"
                 onChangeText={handleSearch}
@@ -197,6 +204,22 @@ const styles = StyleSheet.create({
         color: Colors.GREEN,
         fontWeight: 'bold',
         marginTop: 8,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginLeft: 10,
     },
 });
 
