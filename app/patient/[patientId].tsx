@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Image, Animated, TextInput, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Image, TextInput, Modal, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { selectUser } from '../store/userSlice';
 import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatientError } from '../store/patientSlice';
@@ -19,15 +19,6 @@ const PatientDetails: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [newEntry, setNewEntry] = useState({ type: '', description: '', referral: '' });
-  const fadeAnim = useState(new Animated.Value(0))[0];
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  }, []);
 
   const patient = useSelector((state: RootState) => selectPatientById(state, patientId as string));
   const loading = useSelector(selectPatientLoading);
@@ -73,7 +64,7 @@ const PatientDetails: React.FC = () => {
   }
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <View style={styles.container}>
       <View style={styles.profileSection}>
         <Image 
           source={{ uri: patient?.image || 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }} 
@@ -152,7 +143,7 @@ const PatientDetails: React.FC = () => {
           <Button title="Cancel" onPress={() => setModalVisible(false)} />
         </View>
       </Modal>
-    </Animated.View>
+    </View>
   );
 };
 
@@ -278,4 +269,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PatientDetails;
+export default PatientDetails
