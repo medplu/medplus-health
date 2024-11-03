@@ -9,7 +9,7 @@ import { store, persistor } from './store/configureStore'; // Adjust the path ba
 import { ScheduleProvider } from './context/ScheduleContext'; // Adjust the path based on your project structure
 import UnauthenticatedLayout from './UnauthenticatedLayout';
 import * as NavigationBar from 'expo-navigation-bar';
-
+import { useNavigationState } from '@react-navigation/native';
 const Layout = ({ user, isLoading }) => {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -17,18 +17,32 @@ const Layout = ({ user, isLoading }) => {
     throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env');
   }
 
+  const currentRouteName = useNavigationState(state => state.routes[state.index].name);
+  
+
   useEffect(() => {
-    // Set the bottom navigation bar color to match the screen background
-    const backgroundColor = '#feffdf'; // Set this to your desired background color
+    let backgroundColor = '#191654'; // Default color
+
+    // Set background color based on the current route name
+    switch (true) {
+      case currentRouteName.startsWith('client/tabs'):
+        backgroundColor = '#feffdf'; // Change this color as needed
+        break;
+      case currentRouteName.startsWith('doctor/index'):
+        backgroundColor = '#e0e0e0'; // Another color for a different screen
+        break;
+      // Add more cases for different screens as needed
+      default:
+        backgroundColor = '#feffdf'; // Default color
+    }
+
     NavigationBar.setBackgroundColorAsync(backgroundColor);
-    NavigationBar.setVisibilityAsync('visible'); // Make sure it's visible
+    NavigationBar.setVisibilityAsync('visible');
 
-    // Clean up function to reset navigation bar color on unmount
     return () => {
-      NavigationBar.setBackgroundColorAsync('#FFFFFF'); // Reset to default or any other color
+      NavigationBar.setBackgroundColorAsync('#FFFFFF'); // Reset on unmount
     };
-  }, []);
-
+  }, [currentRouteName]);
   // Show loading state if the user data is being fetched
   if (isLoading) {
     return (
