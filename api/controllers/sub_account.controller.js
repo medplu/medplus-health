@@ -3,9 +3,12 @@ const Subaccount = require('../models/sub_account.model');
 const { v4: uuidv4 } = require('uuid'); // Import UUID for generating unique subaccount codes
 
 exports.getSubaccountByProfessionalId = async (req, res) => {
-  const { professionalId } = req.params;
+  let { professionalId } = req.params;
 
   try {
+    // Log the received professionalId for debugging
+    console.log('Received professionalId:', professionalId);
+
     // Ensure that professionalId is a valid ObjectId before proceeding
     if (!mongoose.Types.ObjectId.isValid(professionalId)) {
       return res.status(400).json({ status: 'Failed', message: 'Invalid professional ID format' });
@@ -20,8 +23,22 @@ exports.getSubaccountByProfessionalId = async (req, res) => {
       return res.status(404).json({ status: 'Failed', message: 'Subaccount not found' });
     }
 
-    // Return the found subaccount data
-    res.status(200).json({ status: 'Success', data: subaccount });
+    // Ensure the subaccount data includes the necessary fields
+    res.status(200).json({ 
+      status: 'Success', 
+      data: {
+        id: subaccount._id,
+        business_name: subaccount.business_name,
+        account_number: subaccount.account_number,
+        percentage_charge: subaccount.percentage_charge,
+        settlement_bank: subaccount.settlement_bank,
+        currency: subaccount.currency,
+        subaccount_code: subaccount.subaccount_code,
+        professional: subaccount.professional,
+        createdAt: subaccount.createdAt,
+        updatedAt: subaccount.updatedAt
+      } 
+    });
   } catch (error) {
     console.error('Error fetching subaccount:', error);
     res.status(500).json({ status: 'Failed', message: 'Internal server error' });
