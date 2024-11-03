@@ -1,5 +1,5 @@
 // src/app/_layout.tsx
-import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { StyleSheet, SafeAreaView, StatusBar, Text } from 'react-native';
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
@@ -7,9 +7,55 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store/configureStore'; // Adjust the path based on your project structure
 import { ScheduleProvider } from './context/ScheduleContext'; // Adjust the path based on your project structure
+import UnauthenticatedLayout from './UnauthenticatedLayout';
 import * as NavigationBar from 'expo-navigation-bar';
 
-const Layout = () => {
+const Layout = ({ user, isLoading }) => {
+  // Ensure to fetch the publishable key from environment variables
+  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+  if (!publishableKey) {
+    throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env');
+  }
+
+  // Show loading state if the user data is being fetched
+  if (isLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <StatusBar barStyle="dark-content" />
+        <Text>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // Show UnauthenticatedLayout if the user is not logged in
+  if (!user) {
+    return <UnauthenticatedLayout />;
+  }
+
+  // If user is authenticated, render the authenticated layout with different screens
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar barStyle="dark-content" />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
+        <Stack.Screen name="clinics/index" options={{ title: 'Clinics', headerShown: true }} />
+        <Stack.Screen name="clinics/[name]" options={{ title: '', headerShown: false }} />
+        <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '', headerShown: false }} />
+        <Stack.Screen name="hospital/index" options={{ title: '', headerShown: false }} />
+        <Stack.Screen name="hospital/[id]" options={{ title: '', headerShown: false }} />
+        <Stack.Screen name="student/index" options={{ title: 'Student', headerShown: true }} />
+        <Stack.Screen name="doctor/index" options={{ title: 'Doctor', headerShown: true }} />
+        <Stack.Screen name="doctor/[doctorId]" options={{ title: 'Doctor Booking', headerShown: true }} />
+        <Stack.Screen name="alldoctors/index" options={{ title: 'All Doctors', headerShown: true }} />
+        <Stack.Screen name="[missing]" options={{ title: '404', headerShown: true }} />
+      </Stack>
+    </SafeAreaView>
+  );
+};
+
+const LayoutWithProviders = ({ user, isLoading }) => {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {
@@ -17,8 +63,8 @@ const Layout = () => {
   }
 
   useEffect(() => {
-    // Set navigation bar visibility based on platform requirements
-    NavigationBar.setVisibilityAsync('shown'); // Show the navigation bar
+    // Hide the Android navigation bar
+    NavigationBar.setVisibilityAsync('hidden');
   }, []);
 
   return (
@@ -27,31 +73,7 @@ const Layout = () => {
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
             <ScheduleProvider>
-              <SafeAreaView style={{ flex: 1, paddingTop: StatusBar.currentHeight, backgroundColor: 'transparent' }}>
-                <StatusBar 
-                  translucent 
-                  backgroundColor="rgba(254, 255, 223, 0.7)" // Use rgba for transparency effect
-                  barStyle="dark-content" 
-                />
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
-                  <Stack.Screen name="clinics/index" options={{ title: 'Clinics', headerShown: true }} />
-                  <Stack.Screen name="notifications/index" options={{ title: 'Notifications', headerShown: true }} />
-                  <Stack.Screen name="search/index" options={{ title: 'Search', headerShown: true }} />
-                  <Stack.Screen name="clinics/[name]" options={{ title: '', headerShown: false }} />
-                  <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '', headerShown: false }} />
-                  <Stack.Screen name="hospital/index" options={{ title: '', headerShown: false }} />
-                  <Stack.Screen name="hospital/[id]" options={{ title: '', headerShown: false }} />
-                  <Stack.Screen name="student/index" options={{ title: 'Student', headerShown: false }} />
-                  <Stack.Screen name="doctor/index" options={{ title: 'Doctor', headerShown: false }} />
-                  <Stack.Screen name="doctor/[doctorId]" options={{ title: 'Doctor Booking', headerShown: true }} />
-                  <Stack.Screen name="alldoctors/index" options={{ title: 'All Doctors', headerShown: true }} />
-                  <Stack.Screen name="ClinicDoctorsList" options={{ title: 'Clinic Doctors List', headerShown: false }} />
-                  <Stack.Screen name="patient/[patientId]" options={{ title: 'Patient Profile', headerShown: false }} />
-                  <Stack.Screen name="[missing]" options={{ title: '404', headerShown: true }} />
-                </Stack>
-              </SafeAreaView>
+              <Layout user={user} isLoading={isLoading} />
             </ScheduleProvider>
           </PersistGate>
         </Provider>
@@ -60,6 +82,6 @@ const Layout = () => {
   );
 };
 
-export default Layout;
+export default LayoutWithProviders;
 
 const styles = StyleSheet.create({});

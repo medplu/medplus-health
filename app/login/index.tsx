@@ -88,9 +88,7 @@ const LoginScreen: React.FC = () => {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <LinearGradient colors={['#43C6AC', '#191654']} style={styles.backgroundGradient}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
+        
 
         <View style={styles.formContainer}>
           <Text style={styles.heading}>Login</Text>
