@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     borderRadius: 8,
     elevation: 3,
+    paddingTop:5
   },
   loadingContainer: {
     flex: 1,
