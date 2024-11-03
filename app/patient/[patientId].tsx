@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Image, TextInput, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Image, TextInput, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { selectUser } from '../store/userSlice';
 import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatientError } from '../store/patientSlice';
@@ -18,7 +18,8 @@ const PatientDetails: React.FC = () => {
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
   const [notes, setNotes] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-  const [newEntry, setNewEntry] = useState({ type: '', description: '', referral: '' });
+  const [newEntry, setNewEntry] = useState({ type: '', description: '', referral: '', medication: '', instructions: '', refills: '', warnings: '' });
+  const [drugSuggestions, setDrugSuggestions] = useState<string[]>([]);
 
   const patient = useSelector((state: RootState) => selectPatientById(state, patientId as string));
   const loading = useSelector(selectPatientLoading);
@@ -39,11 +40,58 @@ const PatientDetails: React.FC = () => {
     // Dispatch action to save notes
   };
 
-  const handleAddEntry = () => {
-    // Logic to add the entry based on selectedSegment and newEntry
+  const handleAddEntry = async () => {
+    if (selectedSegment === 'prescriptions') {
+      const prescriptionData = {
+        patient: patientId,
+        dateIssued: new Date().toISOString(),
+        medication: newEntry.medication,
+        instructions: newEntry.instructions,
+        refills: newEntry.refills,
+        prescriber: user.name,
+        warnings: newEntry.warnings,
+        doctorId: user.id, // Assuming user.id is the doctorId
+      };
+
+      try {
+        const response = await fetch('http://your-backend-url/prescriptions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(prescriptionData),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create prescription');
+        }
+
+        const savedPrescription = await response.json();
+        // Update the state or dispatch an action to update the store
+      } catch (error) {
+        console.error('Error creating prescription:', error);
+      }
+    }
+
     // Reset the newEntry state after submission
-    setNewEntry({ type: '', description: '', referral: '' });
+    setNewEntry({ type: '', description: '', referral: '', medication: '', instructions: '', refills: '', warnings: '' });
     setModalVisible(false);
+  };
+
+  const fetchDrugSuggestions = async (query: string) => {
+    if (query.length < 3) {
+      setDrugSuggestions([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`https://api.fda.gov/drug/label.json?search=openfda.brand_name:${query}&limit=10`);
+      const data = await response.json();
+      const suggestions = data.results.map((item: any) => item.openfda.brand_name[0]);
+      setDrugSuggestions(suggestions);
+    } catch (error) {
+      console.error('Error fetching drug suggestions:', error);
+    }
   };
 
   if (loading) {
@@ -72,22 +120,24 @@ const PatientDetails: React.FC = () => {
         />
         <Text style={styles.profileText}>{patient?.name || 'Unnamed Patient'}</Text>
         <Text style={styles.profileText}>Age: {patient?.age || 'N/A'}</Text>
+        {patient?.diagnosis && (
+          <Text style={styles.profileText}>Diagnosis: {patient.diagnosis}</Text>
+        )}
+        <Button title="Refer to Clinic" onPress={() => setModalVisible(true)} />
       </View>
 
       <View style={styles.tabContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {['prescriptions', 'diagnoses', 'treatment', 'labTests', 'notes', 'referrals'].map(segment => (
-            <TouchableOpacity 
-              key={segment} 
-              onPress={() => handleSegmentChange(segment)} 
-              style={styles.tabCard}
-            >
-              <Text style={selectedSegment === segment ? styles.selectedTab : styles.tab}>
-                {segment.charAt(0).toUpperCase() + segment.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {['prescriptions', 'labs', 'notes'].map(segment => (
+          <TouchableOpacity 
+            key={segment} 
+            onPress={() => handleSegmentChange(segment)} 
+            style={[styles.tabCard, selectedSegment === segment && styles.selectedTabCard]}
+          >
+            <Text style={selectedSegment === segment ? styles.selectedTab : styles.tab}>
+              {segment.charAt(0).toUpperCase() + segment.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {selectedSegment === 'notes' ? (
@@ -107,7 +157,12 @@ const PatientDetails: React.FC = () => {
           <FlatList
             data={patient ? patient[selectedSegment as keyof typeof patient] : []}
             keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => <Text style={styles.dataText}>{item}</Text>}
+            renderItem={({ item }) => (
+              <View style={styles.entryContainer}>
+                <Text style={styles.entryTitle}>{item.type || 'Entry'}</Text>
+                <Text style={styles.dataText}>{item.description || item.result || 'No details provided'}</Text>
+              </View>
+            )}
             ListEmptyComponent={<Text style={styles.noInfoText}>No data available.</Text>}
           />
           <Button title={`Add New ${selectedSegment.charAt(0).toUpperCase() + selectedSegment.slice(1)}`} onPress={() => setModalVisible(true)} />
@@ -124,7 +179,46 @@ const PatientDetails: React.FC = () => {
       >
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Add New {selectedSegment.charAt(0).toUpperCase() + selectedSegment.slice(1)}</Text>
-          {selectedSegment === 'referrals' ? (
+          {selectedSegment === 'prescriptions' ? (
+            <>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Medication"
+                value={newEntry.medication}
+                onChangeText={text => {
+                  setNewEntry({ ...newEntry, medication: text });
+                  fetchDrugSuggestions(text);
+                }}
+              />
+              {drugSuggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                  {drugSuggestions.map((suggestion, index) => (
+                    <TouchableOpacity key={index} onPress={() => setNewEntry({ ...newEntry, medication: suggestion })}>
+                      <Text style={styles.suggestionText}>{suggestion}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Instructions"
+                value={newEntry.instructions}
+                onChangeText={text => setNewEntry({ ...newEntry, instructions: text })}
+              />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Refills"
+                value={newEntry.refills}
+                onChangeText={text => setNewEntry({ ...newEntry, refills: text })}
+              />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Warnings"
+                value={newEntry.warnings}
+                onChangeText={text => setNewEntry({ ...newEntry, warnings: text })}
+              />
+            </>
+          ) : selectedSegment === 'referrals' ? (
             <TextInput
               style={styles.modalInput}
               placeholder="Refer to clinic..."
@@ -188,10 +282,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     marginVertical: 16,
   },
   tabCard: {
-    marginHorizontal: 4,
     backgroundColor: '#ffffff',
     borderRadius: 10,
     paddingVertical: 12,
@@ -203,6 +298,11 @@ const styles = StyleSheet.create({
     elevation: 3,
     alignItems: 'center',
     justifyContent: 'center',
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  selectedTabCard: {
+    backgroundColor: '#e0e0e0',
   },
   tab: {
     fontSize: 16,
@@ -241,6 +341,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 10,
   },
+  suggestionsContainer: {
+    backgroundColor: '#fff',
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 16,
+  },
+  suggestionText: {
+    padding: 10,
+    fontSize: 16,
+  },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 10,
@@ -250,23 +361,31 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,
   },
+  entryContainer: {
+    marginBottom: 12,
+    paddingVertical: 10,
+  },
+  entryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
   dataText: {
-    fontSize: 16,
-    color: '#333',
-    marginVertical: 4,
+    fontSize: 14,
+    color: '#555',
+    marginTop: 4,
   },
   noInfoText: {
     fontSize: 14,
-    color: '#777',
+    color: '#999',
     textAlign: 'center',
   },
 });
 
-export default PatientDetails
+export default PatientDetails;

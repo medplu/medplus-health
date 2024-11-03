@@ -65,13 +65,13 @@ const TransactionScreen: React.FC = () => {
 
   const fetchSubaccountInfo = async () => {
     try {
-      const userId = user?.userId; // Retrieve userId from Redux state
-      if (!userId) {
-        Alert.alert('Error', 'User ID not found. Please log in again.');
+      const professionalId = user?.professional?._id; // Retrieve professionalId from nested professional object
+      if (!professionalId) {
+        Alert.alert('Error', 'Professional ID not found. Please log in again.');
         return;
       }
 
-      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
+      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${professionalId}`);
       if (response.data.status === 'Success') {
         setSubaccountData(response.data.data);
         console.log('Fetched subaccount data:', response.data.data);
@@ -105,21 +105,30 @@ const TransactionScreen: React.FC = () => {
 
   const handleCreateSubaccount = async () => {
     try {
-      const userId = user?.userId; // Use Redux userId here
-      if (!userId) {
-        Alert.alert('Error', 'User ID not found. Please log in again.');
+      const professionalId = user?.professional?._id; // Use nested professionalId here
+      if (!professionalId) {
+        Alert.alert('Error', 'Professional ID not found. Please log in again.');
         return;
       }
 
+      const { subaccount_code, ...payload } = subaccountData; // Exclude subaccount_code from payload
       const subaccountPayload = {
-        ...subaccountData,
-        userId,
+        ...payload,
+        professionalId,
         percentage_charge: '10', // Set default percentage charge to 10%
       };
 
       const response = await axios.post('https://medplus-health.onrender.com/api/payment/create-subaccount', subaccountPayload);
-      Alert.alert('Subaccount Creation', 'Subaccount created successfully.');
-      setShowSubaccountModal(false);
+      if (response.data.status === 'Success') {
+        setSubaccountData(prevData => ({
+          ...prevData,
+          subaccount_code: response.data.data.subaccount_code, // Set subaccount_code from response
+        }));
+        Alert.alert('Subaccount Creation', 'Subaccount created successfully.');
+        setShowSubaccountModal(false);
+      } else {
+        Alert.alert('Subaccount Creation Failed', 'There was an error creating the subaccount.');
+      }
     } catch (error) {
       console.error('Error creating subaccount:', error.response ? error.response.data : error.message);
       Alert.alert('Subaccount Creation Failed', 'There was an error creating the subaccount.');

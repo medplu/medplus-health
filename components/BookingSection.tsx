@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
+
 import { View, Text, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react-native';
 import moment from 'moment';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack, PayStackRef } from 'react-native-paystack-webview';
 import axios from 'axios';
 import Colors from './Shared/Colors';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectUser, updateUserProfile } from '../app/store/userSlice';
 
-const BookingSection: React.FC<{ doctorId: string; userId: string; consultationFee: number }> = ({
+const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = ({
   doctorId,
-  userId,
   consultationFee,
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -22,7 +23,10 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
   const paystackWebViewRef = useRef<PayStackRef>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false); // Add isSubmitting state
 
-  // Access userEmail and patientName from Redux
+ // Access user state from Redux
+ const user = useSelector(selectUser);
+ const { name, email, profileImage, userId } = user; // Extract userId from Redux state
+ const professionalId = user?.professional?._id
   const userEmail = useSelector((state) => state.user.email);
   const patientName = useSelector((state) => state.user.name); // Assuming name is stored in Redux
 
@@ -61,7 +65,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 
     const fetchSubaccountCode = async (userId: string) => {
       try {
-        const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
+        const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${professionalId}`);
         if (response.data.status === 'Success') {
           const { subaccount_code } = response.data.data;
           subaccountCode = subaccount_code;
@@ -73,7 +77,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
       }
     };
 
-    await fetchSubaccountCode(userId); // Ensure subaccountCode is fetched before booking
+    await fetchSubaccountCode(professionalId); // Ensure subaccountCode is fetched before booking
 
     try {
       if (!subaccountCode || !userEmail) {
@@ -204,7 +208,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
             onPress={() => setSelectedDate(item)}
             style={[
               styles.dateButton,
-              selectedDate.toDateString() === item.toDateString() ? { backgroundColor: Colors.primary } : null,
+              selectedDate.toDateString() === item.toDateString() ? { backgroundColor: Colors.goofy } : null,
             ]}
           >
             <Text style={styles.dateText}>{moment(item).format('ddd, DD')}</Text>
@@ -223,33 +227,41 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
               if (!item.isBooked) {
                 setSelectedTimeSlot({ id: item._id, time: `${item.startTime} - ${item.endTime}` });
               } else {
-                Alert.alert('Slot Unavailable', 'This time slot is already booked.');
+                Alert.alert('Slot already booked', 'Please choose another time slot.');
               }
             }}
             style={[
-              styles.timeSlotButton,
-              selectedTimeSlot?.id === item._id ? { backgroundColor: Colors.primary } : null,
+              styles.slotButton,
+              item.isBooked ? { backgroundColor: Colors.primary } : { backgroundColor: Colors.LIGHT_GRAY },
+              selectedTimeSlot && selectedTimeSlot.id === item._id ? { borderColor: Colors.primary, borderWidth: 2 } : {},
             ]}
           >
-            <Text style={styles.timeSlotText}>{`${item.startTime} - ${item.endTime}`}</Text>
+            <Text style={styles.slotText}>
+              {item.isBooked ? 'Booked' : `${item.startTime} - ${item.endTime}`}
+            </Text>
           </TouchableOpacity>
         )}
-        showsHorizontalScrollIndicator={false}
       />
-      <TouchableOpacity onPress={handleBookPress} style={styles.bookButton} disabled={isSubmitting}>
-        <Text style={styles.bookButtonText}>{isSubmitting ? 'Booking...' : 'Book Appointment'}</Text>
+      <TouchableOpacity style={styles.bookButton} onPress={handleBookPress} disabled={isSubmitting}>
+        <Text style={styles.bookButtonText}>Book Appointment</Text>
       </TouchableOpacity>
+
       <AwesomeAlert
         show={showAlert}
-        showProgress={false}
         title={alertType === 'success' ? 'Success' : 'Error'}
         message={alertMessage}
         closeOnTouchOutside={true}
         closeOnHardwareBackPress={false}
-        onDismiss={() => setShowAlert(false)}
-        contentContainerStyle={{ backgroundColor: alertType === 'success' ? Colors.success : Colors.error }}
+        showCancelButton={false}
+        showConfirmButton={true}
+        confirmText="OK"
+        onConfirmPressed={() => {
+          setShowAlert(false);
+          if (alertType === 'success') resetForm();
+        }}
       />
-     <Paystack
+
+<Paystack
       paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
       billingEmail={userEmail}
       amount={consultationFee} // Ensure amount is in smallest currency unit
@@ -264,51 +276,44 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: '#fff',
+    flex: 1,
+    padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    textAlign: 'center',
-    color: Colors.primary,
   },
   dateButton: {
     padding: 10,
     borderRadius: 5,
-    marginHorizontal: 5,
-    backgroundColor: '#f0f0f0',
+    marginRight: 10,
   },
   dateText: {
-    fontSize: 16,
-    color: '#000',
+    color: Colors.primary,
   },
   dateTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
+    marginVertical: 20,
   },
-  timeSlotButton: {
+  slotButton: {
     padding: 10,
     borderRadius: 5,
-    marginHorizontal: 5,
-    borderWidth: 1,
-    borderColor: Colors.primary,
+    marginRight: 10,
   },
-  timeSlotText: {
-    color: '#000',
+  slotText: {
+    color: Colors.SECONDARY,
   },
   bookButton: {
-    marginTop: 20,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.SECONDARY,
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
+    marginTop: 20,
   },
   bookButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: Colors.SECONDARY,
+    fontSize: 18,
   },
 });
 

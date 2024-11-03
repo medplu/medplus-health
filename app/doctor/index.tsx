@@ -7,12 +7,12 @@ import DoctorCard from '../../components/common/DoctorCardItem';
 import HorizontalLine from '../../components/common/HorizontalLine';
 import Colors from '../../components/Shared/Colors';
 import BookingSection from '../../components/BookingSection';
-import Doctors from '../../components/dashboard/Doctors'; // Add import statement
-
+import Doctors from '../../components/dashboard/Doctors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AirbnbRating } from 'react-native-ratings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DoctorCardItem from '../../components/common/DoctorCardItem';
+import { useSelector } from 'react-redux'; // Import useSelector
 
 type RouteParams = {
   doctor: string; // JSON string
@@ -41,8 +41,8 @@ const DoctorProfile: React.FC = () => {
   const navigation = useNavigation();
   const doctor: Doctor = JSON.parse(route.params.doctor); // Deserialize the doctor object
 
-  // Log the doctor object to verify it is being passed correctly
-  console.log('Received doctor:', doctor);
+  // Retrieve userId from Redux store
+  const userId = useSelector((state: any) => state.user.id); // Adjust according to your Redux state structure
 
   const [loading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,9 +79,7 @@ const DoctorProfile: React.FC = () => {
   };
 
   const handleViewAll = (category: string) => {
-    // Implement navigation or any other logic for viewing all professionals
     console.log(`View all professionals in category: ${category}`);
-    // Example: navigation.navigate('ProfessionalsList', { category });
   };
 
   if (loading) {
@@ -110,14 +108,12 @@ const DoctorProfile: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      
       <FlatList
         contentContainerStyle={styles.scrollViewContent}
         data={[doctor]}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <>
-           
             <DoctorCardItem doctor={item} />
             <View style={styles.descriptionContainer}>
               <Text style={styles.descriptionText}>
@@ -129,7 +125,7 @@ const DoctorProfile: React.FC = () => {
             </View>
             <BookingSection
               doctorId={item._id}
-              userId={item.user}
+              userId={userId} // Use userId from Redux here
               consultationFee={item.consultationFee}
             />
             <HorizontalLine />
@@ -203,7 +199,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     left: 20,
-    zIndex: 2, // Increase zIndex to ensure it's above other components
+    zIndex: 2,
   },
   descriptionContainer: {
     marginVertical: 10,
@@ -232,7 +228,6 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     marginBottom: 10,
-    // Flat design without shadow
   },
   reviewUser: {
     fontWeight: '600',
@@ -255,7 +250,6 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#fff',
     borderRadius: 8,
-    // Flat design without shadow
   },
   addReviewTitle: {
     fontSize: 16,
@@ -269,7 +263,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
-    marginVertical: 10,
+    marginBottom: 10,
   },
   loadingContainer: {
     flex: 1,
@@ -280,12 +274,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   errorText: {
-    color: Colors.error,
-    fontSize: 16,
-    textAlign: 'center',
+    color: 'red',
+    fontSize: 18,
   },
 });
 
