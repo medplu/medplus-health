@@ -6,6 +6,7 @@ import moment from 'moment';
 import useSchedule from '../../hooks/useSchedule';
 import { selectUser } from '../store/userSlice'; 
 import { useSelector } from 'react-redux';
+import * as Notifications from 'expo-notifications';
 
 const timeToString = (time) => {
   const date = new Date(time);
@@ -61,6 +62,30 @@ const getDates = (startDate, pattern, duration) => {
   return dates;
 };
 
+// Add this function at the top level
+async function schedulePushNotification(title, body, trigger) {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+    },
+    trigger,
+  });
+}
+
+// Add notification permission setup
+async function registerForPushNotificationsAsync() {
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  
+  return finalStatus === 'granted';
+}
+
 const Schedule = () => {
   const user = useSelector(selectUser);
   const { schedule, fetchSchedule } = useSchedule();
@@ -74,6 +99,7 @@ const Schedule = () => {
   const [repeatDuration, setRepeatDuration] = useState(1);
   const [step, setStep] = useState(1);
   const [todayAppointments, setTodayAppointments] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   const fetchProfessionalId = async () => {
     try {
@@ -91,6 +117,10 @@ const Schedule = () => {
   }, [user]);
 
   useEffect(() => {
+    registerForPushNotificationsAsync();
+  }, []);
+
+  useEffect(() => {
     const transformSchedule = () => {
       const newItems = {};
       const todayAppointments = [];
@@ -101,16 +131,29 @@ const Schedule = () => {
           newItems[strTime] = [];
         }
 
-        const { startTime, endTime, status } = slot; // Assume slot now has startTime, endTime, and status
+        const { startTime, endTime, status, patientId } = slot;
         const slotInfo = {
-          name: status === 'booked' ? 'Booked Slot' : 'Available Slot',
+          name: status === 'booked' ? `Appointment with ${patientId?.name || 'Patient'}` : 'Available Slot',
           type: status === 'booked' ? 'appointment' : 'availability',
           height: 80,
           startTime,
           endTime,
+          patientId,
         };
 
         newItems[strTime].push(slotInfo);
+
+        // Schedule notification for booked appointments
+        if (status === 'booked') {
+          const appointmentDate = moment(`${strTime} ${startTime}`, 'YYYY-MM-DD HH:mm');
+          const notificationDate = appointmentDate.subtract(30, 'minutes').toDate();
+          
+          schedulePushNotification(
+            'Upcoming Appointment',
+            `You have an appointment with ${patientId?.name || 'Patient'} at ${startTime}`,
+            { date: notificationDate }
+          );
+        }
 
         if (strTime === moment().format('YYYY-MM-DD') && status === 'booked') {
           todayAppointments.push(slotInfo);
@@ -273,6 +316,44 @@ const Schedule = () => {
     }
   };
 
+  const renderItem = (item) => (
+    <Card style={styles.card}>
+      <Card.Content>
+        <Text style={styles.itemName}>{item.name}</Text>
+        <Text style={styles.itemTime}>{item.startTime} - {item.endTime}</Text>
+        {item.type === 'appointment' && (
+          <Button 
+            mode="contained" 
+            onPress={() => handleReminder(item)}
+            style={styles.reminderButton}
+          >
+            Set Reminder
+          </Button>
+        )}
+      </Card.Content>
+    </Card>
+  );
+
+  // Add handleReminder function
+  const handleReminder = async (appointment) => {
+    try {
+      const { date, startTime } = appointment;
+      const appointmentDate = moment(`${date} ${startTime}`, 'YYYY-MM-DD HH:mm');
+      const notificationDate = appointmentDate.subtract(30, 'minutes').toDate();
+
+      await schedulePushNotification(
+        'Upcoming Appointment',
+        `You have an appointment at ${startTime}`,
+        { date: notificationDate }
+      );
+
+      alert('Reminder set successfully!');
+    } catch (error) {
+      console.error('Error setting reminder:', error);
+      alert('Failed to set reminder');
+    }
+  };
+
   return (
     <Provider>
       <View style={styles.container}>
@@ -281,14 +362,7 @@ const Schedule = () => {
         ) : (
           <Agenda
             items={items}
-            renderItem={(item) => (
-              <Card style={styles.card}>
-                <Card.Content>
-                  <Text>{item.name}</Text>
-                  <Text>{item.startTime} - {item.endTime}</Text>
-                </Card.Content>
-              </Card>
-            )}
+            renderItem={renderItem}
             renderEmptyData={() => <View><Text>No Availability</Text></View>}
             onDayPress={(day) => {
               setSelectedDate(day.dateString);
@@ -312,6 +386,19 @@ const styles = StyleSheet.create({
   input: { marginBottom: 10 },
   button: { marginTop: 10 },
   radioButtonContainer: { flexDirection: 'row', alignItems: 'center' },
+  itemName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  itemTime: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 10,
+  },
+  reminderButton: {
+    marginTop: 5,
+  },
 });
 
 export default Schedule;

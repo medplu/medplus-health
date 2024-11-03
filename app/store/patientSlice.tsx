@@ -35,7 +35,7 @@ export const fetchPatientById = createAsyncThunk<
   { rejectValue: string }
 >('patient/fetchPatientById', async (patientId, thunkAPI) => {
   try {
-    const response = await fetch(`https://api.example.com/clients/${patientId}`);
+    const response = await fetch(`https://medplus-health.onrender.com/patients/${patientId}`);
     if (!response.ok) {
       return thunkAPI.rejectWithValue('Failed to fetch patient data.');
     }

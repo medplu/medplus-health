@@ -8,6 +8,26 @@ import { selectAppointments } from '../store/appointmentsSlice';
 import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatientError } from '../store/patientSlice'; // Imported patient selectors and thunk
 import { AppDispatch } from '../store/configureStore'; // Import AppDispatch type
 
+interface RootState {
+    appointments: any; // Update with actual type
+    patient: any; // Update with actual type
+    // Add other state slices if necessary
+}
+
+interface Patient {
+    _id: string;
+    name: string;
+    age: number;
+    gender: string;
+    image: string;
+    email: string;
+    prescriptions: string[];
+    diagnoses: string[];
+    treatment: string[];
+    labTests: string[];
+    // Add other patient details as needed
+}
+
 const PatientDetails: React.FC = () => {
   const { patientId } = useLocalSearchParams();
   const router = useRouter();
@@ -27,6 +47,11 @@ const PatientDetails: React.FC = () => {
   const patient = useSelector((state: RootState) => selectPatientById(state, patientId as string));
   const loading = useSelector(selectPatientLoading);
   const error = useSelector(selectPatientError);
+
+  // **Moved useSelector outside of JSX**
+  const relatedAppointments = useSelector((state: RootState) =>
+    state.appointments.appointments.filter((app: any) => app.patientId === patientId)
+  );
 
   useEffect(() => {
     if (patientId) {
@@ -60,6 +85,32 @@ const PatientDetails: React.FC = () => {
       <Text style={styles.title}>Patient Details</Text>
       <Text style={styles.patientId}>Patient ID: {patientId}</Text>
 
+      <View style={styles.card}>
+        <View style={styles.profileSection}>
+          <Image source={{ uri: patient?.image }} style={styles.profileImage} />
+          <Text style={styles.profileText}>Name: {patient?.name}</Text>
+          <Text style={styles.profileText}>Age: {patient?.age}</Text>
+          <Text style={styles.profileText}>Gender: {patient?.gender}</Text>
+          <Text style={styles.profileText}>Email: {patient?.email}</Text>
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Consultation Options</Text>
+        <TouchableOpacity style={styles.optionButton} onPress={() => {/* Implement view medical history */}}>
+          <Text style={styles.optionButtonText}>View Medical History</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.optionButton} onPress={() => {/* Implement take current history */}}>
+          <Text style={styles.optionButtonText}>Take Current History</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.optionButton} onPress={() => {/* Implement request labs/images */}}>
+          <Text style={styles.optionButtonText}>Request Labs/Images</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.optionButton} onPress={() => {/* Implement refer to clinic */}}>
+          <Text style={styles.optionButtonText}>Refer to Clinic</Text>
+        </TouchableOpacity>
+      </View>
+
       {patient ? ( // Display real patient data
         <View style={styles.card}>
           <View style={styles.profileSection}>
@@ -74,17 +125,15 @@ const PatientDetails: React.FC = () => {
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Appointment Details</Text>
-        {/* Retrieve appointments related to this patient */}
+        {/* Use the variable instead of calling useSelector here */}
         <FlatList
-          data={useSelector((state: RootState) =>
-            state.appointments.appointments.filter(app => app.userId === patientId)
-          )}
+          data={relatedAppointments}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <View style={styles.appointmentCard}>
               <Text style={styles.appointmentText}>Date: {item.date}</Text>
               <Text style={styles.appointmentText}>Time: {item.time}</Text>
-              <Text style={styles.appointmentText}>Doctor: {item.doctor}</Text>
+              <Text style={styles.appointmentText}>Doctor: {item.doctorId}</Text> {/* Update as necessary */}
             </View>
           )}
           ListEmptyComponent={<Text style={styles.noInfoText}>No appointments available.</Text>}
@@ -227,6 +276,20 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 8,
   },
+  optionButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  optionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
 });
+
 
 export default PatientDetails;

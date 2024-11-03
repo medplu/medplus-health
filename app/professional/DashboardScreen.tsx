@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 import { PieChart, BarChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { selectUser } from '../store/userSlice';
+import { selectUser } from '../store/userSlice'; // Updated path if necessary
 import { RootState } from '../store/configureStore';
 import { useRouter } from 'expo-router';
 import useAppointments from '../../hooks/useAppointments';
@@ -13,11 +13,23 @@ const screenHeight = Dimensions.get('window').height;
 
 const DashboardScreen: React.FC = () => {
     const router = useRouter();
-    const user = useSelector(selectUser); // Retrieves the current user from Redux
+    const user = useSelector(selectUser); // Ensure 'selectUser' is correctly imported and defined
     const { appointments = [], loading, error } = useAppointments(); // Default to empty array
 
-    const handleViewPatient = (patientId: string) => {
-        router.push(`/patient/${patientId}`);
+    const handleViewPatient = (patient) => {
+        if (patient && patient._id) {
+            router.push({
+                pathname: `/patient/${patient._id}`,
+            });
+        } else {
+            console.error('Patient details are not available');
+        }
+    };
+
+    // Add handleAddToSchedule function
+    const handleAddToSchedule = (appointmentId: string) => {
+        // Implement scheduling logic here
+        console.log(`Add to schedule clicked for appointment: ${appointmentId}`);
     };
 
     // Calculate statistics based on real data
@@ -57,6 +69,8 @@ const DashboardScreen: React.FC = () => {
             </View>
         );
     }
+
+    console.log('Upcoming Appointments:', upcomingAppointments);
 
     return (
         <ScrollView style={styles.container}>
@@ -104,23 +118,32 @@ const DashboardScreen: React.FC = () => {
                                 upcomingAppointments.map((appointment) => (
                                     <View key={appointment._id} style={styles.appointmentCard}>
                                         <View style={styles.appointmentDetails}>
-                                            {appointment.patient ? (
+                                            {appointment.patientId ? (
                                                 <>
-                                                    <Text style={styles.patientName}>{appointment.patient.name}</Text>
-                                                    <Text style={styles.appointmentTime}>{appointment.date}</Text>
-                                                    <Text style={styles.patientDetails}>Age: {appointment.patient.age}</Text>
-                                                    <Text style={styles.patientDetails}>Gender: {appointment.patient.gender}</Text>
+                                                    <Text style={styles.patientName}>You have an appointment with {appointment.patientId.name}</Text>
+                                                    <Text style={styles.appointmentTime}>At {appointment.time}</Text>
+                                                    <Text style={styles.patientDetails}>Age: {appointment.patientId.age}</Text>
+                                                    <Text style={styles.patientDetails}>Gender: {appointment.patientId.gender}</Text>
                                                 </>
                                             ) : (
                                                 <Text style={styles.patientName}>Patient details not available</Text>
                                             )}
                                         </View>
-                                        <TouchableOpacity
-                                            style={styles.viewButton}
-                                            onPress={() => handleViewPatient(appointment.userId)}
-                                        >
-                                            <Text style={styles.buttonText}>View Patient</Text>
-                                        </TouchableOpacity>
+                                        {/* Move buttons below the text */}
+                                        <View style={styles.buttonContainer}>
+                                            <TouchableOpacity
+                                                style={styles.viewButton}
+                                                onPress={() => handleViewPatient(appointment.patientId)}
+                                            >
+                                                <Text style={styles.buttonText}>View Patient</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.addScheduleButton}
+                                                onPress={() => handleAddToSchedule(appointment._id)}
+                                            >
+                                                <Text style={styles.buttonText}>Add to Schedule</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
                                 ))
                             ) : (
@@ -268,34 +291,56 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     appointmentCard: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: '#f0f0f0',
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 10,
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 6,
+        elevation: 3, // For Android shadow
     },
     appointmentDetails: {
-        flex: 1,
+        marginBottom: 12, // Space between details and buttons
     },
     patientName: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontWeight: '600',
         color: '#333',
+        marginBottom: 4,
     },
     appointmentTime: {
-        fontSize: 14,
+        fontSize: 16,
         color: '#555',
+        marginBottom: 4,
     },
     viewButton: {
         backgroundColor: '#4CAF50',
-        padding: 8,
-        borderRadius: 5,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginRight: 12,
+    },
+    addScheduleButton: {
+        backgroundColor: '#2196F3',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        justifyContent: 'flex-start',
     },
     buttonText: {
         color: '#fff',
-        fontSize: 14,
+        fontSize: 16,
+        fontWeight: '500',
     },
     loginPrompt: {
         textAlign: 'center',
@@ -330,7 +375,7 @@ const styles = StyleSheet.create({
     },
     patientDetails: {
         fontSize: 14,
-        color: '#555',
+        color: '#777',
     },
 });
 

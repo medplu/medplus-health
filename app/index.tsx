@@ -1,10 +1,20 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
-import React from 'react';
-import { Link } from 'expo-router';
+import { StyleSheet, Text, View, Image } from 'react-native';
+import React, { useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const Index = () => {
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigation.navigate('Login'); // Navigate to the login screen after 3 seconds
+    }, 3000);
+
+    return () => clearTimeout(timer); // Clear the timer if the component is unmounted
+  }, [navigation]);
+
   return (
     <LinearGradient
       colors={['#FFFFFF', '#E0E0E0']} // Updated gradient colors to shades of white
@@ -18,13 +28,6 @@ const Index = () => {
         />
         <Text style={styles.companyName}>MedPlus Supat</Text>
       </View>
-      <View style={styles.footer}>
-        <Link href="/login" asChild>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Get Started</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
     </LinearGradient>
   );
 };
@@ -34,13 +37,12 @@ export default Index;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     padding: 20,
   },
   content: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -56,26 +58,5 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 5,
-  },
-  footer: {
-    paddingBottom: 30,
-    width: '100%',
-    alignItems: 'center',
-  },
-  button: {
-    backgroundColor: '#00796B',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 2,
-    elevation: 5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
 });

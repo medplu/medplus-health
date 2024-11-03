@@ -98,6 +98,26 @@ const useAppointments = () => {
             }
         });
 
+        socket.on('cancelAppointment', ({ appointmentId, userId, doctorId }) => {
+            if (user._id === userId || (user.professional && user.professional._id === doctorId)) {
+                dispatch(setAppointments((prev) => prev.filter((a) => a._id !== appointmentId)));
+
+                // Dispatch addNotification with relevant details
+                dispatch(addNotification({
+                    _id: appointmentId,
+                    patientName: 'Appointment Cancelled',
+                    date: moment().format('MMMM Do YYYY'),
+                    time: '',
+                    status: 'cancelled',
+                }));
+
+                PushNotification.localNotification({
+                    title: 'Appointment Cancelled',
+                    message: `An appointment has been cancelled.`,
+                });
+            }
+        });
+
         // Cleanup function to disconnect the socket
         return () => {
             socket.disconnect();
@@ -133,11 +153,38 @@ const useAppointments = () => {
         }
     };
 
+    // Function to cancel an appointment
+    const cancelAppointment = async (appointmentId) => {
+        try {
+            const response = await fetch(
+                `https://medplus-health.onrender.com/api/appointments/cancel/${appointmentId}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (response.ok) {
+                dispatch(setAppointments((prev) =>
+                    prev.filter((appointment) => appointment._id !== appointmentId)
+                ));
+            } else {
+                throw new Error('Failed to cancel appointment');
+            }
+        } catch (err) {
+            console.error(err);
+            dispatch(setError('Error cancelling appointment'));
+        }
+    };
+
     return {
         appointments,
         loading,
         error,
         confirmAppointment,
+        cancelAppointment,
     };
 };
 
