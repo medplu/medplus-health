@@ -17,8 +17,8 @@ const Layout = () => {
   }
 
   useEffect(() => {
-    // Hide the Android navigation bar
-    NavigationBar.setVisibilityAsync('hidden');
+    // Set navigation bar visibility based on platform requirements
+    NavigationBar.setVisibilityAsync('shown'); // Show the navigation bar
   }, []);
 
   return (
@@ -28,7 +28,11 @@ const Layout = () => {
           <PersistGate loading={null} persistor={persistor}>
             <ScheduleProvider>
               <SafeAreaView style={{ flex: 1, paddingTop: StatusBar.currentHeight, backgroundColor: 'transparent' }}>
-                <StatusBar backgroundColor="#feffdf" barStyle="dark-content" />
+                <StatusBar 
+                  translucent 
+                  backgroundColor="rgba(254, 255, 223, 0.7)" // Use rgba for transparency effect
+                  barStyle="dark-content" 
+                />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
