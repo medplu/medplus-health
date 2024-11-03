@@ -99,8 +99,6 @@ const PatientDetails: React.FC = () => {
         </ScrollView>
       </View>
 
-
-
       {selectedSegment === 'notes' ? (
         <View style={styles.notesContainer}>
           <TextInput
@@ -116,7 +114,7 @@ const PatientDetails: React.FC = () => {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>{selectedSegment.charAt(0).toUpperCase() + selectedSegment.slice(1)}</Text>
           <FlatList
-            data={patient ? patient[selectedSegment as keyof Patient] : []}
+            data={patient ? patient[selectedSegment as keyof typeof patient] : []}
             keyExtractor={(item, index) => index.toString()}
             renderItem={({ item }) => <Text style={styles.dataText}>{item}</Text>}
             ListEmptyComponent={<Text style={styles.noInfoText}>No data available.</Text>}
@@ -157,41 +155,69 @@ const PatientDetails: React.FC = () => {
     </Animated.View>
   );
 };
+
 const styles = StyleSheet.create({
-  // Styles remain mostly the same, with additions for new sections
   container: {
     flex: 1,
     padding: 16,
     backgroundColor: '#f0f4f7',
   },
-  header: {
-    flexDirection: 'row',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#555',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
+    marginBottom: 8,
+  },
+  profileSection: {
+    alignItems: 'center',
     marginBottom: 16,
   },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginRight: 16,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 8,
   },
   profileText: {
     fontSize: 16,
-    color: '#333',
+    color: '#555',
+    marginTop: 4,
   },
   tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
     marginVertical: 16,
+  },
+  tabCard: {
+    marginHorizontal: 4,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tab: {
     fontSize: 16,
     color: '#007BFF',
   },
   selectedTab: {
-    fontSize: 16,
-    color: '#007BFF',
     fontWeight: 'bold',
     textDecorationLine: 'underline',
   },
@@ -224,180 +250,32 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 10,
   },
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#f0f4f7',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  userImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 8,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  profileSection: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 8,
-  },
-  profileText: {
-    fontSize: 16,
-    color: '#555',
-    marginTop: 4,
-  },
-  horizontalCardContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 8,
-  },
-  horizontalCard: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginHorizontal: 4,
-    flex: 1,
-    alignItems: 'center',
-  },
-  horizontalCardText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 10,
     padding: 16,
     marginVertical: 8,
-    width: '100%',
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 3,
   },
-  segmentedControl: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  segment: {
-    fontSize: 16,
-    color: '#007BFF',
-  },
-  selectedSegment: {
-    fontSize: 16,
-    color: '#007BFF',
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
-  },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: '#333',
   },
   dataText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#333',
-    paddingVertical: 2,
+    marginVertical: 4,
   },
   noInfoText: {
     fontSize: 14,
     color: '#777',
     textAlign: 'center',
-    marginTop: 8,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#555',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: 'red',
-    marginBottom: 8,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    marginVertical: 16,
-  },
-
-  tabCard: {
-    flex: 0, // Set to 0 to prevent flex behavior; width is controlled by the padding
-    marginHorizontal: 4, // Adds spacing between the cards
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    paddingVertical: 12, // Vertical padding inside the card
-    paddingHorizontal: 16, // Horizontal padding inside the card
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3, // For Android shadow
-    alignItems: 'center', // Center the text
-    justifyContent: 'center', // Center the text
-  },
-  
-  tabCard: {
-    flex: 1,
-    marginHorizontal: 4, // Adds spacing between the cards
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    paddingVertical: 12, // Vertical padding inside the card
-    paddingHorizontal: 16, // Horizontal padding inside the card
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3, // For Android shadow
-    alignItems: 'center', // Center the text
-    justifyContent: 'center', // Center the text
-  },
-  
-  tab: {
-    fontSize: 16,
-    color: '#007BFF',
-  },
-  
-  selectedTab: {
-    fontSize: 16,
-    color: '#007BFF',
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
-  },
-  
 });
 
 export default PatientDetails;
-
-
