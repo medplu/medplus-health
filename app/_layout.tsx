@@ -27,7 +27,7 @@ const Layout = () => {
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
             <ScheduleProvider>
-              <SafeAreaView style={{ flex: 1, paddingTop: StatusBar.currentHeight, backgroundColor: '#ffffff' }}>
+              <SafeAreaView style={{ flex: 1, paddingTop: StatusBar.currentHeight, backgroundColor: '#feffdf' }}>
                 <StatusBar backgroundColor="#feffdf" barStyle="dark-content" />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
