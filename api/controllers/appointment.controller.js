@@ -44,7 +44,8 @@ exports.getAppointmentsByUser = async (req, res) => {
   try {
     const appointments = await Appointment.find({ userId })
       .select('doctorId userId patientName status timeSlotId time createdAt updatedAt')
-      .populate('patientId');
+      .populate('patientId')
+      .populate('doctorId'); // Populate doctorId to get professional information
 
     if (!appointments.length) {
       return res.status(404).json({ error: 'No appointments found for this user' });
