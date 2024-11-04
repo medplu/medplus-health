@@ -42,7 +42,7 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
         const userInfo = await userInfoResponse.json();
 
         // Send user info to your backend for creation/login
-        const response = await fetch('https://medplus-health.onrender.com/auth/google', {
+        const response = await fetch('https://medplus-health.onrender.com/api/auth/google', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
