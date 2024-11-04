@@ -18,8 +18,7 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
     clientId: '@parroti/medplus-app',
     androidClientId: '399287117531-s5ea9q7t3v9auj3tspnvi3j70fd9tdg8.apps.googleusercontent.com',
     webClientId: '399287117531-tmvmbo06a5l8svihhb7c7smqt7iobbs0.apps.googleusercontent.com',
-    // Updated redirectUri to match authorized URI
-    redirectUri: 'http://localhost:8081/auth/google/callback',
+    redirectUri: 'https://auth.expo.io/@parroti/medplus-app', // Use custom scheme
   });
 
   React.useEffect(() => {
