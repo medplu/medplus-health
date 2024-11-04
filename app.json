@@ -69,9 +69,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "clerk": {
-        "oauthRedirectUrl": "myapp://oauth/callback"
-      },
+     
       "eas": {
         "projectId": "2cae2ab6-1c1b-42cd-b091-6e88742650c9"
       }
