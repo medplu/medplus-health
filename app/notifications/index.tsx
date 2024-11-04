@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import useAppointments from '../../hooks/useAppointments';
 
@@ -12,20 +12,31 @@ const Notifications = () => {
     router.push(`/appointment/${appointmentId}`);
   };
 
-  const renderAppointmentItem = ({ item }) => (
-    <View style={styles.appointmentCard}>
-      <Text style={styles.appointmentText}>
-        Appointment with {item.patientName} on {item.date} at {item.time}
-      </Text>
-      <Text style={styles.statusText}>Status: {item.status}</Text> 
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={() => handleViewAppointment(item._id)}
-      >
-        <Text style={styles.buttonText}>View Appointment</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderAppointmentItem = ({ item }) => {
+    const doctor = item.doctorId || {};
+    return (
+      <View style={styles.appointmentCard}>
+        {doctor.profileImage && (
+          <Image source={{ uri: doctor.profileImage }} style={styles.profileImage} />
+        )}
+        <View>
+          <Text style={styles.appointmentText}>
+            Appointment with Dr. {doctor.firstName || 'N/A'} {doctor.lastName || 'N/A'}
+          </Text>
+          <Text style={styles.doctorEmail}>{doctor.email || 'N/A'}</Text>
+          <Text style={styles.doctorProfession}>{doctor.profession || 'N/A'}</Text>
+          <Text style={styles.timeText}>Time: {item.time}</Text>
+          <Text style={styles.statusText}>Status: {item.status}</Text> 
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleViewAppointment(item._id)}
+          >
+            <Text style={styles.buttonText}>View Appointment</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
 
   if (loading) {
     return (
@@ -83,10 +94,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     marginBottom: 10,
     borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
   },
   appointmentText: {
     fontSize: 16,
-    marginBottom: 5,
+    fontWeight: 'bold',
+  },
+  doctorEmail: {
+    fontSize: 14,
+    color: '#555',
+  },
+  doctorProfession: {
+    fontSize: 14,
+    color: '#555',
+  },
+  timeText: {
+    fontSize: 14,
+    color: '#555',
   },
   statusText: { 
     fontSize: 14,
