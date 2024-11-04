@@ -41,7 +41,7 @@ const DoctorProfile: React.FC = () => {
   const navigation = useNavigation();
   const doctor: Doctor = JSON.parse(route.params.doctor);
 
-  const userId = useSelector((state: any) => state.user.id);
+ 
 
   const [loading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

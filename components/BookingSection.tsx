@@ -25,7 +25,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
 
  const user = useSelector(selectUser);
  const { name, email, profileImage, userId } = user;
- const professionalId = user?.professional?._id
+ const professionalId = user?.professional?._id;
   const userEmail = useSelector((state) => state.user.email);
   const patientName = useSelector((state) => state.user.name);
 
@@ -62,9 +62,9 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
     setAlertType('success');
     let subaccountCode: string | null = null;
 
-    const fetchSubaccountCode = async (userId: string) => {
+    const fetchSubaccountCode = async (professionalId: string) => {
       try {
-        const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${professionalId}`);
+        const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${doctorId}`);
         if (response.data.status === 'Success') {
           const { subaccount_code } = response.data.data;
           subaccountCode = subaccount_code;
