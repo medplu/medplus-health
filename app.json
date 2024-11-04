@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "medplusapp", // Custom scheme
+    "scheme": "medplusapp",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -20,7 +20,7 @@
         "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [
-              "medplusapp" // Custom scheme
+              "medplusapp"
             ]
           }
         ]  
@@ -31,16 +31,23 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "medplus.company.app", // Updated package name
+      "package": "medplus.company.app",
       "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
           "action": "VIEW",
-          "data": {
-            "scheme": "medplusapp", // Custom scheme
-            "host": "auth.expo.io",
-            "path": "/@parroti/medplus-app/auth/google/callback" // Updated path
-          },
+          "data": [
+            {
+              "scheme": "https",
+              "host": "auth.expo.io",
+              "pathPrefix": "/@parroti/medplus-app"
+            },
+            {
+              "scheme": "medplusapp",
+              "host": "auth.expo.io",
+              "pathPrefix": "/@parroti/medplus-app"
+            }
+          ],
           "category": [
             "BROWSABLE",
             "DEFAULT"
@@ -55,7 +62,6 @@
     },
     "plugins": [
       "expo-router",
-     
       [
         "expo-build-properties",
         {
@@ -69,7 +75,6 @@
       "typedRoutes": true
     },
     "extra": {
-     
       "eas": {
         "projectId": "2cae2ab6-1c1b-42cd-b091-6e88742650c9"
       }
