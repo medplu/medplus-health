@@ -31,7 +31,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yourcompany.medplusapp",
+      "package": "medplus.company.app", // Updated package name
       "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
