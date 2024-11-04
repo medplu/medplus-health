@@ -19,16 +19,15 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
   const [alertMessage, setAlertMessage] = useState<string>('');
   const [alertType, setAlertType] = useState<'success' | 'error'>('success');
   const [schedule, setSchedule] = useState<{ date: string; startTime: string; endTime: string; isBooked: boolean; _id: string }[]>([]);
-  const [appointmentId, setAppointmentId] = useState<string | null>(null); // Track appointment ID
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const paystackWebViewRef = useRef<PayStackRef>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false); // Add isSubmitting state
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
- // Access user state from Redux
  const user = useSelector(selectUser);
- const { name, email, profileImage, userId } = user; // Extract userId from Redux state
+ const { name, email, profileImage, userId } = user;
  const professionalId = user?.professional?._id
   const userEmail = useSelector((state) => state.user.email);
-  const patientName = useSelector((state) => state.user.name); // Assuming name is stored in Redux
+  const patientName = useSelector((state) => state.user.name);
 
   const fetchSchedule = async () => {
     try {
@@ -54,7 +53,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
     }
 
     if (isSubmitting) {
-      return; // Prevent multiple submissions
+      return;
     }
 
     setIsSubmitting(true);
@@ -77,21 +76,20 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
       }
     };
 
-    await fetchSubaccountCode(professionalId); // Ensure subaccountCode is fetched before booking
+    await fetchSubaccountCode(professionalId);
 
     try {
       if (!subaccountCode || !userEmail) {
         throw new Error('Missing subaccount code or user email.');
       }
 
-      // Create appointment
       const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', {
-        doctorId: doctorId, // Ensure correct doctorId
+        doctorId: doctorId,
         userId: userId,
         patientName: patientName,
         date: moment(selectedDate).format('YYYY-MM-DD'),
-        timeSlotId: selectedTimeSlot.id, // Include slot ID
-        time: selectedTimeSlot.time,     // Include slot time
+        timeSlotId: selectedTimeSlot.id,
+        time: selectedTimeSlot.time,
         status: 'pending',
       });
 
@@ -99,20 +97,19 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
       if (!newAppointmentId) {
         throw new Error('Failed to retrieve appointmentId from response');
       }
-      console.log('New appointment ID:', newAppointmentId); // Log newAppointmentId
-      setAppointmentId(newAppointmentId); // Set appointmentId for later use
+      console.log('New appointment ID:', newAppointmentId);
+      setAppointmentId(newAppointmentId);
 
-      // Initialize Paystack payment
       const paymentResponse = await axios.post(
         'https://api.paystack.co/transaction/initialize',
         {
           email: userEmail,
-          amount: consultationFee * 100, // Convert to smallest currency unit
+          amount: consultationFee * 100,
           subaccount: subaccountCode,
           currency: 'KES',
           metadata: {
-            appointmentId: newAppointmentId, // Include appointmentId in metadata
-            timeSlotId: selectedTimeSlot.id,  // Include timeSlotId in metadata
+            appointmentId: newAppointmentId,
+            timeSlotId: selectedTimeSlot.id,
           },
         },
         {
@@ -152,15 +149,14 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
       if (!appointmentId) {
         throw new Error('No appointment ID available for status update.');
       }
-      console.log('Confirming appointment with ID:', appointmentId); // Log appointmentId
+      console.log('Confirming appointment with ID:', appointmentId);
 
       const confirmResponse = await axios.patch(
         `https://medplus-health.onrender.com/api/appointments/confirm/${appointmentId}`,
         { status: 'confirmed' }
       );
-      console.log('Confirm response:', confirmResponse.data); // Log confirmation response
+      console.log('Confirm response:', confirmResponse.data);
 
-      // Optionally, refetch the schedule to update booked slots
       fetchSchedule();
     } catch (error) {
       console.error('Error updating appointment status:', error);
@@ -280,7 +276,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
 <Paystack
       paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
       billingEmail={userEmail}
-      amount={consultationFee} // Ensure amount is in smallest currency unit
+      amount={consultationFee}
       currency='KES'
       onCancel={handlePaymentCancel}
       onSuccess={handlePaymentSuccess}
