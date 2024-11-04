@@ -2,14 +2,12 @@ import * as SecureStore from 'expo-secure-store';
 import { StyleSheet, SafeAreaView, StatusBar, Text } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store/configureStore'; // Adjust path as needed
 import { ScheduleProvider } from './context/ScheduleContext'; // Adjust path as needed
 import UnauthenticatedLayout from './UnauthenticatedLayout';
 import * as NavigationBar from 'expo-navigation-bar';
-import { SplashScreen } from 'expo-router';
 
 const tokenCache = {
   async getToken(key: string) {
@@ -41,11 +39,6 @@ const Layout = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Configure Google Sign-In
-    GoogleSignin.configure({
-      webClientId: '399287117531-tmvmbo06a5l8svihhb7c7smqt7iobbs0.apps.googleusercontent.com', // Replace with your web client ID
-    });
-
     // Set up navigation bar
     NavigationBar.setBackgroundColorAsync('rgba(0, 0, 0, 0)');
     NavigationBar.setVisibilityAsync('visible');
@@ -56,36 +49,13 @@ const Layout = () => {
     };
   }, []);
 
-  // Function to handle Google Sign-In
-  const signInWithGoogle = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      setUser(userInfo);
-      setIsLoaded(true);
-    } catch (error) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log('User cancelled the login process');
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log('Sign-In is already in progress');
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        console.log('Google Play Services is not available');
-      } else {
-        console.error(error);
-      }
-      setIsLoaded(true); // Even if sign-in fails, stop loading
-    }
-  };
-
   // Auto-login or check if user is already signed in
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const isSignedIn = await GoogleSignin.isSignedIn();
-        if (isSignedIn) {
-          const userInfo = await GoogleSignin.getCurrentUser();
-          setUser(userInfo);
-        }
+        // Check user sign-in status from SecureStore or other methods
+        // Example: const userInfo = await SecureStore.getItemAsync('user');
+        // setUser(userInfo);
       } catch (error) {
         console.error('Error checking user sign-in:', error);
       } finally {
@@ -105,7 +75,13 @@ const Layout = () => {
   }
 
   if (!user) {
-    return <UnauthenticatedLayout signInWithGoogle={signInWithGoogle} />;
+    return (
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <UnauthenticatedLayout />
+        </PersistGate>
+      </Provider>
+    );
   }
 
   return (
