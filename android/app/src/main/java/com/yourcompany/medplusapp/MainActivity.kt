@@ -1,4 +1,4 @@
-package medplus.company.app
+package com.yourcompany.medplusapp
 
 import android.os.Build
 import android.os.Bundle

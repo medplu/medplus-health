@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, FlatList, 
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons'; // Add Ionicons to imports
 import DoctorCard from '../../components/common/DoctorCardItem';
 import HorizontalLine from '../../components/common/HorizontalLine';
 import Colors from '../../components/Shared/Colors';
@@ -19,6 +19,7 @@ type RouteParams = {
 };
 
 type Doctor = {
+  _id: string;
   _id: string;
   firstName: string;
   lastName: string;
@@ -108,6 +109,9 @@ const DoctorProfile: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+      <Ionicons name="arrow-back" size={24} color="black" /> {/* Use Ionicons arrow */}
+    </TouchableOpacity>
       <FlatList
         contentContainerStyle={styles.scrollViewContent}
         data={[doctor]}
@@ -282,3 +286,4 @@ const styles = StyleSheet.create({
 });
 
 export default DoctorProfile;
+

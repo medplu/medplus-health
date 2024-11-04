@@ -10,14 +10,14 @@ import {
     setUpcomingAppointments,
     setRequestedAppointments,
     setCompletedAppointments,
-    addNotification, // Import addNotification
+    addNotification,
 } from '@/app/store/appointmentsSlice';
-import { selectUser } from '../app/store/userSlice'; // Import your selector for user
+import { selectUser } from '../app/store/userSlice';
 
 const useAppointments = () => {
     const dispatch = useDispatch();
     const { appointments, loading, error } = useSelector((state) => state.appointments);
-    const user = useSelector(selectUser); // Use the selector to access the user
+    const user = useSelector(selectUser);
 
     useEffect(() => {
         const fetchAppointments = async () => {
@@ -29,23 +29,27 @@ const useAppointments = () => {
                     let response;
 
                     if (user.professional) {
-                        // Fetch all appointments for the doctor
-                        const professionalId = user.professional._id; // Safely access professionalId
+                        const professionalId = user.professional._id;
                         response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${professionalId}/all`);
                     } else {
-                        // Fetch appointments for the user
-                        const userId = user.userId; // Access userId
+                        const userId = user.userId;
                         response = await fetch(`https://medplus-health.onrender.com/api/appointments/user/${userId}`);
                     }
 
                     const allData = await response.json();
-
-                    // Ensure that allData is an array
                     const appointmentsArray = Array.isArray(allData) ? allData : [];
                     dispatch(setAppointments(appointmentsArray));
 
-                    // Filter appointments based on status
-                    const upcomingAppointments = appointmentsArray.filter((appointment) => appointment.status === 'confirmed');
+                    // Get today's date in the desired format
+                    const today = moment().format('YYYY-MM-DD');
+
+                    // Filter appointments based on status and date
+                    const upcomingAppointments = appointmentsArray.filter(
+                        (appointment) => 
+                            appointment.status === 'confirmed' &&
+                            moment(appointment.date).isSameOrAfter(today, 'day')
+                    );
+
                     const requestedAppointments = appointmentsArray.filter((appointment) => appointment.status === 'pending');
                     const completedAppointments = appointmentsArray.filter((appointment) => appointment.status === 'completed');
 
@@ -62,16 +66,13 @@ const useAppointments = () => {
             }
         };
 
-        // Fetch appointments only if the user is defined
         if (user) {
             fetchAppointments();
         }
 
-        // Setting up Socket.IO for real-time updates
         const socket: Socket = io('https://medplus-health.onrender.com');
 
         socket.on('newAppointment', ({ appointment, userId, doctorId }) => {
-            // Check if the notification is for the current user
             if (user._id === userId || (user.professional && user.professional._id === doctorId)) {
                 dispatch(setAppointments((prev) => {
                     const exists = prev.some((a) => a._id === appointment._id);
@@ -81,16 +82,14 @@ const useAppointments = () => {
                     return prev;
                 }));
 
-                // Dispatch addNotification with relevant details
                 dispatch(addNotification({
                     _id: appointment._id,
                     patientName: appointment.patientName,
                     date: moment(appointment.createdAt).format('MMMM Do YYYY'),
-                    time: appointment.time, // Ensure time is included
-                    status: appointment.status, // Include status
+                    time: appointment.time,
+                    status: appointment.status,
                 }));
 
-                // Use the correct PushNotification method
                 PushNotification.localNotification({
                     title: 'New Appointment',
                     message: `New appointment with ${appointment.patientName} on ${moment(appointment.createdAt).format('MMMM Do YYYY')} at ${appointment.time}`,
@@ -102,7 +101,6 @@ const useAppointments = () => {
             if (user._id === userId || (user.professional && user.professional._id === doctorId)) {
                 dispatch(setAppointments((prev) => prev.filter((a) => a._id !== appointmentId)));
 
-                // Dispatch addNotification with relevant details
                 dispatch(addNotification({
                     _id: appointmentId,
                     patientName: 'Appointment Cancelled',
@@ -118,13 +116,11 @@ const useAppointments = () => {
             }
         });
 
-        // Cleanup function to disconnect the socket
         return () => {
             socket.disconnect();
         };
-    }, [dispatch, user]); // Add user as a dependency
+    }, [dispatch, user]);
 
-    // Function to confirm an appointment
     const confirmAppointment = async (appointmentId) => {
         try {
             const response = await fetch(
@@ -138,7 +134,6 @@ const useAppointments = () => {
             );
 
             if (response.ok) {
-                // Update the appointment status in Redux state
                 dispatch(setAppointments((prev) =>
                     prev.map((appointment) =>
                         appointment._id === appointmentId ? { ...appointment, status: 'confirmed' } : appointment
@@ -153,7 +148,6 @@ const useAppointments = () => {
         }
     };
 
-    // Function to cancel an appointment
     const cancelAppointment = async (appointmentId) => {
         try {
             const response = await fetch(

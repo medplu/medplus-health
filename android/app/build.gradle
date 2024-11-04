@@ -109,9 +109,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'medplus.company.app'
+    namespace 'com.yourcompany.medplusapp'
     defaultConfig {
-        applicationId 'medplus.company.app'
+        applicationId 'com.yourcompany.medplusapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

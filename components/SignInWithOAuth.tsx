@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Image, Text, StyleSheet } from 'react-native';
-import { useOAuth, useSession, useClerk } from '@clerk/clerk-expo';
+import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,102 +13,78 @@ interface SignInWithOAuthProps {
 }
 
 const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, router }) => {
-  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
-  const { session } = useSession();
-  const { signOut } = useClerk();
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    expoClientId: '@parroti/medplus-app',
+    androidClientId: '399287117531-s5ea9q7t3v9auj3tspnvi3j70fd9tdg8.apps.googleusercontent.com',
+    webClientId: '399287117531-tmvmbo06a5l8svihhb7c7smqt7iobbs0.apps.googleusercontent.com',
+    // Updated redirectUri to match authorized URI
+    redirectUri: 'https://auth.expo.io/@parroti/medplus-app/auth/google/callback',
+  });
 
-  const saveUserToBackend = async (user: any) => {
-    if (!user) {
-      console.error('User object is undefined');
-      setErrorMessage('User object is undefined. Please try again.');
-      return null;
-    }
-
-    try {
-      // Save the user to the backend
-      const saveResponse = await fetch('https://medplus-health.onrender.com/auth/google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: user.first_name,
-          lastName: user.last_name,
-          email: user.email_addresses[0].email_address,
-          profileImage: user.image_url,
-        }),
-      });
-
-      if (!saveResponse.ok) {
-        throw new Error('Failed to save user to backend');
-      }
-
-      const savedUser = await saveResponse.json();
-      console.log('Saved user:', savedUser);
-
-      return savedUser.userId;
-    } catch (error) {
-      console.error('Error saving user to backend:', error);
-      setErrorMessage('Failed to save user to backend. Please try again.');
-      return null;
-    }
-  };
-
-  const onPress = React.useCallback(async () => {
-    console.log("Session before sign out:", session);
-
-    if (session) {
-      try {
-        await signOut();
-        console.log("Signed out successfully");
-      } catch (err) {
-        console.error('Error logging out existing session', err);
-        setErrorMessage('Failed to log out existing session. Please try again.');
-        return;
+  React.useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      if (authentication?.accessToken) {
+        handleLoginSuccess(authentication.accessToken);
+      } else {
+        setErrorMessage('Google login failed. Please try again.');
       }
     }
+  }, [response]);
 
+  const handleLoginSuccess = async (accessToken: string) => {
     try {
-      const { createdSessionId, setActive, user } = await startOAuthFlow({
-        redirectUrl: Linking.createURL('/client/tabs', { scheme: 'myapp' }),
-      });
+        // Exchange the Google access token for backend authentication
+        const userInfoResponse = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const userInfo = await userInfoResponse.json();
 
-      console.log("Created Session ID:", createdSessionId);
-      console.log("User object:", user);
+        // Send user info to your backend for creation/login
+        const response = await fetch('https://medplus-health.onrender.com/auth/google', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                firstName: userInfo.given_name,
+                lastName: userInfo.family_name,
+                email: userInfo.email,
+                profileImage: userInfo.picture,
+            }),
+        });
 
-      if (createdSessionId && user) {
-        await setActive!({ session: createdSessionId });
-        await AsyncStorage.setItem('authToken', createdSessionId); // Store session ID as authToken
-
-        // Save user to backend and get userId
-        const userId = await saveUserToBackend(user);
-
-        if (!userId) {
-          setErrorMessage('Failed to save user to backend. Please try again.');
-          return;
+        if (!response.ok) {
+            throw new Error('Failed to save user to backend');
         }
 
-        // Save user details to AsyncStorage
+        const savedUser = await response.json();
+        console.log('Saved user:', savedUser);
+
+        // Save user data in AsyncStorage for future sessions
         await AsyncStorage.multiSet([
-          ['userId', userId],
-          ['firstName', user.first_name],
-          ['lastName', user.last_name],
-          ['email', user.email_addresses[0].email_address],
+            ['authToken', savedUser.token], // Store the received token
+            ['userId', savedUser.userId],
+            ['firstName', savedUser.firstName],
+            ['lastName', savedUser.lastName],
+            ['email', savedUser.email],
         ]);
 
-        // Navigate to the main app screen
+        // Navigate to the client tabs
         router.push('/client/tabs');
-      } else {
-        setErrorMessage('Failed to login with Google. Please try again.');
-      }
-    } catch (err) {
-      console.error('OAuth error', err);
-      setErrorMessage(`Failed to login with Google. Please try again. Error: ${err.message}`);
+    } catch (error) {
+        console.error('Error during login:', error);
+        setErrorMessage('Failed to complete Google login. Please try again.');
     }
-  }, [startOAuthFlow, setErrorMessage, router, session, signOut]);
+};
+
+
+  const onPress = () => {
+    promptAsync();
+  };
 
   return (
-    <TouchableOpacity style={styles.googleButton} onPress={onPress}>
+    <TouchableOpacity style={styles.googleButton} onPress={onPress} disabled={!request}>
       <Image
         source={require('../assets/icons/icons8-google-48.png')}
         style={styles.googleIcon}

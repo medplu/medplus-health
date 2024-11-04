@@ -187,3 +187,42 @@ exports.login = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+// Google Sign-In
+exports.googleSignIn = async (req, res) => {
+    try {
+        const { firstName, lastName, email, profileImage } = req.body;
+
+        // Check if user already exists
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            // Create new user if it doesn't exist
+            user = new User({
+                firstName,
+                lastName,
+                email,
+                isVerified: true, // Automatically verify Google users
+            });
+            await user.save();
+        }
+
+        // Generate JWT token
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // Ensure the redirect URI matches the frontend configuration
+        // This might involve setting the correct callback URL in the OAuth flow
+        // For example, when exchanging tokens or redirecting after authentication
+
+        // Send response with user details and token
+        res.status(200).json({
+            token,
+            userId: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+        });
+    } catch (error) {
+        console.error("Error during Google sign-in", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};

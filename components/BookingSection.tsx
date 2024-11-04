@@ -238,16 +238,23 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
                 : {},
             ]}
           >
-            <Text
-              style={[
-                styles.slotText,
-                selectedTimeSlot && selectedTimeSlot.id === item._id
-                  ? { color: Colors.selectedText }
-                  : {},
-              ]}
-            >
-              {item.isBooked ? 'Booked' : `${item.startTime} - ${item.endTime}`}
-            </Text>
+            <View style={{ position: 'relative' }}>
+              <Text
+                style={[
+                  styles.slotText,
+                  selectedTimeSlot && selectedTimeSlot.id === item._id
+                    ? { color: Colors.selectedText }
+                    : {},
+                ]}
+              >
+                {`${item.startTime} - ${item.endTime}`}
+              </Text>
+              {item.isBooked && (
+                <View style={styles.overlay}>
+                  <Text style={styles.bookedText}>Booked</Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         )}
       />
@@ -323,6 +330,21 @@ const styles = StyleSheet.create({
   bookButtonText: {
     color: Colors.primary,
     fontSize: 18,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 5,
+  },
+  bookedText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 

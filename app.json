@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "https", // Changed from 'myapp' to 'https' to align with authorized redirect URI
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -14,16 +14,39 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "medplus-supat",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "bundleIdentifier": "com.yourcompany.medplusapp",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "https" // Updated scheme
+            ]
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "medplus.company.app",
-      "googleServicesFile": "./google-services.json"
+      "package": "com.yourcompany.medplusapp",
+      "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": {
+            "scheme": "https", // Updated scheme
+            "host": "auth.expo.io",
+            "path": "/@parroti/medplus-app/auth/google/callback" // Updated path
+          },
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -33,19 +56,25 @@
     "plugins": [
       "expo-router",
       "@react-native-google-signin/google-signin",
-     [
-      "expo-build-properties",
-      {
-        "ios":{
-          "useFrameworks": "static"
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
         }
-      }
-    ] 
-      
-      
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "clerk": {
+        "oauthRedirectUrl": "myapp://oauth/callback"
+      },
+      "eas": {
+        "projectId": "2cae2ab6-1c1b-42cd-b091-6e88742650c9"
+      }
     }
   }
 }

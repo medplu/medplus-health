@@ -1,34 +1,101 @@
+import * as SecureStore from 'expo-secure-store';
 import { StyleSheet, SafeAreaView, StatusBar, Text } from 'react-native';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { store, persistor } from './store/configureStore'; // Adjust the path based on your project structure
-import { ScheduleProvider } from './context/ScheduleContext'; // Adjust the path based on your project structure
+import { store, persistor } from './store/configureStore'; // Adjust path as needed
+import { ScheduleProvider } from './context/ScheduleContext'; // Adjust path as needed
 import UnauthenticatedLayout from './UnauthenticatedLayout';
 import * as NavigationBar from 'expo-navigation-bar';
+import { SplashScreen } from 'expo-router';
 
-const Layout = ({ user, isLoading }) => {
-  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const tokenCache = {
+  async getToken(key: string) {
+    try {
+      const item = await SecureStore.getItemAsync(key);
+      if (item) {
+        console.log(`${key} was used 🔐 \n`);
+      } else {
+        console.log('No values stored under key: ' + key);
+      }
+      return item;
+    } catch (error) {
+      console.error('SecureStore get item error: ', error);
+      await SecureStore.deleteItemAsync(key);
+      return null;
+    }
+  },
+  async saveToken(key: string, value: string) {
+    try {
+      return SecureStore.setItemAsync(key, value);
+    } catch (err) {
+      console.error('SecureStore save token error:', err);
+    }
+  },
+};
 
-  if (!publishableKey) {
-    throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env');
-  }
+const Layout = () => {
+  const [user, setUser] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Set the bottom navigation bar to transparent or translucent
-    NavigationBar.setBackgroundColorAsync('rgba(0, 0, 0, 0)'); // Fully transparent
-    NavigationBar.setVisibilityAsync('visible'); // Make sure it's visible
+    // Configure Google Sign-In
+    GoogleSignin.configure({
+      webClientId: '399287117531-tmvmbo06a5l8svihhb7c7smqt7iobbs0.apps.googleusercontent.com', // Replace with your web client ID
+    });
 
-    // Clean up function to reset navigation bar color on unmount
+    // Set up navigation bar
+    NavigationBar.setBackgroundColorAsync('rgba(0, 0, 0, 0)');
+    NavigationBar.setVisibilityAsync('visible');
+
+    // Clean up navigation bar on unmount
     return () => {
-      NavigationBar.setBackgroundColorAsync('#FFFFFF'); // Reset to default or any other color
+      NavigationBar.setBackgroundColorAsync('#FFFFFF');
     };
   }, []);
 
-  // Show loading state if the user data is being fetched
-  if (isLoading) {
+  // Function to handle Google Sign-In
+  const signInWithGoogle = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      setUser(userInfo);
+      setIsLoaded(true);
+    } catch (error) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log('User cancelled the login process');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log('Sign-In is already in progress');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.log('Google Play Services is not available');
+      } else {
+        console.error(error);
+      }
+      setIsLoaded(true); // Even if sign-in fails, stop loading
+    }
+  };
+
+  // Auto-login or check if user is already signed in
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const isSignedIn = await GoogleSignin.isSignedIn();
+        if (isSignedIn) {
+          const userInfo = await GoogleSignin.getCurrentUser();
+          setUser(userInfo);
+        }
+      } catch (error) {
+        console.error('Error checking user sign-in:', error);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+    checkUser();
+  }, []);
+
+  if (!isLoaded) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <StatusBar barStyle="dark-content" />
@@ -37,17 +104,15 @@ const Layout = ({ user, isLoading }) => {
     );
   }
 
-  // Show UnauthenticatedLayout if the user is not logged in
   if (!user) {
-    return <UnauthenticatedLayout />;
+    return <UnauthenticatedLayout signInWithGoogle={signInWithGoogle} />;
   }
 
-  // If user is authenticated, render the authenticated layout with different screens
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <StatusBar barStyle="dark-content" />
       <Stack screenOptions={{ headerShown: false }}>
-       
+        <Stack.Screen name="oauth/callback" options={{ headerShown: false }} />
         <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
         <Stack.Screen name="clinics/index" options={{ title: 'Clinics', headerShown: true }} />
         <Stack.Screen name="clinics/[name]" options={{ title: '', headerShown: false }} />
@@ -64,27 +129,15 @@ const Layout = ({ user, isLoading }) => {
   );
 };
 
-const LayoutWithProviders = ({ user, isLoading }) => {
-  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-
-  if (!publishableKey) {
-    throw new Error('Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env');
-  }
-
-  return (
-    <ClerkProvider publishableKey={publishableKey}>
-      <ClerkLoaded>
-        <Provider store={store}>
-          <PersistGate loading={null} persistor={persistor}>
-            <ScheduleProvider>
-              <Layout user={user} isLoading={isLoading} />
-            </ScheduleProvider>
-          </PersistGate>
-        </Provider>
-      </ClerkLoaded>
-    </ClerkProvider>
-  );
-};
+const LayoutWithProviders = () => (
+  <Provider store={store}>
+    <PersistGate loading={null} persistor={persistor}>
+      <ScheduleProvider>
+        <Layout />
+      </ScheduleProvider>
+    </PersistGate>
+  </Provider>
+);
 
 export default LayoutWithProviders;
 
