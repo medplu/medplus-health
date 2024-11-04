@@ -4,6 +4,7 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// import axios from 'axios'; // Removed Axios import
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -18,7 +19,7 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
     androidClientId: '399287117531-s5ea9q7t3v9auj3tspnvi3j70fd9tdg8.apps.googleusercontent.com',
     webClientId: '399287117531-tmvmbo06a5l8svihhb7c7smqt7iobbs0.apps.googleusercontent.com',
     // Updated redirectUri to match authorized URI
-    redirectUri: 'https://auth.expo.io/@parroti/medplus-app/auth/google/callback',
+    redirectUri: 'http://localhost:8081/auth/google/callback',
   });
 
   React.useEffect(() => {
@@ -47,15 +48,12 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                firstName: userInfo.given_name,
-                lastName: userInfo.family_name,
-                email: userInfo.email,
-                profileImage: userInfo.picture,
+                accessToken: accessToken, // Send the access token
             }),
         });
 
         if (!response.ok) {
-            throw new Error('Failed to save user to backend');
+            throw new Error('Failed to authenticate with backend');
         }
 
         const savedUser = await response.json();
@@ -63,7 +61,7 @@ const SignInWithOAuth: React.FC<SignInWithOAuthProps> = ({ setErrorMessage, rout
 
         // Save user data in AsyncStorage for future sessions
         await AsyncStorage.multiSet([
-            ['authToken', savedUser.token], // Store the received token
+            ['authToken', savedUser.token],
             ['userId', savedUser.userId],
             ['firstName', savedUser.firstName],
             ['lastName', savedUser.lastName],

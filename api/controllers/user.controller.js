@@ -5,7 +5,6 @@ const User = require('../models/user.model');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken'); 
-// const axios = require('axios'); // Removed Axios import for Clerk.dev
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -189,58 +188,56 @@ exports.login = async (req, res) => {
     }
 };
 
-// Google Sign-In
-exports.googleSignIn = async (req, res) => {
+// Handle Google OAuth login
+exports.googleAuth = async (req, res) => {
     try {
-        const { firstName, lastName, email, profileImage } = req.body;
+        const { accessToken } = req.body;
 
-        // Check if user already exists
-        let user = await User.findOne({ email });
+        // Verify the access token with Google
+        const userInfoResponse = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
 
-        if (!user) {
-            // Create new user if it doesn't exist
-            user = new User({
-                firstName,
-                lastName,
-                email,
-                isVerified: true, // Automatically verify Google users
-            });
-            await user.save();
+        if (!userInfoResponse.ok) {
+            return res.status(400).json({ error: 'Invalid Google access token' });
         }
 
-        // Generate JWT token with necessary claims
-        const token = jwt.sign(
-            { 
-                userId: user._id, 
-                email: user.email 
-            }, 
-            process.env.JWT_SECRET, 
-            { expiresIn: '1h' }
-        );
+        const userInfo = await userInfoResponse.json();
 
-        // // Optional: Communicate with Clerk.dev to register or authenticate the user
-        // await axios.post('https://api.clerk.dev/v1/users', {
-        //     email: user.email,
-        //     firstName: user.firstName,
-        //     lastName: user.lastName,
-        //     profileImage: user.profileImage
-        // }, {
-        //     headers: {
-        //         'Authorization': `Bearer ${process.env.CLERK_API_KEY}`,
-        //         'Content-Type': 'application/json'
-        //     }
-        // });
+        // Check if user already exists
+        let user = await User.findOne({ email: userInfo.email });
 
-        // Send response with user details and token
-        res.status(200).json({
-            token,
-            userId: user._id,
-            firstName: user.firstName,
-            lastName: user.lastName,
+        if (!user) {
+            // Create a new user
+            user = new User({
+                firstName: userInfo.given_name,
+                lastName: userInfo.family_name,
+                email: userInfo.email,
+                profileImage: userInfo.picture,
+                isVerified: true,
+                // Add any additional fields as needed
+            });
+
+            await user.save();
+
+            // Optionally, create entries in Client, Professional, or Student based on userType
+            // ...existing conditional logic...
+        }
+
+        // Generate JWT token
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.status(200).json({ 
+            token, 
+            userId: user._id, 
+            firstName: user.firstName, 
+            lastName: user.lastName, 
             email: user.email,
+            userType: user.userType,
+            // Add other necessary fields
         });
     } catch (error) {
-        console.error("Error during Google sign-in", error);
+        console.error("Error during Google authentication:", error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
