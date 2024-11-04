@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, FlatList, 
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FontAwesome, Ionicons } from '@expo/vector-icons'; // Add Ionicons to imports
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import DoctorCard from '../../components/common/DoctorCardItem';
 import HorizontalLine from '../../components/common/HorizontalLine';
 import Colors from '../../components/Shared/Colors';
@@ -12,14 +12,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AirbnbRating } from 'react-native-ratings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DoctorCardItem from '../../components/common/DoctorCardItem';
-import { useSelector } from 'react-redux'; // Import useSelector
+import { useSelector } from 'react-redux';
 
 type RouteParams = {
-  doctor: string; // JSON string
+  doctor: string;
 };
 
 type Doctor = {
-  _id: string;
   _id: string;
   firstName: string;
   lastName: string;
@@ -40,10 +39,9 @@ type Review = {
 const DoctorProfile: React.FC = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
-  const doctor: Doctor = JSON.parse(route.params.doctor); // Deserialize the doctor object
+  const doctor: Doctor = JSON.parse(route.params.doctor);
 
-  // Retrieve userId from Redux store
-  const userId = useSelector((state: any) => state.user.id); // Adjust according to your Redux state structure
+  const userId = useSelector((state: any) => state.user.id);
 
   const [loading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,9 +107,9 @@ const DoctorProfile: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-      <Ionicons name="arrow-back" size={24} color="black" /> {/* Use Ionicons arrow */}
-    </TouchableOpacity>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="arrow-back" size={24} color="black" />
+      </TouchableOpacity>
       <FlatList
         contentContainerStyle={styles.scrollViewContent}
         data={[doctor]}
@@ -129,7 +127,7 @@ const DoctorProfile: React.FC = () => {
             </View>
             <BookingSection
               doctorId={item._id}
-              userId={userId} // Use userId from Redux here
+              userId={userId}
               consultationFee={item.consultationFee}
             />
             <HorizontalLine />
@@ -138,7 +136,7 @@ const DoctorProfile: React.FC = () => {
               searchQuery=""
               selectedCategory=""
               onViewAll={handleViewAll}
-              excludeDoctorId={doctor._id} // Add this line
+              excludeDoctorId={doctor._id}
             />
             <HorizontalLine />
             <Text style={styles.sectionTitle}>Reviews</Text>
@@ -197,7 +195,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     padding: 20,
-    paddingTop: 60, // Adjust padding to accommodate back button
+    paddingTop: 60,
   },
   backButton: {
     position: 'absolute',
