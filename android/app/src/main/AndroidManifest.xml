@@ -30,10 +30,11 @@
         <data android:scheme="myapp"/>
         <data android:scheme="medplus.company.app"/>
         <data android:scheme="com.yourcompany.medplusapp"/>
+        <data android:scheme="https"/>
       </intent-filter>
       <intent-filter data-generated="true">
         <action android:name="android.intent.action.VIEW"/>
-        <data android:scheme="myapp" android:host="oauth" android:path="/callback"/>
+        <data android:scheme="https" android:host="auth.expo.io" android:path="/@parroti/medplus-app/auth/google/callback"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
