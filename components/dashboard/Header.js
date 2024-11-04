@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import Colors from '../Shared/Colors';
-import { useClerk } from '@clerk/clerk-expo';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { selectUser, logout } from '../../app/store/userSlice';
 import { io } from 'socket.io-client';
@@ -11,7 +10,6 @@ import { io } from 'socket.io-client';
 export default function Header() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { signOut } = useClerk();
 
   // Obtain user data from Redux state
   const user = useSelector(selectUser);
@@ -19,7 +17,6 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await signOut();
       dispatch(logout()); // Dispatch logout action
       navigation.navigate('login/index');
     } catch (error) {

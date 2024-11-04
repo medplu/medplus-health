@@ -5,6 +5,7 @@ const User = require('../models/user.model');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken'); 
+// const axios = require('axios'); // Removed Axios import for Clerk.dev
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -187,6 +188,7 @@ exports.login = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 // Google Sign-In
 exports.googleSignIn = async (req, res) => {
     try {
@@ -206,12 +208,28 @@ exports.googleSignIn = async (req, res) => {
             await user.save();
         }
 
-        // Generate JWT token
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        // Generate JWT token with necessary claims
+        const token = jwt.sign(
+            { 
+                userId: user._id, 
+                email: user.email 
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '1h' }
+        );
 
-        // Ensure the redirect URI matches the frontend configuration
-        // This might involve setting the correct callback URL in the OAuth flow
-        // For example, when exchanging tokens or redirecting after authentication
+        // // Optional: Communicate with Clerk.dev to register or authenticate the user
+        // await axios.post('https://api.clerk.dev/v1/users', {
+        //     email: user.email,
+        //     firstName: user.firstName,
+        //     lastName: user.lastName,
+        //     profileImage: user.profileImage
+        // }, {
+        //     headers: {
+        //         'Authorization': `Bearer ${process.env.CLERK_API_KEY}`,
+        //         'Content-Type': 'application/json'
+        //     }
+        // });
 
         // Send response with user details and token
         res.status(200).json({
