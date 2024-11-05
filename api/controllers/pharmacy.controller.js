@@ -2,7 +2,6 @@
 const Pharmacy = require('../models/pharmacy.model');
 const Professional = require('../models/professional.model');
 const cloudinary = require('cloudinary').v2;
-
 // Controller to create a pharmacy (only pharmacists can create pharmacies)
 const createPharmacy = async (req, res) => {
     try {
@@ -14,17 +13,35 @@ const createPharmacy = async (req, res) => {
             city,
             state,
             zipCode,
-            operatingHours, // Expecting an object with open and close properties
+            operatingHours: rawOperatingHours, // Accepting as a raw input, which might be a JSON string or object
             services,
             licenseNumber,
-            professionalId  // ID of the professional creating the pharmacy
+            professionalId
         } = req.body;
 
-        // Add logging to verify payload
-        console.log('Received professionalId:', professionalId);
+        // Log to verify received data
+        console.log('Received payload:', req.body);
 
         if (!professionalId) {
             return res.status(400).json({ error: 'professionalId is required' });
+        }
+
+        let operatingHours;
+
+        // Check if `operatingHours` is an object or string and parse if needed
+        if (typeof rawOperatingHours === 'string') {
+            try {
+                operatingHours = JSON.parse(rawOperatingHours);
+            } catch (error) {
+                return res.status(400).json({ error: 'Invalid format for operatingHours' });
+            }
+        } else {
+            operatingHours = rawOperatingHours;
+        }
+
+        // Check if `operatingHours` has `open` and `close`
+        if (!operatingHours?.open || !operatingHours?.close) {
+            return res.status(400).json({ error: 'Both operatingHours.open and operatingHours.close are required' });
         }
 
         let image = null;
@@ -54,7 +71,7 @@ const createPharmacy = async (req, res) => {
             return res.status(400).json({ error: 'Professional is already attached to a pharmacy' });
         }
 
-        // Create a new pharmacy without location and inventory
+        // Create a new pharmacy
         const pharmacy = new Pharmacy({
             name,
             contactNumber,
@@ -65,7 +82,7 @@ const createPharmacy = async (req, res) => {
                 state,
                 zipCode
             },
-            pharmacists: [professional._id],  // Link the pharmacist to the pharmacy
+            pharmacists: [professional._id],
             operatingHours: {
                 open: operatingHours.open,
                 close: operatingHours.close
@@ -82,10 +99,10 @@ const createPharmacy = async (req, res) => {
         const updatedProfessional = await Professional.findOneAndUpdate(
             { _id: professionalId },
             {
-                pharmacy: savedPharmacy._id, // Link the pharmacy ID to the professional's pharmacy field
-                attachedToPharmacy: true // Set attachedToPharmacy to true
+                pharmacy: savedPharmacy._id,
+                attachedToPharmacy: true
             },
-            { new: true } // Return the updated document
+            { new: true }
         );
 
         if (!updatedProfessional) {
@@ -98,13 +115,13 @@ const createPharmacy = async (req, res) => {
             pharmacy: savedPharmacy
         });
     } catch (error) {
-        // Handle any unexpected errors
         console.error(error);
         return res.status(500).json({
             error: 'An error occurred while creating the pharmacy'
         });
     }
 };
+
 
 // Controller to update the location of a pharmacy
 const updatePharmacyLocation = async (req, res) => {
