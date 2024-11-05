@@ -15,7 +15,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yourcompany.medplusapp",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "CFBundleURLTypes": [
           {
@@ -32,7 +31,6 @@
         "backgroundColor": "#ffffff"
       },
       "package": "medplus.company.app",
-      "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
           "action": "VIEW",
@@ -68,6 +66,12 @@
           "ios": {
             "useFrameworks": "static"
           }
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.399287117531-853cnp42gtbpm3idp02jcrc0thec4jg4"
         }
       ]
     ],

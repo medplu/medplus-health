@@ -1,4 +1,4 @@
-package com.yourcompany.medplusapp
+package medplus.company.app
 
 import android.app.Application
 import android.content.res.Configuration
