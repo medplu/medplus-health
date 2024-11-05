@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, FlatList, TextInput, Button, Dimensions, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, ScrollView, TextInput, Button, Dimensions } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -52,13 +52,6 @@ const DoctorProfile: React.FC = () => {
   const [newRating, setNewRating] = useState<number>(0);
   const [showFullBio, setShowFullBio] = useState<boolean>(false);
   const [showAllReviews, setShowAllReviews] = useState<boolean>(false);
-  const [index, setIndex] = useState(0);
-  const [routes] = useState([
-    { key: 'schedule', title: 'Schedule' },
-    { key: 'about', title: 'About' },
-    { key: 'experience', title: 'Experience' },
-    { key: 'reviews', title: 'Reviews' },
-  ]);
 
   useEffect(() => {
     fetchReviews();
@@ -89,49 +82,6 @@ const DoctorProfile: React.FC = () => {
   const handleViewAll = (category: string) => {
     console.log(`View all professionals in category: ${category}`);
   };
-
-  const renderScene = SceneMap({
-    schedule: () => (
-      <BookingSection
-        doctorId={doctor._id}
-        userId={userId}
-        consultationFee={doctor.consultationFee}
-      />
-    ),
-    about: () => (
-      <View style={styles.tabContent}>
-        <Text style={styles.tabText}>{doctor.bio}</Text>
-      </View>
-    ),
-    experience: () => (
-      <View style={styles.tabContent}>
-        <Text style={styles.tabText}>
-          Specialities: {doctor.specialities ? doctor.specialities.join(', ') : 'N/A'}
-        </Text>
-      </View>
-    ),
-    reviews: () => (
-      <FlatList
-        data={showAllReviews ? reviews : reviews.slice(0, 2)}
-        renderItem={({ item }) => (
-          <View style={styles.reviewCard}>
-            <Text style={styles.reviewUser}>{item.user}</Text>
-            <AirbnbRating
-              isDisabled={true}
-              count={5}
-              defaultRating={item.rating}
-              size={20}
-              showRating={false}
-              starContainerStyle={{ paddingVertical: 5 }}
-            />
-            <Text style={styles.reviewComment}>{item.comment}</Text>
-          </View>
-        )}
-        keyExtractor={(item) => item.id}
-        style={styles.reviewList}
-      />
-    ),
-  });
 
   if (loading) {
     return (
@@ -178,28 +128,10 @@ const DoctorProfile: React.FC = () => {
             <Text style={styles.infoText}>{reviews.length} Reviews</Text>
           </View>
         </View>
-        <TabView
-          navigationState={{ index, routes }}
-          renderScene={renderScene}
-          onIndexChange={setIndex}
-          initialLayout={{ width: Dimensions.get('window').width }}
-          renderTabBar={(props) => (
-            <TabBar
-              {...props}
-              indicatorStyle={{ backgroundColor: Colors.primary }}
-              style={{ backgroundColor: 'white' }}
-              labelStyle={{ color: 'black' }}
-            />
-          )}
-        />
+        <BookingSection doctorId={doctor._id} consultationFee={doctor.consultationFee} />
         <HorizontalLine />
         <Text style={styles.sectionTitle}>View More Professionals</Text>
-        <Doctors
-          searchQuery=""
-          selectedCategory=""
-          onViewAll={handleViewAll}
-          excludeDoctorId={doctor._id}
-        />
+        <Doctors searchQuery="" selectedCategory="" onViewAll={handleViewAll} excludeDoctorId={doctor._id} />
       </ScrollView>
     </SafeAreaView>
   );
