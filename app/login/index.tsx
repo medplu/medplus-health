@@ -63,7 +63,11 @@ const LoginScreen: React.FC = () => {
       let route = '';
       switch (userType) {
         case 'professional':
-          route = '/professional/tabs';
+          if (professional.profession === 'pharmacist') {
+            route = '/pharmacist/tabs'; // Route pharmacists to the PharmacistDashboardScreen
+          } else {
+            route = '/professional/tabs';
+          }
           break;
         case 'client':
           route = '/client/tabs';

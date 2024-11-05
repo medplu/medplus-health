@@ -100,6 +100,8 @@ const Layout = () => {
         <Stack.Screen name="doctor/[doctorId]" options={{ title: 'Doctor Booking', headerShown: true }} />
         <Stack.Screen name="alldoctors/index" options={{ title: 'All Doctors', headerShown: true }} />
         <Stack.Screen name="[missing]" options={{ title: '404', headerShown: true }} />
+        <Stack.Screen name="pharmacist/dashboard" options={{ title: 'Pharmacist Dashboard' }} />
+        <Stack.Screen name="pharmacist/tabs" options={{ headerShown: false }} /> {/* Add this line */}
       </Stack>
     </SafeAreaView>
   );

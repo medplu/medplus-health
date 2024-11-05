@@ -74,6 +74,9 @@ const scheduleRoutes = require('./routes/schedule.route'); // Import the schedul
 // Import the patient routes
 const patientRoutes = require('./routes/patient.routes');
 
+// Import the catalogue routes
+const catalogueRoutes = require('./routes/catalogue.route'); // Import the catalogue routes
+
 // Use the user routes
 app.use('/api', userRoutes);
 
@@ -106,6 +109,9 @@ app.use('/api', scheduleRoutes); // Added the schedule routes
 
 // Use the patient routes
 app.use('/api', patientRoutes);
+
+// Use the catalogue routes
+app.use('/api', catalogueRoutes); // Use the catalogue routes
 
 // Import the appointments route
 const appointmentsRoute = require('./routes/appointments');

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, FlatList, TextInput, Button } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, FlatList, TextInput, Button, Dimensions } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -13,6 +13,8 @@ import { AirbnbRating } from 'react-native-ratings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DoctorCardItem from '../../components/common/DoctorCardItem';
 import { useSelector } from 'react-redux';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { MaterialIcons } from '@expo/vector-icons';
 
 type RouteParams = {
   doctor: string;
@@ -50,6 +52,13 @@ const DoctorProfile: React.FC = () => {
   const [newRating, setNewRating] = useState<number>(0);
   const [showFullBio, setShowFullBio] = useState<boolean>(false);
   const [showAllReviews, setShowAllReviews] = useState<boolean>(false);
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
+    { key: 'schedule', title: 'Schedule' },
+    { key: 'about', title: 'About' },
+    { key: 'experience', title: 'Experience' },
+    { key: 'reviews', title: 'Reviews' },
+  ]);
 
   useEffect(() => {
     fetchReviews();
@@ -80,6 +89,49 @@ const DoctorProfile: React.FC = () => {
   const handleViewAll = (category: string) => {
     console.log(`View all professionals in category: ${category}`);
   };
+
+  const renderScene = SceneMap({
+    schedule: () => (
+      <BookingSection
+        doctorId={doctor._id}
+        userId={userId}
+        consultationFee={doctor.consultationFee}
+      />
+    ),
+    about: () => (
+      <View style={styles.tabContent}>
+        <Text style={styles.tabText}>{doctor.bio}</Text>
+      </View>
+    ),
+    experience: () => (
+      <View style={styles.tabContent}>
+        <Text style={styles.tabText}>
+          Specialities: {doctor.specialities ? doctor.specialities.join(', ') : 'N/A'}
+        </Text>
+      </View>
+    ),
+    reviews: () => (
+      <FlatList
+        data={showAllReviews ? reviews : reviews.slice(0, 2)}
+        renderItem={({ item }) => (
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewUser}>{item.user}</Text>
+            <AirbnbRating
+              isDisabled={true}
+              count={5}
+              defaultRating={item.rating}
+              size={20}
+              showRating={false}
+              starContainerStyle={{ paddingVertical: 5 }}
+            />
+            <Text style={styles.reviewComment}>{item.comment}</Text>
+          </View>
+        )}
+        keyExtractor={(item) => item.id}
+        style={styles.reviewList}
+      />
+    ),
+  });
 
   if (loading) {
     return (
@@ -117,18 +169,33 @@ const DoctorProfile: React.FC = () => {
         renderItem={({ item }) => (
           <>
             <DoctorCardItem doctor={item} />
-            <View style={styles.descriptionContainer}>
-              <Text style={styles.descriptionText}>
-                {showFullBio ? item.bio : `${item.bio?.substring(0, 100) || ''}...`}
-              </Text>
-              <TouchableOpacity onPress={() => setShowFullBio(!showFullBio)}>
-                <Text style={styles.readMoreText}>{showFullBio ? 'Read Less' : 'Read More'}</Text>
-              </TouchableOpacity>
+            <View style={styles.infoContainer}>
+              <View style={styles.infoItem}>
+                <MaterialIcons name="work" size={20} color={Colors.primary} />
+                <Text style={styles.infoText}>{item.yearsOfExperience} Years</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <MaterialIcons name="people" size={20} color={Colors.primary} />
+                <Text style={styles.infoText}>{item.numberOfPatients} Patients</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <FontAwesome name="star" size={20} color={Colors.primary} />
+                <Text style={styles.infoText}>{reviews.length} Reviews</Text>
+              </View>
             </View>
-            <BookingSection
-              doctorId={item._id}
-              userId={userId}
-              consultationFee={item.consultationFee}
+            <TabView
+              navigationState={{ index, routes }}
+              renderScene={renderScene}
+              onIndexChange={setIndex}
+              initialLayout={{ width: Dimensions.get('window').width }}
+              renderTabBar={(props) => (
+                <TabBar
+                  {...props}
+                  indicatorStyle={{ backgroundColor: Colors.primary }}
+                  style={{ backgroundColor: 'white' }}
+                  labelStyle={{ color: 'black' }}
+                />
+              )}
             />
             <HorizontalLine />
             <Text style={styles.sectionTitle}>View More Professionals</Text>
@@ -138,49 +205,6 @@ const DoctorProfile: React.FC = () => {
               onViewAll={handleViewAll}
               excludeDoctorId={doctor._id}
             />
-            <HorizontalLine />
-            <Text style={styles.sectionTitle}>Reviews</Text>
-            <FlatList
-              data={showAllReviews ? reviews : reviews.slice(0, 2)}
-              renderItem={({ item }) => (
-                <View style={styles.reviewCard}>
-                  <Text style={styles.reviewUser}>{item.user}</Text>
-                  <AirbnbRating
-                    isDisabled={true}
-                    count={5}
-                    defaultRating={item.rating}
-                    size={20}
-                    showRating={false}
-                    starContainerStyle={{ paddingVertical: 5 }}
-                  />
-                  <Text style={styles.reviewComment}>{item.comment}</Text>
-                </View>
-              )}
-              keyExtractor={(item) => item.id}
-              style={styles.reviewList}
-            />
-            <TouchableOpacity onPress={() => setShowAllReviews(!showAllReviews)}>
-              <Text style={styles.viewMoreText}>
-                {showAllReviews ? 'View Less Reviews' : 'View More Reviews'}
-              </Text>
-            </TouchableOpacity>
-            <View style={styles.addReviewContainer}>
-              <Text style={styles.addReviewTitle}>Add Your Review</Text>
-              <AirbnbRating
-                count={5}
-                defaultRating={newRating}
-                size={30}
-                onFinishRating={(rating) => setNewRating(rating)}
-                starContainerStyle={{ paddingVertical: 5 }}
-              />
-              <TextInput
-                style={styles.reviewInput}
-                placeholder="Write your review here..."
-                value={newReview}
-                onChangeText={setNewReview}
-              />
-              <Button title="Submit" onPress={handleAddReview} />
-            </View>
           </>
         )}
       />
@@ -280,6 +304,32 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 18,
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 10,
+    paddingHorizontal: 10,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  infoText: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 5,
+  },
+  reviewSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tabContent: {
+    padding: 20,
+  },
+  tabText: {
+    fontSize: 16,
+    color: '#333',
   },
 });
 
