@@ -71,6 +71,15 @@ const professionalSchema = new Schema({
     attachedToClinic: {  // New field to track clinic attachment status
         type: Boolean,
         default: false // Initialize as false
+    },
+    pharmacy: {  // Reference to the Pharmacy model
+        type: Schema.Types.ObjectId,
+        ref: 'Pharmacy',  // This ensures that a professional can be linked to a specific pharmacy
+        default: null // Default to null when not attached to a pharmacy
+    },
+    attachedToPharmacy: {  // New field to track pharmacy attachment status
+        type: Boolean,
+        default: false // Initialize as false
     }
 }, { timestamps: true });
 

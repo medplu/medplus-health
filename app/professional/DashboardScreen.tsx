@@ -7,6 +7,7 @@ import { selectUser } from '../store/userSlice'; // Updated path if necessary
 import { RootState } from '../store/configureStore';
 import { useRouter } from 'expo-router';
 import useAppointments from '../../hooks/useAppointments';
+import CreatePharmacyForm from '../../components/CreatePharmacyForm'; // Import the new component
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -15,10 +16,6 @@ const DashboardScreen: React.FC = () => {
     const router = useRouter();
     const user = useSelector(selectUser); // Ensure 'selectUser' is correctly imported and defined
     const { appointments = [], loading, error } = useAppointments(); // Default to empty array
-
-    const fetchPatientAppointments = (patientId: string) => {
-        return appointments.filter(appointment => appointment.patientId._id === patientId);
-    };
 
     const handleViewPatient = (appointment) => {
         console.log('Received appointment data:', appointment); // Log the entire appointment object
@@ -31,10 +28,7 @@ const DashboardScreen: React.FC = () => {
             console.error('Patient ID is not available in the appointment data', appointment);
         }
     };
-    
-    
 
-    // Add handleAddToSchedule function
     const handleAddToSchedule = (appointmentId: string) => {
         // Implement scheduling logic here
         console.log(`Add to schedule clicked for appointment: ${appointmentId}`);
@@ -83,109 +77,125 @@ const DashboardScreen: React.FC = () => {
     return (
         <ScrollView style={styles.container}>
             {user.isLoggedIn ? (
-                user.professional?.attachedToClinic ? (
-                    <>
-                        <View style={styles.card}>
-                            <Text style={styles.greetingText}>Welcome, {user.name}!</Text>
-                        </View>
+                user.professional.profession === 'pharmacist' ? (
+                    user.professional.attachedToPharmacy ? (
+                        <>
+                            <View style={styles.card}>
+                                <Text style={styles.greetingText}>Welcome, {user.name}!</Text>
+                            </View>
 
-                        <View style={styles.overviewContainer}>
-                            <View style={styles.overviewHeader}>
-                                <Text style={styles.sectionTitle}>Overview</Text>
-                                <View style={styles.iconContainer}>
-                                    {upcomingAppointments.length > 0 && (
-                                        <View style={styles.badge} />
-                                    )}
-                                    <Icon name="calendar" size={24} color="#333" style={styles.icon} />
+                            <View style={styles.overviewContainer}>
+                                <View style={styles.overviewHeader}>
+                                    <Text style={styles.sectionTitle}>Overview</Text>
+                                    <View style={styles.iconContainer}>
+                                        {upcomingAppointments.length > 0 && (
+                                            <View style={styles.badge} />
+                                        )}
+                                        <Icon name="calendar" size={24} color="#333" style={styles.icon} />
+                                    </View>
+                                </View>
+
+                                <View style={styles.overviewCard}>
+                                    <TouchableOpacity style={styles.overviewItem}>
+                                        <Text style={styles.overviewLabel}>Total Appointments</Text>
+                                        <Text style={styles.overviewNumber}>{totalAppointments}</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.overviewItem}>
+                                        <Text style={styles.overviewLabel}>Upcoming</Text>
+                                        <Text style={styles.overviewNumber}>{upcomingAppointments.length}</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.overviewItem}>
+                                        <Text style={styles.overviewLabel}>Requested</Text>
+                                        <Text style={styles.overviewNumber}>{requestedAppointments}</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.overviewItem}>
+                                        <Text style={styles.overviewLabel}>Completed</Text>
+                                        <Text style={styles.overviewNumber}>{completedAppointments}</Text>
+                                    </TouchableOpacity>
                                 </View>
                             </View>
 
-                            <View style={styles.overviewCard}>
-                                <TouchableOpacity style={styles.overviewItem}>
-                                    <Text style={styles.overviewLabel}>Total Appointments</Text>
-                                    <Text style={styles.overviewNumber}>{totalAppointments}</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.overviewItem}>
-                                    <Text style={styles.overviewLabel}>Upcoming</Text>
-                                    <Text style={styles.overviewNumber}>{upcomingAppointments.length}</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.overviewItem}>
-                                    <Text style={styles.overviewLabel}>Requested</Text>
-                                    <Text style={styles.overviewNumber}>{requestedAppointments}</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.overviewItem}>
-                                    <Text style={styles.overviewLabel}>Completed</Text>
-                                    <Text style={styles.overviewNumber}>{completedAppointments}</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-
-                        <View style={styles.upcomingContainer}>
-                            <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
-                            {upcomingAppointments.length > 0 ? (
-                                upcomingAppointments.map((appointment) => (
-                                    <View key={appointment._id} style={styles.appointmentCard}>
-                                        <View style={styles.appointmentDetails}>
-                                            {appointment.patientId ? (
-                                                <>
-                                                    <Text style={styles.patientName}>You have an appointment with {appointment.patientId.name}</Text>
-                                                    <Text style={styles.appointmentTime}>At {appointment.time}</Text>
-                                                    <Text style={styles.patientDetails}>Age: {appointment.patientId.age}</Text>
-                                                    <Text style={styles.patientDetails}>Gender: {appointment.patientId.gender}</Text>
-                                                </>
-                                            ) : (
-                                                <Text style={styles.patientName}>Patient details not available</Text>
-                                            )}
+                            <View style={styles.upcomingContainer}>
+                                <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
+                                {upcomingAppointments.length > 0 ? (
+                                    upcomingAppointments.map((appointment) => (
+                                        <View key={appointment._id} style={styles.appointmentCard}>
+                                            <View style={styles.appointmentDetails}>
+                                                {appointment.patientId ? (
+                                                    <>
+                                                        <Text style={styles.patientName}>You have an appointment with {appointment.patientId.name}</Text>
+                                                        <Text style={styles.appointmentTime}>At {appointment.time}</Text>
+                                                        <Text style={styles.patientDetails}>Age: {appointment.patientId.age}</Text>
+                                                        <Text style={styles.patientDetails}>Gender: {appointment.patientId.gender}</Text>
+                                                    </>
+                                                ) : (
+                                                    <Text style={styles.patientName}>Patient details not available</Text>
+                                                )}
+                                            </View>
+                                            {/* Move buttons below the text */}
+                                            <View style={styles.buttonContainer}>
+                                                <TouchableOpacity
+                                                    style={styles.viewButton}
+                                                    onPress={() => handleViewPatient(appointment.patientId)}
+                                                >
+                                                    <Text style={styles.buttonText}>View Patient</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={styles.addScheduleButton}
+                                                    onPress={() => handleAddToSchedule(appointment._id)}
+                                                >
+                                                    <Text style={styles.buttonText}>Add to Schedule</Text>
+                                                </TouchableOpacity>
+                                            </View>
                                         </View>
-                                        {/* Move buttons below the text */}
-                                        <View style={styles.buttonContainer}>
-                                            <TouchableOpacity
-                                                style={styles.viewButton}
-                                                onPress={() => handleViewPatient(appointment.patientId)}
-                                            >
-                                                <Text style={styles.buttonText}>View Patient</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={styles.addScheduleButton}
-                                                onPress={() => handleAddToSchedule(appointment._id)}
-                                            >
-                                                <Text style={styles.buttonText}>Add to Schedule</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                ))
-                            ) : (
-                                <Text style={styles.noAppointmentsText}>No upcoming appointments.</Text>
-                            )}
-                        </View>
-
-                        <View style={styles.analyticsContainer}>
-                            <Text style={styles.sectionTitle}>Patients</Text>
-                            <Text style={styles.chartTitle}>Patient Analysis</Text>
-                            <PieChart
-                                data={patientData}
-                                width={screenWidth - 32}
-                                height={screenHeight * 0.25}
-                                chartConfig={chartConfig}
-                                accessor="population"
-                                backgroundColor="transparent"
-                                paddingLeft="15"
-                                absolute
-                            />
-
-                            <View style={styles.customLegend}>
-                                {patientData.map((data, index) => (
-                                    <View key={index} style={styles.legendItem}>
-                                        <View style={[styles.legendColorBox, { backgroundColor: data.color }]} />
-                                        <Text style={styles.legendLabel}>{data.name}</Text>
-                                    </View>
-                                ))}
+                                    ))
+                                ) : (
+                                    <Text style={styles.noAppointmentsText}>No upcoming appointments.</Text>
+                                )}
                             </View>
+
+                            <View style={styles.analyticsContainer}>
+                                <Text style={styles.sectionTitle}>Patients</Text>
+                                <Text style={styles.chartTitle}>Patient Analysis</Text>
+                                <PieChart
+                                    data={patientData}
+                                    width={screenWidth - 32}
+                                    height={screenHeight * 0.25}
+                                    chartConfig={chartConfig}
+                                    accessor="population"
+                                    backgroundColor="transparent"
+                                    paddingLeft="15"
+                                    absolute
+                                />
+
+                                <View style={styles.customLegend}>
+                                    {patientData.map((data, index) => (
+                                        <View key={index} style={styles.legendItem}>
+                                            <View style={[styles.legendColorBox, { backgroundColor: data.color }]} />
+                                            <Text style={styles.legendLabel}>{data.name}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        </>
+                    ) : (
+                        <CreatePharmacyForm user={user} /> // Render the CreatePharmacyForm component
+                    )
+                ) : user.professional.profession === 'doctor' ? (
+                    user.professional.attachedToClinic ? (
+                        // Add doctor-specific UI here
+                        <View style={styles.doctorContainer}>
+                            <Text style={styles.sectionTitle}>Doctor Dashboard</Text>
+                            {/* Add more doctor-specific components */}
                         </View>
-                    </>
+                    ) : (
+                        <View style={styles.noClinicContainer}>
+                            <Text style={styles.noClinicText}>You are not attached to a clinic. Please contact admin to attach your profile to a clinic.</Text>
+                        </View>
+                    )
                 ) : (
                     <View style={styles.noClinicContainer}>
-                        <Text style={styles.noClinicText}>You are not attached to a clinic. Please contact admin to attach your profile to a clinic.</Text>
+                        <Text style={styles.noClinicText}>You are not a pharmacist or doctor. Please contact admin for further assistance.</Text>
                     </View>
                 )
             ) : (

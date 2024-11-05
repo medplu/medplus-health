@@ -1,6 +1,7 @@
 // Import necessary models
 const Pharmacy = require('../models/pharmacy.model');
 const Professional = require('../models/professional.model');
+const cloudinary = require('cloudinary').v2;
 
 // Controller to create a pharmacy (only pharmacists can create pharmacies)
 const createPharmacy = async (req, res) => {
@@ -13,11 +14,21 @@ const createPharmacy = async (req, res) => {
             city,
             state,
             zipCode,
-            operatingHours,
+            operatingHours, // Expecting an object with open and close properties
             services,
             licenseNumber,
             professionalId  // ID of the professional creating the pharmacy
         } = req.body;
+
+        let image = null;
+
+        if (req.files && req.files.image) {
+            const file = req.files.image;
+            const uploadedResponse = await cloudinary.uploader.upload(file.tempFilePath, {
+                folder: 'pharmacies',
+            });
+            image = uploadedResponse.secure_url;
+        }
 
         // Find the professional by ID
         const professional = await Professional.findById(professionalId);
@@ -29,6 +40,11 @@ const createPharmacy = async (req, res) => {
 
         if (professional.profession !== 'pharmacist') {
             return res.status(403).json({ error: 'Only pharmacists can create a pharmacy' });
+        }
+
+        // Check if the professional is already attached to a pharmacy
+        if (professional.attachedToPharmacy) {
+            return res.status(400).json({ error: 'Professional is already attached to a pharmacy' });
         }
 
         // Create a new pharmacy without location and inventory
@@ -43,13 +59,28 @@ const createPharmacy = async (req, res) => {
                 zipCode
             },
             pharmacists: [professional._id],  // Link the pharmacist to the pharmacy
-            operatingHours,
+            operatingHours, // Use the object directly
             services,
-            licenseNumber
+            licenseNumber,
+            image
         });
 
         // Save the pharmacy to the database
         const savedPharmacy = await pharmacy.save();
+
+        // Update the professional to be attached to the new pharmacy
+        const updatedProfessional = await Professional.findOneAndUpdate(
+            { _id: professionalId },
+            {
+                pharmacy: savedPharmacy._id, // Link the pharmacy ID to the professional's pharmacy field
+                attachedToPharmacy: true // Set attachedToPharmacy to true
+            },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedProfessional) {
+            console.warn(`No professional found for ID: ${professionalId}`);
+        }
 
         // Send a success response
         return res.status(201).json({

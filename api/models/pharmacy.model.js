@@ -27,22 +27,25 @@ const pharmacySchema = new Schema({
     },
     pharmacists: [{
         type: Schema.Types.ObjectId,
-        ref: 'Professional',  // Reference to the Professional model (pharmacists)
+        ref: 'Professional',
         required: true
     }],
     inventory: [{
         drugName: { type: String, required: true },
         stock: { type: Number, required: true }
     }],
-    operatingHours: [{
-        day: { type: String, required: true },  // e.g., 'Monday'
-        openTime: { type: String, required: true },  // e.g., '08:00 AM'
-        closeTime: { type: String, required: true }  // e.g., '06:00 PM'
-    }],
-    services: [String],  // Array of pharmacy services (e.g., 'Delivery', 'Consultation')
+    operatingHours: {
+        open: { type: String, required: true },
+        close: { type: String, required: true }
+    },
+    services: [String],
     licenseNumber: {
         type: String,
-        required: true  // Required to verify the pharmacy
+        required: true
+    },
+    image: {
+        type: String,
+        required: false
     }
 }, { timestamps: true });
 
