@@ -98,6 +98,7 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
         )}
         keyExtractor={(item) => item._id.toString()}
         showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled={true} // Add this line
       />
     </View>
   );

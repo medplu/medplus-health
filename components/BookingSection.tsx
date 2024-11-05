@@ -211,6 +211,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
           </TouchableOpacity>
         )}
         showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled={true} // Add this line
       />
       <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
       <FlatList
@@ -253,6 +254,8 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
             </View>
           </TouchableOpacity>
         )}
+        showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled={true} // Add this line
       />
       <TouchableOpacity style={styles.bookButton} onPress={handleBookPress} disabled={isSubmitting}>
         <Text style={styles.bookButtonText}>Book Appointment</Text>
