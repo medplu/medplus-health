@@ -63,7 +63,6 @@ const CreatePharmacyForm = ({ user }) => {
 
             const response = await fetch('https://medplus-health.onrender.com/api/pharmacies', {
                 method: 'POST',
-                headers: { 'Content-Type': 'multipart/form-data' },
                 body: formData,
             });
 

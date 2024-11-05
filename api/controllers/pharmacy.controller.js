@@ -20,6 +20,13 @@ const createPharmacy = async (req, res) => {
             professionalId  // ID of the professional creating the pharmacy
         } = req.body;
 
+        // Add logging to verify payload
+        console.log('Received professionalId:', professionalId);
+
+        if (!professionalId) {
+            return res.status(400).json({ error: 'professionalId is required' });
+        }
+
         let image = null;
 
         if (req.files && req.files.image) {
