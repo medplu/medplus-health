@@ -38,7 +38,10 @@ const pharmacySchema = new Schema({
         open: { type: String, required: true },
         close: { type: String, required: true }
     },
-    services: [String],
+    services: {
+        type: [String],
+        required: false
+    },
     licenseNumber: {
         type: String,
         required: true

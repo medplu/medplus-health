@@ -59,7 +59,10 @@ const createPharmacy = async (req, res) => {
                 zipCode
             },
             pharmacists: [professional._id],  // Link the pharmacist to the pharmacy
-            operatingHours, // Use the object directly
+            operatingHours: {
+                open: operatingHours.open,
+                close: operatingHours.close
+            },
             services,
             licenseNumber,
             image
