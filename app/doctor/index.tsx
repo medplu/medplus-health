@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, FlatList, TextInput, Button, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, FlatList, TextInput, Button, Dimensions, ScrollView } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -162,52 +162,45 @@ const DoctorProfile: React.FC = () => {
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Ionicons name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
-      <FlatList
-        contentContainerStyle={styles.scrollViewContent}
-        data={[doctor]}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <>
-            <DoctorCardItem doctor={item} />
-            <View style={styles.infoContainer}>
-              <View style={styles.infoItem}>
-                <MaterialIcons name="work" size={20} color={Colors.primary} />
-                <Text style={styles.infoText}>{item.yearsOfExperience} Years</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <MaterialIcons name="people" size={20} color={Colors.primary} />
-                <Text style={styles.infoText}>{item.numberOfPatients} Patients</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <FontAwesome name="star" size={20} color={Colors.primary} />
-                <Text style={styles.infoText}>{reviews.length} Reviews</Text>
-              </View>
-            </View>
-            <TabView
-              navigationState={{ index, routes }}
-              renderScene={renderScene}
-              onIndexChange={setIndex}
-              initialLayout={{ width: Dimensions.get('window').width }}
-              renderTabBar={(props) => (
-                <TabBar
-                  {...props}
-                  indicatorStyle={{ backgroundColor: Colors.primary }}
-                  style={{ backgroundColor: 'white' }}
-                  labelStyle={{ color: 'black' }}
-                />
-              )}
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <DoctorCardItem doctor={doctor} />
+        <View style={styles.infoContainer}>
+          <View style={styles.infoItem}>
+            <MaterialIcons name="work" size={20} color={Colors.primary} />
+            <Text style={styles.infoText}>{doctor.yearsOfExperience} Years</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <MaterialIcons name="people" size={20} color={Colors.primary} />
+            <Text style={styles.infoText}>{doctor.numberOfPatients} Patients</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <FontAwesome name="star" size={20} color={Colors.primary} />
+            <Text style={styles.infoText}>{reviews.length} Reviews</Text>
+          </View>
+        </View>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={{ width: Dimensions.get('window').width }}
+          renderTabBar={(props) => (
+            <TabBar
+              {...props}
+              indicatorStyle={{ backgroundColor: Colors.primary }}
+              style={{ backgroundColor: 'white' }}
+              labelStyle={{ color: 'black' }}
             />
-            <HorizontalLine />
-            <Text style={styles.sectionTitle}>View More Professionals</Text>
-            <Doctors
-              searchQuery=""
-              selectedCategory=""
-              onViewAll={handleViewAll}
-              excludeDoctorId={doctor._id}
-            />
-          </>
-        )}
-      />
+          )}
+        />
+        <HorizontalLine />
+        <Text style={styles.sectionTitle}>View More Professionals</Text>
+        <Doctors
+          searchQuery=""
+          selectedCategory=""
+          onViewAll={handleViewAll}
+          excludeDoctorId={doctor._id}
+        />
+      </ScrollView>
     </SafeAreaView>
   );
 };
