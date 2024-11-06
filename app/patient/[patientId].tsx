@@ -16,18 +16,7 @@ const PatientDetails: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
-  const [notes, setNotes] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-  const [newEntry, setNewEntry] = useState({
-    type: '',
-    description: '',
-    referral: '',
-    medication: '',
-    instructions: '',
-    refills: '',
-    warnings: '',
-  });
-  const [drugSuggestions, setDrugSuggestions] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
 
@@ -46,10 +35,6 @@ const PatientDetails: React.FC = () => {
     setSelectedSegment(segment);
   };
 
-  const handleSaveNotes = () => {
-   
-  };
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setSelectedFile(event.target.files[0]);
@@ -61,23 +46,12 @@ const PatientDetails: React.FC = () => {
       const formData = new FormData();
       formData.append('patientId', patientId as string);
       formData.append('doctorId', user.professional?._id as string);
-      formData.append('medication', JSON.stringify([{
-        drugName: newEntry.medication,
-        strength: '500 mg', 
-        dosageForm: 'tablet', 
-        quantity: 30,
-      }]));
-      formData.append('instructions', JSON.stringify({ 
-        route: 'orally',
-        frequency: 'every 8 hours', 
-        duration: 'for 7 days', 
-        additionalInstructions: newEntry.instructions,
-      }));
-      formData.append('refills', newEntry.refills);
-      formData.append('warnings', newEntry.warnings);
 
       if (selectedFile) {
         formData.append('file', selectedFile);
+      } else {
+        setFileError('File is required');
+        return;
       }
 
       try {
@@ -90,7 +64,7 @@ const PatientDetails: React.FC = () => {
           throw new Error('Failed to create prescription');
         }
 
-        const { prescription, pdfUrl } = await response.json();
+        const { prescription } = await response.json();
         window.open(`https://medplus-health.onrender.com/api/prescriptions/${prescription._id}/download`, '_blank');
       } catch (error) {
         console.error('Error creating prescription:', error);
@@ -98,32 +72,8 @@ const PatientDetails: React.FC = () => {
       }
     }
 
-    
-    setNewEntry({ type: '', description: '', referral: '', medication: '', instructions: '', refills: '', warnings: '' });
     setSelectedFile(null);
     setModalVisible(false);
-  };
-
-  
-  const fetchDrugSuggestions = async (query: string) => {
-    if (query.length < 3) {
-      setDrugSuggestions([]);
-      return;
-    }
-
-    try {
-      const response = await fetch(`https://api.fda.gov/drug/label.json?search=openfda.brand_name:${query}&limit=10`);
-      const data = await response.json();
-      const suggestions = data.results.map((item: any) => item.openfda.brand_name[0]);
-      setDrugSuggestions(suggestions);
-    } catch (error) {
-      console.error('Error fetching drug suggestions:', error);
-    }
-  };
-
-  const handleDrugSelection = (suggestion: string) => {
-    setNewEntry({ ...newEntry, medication: suggestion });
-    setDrugSuggestions([]);
   };
 
   if (loading) {
@@ -177,11 +127,9 @@ const PatientDetails: React.FC = () => {
           <TextInput
             style={styles.notesInput}
             multiline
-            value={notes}
-            onChangeText={setNotes}
             placeholder="Add your notes here..."
           />
-          <Button title="Save Notes" onPress={handleSaveNotes} />
+          <Button title="Save Notes" onPress={() => {}} />
         </View>
       ) : (
         <View style={styles.card}>
@@ -211,64 +159,14 @@ const PatientDetails: React.FC = () => {
       >
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Add New {selectedSegment.charAt(0).toUpperCase() + selectedSegment.slice(1)}</Text>
-          {selectedSegment === 'prescriptions' ? (
+          {selectedSegment === 'prescriptions' && (
             <>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Medication"
-                value={newEntry.medication}
-                onChangeText={text => {
-                  setNewEntry({ ...newEntry, medication: text });
-                  fetchDrugSuggestions(text);
-                }}
-              />
-              {drugSuggestions.length > 0 && (
-                <View style={styles.suggestionsContainer}>
-                  {drugSuggestions.map((suggestion, index) => (
-                    <TouchableOpacity key={index} onPress={() => handleDrugSelection(suggestion)}>
-                      <Text style={styles.suggestionText}>{suggestion}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Instructions"
-                value={newEntry.instructions}
-                onChangeText={text => setNewEntry({ ...newEntry, instructions: text })}
-              />
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Refills"
-                value={newEntry.refills}
-                onChangeText={text => setNewEntry({ ...newEntry, refills: text })}
-              />
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Warnings"
-                value={newEntry.warnings}
-                onChangeText={text => setNewEntry({ ...newEntry, warnings: text })}
-              />
               <input type="file" onChange={handleFileChange} />
+              {fileError && <Text style={styles.errorText}>{fileError}</Text>}
             </>
-          ) : selectedSegment === 'referrals' ? (
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Refer to clinic"
-              value={newEntry.referral}
-              onChangeText={text => setNewEntry({ ...newEntry, referral: text })}
-            />
-          ) : (
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Description"
-              value={newEntry.description}
-              onChangeText={text => setNewEntry({ ...newEntry, description: text })}
-            />
           )}
           <Button title="Save Entry" onPress={handleAddEntry} />
           <Button title="Cancel" onPress={() => setModalVisible(false)} />
-          {fileError && <Text style={styles.errorText}>{fileError}</Text>}
         </View>
       </Modal>
     </View>
@@ -375,17 +273,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 16,
     paddingHorizontal: 10,
-  },
-  suggestionsContainer: {
-    backgroundColor: '#fff',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 16,
-  },
-  suggestionText: {
-    padding: 10,
-    fontSize: 16,
   },
   card: {
     backgroundColor: '#ffffff',
