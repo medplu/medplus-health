@@ -1,7 +1,7 @@
 const Joi = require('joi');
 const Prescription = require('../models/prescription.model');
 const Patient = require('../models/patient.model');
-const User = require('../models/user.model'); // Assuming you have a User model for doctors
+const Professional = require('../models/professional.model'); // Import the Professional model
 const PDFDocument = require('pdfkit');
 const fs = require('fs'); // Add missing fs module
 const path = require('path');
@@ -49,8 +49,13 @@ exports.createPrescription = async (req, res) => {
   try {
     const { patientId, doctorId, medication, instructions, refills, warnings } = req.body;
 
+    console.log('Checking patient ID:', patientId);
     const patient = await Patient.findById(patientId);
-    const doctor = await User.findById(doctorId);
+    console.log('Patient found:', patient);
+
+    console.log('Checking doctor ID:', doctorId);
+    const doctor = await Professional.findById(doctorId); // Query the Professional model
+    console.log('Doctor found:', doctor);
 
     if (!patient || !doctor) {
       return res.status(404).json({ error: 'Patient or Doctor not found' });

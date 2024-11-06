@@ -12,7 +12,7 @@ interface RootState {
 }
 
 const PatientDetails: React.FC = () => {
-  const { patientId } = useLocalSearchParams();
+  const { patientId } = useLocalSearchParams(); // Get patientId from URL parameters
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
@@ -27,7 +27,7 @@ const PatientDetails: React.FC = () => {
   const patient = useSelector((state: RootState) => selectPatientById(state, patientId as string));
   const loading = useSelector(selectPatientLoading);
   const error = useSelector(selectPatientError);
-  const user = useSelector(selectUser);
+  const user = useSelector(selectUser); // Get the current user from the Redux store
 
   useEffect(() => {
     if (patientId) {
@@ -42,8 +42,8 @@ const PatientDetails: React.FC = () => {
   const handleAddEntry = async () => {
     if (selectedSegment === 'prescriptions') {
       const formData = {
-        patientId: patientId as string,
-        doctorId: user.professional?._id as string,
+        patientId: patientId as string, // Use patientId from URL parameters
+        doctorId: user.professional?._id as string, // Use doctorId from the current user in the Redux store
         medication: [{
           drugName: newEntry.medication,
           strength: '500 mg', 
