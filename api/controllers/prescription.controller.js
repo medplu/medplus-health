@@ -1,7 +1,7 @@
-import Prescription from '../models/prescription.model';
-import cloudinary from 'cloudinary';
+const Prescription = require('../models/prescription.model');
+const cloudinary = require('cloudinary').v2;
 
-export const createPrescription = async (req, res) => {
+exports.createPrescription = async (req, res) => {
   try {
     const { patientId, doctorId, patient, medication, instructions, refills, prescriber, warnings } = req.body;
     let fileUrl = '';
