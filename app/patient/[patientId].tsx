@@ -7,8 +7,8 @@ import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatien
 import { AppDispatch } from '../store/configureStore';
 
 interface RootState {
-  patient: any; // Update with actual type
-  user: any; // Update with actual type
+  patient: any; 
+  user: any; 
 }
 
 const PatientDetails: React.FC = () => {
@@ -46,7 +46,7 @@ const PatientDetails: React.FC = () => {
   };
 
   const handleSaveNotes = () => {
-    // Dispatch action to save notes
+   
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,35 +60,20 @@ const PatientDetails: React.FC = () => {
       const formData = new FormData();
       formData.append('patientId', patientId as string);
       formData.append('doctorId', user.professional?._id as string);
-      formData.append('dateIssued', new Date().toISOString());
       formData.append('medication', JSON.stringify([{
         drugName: newEntry.medication,
-        strength: '500 mg', // Example value, should be dynamic
-        dosageForm: 'tablet', // Example value, should be dynamic
-        quantity: 30, // Example value, should be dynamic
+        strength: '500 mg', 
+        dosageForm: 'tablet', 
+        quantity: 30,
       }]));
-      formData.append('instructions', JSON.stringify({
-        dosageAmount: '1 tablet', // Example value, should be dynamic
-        route: 'orally', // Example value, should be dynamic
-        frequency: 'every 8 hours', // Example value, should be dynamic
-        duration: 'for 7 days', // Example value, should be dynamic
+      formData.append('instructions', JSON.stringify({ 
+        route: 'orally',
+        frequency: 'every 8 hours', 
+        duration: 'for 7 days', 
         additionalInstructions: newEntry.instructions,
       }));
       formData.append('refills', newEntry.refills);
-      formData.append('prescriber', JSON.stringify({
-        name: user.name,
-        licenseNumber: '123456', // Example value, should be dynamic
-        contact: {
-          phone: '123-456-7890', // Example value, should be dynamic
-          address: '123 Main St', // Example value, should be dynamic
-        },
-      }));
       formData.append('warnings', newEntry.warnings);
-      formData.append('patient', JSON.stringify({
-        name: patient?.name || 'Unnamed Patient',
-        dob: patient?.dob || new Date(), // Example value, should be dynamic
-        weight: patient?.weight || 70, // Example value, should be dynamic
-      }));
 
       if (selectedFile) {
         formData.append('file', selectedFile);
@@ -104,20 +89,20 @@ const PatientDetails: React.FC = () => {
           throw new Error('Failed to create prescription');
         }
 
-        const savedPrescription = await response.json();
-        // Update the state or dispatch an action to update the store
+        const { prescription, pdfUrl } = await response.json();
+        window.open(`https://medplus-health.onrender.com/api/prescriptions/${prescription._id}/download`, '_blank');
       } catch (error) {
         console.error('Error creating prescription:', error);
       }
     }
 
-    // Reset the newEntry state after submission
+    
     setNewEntry({ type: '', description: '', referral: '', medication: '', instructions: '', refills: '', warnings: '' });
     setSelectedFile(null);
     setModalVisible(false);
   };
 
-  // Fetch drug suggestions from the FDA API
+  
   const fetchDrugSuggestions = async (query: string) => {
     if (query.length < 3) {
       setDrugSuggestions([]);
