@@ -4,8 +4,8 @@ const prescriptionSchema = new mongoose.Schema({
   patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
   doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   patient: {
-    name: { type: String, required: true },
-    dob: { type: Date, required: true },
+    name: { type: String, required: false }, // changed to optional
+    dob: { type: Date, required: false }, // changed to optional
     weight: { type: Number, required: false }, // weight in kg, optional
   },
   dateIssued: { type: Date, default: Date.now, required: true },
@@ -26,11 +26,11 @@ const prescriptionSchema = new mongoose.Schema({
   },
   refills: { type: Number, default: 0 }, // number of refills allowed
   prescriber: {
-    name: { type: String, required: true },
-    licenseNumber: { type: String, required: true },
+    name: { type: String, required: false }, // changed to optional
+    licenseNumber: { type: String, required: false }, // changed to optional
     contact: {
-      phone: { type: String, required: true },
-      address: { type: String, required: true },
+      phone: { type: String, required: false }, // changed to optional
+      address: { type: String, required: false }, // changed to optional
     },
   },
   warnings: { type: String, required: false }, // any additional warnings
