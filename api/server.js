@@ -77,6 +77,9 @@ const patientRoutes = require('./routes/patient.routes');
 // Import the catalogue routes
 const catalogueRoutes = require('./routes/catalogue.route'); // Import the catalogue routes
 
+// Import the prescription routes
+const prescriptionRoutes = require('./routes/prescription.routes'); // Import the prescription routes
+
 // Use the user routes
 app.use('/api', userRoutes);
 
@@ -112,6 +115,9 @@ app.use('/api', patientRoutes);
 
 // Use the catalogue routes
 app.use('/api', catalogueRoutes); // Use the catalogue routes
+
+// Use the prescription routes
+app.use('/api', prescriptionRoutes); // Use the prescription routes
 
 // Import the appointments route
 const appointmentsRoute = require('./routes/appointments');

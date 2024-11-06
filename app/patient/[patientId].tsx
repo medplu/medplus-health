@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Image, TextInput, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { selectUser } from '../store/userSlice';
 import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatientError } from '../store/patientSlice';
 import { AppDispatch } from '../store/configureStore';
+import { Ionicons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 
 interface RootState {
-  patient: any; // Update with actual type
-  user: any; // Update with actual type
+  patient: any; 
+  user: any; 
 }
 
 const PatientDetails: React.FC = () => {
   const { patientId } = useLocalSearchParams();
+  const navigation = useNavigation();
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
@@ -20,6 +24,7 @@ const PatientDetails: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [newEntry, setNewEntry] = useState({ type: '', description: '', referral: '', medication: '', instructions: '', refills: '', warnings: '' });
   const [drugSuggestions, setDrugSuggestions] = useState<string[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const patient = useSelector((state: RootState) => selectPatientById(state, patientId as string));
   const loading = useSelector(selectPatientLoading);
@@ -43,18 +48,30 @@ const PatientDetails: React.FC = () => {
   const handleAddEntry = async () => {
     if (selectedSegment === 'prescriptions') {
       const prescriptionData = {
-        patient: patientId,
+        patientId,
+        doctorId: user.professional?._id, 
+        patient: {
+          name: patient.name,
+          dob: patient.dob,
+          weight: patient.weight,
+        },
         dateIssued: new Date().toISOString(),
         medication: newEntry.medication,
         instructions: newEntry.instructions,
         refills: newEntry.refills,
-        prescriber: user.name,
+        prescriber: {
+          name: user.name,
+          licenseNumber: user.licenseNumber,
+          contact: {
+            phone: user.phone,
+            address: user.address,
+          },
+        },
         warnings: newEntry.warnings,
-        doctorId: user.id, // Assuming user.id is the doctorId
       };
 
       try {
-        const response = await fetch('http://your-backend-url/prescriptions', {
+        const response = await fetch('https://medplus-health.onrender.com/api/prescriptions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -94,6 +111,62 @@ const PatientDetails: React.FC = () => {
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleUploadPrescription = async () => {
+    if (!selectedFile) {
+      console.error('No file selected');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('patientId', patientId as string);
+    formData.append('doctorId', user.professional?._id);
+    formData.append('patient', JSON.stringify({
+      name: patient.name,
+      dob: patient.dob,
+      weight: patient.weight,
+    }));
+    formData.append('medication', newEntry.medication);
+    formData.append('instructions', newEntry.instructions);
+    formData.append('refills', newEntry.refills);
+    formData.append('prescriber', JSON.stringify({
+      name: user.name,
+      licenseNumber: user.licenseNumber,
+      contact: {
+        phone: user.phone,
+        address: user.address,
+      },
+    }));
+    formData.append('warnings', newEntry.warnings);
+
+    try {
+      const response = await fetch('https://medplus-health.onrender.com/api/prescriptions', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload prescription');
+      }
+
+      const savedPrescription = await response.json();
+      // Update the state or dispatch an action to update the store
+    } catch (error) {
+      console.error('Error uploading prescription:', error);
+    }
+  };
+
+  const handleScanPrescription = () => {
+    console.log('Scan Prescription option selected');
+    // Add your logic to handle prescription scan
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -113,6 +186,9 @@ const PatientDetails: React.FC = () => {
 
   return (
     <View style={styles.container}>
+       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="arrow-back" size={24} color="black" />
+      </TouchableOpacity>
       <View style={styles.profileSection}>
         <Image 
           source={{ uri: patient?.image || 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }} 
@@ -150,6 +226,17 @@ const PatientDetails: React.FC = () => {
             placeholder="Add your notes here..."
           />
           <Button title="Save Notes" onPress={handleSaveNotes} />
+        </View>
+      ) : selectedSegment === 'prescriptions' ? (
+        <View style={styles.prescriptionOptionsContainer}>
+          <TouchableOpacity style={styles.optionCard} onPress={handleUploadPrescription}>
+            <MaterialIcons name="file-upload" size={48} color="black" />
+            <Text style={styles.optionText}>Upload Prescription</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.optionCard} onPress={handleScanPrescription}>
+            <MaterialIcons name="camera-alt" size={48} color="black" />
+            <Text style={styles.optionText}>Scan Prescription</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.card}>
@@ -237,6 +324,7 @@ const PatientDetails: React.FC = () => {
           <Button title="Cancel" onPress={() => setModalVisible(false)} />
         </View>
       </Modal>
+      <input type="file" onChange={handleFileChange} />
     </View>
   );
 };
@@ -246,6 +334,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#f0f4f7',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    zIndex: 2,
   },
   loadingContainer: {
     flex: 1,
@@ -351,6 +445,31 @@ const styles = StyleSheet.create({
   suggestionText: {
     padding: 10,
     fontSize: 16,
+  },
+  prescriptionOptionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 16,
+  },
+  optionCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  optionText: {
+    fontSize: 16,
+    color: '#007BFF',
+    marginTop: 8,
   },
   card: {
     backgroundColor: '#ffffff',

@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 
 const prescriptionSchema = new mongoose.Schema({
+  patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
+  doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   patient: {
     name: { type: String, required: true },
     dob: { type: Date, required: true },
@@ -32,6 +34,7 @@ const prescriptionSchema = new mongoose.Schema({
     },
   },
   warnings: { type: String, required: false }, // any additional warnings
+  fileUrl: { type: String, required: false }, // URL of the uploaded document
 });
 
 // Compile the schema into a model

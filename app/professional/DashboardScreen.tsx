@@ -26,9 +26,12 @@ const DashboardScreen: React.FC = () => {
     // Filter to get upcoming appointments (keep as an array)
     const upcomingAppointments = appointments.filter(appointment => {
         const appointmentDate = appointment.date && moment(appointment.date);
-        return appointment.status === 'confirmed' && appointmentDate && appointmentDate.isSameOrAfter(moment(), 'day');
+        return (
+            (appointment.status === 'confirmed' || appointment.status === 'pending') &&
+            appointmentDate && appointmentDate.isSame(moment(), 'day')
+        );
     });
-
+    
     // Log appointments and upcomingAppointments for debugging
     useEffect(() => {
         console.log('All Appointments:', appointments);
@@ -96,27 +99,39 @@ const DashboardScreen: React.FC = () => {
                     </View>
 
                     {/* Upcoming Appointments Section */}
-                    <View style={styles.upcomingContainer}>
-                        <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
-                        {upcomingAppointments.length > 0 ? (
-                            upcomingAppointments.map((appointment) => (
-                                <View key={appointment._id} style={styles.appointmentCard}>
-                                    <View style={styles.appointmentDetails}>
-                                        <Text style={styles.patientName}>{appointment.patientName}</Text>
-                                        <Text style={styles.appointmentTime}>{appointment.date}</Text>
-                                    </View>
-                                    <TouchableOpacity
-                                        style={styles.viewButton}
-                                        onPress={() => handleViewPatient(appointment.patientId._id)}
-                                    >
-                                        <Text style={styles.buttonText}>View Patient</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ))
-                        ) : (
-                            <Text style={styles.noAppointmentsText}>No upcoming appointments.</Text>
-                        )}
+<View style={styles.upcomingContainer}>
+    <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
+    {upcomingAppointments.length > 0 ? (
+        upcomingAppointments.map((appointment) => {
+            // Format the date to a friendly format
+            const appointmentDate = moment(appointment.date).calendar(null, {
+                sameDay: '[Today]', // e.g., Today
+                nextDay: '[Tomorrow]', // e.g., Tomorrow
+                nextWeek: 'dddd', // e.g., Monday
+                sameElse: 'MMMM D, YYYY' // e.g., November 6, 2024
+            });
+            
+            return (
+                <View key={appointment._id} style={styles.appointmentCard}>
+                    <View style={styles.appointmentDetails}>
+                        <Text style={styles.patientName}>{appointment.patientName}</Text>
+                        <Text style={styles.appointmentTime}>{appointment.time}</Text>
+                        <Text style={styles.appointmentDate}>{appointmentDate}</Text>
                     </View>
+                    <TouchableOpacity
+                        style={styles.viewButton}
+                        onPress={() => handleViewPatient(appointment.patientId._id)}
+                    >
+                        <Text style={styles.buttonText}>View Patient</Text>
+                    </TouchableOpacity>
+                </View>
+            );
+        })
+    ) : (
+        <Text style={styles.noAppointmentsText}>No upcoming appointments.</Text>
+    )}
+</View>
+
                 </>
             ) : (
                 <Text style={styles.loginPrompt}>Please log in to see your dashboard.</Text>

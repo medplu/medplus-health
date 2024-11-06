@@ -32,11 +32,11 @@ const useAppointments = () => {
         const fetchAppointments = async () => {
             dispatch(setLoading(true));
             dispatch(setError(null));
-
+        
             try {
                 if (user) {
                     let response;
-
+        
                     if (user.professional) {
                         const professionalId = user.professional._id;
                         response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${professionalId}/all`);
@@ -44,32 +44,32 @@ const useAppointments = () => {
                         const userId = user.userId;
                         response = await fetch(`https://medplus-health.onrender.com/api/appointments/user/${userId}`);
                     }
-
+        
                     const allData = await response.json();
                     const appointmentsArray = Array.isArray(allData) ? allData : [];
                     dispatch(setAppointments(appointmentsArray));
-
+        
                     // Log fetched appointments
                     console.log('Fetched Appointments:', appointmentsArray);
-
+        
                     // Get current date and time
                     const now = moment();
-
-                    // Filter appointments based on status and date
+        
+                    // Filter upcoming appointments by date and status
                     const upcomingAppointments = appointmentsArray.filter(
-                        (appointment) => 
+                        (appointment) =>
                             appointment.status === 'confirmed' &&
                             moment(appointment.date).isSameOrAfter(now, 'day')
                     );
-
+        
                     const requestedAppointments = appointmentsArray.filter((appointment) => appointment.status === 'pending');
                     const completedAppointments = appointmentsArray.filter((appointment) => appointment.status === 'completed');
-
+        
                     // Log filtered appointments
                     console.log('Upcoming Appointments:', upcomingAppointments);
                     console.log('Requested Appointments:', requestedAppointments);
                     console.log('Completed Appointments:', completedAppointments);
-
+        
                     // Dispatch filtered appointments to Redux state
                     dispatch(setUpcomingAppointments(upcomingAppointments));
                     dispatch(setRequestedAppointments(requestedAppointments));
@@ -82,6 +82,7 @@ const useAppointments = () => {
                 dispatch(setLoading(false));
             }
         };
+        
 
         if (user) {
             fetchAppointments();
