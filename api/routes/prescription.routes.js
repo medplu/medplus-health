@@ -7,7 +7,7 @@ router.use(fileUpload());
 
 router.post('/prescriptions', prescriptionController.createPrescription);
 router.get('/prescriptions/:id/download', (req, res) => {
-  const pdfPath = `./prescriptions/${req.params.id}.pdf`;
+  const pdfPath = path.join(__dirname, `../prescriptions/${req.params.id}.pdf`);
   res.download(pdfPath);
 });
 
