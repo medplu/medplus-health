@@ -1,396 +1,9 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Animated,
-  Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { Picker } from '@react-native-picker/picker';
-import { registerUser, verifyEmail } from '@/Services/auth';
-import axios from 'axios';
-
-
-const { width } = Dimensions.get('window');
-
-const SignupScreen: React.FC = () => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | null>(null);
-  const [userType, setUserType] = useState<'client' | 'professional' | 'student' | null>(null);
-  const [profession, setProfession] = useState('');  // Changed from category to profession
-  const [verificationCode, setVerificationCode] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [buttonAnimation] = useState(new Animated.Value(1));
-
-  const router = useRouter();
-
-  const animateButton = () => {
-    Animated.sequence([
-      Animated.timing(buttonAnimation, {
-        toValue: 0.9,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(buttonAnimation, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const handleSignupPress = async () => {
-    if (
-      firstName === '' ||
-      lastName === '' ||
-      email === '' ||
-      password === '' ||
-      confirmPassword === '' ||
-      !gender ||
-      !userType
-    ) {
-      setErrorMessage('Please fill all fields.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match.');
-      return;
-    }
-  
-    // Check for profession if userType is professional
-    if (userType === 'professional' && (profession === '' || !profession)) {
-      setErrorMessage('Please select a profession.');
-      return;
-    }
-  
-    try {
-      // Prepare user registration data
-      const userData = {
-        firstName,
-        lastName,
-        email,
-        password,
-        gender,
-        userType,
-        // Send profession only if userType is professional
-        ...(userType === 'professional' ? { profession } : {}),
-      };
-  
-      await registerUser(userData); // Pass user data
-  
-      setErrorMessage(null);
-      setSuccessMessage('Signup successful! Please check your email for verification.');
-      setIsVerifying(true);
-    } catch (error) {
-      setErrorMessage(error.message || 'Error creating user'); // Set error message
-    }
-  };
-  
-  const handleVerificationPress = async () => {
-    try {
-      const response = await axios.post('https://medplus-health.onrender.com/api/verify-email', {
-        email,
-        verificationCode,
-      });
-
-      setErrorMessage(null);
-      setSuccessMessage('Verification successful! You can now log in.');
-      setIsVerifying(false);
-      router.push('/login'); // Route to login page after successful verification
-    } catch (error) {
-      setErrorMessage('Verification failed. Please try again.');
-    }
-  };
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.formContainer}>
-          <Text style={styles.heading}>Create an Account</Text>
-          <Text style={styles.subHeading}>Sign up to get started</Text>
-
-          {!isVerifying ? (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="First Name"
-                value={firstName}
-                onChangeText={setFirstName}
-                placeholderTextColor="#888"
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Last Name"
-                value={lastName}
-                onChangeText={setLastName}
-                placeholderTextColor="#888"
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholderTextColor="#888"
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholderTextColor="#888"
-                secureTextEntry
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                placeholderTextColor="#888"
-                secureTextEntry
-              />
-
-              {/* Gender Selection */}
-              <View style={styles.genderContainer}>
-                <TouchableOpacity
-                  style={[styles.genderButton, gender === 'Male' && styles.selectedGender]}
-                  onPress={() => setGender('Male')}
-                >
-                  <Text style={styles.genderText}>Male</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.genderButton, gender === 'Female' && styles.selectedGender]}
-                  onPress={() => setGender('Female')}
-                >
-                  <Text style={styles.genderText}>Female</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.genderButton, gender === 'Other' && styles.selectedGender]}
-                  onPress={() => setGender('Other')}
-                >
-                  <Text style={styles.genderText}>Other</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Account Type Selection */}
-              <View style={styles.accountTypeContainer}>
-                <TouchableOpacity
-                  style={[styles.accountTypeButton, userType === 'client' && styles.selectedAccountType]}
-                  onPress={() => setUserType('client')}
-                >
-                  <Text style={styles.accountTypeText}>Client</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.accountTypeButton, userType === 'professional' && styles.selectedAccountType]}
-                  onPress={() => setUserType('professional')}
-                >
-                  <Text style={styles.accountTypeText}>Professional</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.accountTypeButton, userType === 'student' && styles.selectedAccountType]}
-                  onPress={() => setUserType('student')}
-                >
-                  <Text style={styles.accountTypeText}>Student</Text>
-                </TouchableOpacity>
-              </View>
-
-              {userType === 'professional' && (
-                <Picker
-                  selectedValue={profession}
-                  style={styles.input}
-                  onValueChange={(itemValue) => setProfession(itemValue)}  // Update to profession
-                >
-                  <Picker.Item label="Select Profession" value="" />
-                  <Picker.Item label="Doctor" value="doctor" />
-                  <Picker.Item label="Dentist" value="dentist" />
-                  <Picker.Item label="Pharmacist" value="pharmacist" />
-                  <Picker.Item label="Nurse" value="nurse" />
-                  <Picker.Item label="Other" value="other" />
-                </Picker>
-              )}
-
-              {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-              {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
-
-              <Animated.View style={{ transform: [{ scale: buttonAnimation }] }}>
-                <TouchableOpacity
-                  style={styles.signupButton}
-                  onPress={() => {
-                    animateButton();
-                    handleSignupPress();
-                  }}
-                >
-                  <Text style={styles.signupButtonText}>Sign Up</Text>
-                </TouchableOpacity>
-              </Animated.View>
-
-              <View style={styles.signupContainer}>
-                <Text style={styles.signupText}>Already have an account? </Text>
-                <TouchableOpacity onPress={() => router.push('/login')}>
-                  <Text style={styles.signupLink}>Login</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={styles.subHeading}>Enter the verification code sent to your email</Text>
-
-              <TextInput
-                style={styles.input}
-                placeholder="Verification Code"
-                value={verificationCode}
-                onChangeText={setVerificationCode}
-                placeholderTextColor="#888"
-                keyboardType="numeric"
-              />
-
-              {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-              {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
-
-              <TouchableOpacity style={styles.signupButton} onPress={handleVerificationPress}>
-                <Text style={styles.signupButtonText}>Verify</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  formContainer: {
-    width: width * 0.8,
-    alignSelf: 'center',
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  subHeading: {
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
-  },
-  genderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-  },
-  genderButton: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    marginHorizontal: 5,
-  },
-  selectedGender: {
-    backgroundColor: '#cce5ff',
-  },
-  genderText: {
-    fontSize: 16,
-  },
-  accountTypeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-  },
-  accountTypeButton: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    marginHorizontal: 5,
-  },
-  selectedAccountType: {
-    backgroundColor: '#cce5ff',
-  },
-  accountTypeText: {
-    fontSize: 16,
-  },
-  errorMessage: {
-    color: 'red',
-    marginBottom: 10,
-  },
-  successMessage: {
-    color: 'green',
-    marginBottom: 10,
-  },
-  signupButton: {
-    backgroundColor: '#007BFF',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  signupButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  signupContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  signupText: {
-    fontSize: 14,
-  },
-  signupLink: {
-    fontSize: 14,
-    color: '#007BFF',
-  },
-});
-
-export default SignupScreen;
-
-
-
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 import { PieChart, BarChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { selectUser } from '../store/userSlice';
+import { selectUser } from '../store/userSlice'; // Updated path if necessary
 import { RootState } from '../store/configureStore';
 import { useRouter } from 'expo-router';
 import useAppointments from '../../hooks/useAppointments';
@@ -400,18 +13,31 @@ const screenHeight = Dimensions.get('window').height;
 
 const DashboardScreen: React.FC = () => {
     const router = useRouter();
-    const user = useSelector(selectUser);
-    const { appointments, loading, error } = useAppointments();
+    const user = useSelector(selectUser); // Ensure 'selectUser' is correctly imported and defined
+    const { appointments = [], loading, error } = useAppointments(); // Default to empty array
 
-    const handleViewPatient = (patientId: string) => {
-        router.push(`/patient/${patientId}`);
+    const handleViewPatient = (appointment) => {
+        console.log('Received appointment data:', appointment); // Log the entire appointment object
+    
+        // Access the patient ID directly from the appointment object
+        if (appointment && appointment._id) {
+            const patientId = appointment._id; // Use the correct property to get the ID
+            router.push(`/patient/${patientId}`); // Navigate to the patient page
+        } else {
+            console.error('Patient ID is not available in the appointment data', appointment);
+        }
+    };
+
+    const handleAddToSchedule = (appointmentId: string) => {
+        // Implement scheduling logic here
+        console.log(`Add to schedule clicked for appointment: ${appointmentId}`);
     };
 
     // Calculate statistics based on real data
-    const totalAppointments = appointments.length;
-    const upcomingAppointments = appointments.filter(appointment => appointment.status === 'confirmed');
-    const requestedAppointments = appointments.filter(appointment => appointment.status === 'requested').length;
-    const completedAppointments = appointments.filter(appointment => appointment.status === 'completed').length;
+    const totalAppointments = Array.isArray(appointments) ? appointments.length : 0;
+    const upcomingAppointments = Array.isArray(appointments) ? appointments.filter(appointment => appointment.status === 'confirmed') : [];
+    const requestedAppointments = Array.isArray(appointments) ? appointments.filter(appointment => appointment.status === 'requested').length : 0;
+    const completedAppointments = Array.isArray(appointments) ? appointments.filter(appointment => appointment.status === 'completed').length : 0;
 
     const patientData = [
         { name: 'Male', population: 40, color: '#4f8bc2', legendFontColor: '#7F7F7F', legendFontSize: 15 },
@@ -445,92 +71,27 @@ const DashboardScreen: React.FC = () => {
         );
     }
 
+    console.log('Upcoming Appointments:', upcomingAppointments);
+
     return (
         <ScrollView style={styles.container}>
             {user.isLoggedIn ? (
-                <>
-                    <View style={styles.card}>
-                        <Text style={styles.greetingText}>Welcome, {user.name}!</Text>
-                    </View>
-
-                    <View style={styles.overviewContainer}>
-                        <View style={styles.overviewHeader}>
-                            <Text style={styles.sectionTitle}>Overview</Text>
-                            <View style={styles.iconContainer}>
-                                {upcomingAppointments.length > 0 && (
-                                    <View style={styles.badge} />
-                                )}
-                                <Icon name="calendar" size={24} color="#333" style={styles.icon} />
-                            </View>
+                user.professional.profession === 'doctor' ? (
+                    user.professional.attachedToClinic ? (
+                        <View style={styles.doctorContainer}>
+                            <Text style={styles.sectionTitle}>Doctor Dashboard</Text>
+                            {/* Add more doctor-specific components */}
                         </View>
-
-                        <View style={styles.overviewCard}>
-                            <TouchableOpacity style={styles.overviewItem}>
-                                <Text style={styles.overviewLabel}>Total Appointments</Text>
-                                <Text style={styles.overviewNumber}>{totalAppointments}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.overviewItem}>
-                                <Text style={styles.overviewLabel}>Upcoming</Text>
-                                <Text style={styles.overviewNumber}>{upcomingAppointments.length}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.overviewItem}>
-                                <Text style={styles.overviewLabel}>Requested</Text>
-                                <Text style={styles.overviewNumber}>{requestedAppointments}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.overviewItem}>
-                                <Text style={styles.overviewLabel}>Completed</Text>
-                                <Text style={styles.overviewNumber}>{completedAppointments}</Text>
-                            </TouchableOpacity>
+                    ) : (
+                        <View style={styles.noClinicContainer}>
+                            <Text style={styles.noClinicText}>You are not attached to a clinic. Please contact admin to attach your profile to a clinic.</Text>
                         </View>
+                    )
+                ) : (
+                    <View style={styles.noClinicContainer}>
+                        <Text style={styles.noClinicText}>You are not a doctor. Please contact admin for further assistance.</Text>
                     </View>
-                    <View style={styles.upcomingContainer}>
-                        <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
-                        {upcomingAppointments.length > 0 ? (
-                            upcomingAppointments.map((appointment) => (
-                                <View key={appointment._id} style={styles.appointmentCard}>
-                                    <View style={styles.appointmentDetails}>
-                                        <Text style={styles.patientName}>{appointment.patientName}</Text>
-                                        <Text style={styles.appointmentTime}>{appointment.date}</Text>
-                                    </View>
-                                    <TouchableOpacity
-                                        style={styles.viewButton}
-                                        onPress={() => handleViewPatient(appointment.userId)}
-                                    >
-                                        <Text style={styles.buttonText}>View Patient</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ))
-                        ) : (
-                            <Text style={styles.noAppointmentsText}>No upcoming appointments.</Text>
-                        )}
-                    </View>
-
-                    <View style={styles.analyticsContainer}>
-                        <Text style={styles.sectionTitle}>Patients</Text>
-                        <Text style={styles.chartTitle}>Patient Analysis</Text>
-                        <PieChart
-                            data={patientData}
-                            width={screenWidth - 32}
-                            height={screenHeight * 0.25}
-                            chartConfig={chartConfig}
-                            accessor="population"
-                            backgroundColor="transparent"
-                            paddingLeft="15"
-                            absolute
-                        />
-
-                        <View style={styles.customLegend}>
-                            {patientData.map((data, index) => (
-                                <View key={index} style={styles.legendItem}>
-                                    <View style={[styles.legendColorBox, { backgroundColor: data.color }]} />
-                                    <Text style={styles.legendLabel}>{data.name}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-
-                    
-                </>
+                )
             ) : (
                 <Text style={styles.loginPrompt}>Please log in to see your dashboard.</Text>
             )}
@@ -642,34 +203,56 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     appointmentCard: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: '#f0f0f0',
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 10,
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 6,
+        elevation: 3, // For Android shadow
     },
     appointmentDetails: {
-        flex: 1,
+        marginBottom: 12, // Space between details and buttons
     },
     patientName: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontWeight: '600',
         color: '#333',
+        marginBottom: 4,
     },
     appointmentTime: {
-        fontSize: 14,
+        fontSize: 16,
         color: '#555',
+        marginBottom: 4,
     },
     viewButton: {
         backgroundColor: '#4CAF50',
-        padding: 8,
-        borderRadius: 5,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginRight: 12,
+    },
+    addScheduleButton: {
+        backgroundColor: '#2196F3',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        justifyContent: 'flex-start',
     },
     buttonText: {
         color: '#fff',
-        fontSize: 14,
+        fontSize: 16,
+        fontWeight: '500',
     },
     loginPrompt: {
         textAlign: 'center',
@@ -702,203 +285,10 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: 'red',
     },
+    patientDetails: {
+        fontSize: 14,
+        color: '#777',
+    },
 });
 
 export default DashboardScreen;
-
-function rgba(arg0: number, arg1: number, arg2: number, $: any, arg4: { opacity: number; }) {
-    throw new Error('Function not implemented.');
-}
-
-
-
-
-
-
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Alert, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
-import { useSelector } from 'react-redux';
-import { Picker } from '@react-native-picker/picker';
-import axios from 'axios';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import Colors from '../../components/Shared/Colors';
-import HorizontalLine from '../../components/common/HorizontalLine';
-import { fetchTransactions } from '../../Services/paystackService';
-import { selectUser } from '../../app/store/userSlice';
-
-const TransactionScreen: React.FC = () => {
-  const PAYSTACK_SECRET_KEY = process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
-
-  // Obtain user data from Redux
-  const user = useSelector(selectUser);
-  const userId = user?.id; // Access userId directly from user object
-
-  const [isPaymentSetupCompleted, setIsPaymentSetupCompleted] = useState(false);
-  const [showPaymentSetupModal, setShowPaymentSetupModal] = useState(false);
-  const [showSubaccountModal, setShowSubaccountModal] = useState(false);
-  const [subaccountData, setSubaccountData] = useState({
-    business_name: '',
-    settlement_bank: '',
-    account_number: '',
-    subaccount_code: '',
-  });
-  const [banks, setBanks] = useState([]);
-  const [isAccountInfoVisible, setIsAccountInfoVisible] = useState(false);
-  const [transactions, setTransactions] = useState([]);
-
-  useEffect(() => {
-    if (!isPaymentSetupCompleted) setShowPaymentSetupModal(true);
-    fetchBanks();
-    fetchSubaccountInfo();
-  }, [userId]);
-
-  useEffect(() => {
-    if (subaccountData.subaccount_code) {
-      fetchTransactionsData(subaccountData.subaccount_code);
-    }
-  }, [subaccountData]);
-
-  const fetchBanks = async () => {
-    try {
-      const response = await axios.get('https://api.paystack.co/bank?country=kenya', {
-        headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` },
-      });
-      setBanks(response.data.data);
-    } catch (error) {
-      console.error('Error fetching banks:', error);
-      Alert.alert('Error', 'Failed to fetch banks.');
-    }
-  };
-
-  const fetchSubaccountInfo = async () => {
-    if (!userId) {
-      Alert.alert('Error', 'User ID not found. Please log in again.');
-      return;
-    }
-
-    try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
-      if (response.data.status === 'Success') {
-        setSubaccountData(response.data.data);
-        console.log('Fetched subaccount data:', response.data.data);
-      } else {
-        Alert.alert('Error', 'Failed to fetch subaccount info.');
-      }
-    } catch (error) {
-      console.error('Error fetching subaccount info:', error);
-      Alert.alert('Error', 'Failed to fetch subaccount info.');
-    }
-  };
-
-  const fetchTransactionsData = async (subaccountCode) => {
-    try {
-      const transactions = await fetchTransactions(subaccountCode);
-      const successfulTransactions = transactions.filter((t) => t.status === 'success');
-      setTransactions(successfulTransactions);
-      console.log('Fetched transactions:', successfulTransactions);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-      Alert.alert('Error', 'Failed to fetch transactions.');
-    }
-  };
-
-  const handleCreateSubaccount = async () => {
-    if (!userId) {
-      Alert.alert('Error', 'User ID not found. Please log in again.');
-      return;
-    }
-
-    try {
-      const subaccountPayload = {
-        ...subaccountData,
-        userId,
-        percentage_charge: '10', // Default to 10%
-      };
-
-      const response = await axios.post('https://medplus-health.onrender.com/api/payment/create-subaccount', subaccountPayload);
-      Alert.alert('Subaccount Creation', 'Subaccount created successfully.');
-      setShowSubaccountModal(false);
-    } catch (error) {
-      console.error('Error creating subaccount:', error.response ? error.response.data : error.message);
-      Alert.alert('Subaccount Creation Failed', 'There was an error creating the subaccount.');
-    }
-  };
-
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Transactions</Text>
-      <HorizontalLine />
-      <View style={styles.accountInfoContainer}>
-        <Text style={styles.sectionTitle}>Account Info</Text>
-        {isAccountInfoVisible ? (
-          <View style={styles.accountDetails}>
-            <Text>Bank: {subaccountData.settlement_bank}</Text>
-            <Text>Account Number: {subaccountData.account_number}</Text>
-            <Text>Business Name: {subaccountData.business_name}</Text>
-          </View>
-        ) : (
-          <Text style={styles.infoText}>No account info available</Text>
-        )}
-      </View>
-
-      <Modal visible={showSubaccountModal} animationType="slide">
-        <View style={styles.modalContent}>
-          <TextInput
-            placeholder="Business Name"
-            style={styles.input}
-            value={subaccountData.business_name}
-            onChangeText={(text) => setSubaccountData({ ...subaccountData, business_name: text })}
-          />
-          <TextInput
-            placeholder="Account Number"
-            style={styles.input}
-            value={subaccountData.account_number}
-            onChangeText={(text) => setSubaccountData({ ...subaccountData, account_number: text })}
-          />
-          <Picker
-            selectedValue={subaccountData.settlement_bank}
-            onValueChange={(itemValue) => setSubaccountData({ ...subaccountData, settlement_bank: itemValue })}
-          >
-            {banks.map((bank) => (
-              <Picker.Item key={bank.code} label={bank.name} value={bank.code} />
-            ))}
-          </Picker>
-          <TouchableOpacity onPress={handleCreateSubaccount} style={styles.submitButton}>
-            <Text style={styles.submitButtonText}>Create Subaccount</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-
-      <View style={styles.transactionsContainer}>
-        <Text style={styles.sectionTitle}>Transaction History</Text>
-        {transactions.length ? (
-          transactions.map((transaction) => (
-            <View key={transaction.id} style={styles.transactionItem}>
-              <Text>Amount: {transaction.amount}</Text>
-              <Text>Date: {transaction.date}</Text>
-            </View>
-          ))
-        ) : (
-          <Text>No transactions available</Text>
-        )}
-      </View>
-    </ScrollView>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', color: Colors.primary, marginBottom: 10 },
-  accountInfoContainer: { marginVertical: 20 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  accountDetails: { paddingVertical: 10 },
-  infoText: { color: Colors.secondary },
-  modalContent: { padding: 20, backgroundColor: 'white', flex: 1, justifyContent: 'center' },
-  input: { borderWidth: 1, borderColor: Colors.primary, padding: 10, marginVertical: 10, borderRadius: 5 },
-  submitButton: { backgroundColor: Colors.primary, padding: 15, borderRadius: 5, alignItems: 'center' },
-  submitButtonText: { color: 'white', fontWeight: 'bold' },
-  transactionsContainer: { marginTop: 20 },
-  transactionItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: Colors.lightGray },
-});
-
-export default TransactionScreen;

@@ -30,6 +30,11 @@ const pharmacySchema = new Schema({
         ref: 'Professional',
         required: true
     }],
+    catalogue: {
+        type: Schema.Types.ObjectId,
+        ref: 'Catalogue',
+        required: false
+    },
     inventory: [{
         drugName: { type: String, required: true },
         stock: { type: Number, required: true }

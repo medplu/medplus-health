@@ -11,7 +11,11 @@ exports.getAllAppointmentsByDoctor = async (req, res) => {
   const { doctorId } = req.params;
 
   try {
-    const appointments = await Appointment.find({ doctorId }).populate('patientId');
+    const today = moment().startOf('day');
+    const appointments = await Appointment.find({
+      doctorId,
+      date: { $gte: today.toDate() } // Ensure it does not fetch past appointments
+    }).populate('patientId');
     res.status(200).json(appointments);
   } catch (error) {
     console.error('Error fetching appointments:', error);
