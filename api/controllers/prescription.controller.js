@@ -62,8 +62,21 @@ exports.createPrescription = async (req, res) => {
     }
 
     const newPrescription = new Prescription({
-      patient: patientId,
-      prescriber: doctorId,
+      patientId,
+      doctorId,
+      patient: {
+        name: patient?.name ?? null,
+        dob: patient?.dob ?? null,
+        weight: patient?.weight ?? null,
+      },
+      prescriber: {
+        name: `${doctor?.firstName ?? ''} ${doctor?.lastName ?? ''}`,
+        licenseNumber: doctor?.licenseNumber ?? null,
+        contact: {
+          phone: doctor?.phone ?? null,
+          address: doctor?.address ?? null,
+        },
+      },
       medication,
       instructions,
       refills,

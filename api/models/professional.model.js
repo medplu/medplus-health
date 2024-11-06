@@ -80,6 +80,18 @@ const professionalSchema = new Schema({
     attachedToPharmacy: {  // New field to track pharmacy attachment status
         type: Boolean,
         default: false // Initialize as false
+    },
+    licenseNumber: { // Add licenseNumber field
+        type: String,
+        required: true
+    },
+    phone: { // Add phone field
+        type: String,
+        required: true
+    },
+    address: { // Add address field
+        type: String,
+        required: true
     }
 }, { timestamps: true });
 
