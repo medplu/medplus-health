@@ -1,5 +1,12 @@
 const Prescription = require('../models/prescription.model');
 const cloudinary = require('cloudinary').v2;
+const fileUpload = require('express-fileupload');
+
+// Middleware to handle file uploads
+app.use(fileUpload({
+  useTempFiles: true,
+  tempFileDir: '/tmp/'
+}));
 
 exports.createPrescription = async (req, res) => {
   try {

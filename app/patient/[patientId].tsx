@@ -324,7 +324,9 @@ const PatientDetails: React.FC = () => {
           <Button title="Cancel" onPress={() => setModalVisible(false)} />
         </View>
       </Modal>
-      <input type="file" onChange={handleFileChange} />
+      <form encType="multipart/form-data">
+        <input type="file" onChange={handleFileChange} />
+      </form>
     </View>
   );
 };
