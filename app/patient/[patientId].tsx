@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Image, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, Image, TextInput, Modal, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { selectUser } from '../store/userSlice';
 import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatientError } from '../store/patientSlice';
@@ -75,7 +75,7 @@ const PatientDetails: React.FC = () => {
         }
 
         const { prescription, pdfUrl } = await response.json();
-        window.open(pdfUrl, '_blank');
+        Linking.openURL(pdfUrl); // Use Linking to open the PDF URL
       } catch (error) {
         console.error('Error creating prescription:', error);
       }

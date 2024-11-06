@@ -9,6 +9,7 @@ const subaccountRoutes = require('./routes/subaccount.routes'); // Import subacc
 const { Server } = require("socket.io");
 const fileUpload = require("express-fileupload");
 const cloudinary = require('cloudinary').v2;
+const path = require('path');
 dotenv.config();
 
 cloudinary.config({
@@ -124,6 +125,9 @@ app.use('/api', prescriptionRoutes); // Use the prescription routes
 // Import the appointments route
 const appointmentsRoute = require('./routes/appointments');
 app.use('/api/appointments', appointmentsRoute);
+
+// Serve the prescriptions directory as static files
+app.use('/prescriptions', express.static(path.join(__dirname, 'prescriptions')));
 
 // Handle WebSocket connections
 io.on("connection", (socket) => {

@@ -28,13 +28,35 @@ const prescriptionSchema = Joi.object({
 
 const generatePrescriptionPDF = (prescription) => {
   const doc = new PDFDocument();
-  doc.fontSize(12).text(`Prescription for ${prescription.patient.name}`, { align: 'center' });
-  doc.text(`Date Issued: ${prescription.dateIssued}`, { align: 'center' });
-  doc.text(`Doctor: ${prescription.prescriber.name}`, { align: 'center' });
-  doc.text(`Medication: ${prescription.medication.map(med => `${med.drugName} (${med.strength})`).join(', ')}`, { align: 'center' });
-  doc.text(`Instructions: ${prescription.instructions.dosageAmount} ${prescription.instructions.route} ${prescription.instructions.frequency} ${prescription.instructions.duration}`, { align: 'center' });
-  doc.text(`Refills: ${prescription.refills}`, { align: 'center' });
-  doc.text(`Warnings: ${prescription.warnings}`, { align: 'center' });
+  doc.fontSize(16).text('Prescription', { align: 'center' });
+  doc.moveDown();
+  doc.fontSize(12).text(`Patient Name: ${prescription.patient.name || 'N/A'}`);
+  doc.text(`Date of Birth: ${prescription.patient.dob ? new Date(prescription.patient.dob).toLocaleDateString() : 'N/A'}`);
+  doc.text(`Weight: ${prescription.patient.weight || 'N/A'} kg`);
+  doc.moveDown();
+  doc.text(`Prescriber: ${prescription.prescriber.name || 'N/A'}`);
+  doc.text(`License Number: ${prescription.prescriber.licenseNumber || 'N/A'}`);
+  doc.text(`Contact Phone: ${prescription.prescriber.contact.phone || 'N/A'}`);
+  doc.text(`Contact Address: ${prescription.prescriber.contact.address || 'N/A'}`);
+  doc.moveDown();
+  doc.text('Medications:');
+  prescription.medication.forEach((med, index) => {
+    doc.text(`${index + 1}. ${med.drugName} (${med.strength}) - ${med.dosageForm}, Quantity: ${med.quantity}`);
+  });
+  doc.moveDown();
+  doc.text('Instructions:');
+  doc.text(`Dosage Amount: ${prescription.instructions.dosageAmount}`);
+  doc.text(`Route: ${prescription.instructions.route}`);
+  doc.text(`Frequency: ${prescription.instructions.frequency}`);
+  doc.text(`Duration: ${prescription.instructions.duration}`);
+  if (prescription.instructions.additionalInstructions) {
+    doc.text(`Additional Instructions: ${prescription.instructions.additionalInstructions}`);
+  }
+  doc.moveDown();
+  doc.text(`Refills: ${prescription.refills}`);
+  if (prescription.warnings) {
+    doc.text(`Warnings: ${prescription.warnings}`);
+  }
   return doc;
 };
 
