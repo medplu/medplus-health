@@ -127,7 +127,7 @@ const appointmentsRoute = require('./routes/appointments');
 app.use('/api/appointments', appointmentsRoute);
 
 // Serve the prescriptions directory as static files
-app.use('/prescriptions', express.static(path.join(__dirname, 'prescriptions')));
+app.use('/prescriptions', express.static(path.join(__dirname, '../prescriptions')));
 
 // Handle WebSocket connections
 io.on("connection", (socket) => {
