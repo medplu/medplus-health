@@ -38,7 +38,9 @@ app.use(express.json());
 // File upload middleware
 app.use(fileUpload({
   useTempFiles: true,
-  tempFileDir: '/tmp/'
+  tempFileDir: '/tmp/',
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  abortOnLimit: true,
 }));
 
 mongoose.connect(process.env.MONGO_URI).then(() => {
