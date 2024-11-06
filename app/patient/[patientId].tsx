@@ -29,6 +29,7 @@ const PatientDetails: React.FC = () => {
   });
   const [drugSuggestions, setDrugSuggestions] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const patient = useSelector((state: RootState) => selectPatientById(state, patientId as string));
   const loading = useSelector(selectPatientLoading);
@@ -93,6 +94,7 @@ const PatientDetails: React.FC = () => {
         window.open(`https://medplus-health.onrender.com/api/prescriptions/${prescription._id}/download`, '_blank');
       } catch (error) {
         console.error('Error creating prescription:', error);
+        setFileError('Error creating prescription. Please try again.');
       }
     }
 
@@ -266,6 +268,7 @@ const PatientDetails: React.FC = () => {
           )}
           <Button title="Save Entry" onPress={handleAddEntry} />
           <Button title="Cancel" onPress={() => setModalVisible(false)} />
+          {fileError && <Text style={styles.errorText}>{fileError}</Text>}
         </View>
       </Modal>
     </View>

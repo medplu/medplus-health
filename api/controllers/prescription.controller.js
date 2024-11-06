@@ -5,6 +5,7 @@ const User = require('../models/user.model'); // Assuming you have a User model 
 const cloudinary = require('cloudinary').v2;
 const PDFDocument = require('pdfkit');
 const fs = require('fs'); // Add missing fs module
+const path = require('path');
 
 const prescriptionSchema = Joi.object({
   patientId: Joi.string().required(),
@@ -50,10 +51,15 @@ exports.createPrescription = async (req, res) => {
 
     if (req.files && req.files.file) {
       const file = req.files.file;
-      const uploadedResponse = await cloudinary.uploader.upload(file.tempFilePath, {
+      const tempFilePath = path.join(__dirname, '..', 'temp', file.name);
+      await file.mv(tempFilePath);
+
+      const uploadedResponse = await cloudinary.uploader.upload(tempFilePath, {
         folder: 'prescriptions',
       });
       fileUrl = uploadedResponse.secure_url;
+
+      fs.unlinkSync(tempFilePath); // Remove the temporary file
     }
 
     const patient = await Patient.findById(patientId);
@@ -82,6 +88,7 @@ exports.createPrescription = async (req, res) => {
 
     res.status(201).json({ prescription: savedPrescription, pdfUrl: pdfPath });
   } catch (error) {
+    console.error('Error creating prescription:', error); // Add logging for debugging
     res.status(500).json({ error: error.message });
   }
 };
