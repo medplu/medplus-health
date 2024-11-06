@@ -11,4 +11,7 @@ router.get('/prescriptions/:id/download', (req, res) => {
   res.download(pdfPath);
 });
 
+// Route to generate and fetch the prescription PDF
+router.get('/prescriptions/:id/pdf', prescriptionController.getPrescriptionPDF);
+
 module.exports = router;

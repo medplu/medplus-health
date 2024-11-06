@@ -107,14 +107,30 @@ exports.createPrescription = async (req, res) => {
 
     const savedPrescription = await newPrescription.save();
 
-    const pdfDoc = generatePrescriptionPDF(savedPrescription);
-    const pdfPath = `./prescriptions/${savedPrescription._id}.pdf`;
+    res.status(201).json({ prescription: savedPrescription });
+  } catch (error) {
+    console.error('Error creating prescription:', error); // Add logging for debugging
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getPrescriptionPDF = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const prescription = await Prescription.findById(id).populate('patientId').populate('doctorId');
+
+    if (!prescription) {
+      return res.status(404).json({ error: 'Prescription not found' });
+    }
+
+    const pdfDoc = generatePrescriptionPDF(prescription);
+    const pdfPath = path.join(__dirname, `../prescriptions/${prescription._id}.pdf`);
     pdfDoc.pipe(fs.createWriteStream(pdfPath));
     pdfDoc.end();
 
-    res.status(201).json({ prescription: savedPrescription, pdfUrl: pdfPath });
+    res.status(200).json({ pdfUrl: `/prescriptions/${prescription._id}.pdf` });
   } catch (error) {
-    console.error('Error creating prescription:', error); // Add logging for debugging
+    console.error('Error generating prescription PDF:', error);
     res.status(500).json({ error: error.message });
   }
 };

@@ -74,7 +74,9 @@ const PatientDetails: React.FC = () => {
           throw new Error('Failed to create prescription');
         }
 
-        const { prescription, pdfUrl } = await response.json();
+        const { prescription } = await response.json();
+        const pdfResponse = await fetch(`https://medplus-health.onrender.com/api/prescriptions/${prescription._id}/pdf`);
+        const { pdfUrl } = await pdfResponse.json();
         Linking.openURL(pdfUrl); // Use Linking to open the PDF URL
       } catch (error) {
         console.error('Error creating prescription:', error);
