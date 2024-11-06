@@ -17,8 +17,12 @@ const PatientDetails: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileError, setFileError] = useState<string | null>(null);
+  const [newEntry, setNewEntry] = useState({
+    medication: '',
+    instructions: '',
+    refills: '',
+    warnings: '',
+  });
 
   const patient = useSelector((state: RootState) => selectPatientById(state, patientId as string));
   const loading = useSelector(selectPatientLoading);
@@ -35,44 +39,49 @@ const PatientDetails: React.FC = () => {
     setSelectedSegment(segment);
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
-    }
-  };
-
   const handleAddEntry = async () => {
     if (selectedSegment === 'prescriptions') {
-      const formData = new FormData();
-      formData.append('patientId', patientId as string);
-      formData.append('doctorId', user.professional?._id as string);
-
-      if (selectedFile) {
-        formData.append('file', selectedFile);
-      } else {
-        setFileError('File is required');
-        return;
-      }
+      const formData = {
+        patientId: patientId as string,
+        doctorId: user.professional?._id as string,
+        medication: [{
+          drugName: newEntry.medication,
+          strength: '500 mg', 
+          dosageForm: 'tablet', 
+          quantity: 30,
+        }],
+        instructions: { 
+          dosageAmount: '1 tablet',
+          route: 'orally',
+          frequency: 'every 8 hours', 
+          duration: 'for 7 days', 
+          additionalInstructions: newEntry.instructions,
+        },
+        refills: newEntry.refills,
+        warnings: newEntry.warnings,
+      };
 
       try {
         const response = await fetch('https://medplus-health.onrender.com/api/prescriptions', {
           method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
         });
 
         if (!response.ok) {
           throw new Error('Failed to create prescription');
         }
 
-        const { prescription } = await response.json();
-        window.open(`https://medplus-health.onrender.com/api/prescriptions/${prescription._id}/download`, '_blank');
+        const { prescription, pdfUrl } = await response.json();
+        window.open(pdfUrl, '_blank');
       } catch (error) {
         console.error('Error creating prescription:', error);
-        setFileError('Error creating prescription. Please try again.');
       }
     }
 
-    setSelectedFile(null);
+    setNewEntry({ medication: '', instructions: '', refills: '', warnings: '' });
     setModalVisible(false);
   };
 
@@ -161,8 +170,30 @@ const PatientDetails: React.FC = () => {
           <Text style={styles.modalTitle}>Add New {selectedSegment.charAt(0).toUpperCase() + selectedSegment.slice(1)}</Text>
           {selectedSegment === 'prescriptions' && (
             <>
-              <input type="file" onChange={handleFileChange} />
-              {fileError && <Text style={styles.errorText}>{fileError}</Text>}
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Medication"
+                value={newEntry.medication}
+                onChangeText={text => setNewEntry({ ...newEntry, medication: text })}
+              />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Instructions"
+                value={newEntry.instructions}
+                onChangeText={text => setNewEntry({ ...newEntry, instructions: text })}
+              />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Refills"
+                value={newEntry.refills}
+                onChangeText={text => setNewEntry({ ...newEntry, refills: text })}
+              />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Warnings"
+                value={newEntry.warnings}
+                onChangeText={text => setNewEntry({ ...newEntry, warnings: text })}
+              />
             </>
           )}
           <Button title="Save Entry" onPress={handleAddEntry} />
