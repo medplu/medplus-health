@@ -40,6 +40,9 @@ const generatePrescriptionPDF = (prescription) => {
 };
 
 exports.createPrescription = async (req, res) => {
+  console.log('Received data:', req.body); // Log the received data
+  console.log('Received files:', req.files); // Log the received files
+
   const { error } = prescriptionSchema.validate(req.body);
   if (error) {
     return res.status(400).json({ error: error.details[0].message });
