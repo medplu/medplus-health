@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 import io, { Socket } from 'socket.io-client';
-import PushNotification from 'react-native-push-notification';
+import * as Notifications from 'expo-notifications';
 import {
     setAppointments,
     setError,
@@ -13,6 +13,15 @@ import {
     addNotification,
 } from '@/app/store/appointmentsSlice';
 import { selectUser } from '../app/store/userSlice';
+
+// Configure Notifications
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+    }),
+});
 
 const useAppointments = () => {
     const dispatch = useDispatch();
@@ -40,18 +49,26 @@ const useAppointments = () => {
                     const appointmentsArray = Array.isArray(allData) ? allData : [];
                     dispatch(setAppointments(appointmentsArray));
 
-                    // Get today's date in the desired format
-                    const today = moment().format('YYYY-MM-DD');
+                    // Log fetched appointments
+                    console.log('Fetched Appointments:', appointmentsArray);
+
+                    // Get current date and time
+                    const now = moment();
 
                     // Filter appointments based on status and date
                     const upcomingAppointments = appointmentsArray.filter(
                         (appointment) => 
                             appointment.status === 'confirmed' &&
-                            moment(appointment.date).isSameOrAfter(today, 'day')
+                            moment(appointment.date).isSameOrAfter(now, 'day')
                     );
 
                     const requestedAppointments = appointmentsArray.filter((appointment) => appointment.status === 'pending');
                     const completedAppointments = appointmentsArray.filter((appointment) => appointment.status === 'completed');
+
+                    // Log filtered appointments
+                    console.log('Upcoming Appointments:', upcomingAppointments);
+                    console.log('Requested Appointments:', requestedAppointments);
+                    console.log('Completed Appointments:', completedAppointments);
 
                     // Dispatch filtered appointments to Redux state
                     dispatch(setUpcomingAppointments(upcomingAppointments));
@@ -90,9 +107,12 @@ const useAppointments = () => {
                     status: appointment.status,
                 }));
 
-                PushNotification.localNotification({
-                    title: 'New Appointment',
-                    message: `New appointment with ${appointment.patientName} on ${moment(appointment.createdAt).format('MMMM Do YYYY')} at ${appointment.time}`,
+                Notifications.scheduleNotificationAsync({
+                    content: {
+                        title: 'New Appointment',
+                        body: `New appointment with ${appointment.patientName} on ${moment(appointment.createdAt).format('MMMM Do YYYY')} at ${appointment.time}`,
+                    },
+                    trigger: null,
                 });
             }
         });
@@ -109,9 +129,12 @@ const useAppointments = () => {
                     status: 'cancelled',
                 }));
 
-                PushNotification.localNotification({
-                    title: 'Appointment Cancelled',
-                    message: `An appointment has been cancelled.`,
+                Notifications.scheduleNotificationAsync({
+                    content: {
+                        title: 'Appointment Cancelled',
+                        body: `An appointment has been cancelled.`,
+                    },
+                    trigger: null,
                 });
             }
         });

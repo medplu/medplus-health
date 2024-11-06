@@ -87,7 +87,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
         doctorId: doctorId,
         userId: userId,
         patientName: patientName,
-        date: moment(selectedDate).format('YYYY-MM-DD'),
+        date: moment(selectedDate).format('YYYY-MM-DD'), // Ensure date is included
         timeSlotId: selectedTimeSlot.id,
         time: selectedTimeSlot.time,
         status: 'pending',

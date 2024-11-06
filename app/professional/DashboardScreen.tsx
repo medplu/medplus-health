@@ -1,59 +1,42 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 import { PieChart, BarChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { selectUser } from '../store/userSlice'; // Updated path if necessary
-import { RootState } from '../store/configureStore';
+import { selectUser } from '../store/userSlice'; // Adjust the import based on your project structure
+import { RootState } from '../store/configureStore'; // Adjust the import based on your project structure
 import { useRouter } from 'expo-router';
-import useAppointments from '../../hooks/useAppointments';
+import useAppointments from '../../hooks/useAppointments'; // Adjust the import based on your project structure
+import moment from 'moment';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
 const DashboardScreen: React.FC = () => {
     const router = useRouter();
-    const user = useSelector(selectUser); // Ensure 'selectUser' is correctly imported and defined
-    const { appointments = [], loading, error } = useAppointments(); // Default to empty array
+    const user = useSelector(selectUser);
+    const { appointments, loading, error } = useAppointments();
 
-    const handleViewPatient = (appointment) => {
-        console.log('Received appointment data:', appointment); // Log the entire appointment object
-    
-        // Access the patient ID directly from the appointment object
-        if (appointment && appointment._id) {
-            const patientId = appointment._id; // Use the correct property to get the ID
-            router.push(`/patient/${patientId}`); // Navigate to the patient page
-        } else {
-            console.error('Patient ID is not available in the appointment data', appointment);
-        }
-    };
-
-    const handleAddToSchedule = (appointmentId: string) => {
-        // Implement scheduling logic here
-        console.log(`Add to schedule clicked for appointment: ${appointmentId}`);
+    const handleViewPatient = (patientId: string) => {
+        router.push(`/patient/${patientId}`);
     };
 
     // Calculate statistics based on real data
-    const totalAppointments = Array.isArray(appointments) ? appointments.length : 0;
-    const upcomingAppointments = Array.isArray(appointments) ? appointments.filter(appointment => appointment.status === 'confirmed') : [];
-    const requestedAppointments = Array.isArray(appointments) ? appointments.filter(appointment => appointment.status === 'requested').length : 0;
-    const completedAppointments = Array.isArray(appointments) ? appointments.filter(appointment => appointment.status === 'completed').length : 0;
+    const totalAppointments = appointments.length;
+    // Filter to get upcoming appointments (keep as an array)
+    const upcomingAppointments = appointments.filter(appointment => {
+        const appointmentDate = appointment.date && moment(appointment.date);
+        return appointment.status === 'confirmed' && appointmentDate && appointmentDate.isSameOrAfter(moment(), 'day');
+    });
 
-    const patientData = [
-        { name: 'Male', population: 40, color: '#4f8bc2', legendFontColor: '#7F7F7F', legendFontSize: 15 },
-        { name: 'Female', population: 60, color: '#f15b5b', legendFontColor: '#7F7F7F', legendFontSize: 15 },
-        { name: 'New', population: 30, color: '#FBFF8F', legendFontColor: '#7F7F7F', legendFontSize: 15 },
-        { name: 'Returning', population: 20, color: '#8bffff', legendFontColor: '#7F7F7F', legendFontSize: 15 },
-    ];
+    // Log appointments and upcomingAppointments for debugging
+    useEffect(() => {
+        console.log('All Appointments:', appointments);
+        console.log('Upcoming Appointments:', upcomingAppointments);
+    }, [appointments, upcomingAppointments]);
 
-    const consultsData = {
-        labels: ['New', 'Returning'],
-        datasets: [
-            {
-                data: [30, 20],
-            },
-        ],
-    };
+    const requestedAppointments = appointments.filter(appointment => appointment.status === 'requested');
+    const completedAppointments = appointments.filter(appointment => appointment.status === 'completed');
 
     if (loading) {
         return (
@@ -71,27 +54,70 @@ const DashboardScreen: React.FC = () => {
         );
     }
 
-    console.log('Upcoming Appointments:', upcomingAppointments);
-
     return (
         <ScrollView style={styles.container}>
             {user.isLoggedIn ? (
-                user.professional.profession === 'doctor' ? (
-                    user.professional.attachedToClinic ? (
-                        <View style={styles.doctorContainer}>
-                            <Text style={styles.sectionTitle}>Doctor Dashboard</Text>
-                            {/* Add more doctor-specific components */}
-                        </View>
-                    ) : (
-                        <View style={styles.noClinicContainer}>
-                            <Text style={styles.noClinicText}>You are not attached to a clinic. Please contact admin to attach your profile to a clinic.</Text>
-                        </View>
-                    )
-                ) : (
-                    <View style={styles.noClinicContainer}>
-                        <Text style={styles.noClinicText}>You are not a doctor. Please contact admin for further assistance.</Text>
+                <>
+                    {/* Welcome Card */}
+                    <View style={styles.card}>
+                        <Text style={styles.greetingText}>Welcome, {user.name}!</Text>
                     </View>
-                )
+
+                    {/* Overview Section */}
+                    <View style={styles.overviewContainer}>
+                        <View style={styles.overviewHeader}>
+                            <Text style={styles.sectionTitle}>Overview</Text>
+                            <View style={styles.iconContainer}>
+                                {upcomingAppointments.length > 0 && (
+                                    <View style={styles.badge} />
+                                )}
+                                <Icon name="calendar" size={24} color="#333" style={styles.icon} />
+                            </View>
+                        </View>
+
+                        <View style={styles.overviewCard}>
+                            <TouchableOpacity style={styles.overviewItem}>
+                                <Text style={styles.overviewLabel}>Total Appointments</Text>
+                                <Text style={styles.overviewNumber}>{totalAppointments}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.overviewItem}>
+                                <Text style={styles.overviewLabel}>Upcoming</Text>
+                                <Text style={styles.overviewNumber}>{upcomingAppointments.length}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.overviewItem}>
+                                <Text style={styles.overviewLabel}>Requested</Text>
+                                <Text style={styles.overviewNumber}>{requestedAppointments.length}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.overviewItem}>
+                                <Text style={styles.overviewLabel}>Completed</Text>
+                                <Text style={styles.overviewNumber}>{completedAppointments.length}</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    {/* Upcoming Appointments Section */}
+                    <View style={styles.upcomingContainer}>
+                        <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
+                        {upcomingAppointments.length > 0 ? (
+                            upcomingAppointments.map((appointment) => (
+                                <View key={appointment._id} style={styles.appointmentCard}>
+                                    <View style={styles.appointmentDetails}>
+                                        <Text style={styles.patientName}>{appointment.patientName}</Text>
+                                        <Text style={styles.appointmentTime}>{appointment.date}</Text>
+                                    </View>
+                                    <TouchableOpacity
+                                        style={styles.viewButton}
+                                        onPress={() => handleViewPatient(appointment.patientId._id)}
+                                    >
+                                        <Text style={styles.buttonText}>View Patient</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ))
+                        ) : (
+                            <Text style={styles.noAppointmentsText}>No upcoming appointments.</Text>
+                        )}
+                    </View>
+                </>
             ) : (
                 <Text style={styles.loginPrompt}>Please log in to see your dashboard.</Text>
             )}
@@ -102,8 +128,8 @@ const DashboardScreen: React.FC = () => {
 const chartConfig = {
     backgroundGradientFrom: '#fff',
     backgroundGradientTo: '#fff',
-    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    color: (opacity = 1) => rgba(0, 0, 0, opacity),
+    labelColor: (opacity = 1) => rgba(0, 0, 0, opacity),
     strokeWidth: 2,
     barPercentage: 0.5,
     useShadowColorFromDataset: false,
@@ -203,56 +229,34 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     appointmentCard: {
-        flexDirection: 'column',
-        justifyContent: 'flex-start',
-        alignItems: 'flex-start',
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 4 },
-        shadowRadius: 6,
-        elevation: 3, // For Android shadow
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#f0f0f0',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 10,
     },
     appointmentDetails: {
-        marginBottom: 12, // Space between details and buttons
+        flex: 1,
     },
     patientName: {
-        fontSize: 18,
-        fontWeight: '600',
+        fontSize: 16,
+        fontWeight: 'bold',
         color: '#333',
-        marginBottom: 4,
     },
     appointmentTime: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#555',
-        marginBottom: 4,
     },
     viewButton: {
         backgroundColor: '#4CAF50',
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        marginRight: 12,
-    },
-    addScheduleButton: {
-        backgroundColor: '#2196F3',
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: '100%',
-        justifyContent: 'flex-start',
+        padding: 8,
+        borderRadius: 5,
     },
     buttonText: {
         color: '#fff',
-        fontSize: 16,
-        fontWeight: '500',
+        fontSize: 14,
     },
     loginPrompt: {
         textAlign: 'center',
@@ -285,10 +289,10 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: 'red',
     },
-    patientDetails: {
-        fontSize: 14,
-        color: '#777',
-    },
 });
 
 export default DashboardScreen;
+const rgba = (r: number, g: number, b: number, a: number) => {
+    return `rgba(${r},${g},${b},${a})`;
+};
+

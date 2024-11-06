@@ -60,10 +60,10 @@ exports.getAppointmentsByUser = async (req, res) => {
 
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, patientName, status, timeSlotId, time, patientDetails = {} } = req.body;
+  const { doctorId, userId, patientName, status, timeSlotId, time, date, patientDetails = {} } = req.body;
 
   try {
-    if (!doctorId || !userId || !status || !timeSlotId || !time) {
+    if (!doctorId || !userId || !status || !timeSlotId || !time || !date) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -118,6 +118,7 @@ exports.bookAppointment = async (req, res) => {
       status,
       timeSlotId,
       time,
+      date, // Ensure date is included
     });
 
     await newAppointment.save();
