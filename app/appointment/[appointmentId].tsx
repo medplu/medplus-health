@@ -16,7 +16,7 @@ const AppointmentDetails = () => {
   const appointment = useSelector((state) => 
     state.appointments.appointments.find(a => a._id === appointmentId)
   );
-  const prescriptions = useSelector(selectPrescriptions); // Select prescriptions from Redux store
+  const prescriptions = useSelector(selectPrescriptions) || []; // Ensure prescriptions is always an array
 
   // Define patientId on a global scope
   const patientId = appointment?.patientId?._id;
@@ -33,7 +33,7 @@ const AppointmentDetails = () => {
       console.log('Fetching prescriptions for patientId:', patientId); // Log the patientId before fetching prescriptions
       dispatch(fetchPrescriptionsByPatientId(patientId)); // Fetch prescriptions for the patient using extracted patientId
     }
-  }, [dispatch, patientId]);
+  }, [dispatch, patientId]); // Run this effect when dispatch or patientId changes
 
   if (!appointment) {
     return (
@@ -110,7 +110,7 @@ const AppointmentDetails = () => {
               renderItem={({ item }) => (
                 <Card style={styles.prescriptionCard}>
                   <Card.Content>
-                    <Text style={styles.prescriptionDate}>Date: {new Date(item.createdAt).toLocaleDateString()}</Text>
+                    <Text style={styles.prescriptionDate}>Date: {new Date(item.dateIssued).toLocaleDateString()}</Text>
                     <Text style={styles.prescriptionDoctor}>Prescribed by: Dr. {item.doctorId.firstName} {item.doctorId.lastName}</Text>
                   </Card.Content>
                   <Card.Actions>
