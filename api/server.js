@@ -129,6 +129,25 @@ app.use('/api/appointments', appointmentsRoute);
 // Serve the prescriptions directory as static files
 app.use('/prescriptions', express.static(path.join(__dirname, '../prescriptions')));
 
+// Define the route to fill the template with prescription data
+app.post('/api/fill-template', (req, res) => {
+  const prescription = req.body.prescription;
+
+  // Load the template file
+  const templatePath = path.join(__dirname, 'templates', 'prescription-template.ejs');
+  fs.readFile(templatePath, 'utf8', (err, template) => {
+    if (err) {
+      return res.status(500).send('Error loading template');
+    }
+
+    // Render the template with the prescription data
+    const filledTemplate = ejs.render(template, { prescription });
+
+    // Send the filled template as the response
+    res.send(filledTemplate);
+  });
+});
+
 // Handle WebSocket connections
 io.on("connection", (socket) => {
   console.log("New client connected");

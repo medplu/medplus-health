@@ -18,10 +18,10 @@ const prescriptionSchema = new mongoose.Schema({
     },
   ],
   instructions: {
-    dosageAmount: { type: String, required: true }, // e.g., "1 tablet"
-    route: { type: String, required: true }, // e.g., "orally", "topically"
-    frequency: { type: String, required: true }, // e.g., "every 8 hours"
-    duration: { type: String, required: true }, // e.g., "for 7 days"
+    dosageAmount: { type: String, required: false }, // e.g., "1 tablet"
+    route: { type: String, required: false }, // e.g., "orally", "topically"
+    frequency: { type: String, required: false }, // e.g., "every 8 hours"
+    duration: { type: String, required: false }, // e.g., "for 7 days"
     additionalInstructions: { type: String, required: false }, // e.g., "Take with food"
   },
   refills: { type: Number, default: 0 }, // number of refills allowed
