@@ -9,19 +9,19 @@ const prescriptionSchema = Joi.object({
   doctorId: Joi.string().required(),
   medication: Joi.array().items(Joi.object({
     drugName: Joi.string().required(),
-    strength: Joi.string().required(),
-    dosageForm: Joi.string().required(),
+    strength: Joi.string().required().allow(''), // Allow empty string
+    dosageForm: Joi.string().required().allow(''), // Allow empty string
     quantity: Joi.number().required(),
   })).required(),
   instructions: Joi.object({
-    dosageAmount: Joi.string().required(),
-    route: Joi.string().required(),
+    dosageAmount: Joi.string().required().allow(''), // Allow empty string
+    route: Joi.string().required().allow(''), // Allow empty string
     frequency: Joi.string().required(),
     duration: Joi.string().required(),
-    additionalInstructions: Joi.string().optional(),
+    additionalInstructions: Joi.string().optional().allow(''), // Allow empty string
   }).required(),
-  refills: Joi.number().default(0),
-  warnings: Joi.string().optional(),
+  refills: Joi.number().default(0).allow(''), // Allow empty string
+  warnings: Joi.string().optional().allow(''), // Allow empty string
 });
 
 const generatePrescriptionPDF = (prescription) => {
