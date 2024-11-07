@@ -18,6 +18,9 @@ const AppointmentDetails = () => {
   );
   const prescriptions = useSelector(selectPrescriptions); // Select prescriptions from Redux store
 
+  // Define patientId on a global scope
+  const patientId = appointment?.patientId?._id;
+
   // Log the appointment data
   console.log('Appointment Details:', appointment);
 
@@ -25,10 +28,12 @@ const AppointmentDetails = () => {
   const [selectedPrescription, setSelectedPrescription] = useState(null); // State for selected prescription
 
   useEffect(() => {
-    if (appointment?.patientId) {
-      dispatch(fetchPrescriptionsByPatientId(appointment.patientId)); // Fetch prescriptions for the patient
+    console.log('Appointment before fetching prescriptions:', appointment); // Log the appointment data before fetching prescriptions
+    if (patientId) {
+      console.log('Fetching prescriptions for patientId:', patientId); // Log the patientId before fetching prescriptions
+      dispatch(fetchPrescriptionsByPatientId(patientId)); // Fetch prescriptions for the patient using extracted patientId
     }
-  }, [dispatch, appointment]);
+  }, [dispatch, patientId]);
 
   if (!appointment) {
     return (

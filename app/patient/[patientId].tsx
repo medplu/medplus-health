@@ -27,6 +27,7 @@ interface RootState {
 
 const PatientDetails: React.FC = () => {
   const { patientId } = useLocalSearchParams(); // Get patientId from URL parameters
+  console.log('Patient ID:', patientId); // Log patientId for debugging
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');

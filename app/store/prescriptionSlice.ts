@@ -4,10 +4,9 @@ import { RootState } from '../store/configureStore'; // Add this line
 
 export const fetchPrescriptionsByPatientId = createAsyncThunk(
   'prescriptions/fetchByPatientId',
-  async (patient: { _id: string }) => { // Update parameter to accept patient object
-    const patientId = patient._id; // Extract the actual _id
-    console.log('Fetching prescriptions for patientId:', patientId); // Log the extracted _id
-    const response = await axios.get(`https://medplus-health.onrender.com/prescriptions/${encodeURIComponent(patientId)}`);
+  async (patientId: string) => { // Update parameter to accept patientId string
+    console.log('Fetching prescriptions for patientId:', patientId); // Log the patientId
+    const response = await axios.get(`https://medplus-health.onrender.com/api/prescriptions/${encodeURIComponent(patientId)}`);
     return response.data.prescriptions;
   }
 );

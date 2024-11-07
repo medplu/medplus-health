@@ -147,8 +147,10 @@ exports.deletePrescriptionById = async (req, res) => {
 
 exports.getPrescriptionPDF = async (req, res) => {
   try {
-    const { id } = req.params;
-    let prescription = await Prescription.findById(id).populate('patientId').populate('doctorId');
+    const { patientId } = req.params; // Assuming patientId is passed in req.params
+    let prescription = await Prescription.findOne({ patientId })
+      .populate('patientId')
+      .populate('doctorId');
 
     if (!prescription) {
       return res.status(404).json({ error: 'Prescription not found' });
@@ -169,3 +171,4 @@ exports.getPrescriptionPDF = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
