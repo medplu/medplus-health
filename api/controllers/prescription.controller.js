@@ -57,7 +57,12 @@ exports.createPrescription = async (req, res) => {
     // Save the prescription to the database
     const savedPrescription = await newPrescription.save();
 
-    res.status(201).json({ prescription: savedPrescription });
+    // Populate the patient and doctor fields
+    const populatedPrescription = await Prescription.findById(savedPrescription._id)
+      .populate('patientId')
+      .populate('doctorId');
+
+    res.status(201).json({ prescription: populatedPrescription });
   } catch (error) {
     res.status(500).json({ message: 'Failed to create prescription', error });
   }
@@ -67,8 +72,10 @@ exports.getPrescriptionById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Find the prescription by ID
-    const prescription = await Prescription.findById(id).populate('patientId').populate('doctorId');
+    // Find the prescription by ID and populate the patient and doctor fields
+    const prescription = await Prescription.findById(id)
+      .populate('patientId')
+      .populate('doctorId');
 
     if (!prescription) {
       return res.status(404).json({ message: 'Prescription not found' });
@@ -109,7 +116,7 @@ exports.updatePrescriptionById = async (req, res) => {
       id,
       { medication },
       { new: true }
-    );
+    ).populate('patientId').populate('doctorId');
 
     if (!updatedPrescription) {
       return res.status(404).json({ message: 'Prescription not found' });
