@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.ligh_gray,
   },
   loadingContainer: {
     flex: 1,
@@ -361,6 +361,7 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     marginBottom: 16,
+    padding: 20
   },
   profileContent: {
     flexDirection: 'row',
