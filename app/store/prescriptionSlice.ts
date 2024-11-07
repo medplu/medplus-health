@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { RootState } from '../store/configureStore'; // Add this line
 
 export const fetchPrescriptionsByPatientId = createAsyncThunk(
   'prescriptions/fetchByPatientId',
