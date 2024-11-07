@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { View, StyleSheet, FlatList, Image, Linking } from 'react-native';
+import { View, StyleSheet, FlatList, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { selectUser } from '../store/userSlice';
 import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatientError } from '../store/patientSlice';
 import { AppDispatch } from '../store/configureStore';
 import { Text, Button, TextInput, Modal, Card, Title, Paragraph, ActivityIndicator, Snackbar } from 'react-native-paper';
+import { WebView } from 'react-native-webview';
 import Colors from '@/components/Shared/Colors';
 
 interface RootState {
@@ -19,6 +20,7 @@ const PatientDetails: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
   const [modalVisible, setModalVisible] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [newEntry, setNewEntry] = useState({
     dosageAmount: '',
     route: '',
@@ -98,7 +100,7 @@ const PatientDetails: React.FC = () => {
         const { prescription } = await response.json();
         const pdfResponse = await fetch(`https://medplus-health.onrender.com/api/prescriptions/${prescription._id}/pdf`);
         const { pdfUrl } = await pdfResponse.json();
-        Linking.openURL(pdfUrl); // Use Linking to open the PDF URL
+        setPdfUrl(pdfUrl); // Set the PDF URL to state
         setSnackbarVisible(true);
       } catch (error) {
         console.error('Error creating prescription:', error);
@@ -125,6 +127,15 @@ const PatientDetails: React.FC = () => {
         <Text style={styles.errorText}>{error}</Text>
         <Button mode="contained" onPress={() => dispatch(fetchPatientById(patientId as string))}>Retry</Button>
       </View>
+    );
+  }
+
+  if (pdfUrl) {
+    return (
+      <WebView
+        source={{ uri: pdfUrl }}
+        style={{ flex: 1 }}
+      />
     );
   }
 
