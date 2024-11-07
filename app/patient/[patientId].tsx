@@ -9,6 +9,15 @@ import { Text, Button, TextInput, Modal, Card, Title, Paragraph, ActivityIndicat
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Colors from '@/components/Shared/Colors';
 import PrescriptionTemplate from '@/components/PrescriptionTemplate';
+import { Picker } from '@react-native-picker/picker'; // Add Picker import
+
+// Define frequency options
+const FREQUENCY_OPTIONS = [
+  { label: 'OB/BID (Once or Twice a Day)', value: 'OB/BID' },
+  { label: 'TID (Three Times a Day)', value: 'TID' },
+  { label: 'QID (Four Times a Day)', value: 'QID' },
+  { label: 'QHS (Every Night at Bedtime)', value: 'QHS' },
+];
 
 interface RootState {
   patient: any; 
@@ -31,7 +40,7 @@ const PatientDetails: React.FC = () => {
   const [medications, setMedications] = useState([{
     drugName: '',
     strength: '',
-    frequency: '',
+    frequency: 'OB/BID', // Set default value
     duration: '',
   }]);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
@@ -53,7 +62,7 @@ const PatientDetails: React.FC = () => {
   };
 
   const handleAddMedication = () => {
-    setMedications([...medications, { drugName: '', strength: '', frequency: '', duration: '' }]);
+    setMedications([...medications, { drugName: '', strength: '', frequency: 'OB/BID', duration: '' }]);
   };
 
   const handleMedicationChange = (index: number, field: string, value: string) => {
@@ -96,7 +105,7 @@ const PatientDetails: React.FC = () => {
     }
 
     setNewEntry({ drugName: '', strength: '', frequency: '', duration: '' });
-    setMedications([{ drugName: '', strength: '', frequency: '', duration: '' }]);
+    setMedications([{ drugName: '', strength: '', frequency: 'OB/BID', duration: '' }]);
     setModalVisible(false);
   };
 
@@ -227,14 +236,20 @@ const PatientDetails: React.FC = () => {
                   />
                 </View>
                 <View style={styles.row}>
-                  <TextInput
-                    mode="outlined"
-                    label="Frequency"
-                    placeholder="e.g., Every 8 hours"
-                    value={medication.frequency}
-                    onChangeText={text => handleMedicationChange(index, 'frequency', text)}
-                    style={styles.modalInput}
-                  />
+                  {/* Replace TextInput with Picker for Frequency */}
+                  <View style={styles.pickerContainer}>
+                    <Text style={styles.pickerLabel}>Frequency</Text>
+                    <Picker
+                      selectedValue={medication.frequency}
+                      onValueChange={(itemValue) => handleMedicationChange(index, 'frequency', itemValue)}
+                      style={styles.picker}
+                      mode="dropdown"
+                    >
+                      {FREQUENCY_OPTIONS.map(option => (
+                        <Picker.Item key={option.value} label={option.label} value={option.value} />
+                      ))}
+                    </Picker>
+                  </View>
                   <TextInput
                     mode="outlined"
                     label="Duration"
@@ -263,14 +278,32 @@ const PatientDetails: React.FC = () => {
 
       {prescription && (
         <>
-          <Button mode="contained" onPress={() => setPrescriptionModalVisible(true)} style={styles.viewButton}>View Prescription</Button>
+          <Button 
+            mode="contained" 
+            onPress={() => setPrescriptionModalVisible(true)} 
+            style={styles.viewButton}
+          >
+            View Prescription
+          </Button>
           <Modal
             visible={prescriptionModalVisible}
-            onDismiss={() => setPrescriptionModalVisible(false)}
+            onDismiss={() => {
+              setPrescriptionModalVisible(false);
+              setPrescription(null); // Reset prescription state
+            }}
             contentContainerStyle={styles.modalContainer}
           >
             <PrescriptionTemplate prescription={prescription} />
-            <Button mode="outlined" onPress={() => setPrescriptionModalVisible(false)} style={styles.cancelButton}>Close</Button>
+            <Button 
+              mode="outlined" 
+              onPress={() => {
+                setPrescriptionModalVisible(false);
+                setPrescription(null); // Reset prescription state
+              }} 
+              style={styles.cancelButton}
+            >
+              Close
+            </Button>
           </Modal>
         </>
       )}
@@ -430,6 +463,22 @@ const styles = StyleSheet.create({
   },
   medicationContainer: {
     marginBottom: 16,
+  },
+  pickerContainer: {
+    flex: 1,
+    marginHorizontal: 8,
+    justifyContent: 'center',
+  },
+  pickerLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    color: Colors.secondary,
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+    backgroundColor: Colors.white,
   },
 });
 

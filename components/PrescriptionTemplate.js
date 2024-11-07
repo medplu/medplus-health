@@ -3,8 +3,16 @@ import { View, Button, Alert, ScrollView, StyleSheet, Text, Image } from 'react-
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
-// Ensure you have a logo image in your assets folder
-import Logo from '../assets/images/medical-symbol.png'; // Adjust the path as necessary
+// Cloudinary logo URL
+const LogoUrl = 'https://res.cloudinary.com/dws2bgxg4/image/upload/e_background_removal/f_png/v1717995504/medplus-logo_iug8am.jpg'; // Replace with your Cloudinary URL
+
+// Add frequency descriptions mapping
+const FREQUENCY_DESCRIPTIONS = {
+    'OB/BID': 'Once or Twice a Day',
+    'TID': '3 Times a Day',
+    'QID': '4 Times a Day',
+    'QHS': 'Every Night at Bedtime',
+};
 
 const PrescriptionTemplate = ({ prescription }) => {
     const generatePDF = async () => {
@@ -28,7 +36,7 @@ const PrescriptionTemplate = ({ prescription }) => {
                     </head>
                     <body>
                         <div class="header">
-                            <img src="https://your-domain.com/path-to-logo.png" class="logo" alt="Logo" />
+                            <img src="${LogoUrl}" class="logo" alt="Logo" />
                             <h1>Prescription</h1>
                         </div>
 
@@ -55,7 +63,7 @@ const PrescriptionTemplate = ({ prescription }) => {
                                 <tr>
                                     <td>${med.drugName}</td>
                                     <td>${med.strength}</td>
-                                    <td>${med.frequency}</td>
+                                    <td>${med.frequency} (${FREQUENCY_DESCRIPTIONS[med.frequency] || 'N/A'})</td>
                                     <td>${med.duration}</td>
                                 </tr>
                             `).join('')}
@@ -85,7 +93,7 @@ const PrescriptionTemplate = ({ prescription }) => {
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.header}>
-                <Image source={Logo} style={styles.logo} />
+                <Image source={{ uri: LogoUrl }} style={styles.logo} />
                 <Text style={styles.title}>Prescription</Text>
             </View>
             <View style={styles.section}>
@@ -111,7 +119,10 @@ const PrescriptionTemplate = ({ prescription }) => {
                     <View key={index} style={styles.tableRow}>
                         <Text style={styles.tableCell}>{med.drugName}</Text>
                         <Text style={styles.tableCell}>{med.strength}</Text>
-                        <Text style={styles.tableCell}>{med.frequency}</Text>
+                        {/* Modify Frequency Display to Include Description */}
+                        <Text style={styles.tableCell}>
+                            {med.frequency} ({FREQUENCY_DESCRIPTIONS[med.frequency] || 'N/A'})
+                        </Text>
                         <Text style={styles.tableCell}>{med.duration}</Text>
                     </View>
                 ))}
@@ -170,12 +181,14 @@ const styles = StyleSheet.create({
     },
     tableCell: {
         flex: 1,
-        fontSize: 16,
+        fontSize: 14, // Reduced font size from 16 to 14
         color: '#444',
+        flexWrap: 'nowrap', // Prevent text from wrapping
     },
     tableHeaderCell: {
         fontWeight: '700',
         color: '#333',
+        fontSize: 14, // Reduced font size from default if necessary
     },
 });
 
