@@ -7,6 +7,7 @@ import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatien
 import { AppDispatch } from '../store/configureStore';
 import { Text, Button, TextInput, Modal, Card, Title, Paragraph, ActivityIndicator, Snackbar } from 'react-native-paper';
 import { WebView } from 'react-native-webview';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Colors from '@/components/Shared/Colors';
 
 interface RootState {
@@ -22,19 +23,16 @@ const PatientDetails: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [newEntry, setNewEntry] = useState({
-    dosageAmount: '',
-    route: '',
+    drugName: '',
+    strength: '',
     frequency: '',
     duration: '',
-    instructions: '',
-    refills: '',
-    warnings: '',
   });
   const [medications, setMedications] = useState([{
     drugName: '',
     strength: '',
-    dosageForm: '',
-    quantity: '',
+    frequency: '',
+    duration: '',
   }]);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
 
@@ -54,7 +52,7 @@ const PatientDetails: React.FC = () => {
   };
 
   const handleAddMedication = () => {
-    setMedications([...medications, { drugName: '', strength: '', dosageForm: '', quantity: '' }]);
+    setMedications([...medications, { drugName: '', strength: '', frequency: '', duration: '' }]);
   };
 
   const handleMedicationChange = (index: number, field: string, value: string) => {
@@ -73,15 +71,6 @@ const PatientDetails: React.FC = () => {
         patientId: patientId as string, // Use patientId from URL parameters
         doctorId: user.professional?._id as string, // Use doctorId from the current user in the Redux store
         medication: medications,
-        instructions: { 
-          dosageAmount: newEntry.dosageAmount,
-          route: newEntry.route,
-          frequency: newEntry.frequency, 
-          duration: newEntry.duration, 
-          additionalInstructions: newEntry.instructions,
-        },
-        refills: newEntry.refills,
-        warnings: newEntry.warnings,
       };
 
       try {
@@ -107,8 +96,8 @@ const PatientDetails: React.FC = () => {
       }
     }
 
-    setNewEntry({ dosageAmount: '', route: '', frequency: '', duration: '', instructions: '', refills: '', warnings: '' });
-    setMedications([{ drugName: '', strength: '', dosageForm: '', quantity: '' }]);
+    setNewEntry({ drugName: '', strength: '', frequency: '', duration: '' });
+    setMedications([{ drugName: '', strength: '', frequency: '', duration: '' }]);
     setModalVisible(false);
   };
 
@@ -148,10 +137,10 @@ const PatientDetails: React.FC = () => {
             style={styles.profileImage}
           />
           <View>
-            <Title>{patient?.name || 'Unnamed Patient'}</Title>
-            <Paragraph>Age: {patient?.age || 'N/A'}</Paragraph>
+            <Title style={styles.profileName}>{patient?.name || 'Unnamed Patient'}</Title>
+            <Paragraph style={styles.profileDetails}>Age: {patient?.age || 'N/A'}</Paragraph>
             {patient?.diagnosis && (
-              <Paragraph>Diagnosis: {patient.diagnosis}</Paragraph>
+              <Paragraph style={styles.profileDetails}>Diagnosis: {patient.diagnosis}</Paragraph>
             )}
           </View>
         </Card.Content>
@@ -167,6 +156,18 @@ const PatientDetails: React.FC = () => {
             mode={selectedSegment === segment ? 'contained' : 'outlined'}
             onPress={() => handleSegmentChange(segment)}
             style={styles.tabButton}
+            icon={() => {
+              switch (segment) {
+                case 'prescriptions':
+                  return <Icon name="pill" size={20} color={selectedSegment === segment ? Colors.white : Colors.primary} />;
+                case 'labs':
+                  return <Icon name="flask" size={20} color={selectedSegment === segment ? Colors.white : Colors.primary} />;
+                case 'notes':
+                  return <Icon name="note" size={20} color={selectedSegment === segment ? Colors.white : Colors.primary} />;
+                default:
+                  return null;
+              }
+            }}
           >
             {segment.charAt(0).toUpperCase() + segment.slice(1)}
           </Button>
@@ -238,84 +239,24 @@ const PatientDetails: React.FC = () => {
                 <View style={styles.row}>
                   <TextInput
                     mode="outlined"
-                    label="Dosage Form"
-                    placeholder="e.g., Tablet"
-                    value={medication.dosageForm}
-                    onChangeText={text => handleMedicationChange(index, 'dosageForm', text)}
+                    label="Frequency"
+                    placeholder="e.g., Every 8 hours"
+                    value={medication.frequency}
+                    onChangeText={text => handleMedicationChange(index, 'frequency', text)}
                     style={styles.modalInput}
                   />
                   <TextInput
                     mode="outlined"
-                    label="Quantity"
-                    placeholder="e.g., 30"
-                    value={medication.quantity}
-                    onChangeText={text => handleMedicationChange(index, 'quantity', text)}
+                    label="Duration"
+                    placeholder="e.g., For 7 days"
+                    value={medication.duration}
+                    onChangeText={text => handleMedicationChange(index, 'duration', text)}
                     style={styles.modalInput}
                   />
                 </View>
               </View>
             ))}
             <Button mode="outlined" onPress={handleAddMedication} style={styles.addButton}>Add Another Medication</Button>
-            <View style={styles.row}>
-              <TextInput
-                mode="outlined"
-                label="Dosage Amount"
-                placeholder="e.g., 1 tablet"
-                value={newEntry.dosageAmount}
-                onChangeText={text => setNewEntry({ ...newEntry, dosageAmount: text })}
-                style={styles.modalInput}
-              />
-              <TextInput
-                mode="outlined"
-                label="Route"
-                placeholder="e.g., Orally"
-                value={newEntry.route}
-                onChangeText={text => setNewEntry({ ...newEntry, route: text })}
-                style={styles.modalInput}
-              />
-            </View>
-            <View style={styles.row}>
-              <TextInput
-                mode="outlined"
-                label="Frequency"
-                placeholder="e.g., Every 8 hours"
-                value={newEntry.frequency}
-                onChangeText={text => setNewEntry({ ...newEntry, frequency: text })}
-                style={styles.modalInput}
-              />
-              <TextInput
-                mode="outlined"
-                label="Duration"
-                placeholder="e.g., For 7 days"
-                value={newEntry.duration}
-                onChangeText={text => setNewEntry({ ...newEntry, duration: text })}
-                style={styles.modalInput}
-              />
-            </View>
-            <TextInput
-              mode="outlined"
-              label="Additional Instructions"
-              placeholder="e.g., Take with food"
-              value={newEntry.instructions}
-              onChangeText={text => setNewEntry({ ...newEntry, instructions: text })}
-              style={styles.modalInput}
-            />
-            <TextInput
-              mode="outlined"
-              label="Refills"
-              placeholder="e.g., 2"
-              value={newEntry.refills}
-              onChangeText={text => setNewEntry({ ...newEntry, refills: text })}
-              style={styles.modalInput}
-            />
-            <TextInput
-              mode="outlined"
-              label="Warnings"
-              placeholder="e.g., May cause drowsiness"
-              value={newEntry.warnings}
-              onChangeText={text => setNewEntry({ ...newEntry, warnings: text })}
-              style={styles.modalInput}
-            />
           </View>
         )}
         <Button mode="contained" onPress={handleAddEntry} style={styles.saveButton}>Save Entry</Button>
@@ -338,7 +279,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: Colors.ligh_gray,
+    backgroundColor: Colors.light_gray,
   },
   loadingContainer: {
     flex: 1,
@@ -361,7 +302,14 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     marginBottom: 16,
-    padding: 20
+    padding: 20,
+    backgroundColor: Colors.white,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
   },
   profileContent: {
     flexDirection: 'row',
@@ -372,6 +320,15 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     marginRight: 16,
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary,
+  },
+  profileDetails: {
+    fontSize: 16,
+    color: Colors.secondary,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -391,6 +348,13 @@ const styles = StyleSheet.create({
   },
   card: {
     marginVertical: 8,
+    backgroundColor: Colors.white,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: 20,
@@ -420,7 +384,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     padding: 16,
-    backgroundColor: Colors.light_gray,
+    backgroundColor: Colors.white,
     margin: 20,
     borderRadius: 8,
   },

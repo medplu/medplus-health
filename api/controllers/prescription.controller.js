@@ -11,19 +11,10 @@ const prescriptionSchema = Joi.object({
   doctorId: Joi.string().required(),
   medication: Joi.array().items(Joi.object({
     drugName: Joi.string().required(),
-    strength: Joi.string().required().allow(''), // Allow empty string
-    dosageForm: Joi.string().required().allow(''), // Allow empty string
-    quantity: Joi.number().required(),
-  })).required(),
-  instructions: Joi.object({
-    dosageAmount: Joi.string().required().allow(''), // Allow empty string
-    route: Joi.string().required().allow(''), // Allow empty string
+    strength: Joi.string().required(),
     frequency: Joi.string().required(),
     duration: Joi.string().required(),
-    additionalInstructions: Joi.string().optional().allow(''), // Allow empty string
-  }).required(),
-  refills: Joi.number().default(0).allow(''), // Allow empty string
-  warnings: Joi.string().optional().allow(''), // Allow empty string
+  })).required(),
 });
 
 const generatePrescriptionPDF = (prescription) => {
@@ -41,28 +32,14 @@ const generatePrescriptionPDF = (prescription) => {
   doc.moveDown();
   doc.text('Medications:');
   prescription.medication.forEach((med, index) => {
-    doc.text(`${index + 1}. ${med.drugName} (${med.strength}) - ${med.dosageForm}, Quantity: ${med.quantity}`);
+    doc.text(`${index + 1}. ${med.drugName} (${med.strength}) - ${med.frequency}, Duration: ${med.duration}`);
   });
-  doc.moveDown();
-  doc.text('Instructions:');
-  doc.text(`Dosage Amount: ${prescription.instructions.dosageAmount}`);
-  doc.text(`Route: ${prescription.instructions.route}`);
-  doc.text(`Frequency: ${prescription.instructions.frequency}`);
-  doc.text(`Duration: ${prescription.instructions.duration}`);
-  if (prescription.instructions.additionalInstructions) {
-    doc.text(`Additional Instructions: ${prescription.instructions.additionalInstructions}`);
-  }
-  doc.moveDown();
-  doc.text(`Refills: ${prescription.refills}`);
-  if (prescription.warnings) {
-    doc.text(`Warnings: ${prescription.warnings}`);
-  }
   return doc;
 };
 
 exports.createPrescription = async (req, res) => {
   try {
-    const { patientId, doctorId, medication, instructions, refills, warnings } = req.body;
+    const { patientId, doctorId, medication } = req.body;
 
     // Validate the request body
     const { error } = prescriptionSchema.validate(req.body);
@@ -75,9 +52,6 @@ exports.createPrescription = async (req, res) => {
       patientId,
       doctorId,
       medication,
-      instructions,
-      refills,
-      warnings,
     });
 
     // Save the prescription to the database
@@ -122,7 +96,7 @@ exports.getPrescriptionsByPatientId = async (req, res) => {
 exports.updatePrescriptionById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { medication, instructions, refills, warnings } = req.body;
+    const { medication } = req.body;
 
     // Validate the request body
     const { error } = prescriptionSchema.validate(req.body);
@@ -133,7 +107,7 @@ exports.updatePrescriptionById = async (req, res) => {
     // Find the prescription by ID and update it
     const updatedPrescription = await Prescription.findByIdAndUpdate(
       id,
-      { medication, instructions, refills, warnings },
+      { medication },
       { new: true }
     );
 
