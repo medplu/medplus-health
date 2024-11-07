@@ -162,14 +162,10 @@ exports.getPrescriptionPDF = async (req, res) => {
       prescription.doctorId = await Professional.findById(prescription.doctorId) || null;
     }
 
-    const pdfDoc = generatePrescriptionPDF(prescription);
-    const pdfPath = path.join(__dirname, `../prescriptions/${prescription._id}.pdf`);
-    pdfDoc.pipe(fs.createWriteStream(pdfPath));
-    pdfDoc.end();
-
-    res.status(200).json({ pdfUrl: `/prescriptions/${prescription._id}.pdf` });
+    // Return the prescription data instead of generating a PDF
+    res.status(200).json({ prescription });
   } catch (error) {
-    console.error('Error generating prescription PDF:', error);
+    console.error('Error retrieving prescription data:', error);
     res.status(500).json({ error: error.message });
   }
 };

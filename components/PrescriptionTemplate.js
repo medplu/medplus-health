@@ -8,7 +8,8 @@ const LogoUrl = 'https://res.cloudinary.com/dws2bgxg4/image/upload/e_background_
 
 // Add frequency descriptions mapping
 const FREQUENCY_DESCRIPTIONS = {
-    'OB/BID': 'Once or Twice a Day',
+    'OD': 'Once ',
+    'BD/BID': '2 Times a Day',
     'TID': '3 Times a Day',
     'QID': '4 Times a Day',
     'QHS': 'Every Night at Bedtime',

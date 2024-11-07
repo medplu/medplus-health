@@ -13,7 +13,8 @@ import { Picker } from '@react-native-picker/picker'; // Add Picker import
 
 // Define frequency options
 const FREQUENCY_OPTIONS = [
-  { label: 'OB/BID (Once or Twice a Day)', value: 'OB/BID' },
+  { label: 'OB (Once Day)', value: 'OB' },
+  { label: 'BID (Twice a  Day)', value: 'BID' },
   { label: 'TID (Three Times a Day)', value: 'TID' },
   { label: 'QID (Four Times a Day)', value: 'QID' },
   { label: 'QHS (Every Night at Bedtime)', value: 'QHS' },
@@ -40,7 +41,7 @@ const PatientDetails: React.FC = () => {
   const [medications, setMedications] = useState([{
     drugName: '',
     strength: '',
-    frequency: 'OB/BID', // Set default value
+    frequency: 'OB', // Set default value
     duration: '',
   }]);
   const [snackbarVisible, setSnackbarVisible] = useState(false);

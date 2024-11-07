@@ -9,7 +9,7 @@ const Notifications = () => {
   const router = useRouter();
 
   const handleViewAppointment = (appointmentId: string) => {
-    router.push(`/appointment/${appointmentId}`);
+    router.push(`/appointment/${appointmentId}`); // Pass only appointmentId
   };
 
   const renderAppointmentItem = ({ item }) => {

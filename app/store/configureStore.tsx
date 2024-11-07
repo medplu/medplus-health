@@ -7,6 +7,7 @@ import scheduleReducer from './scheduleSlice';
 import doctorReducer from './doctorSlice';
 import clinicsReducer from './clinicSlice';
 import patientReducer from './patientSlice'; // Import the patient reducer
+import prescriptionReducer from './prescriptionSlice'; // Import the prescription reducer
 
 const persistConfig = {
   key: 'root',
@@ -22,6 +23,7 @@ const rootReducer = combineReducers({
   doctors: doctorReducer,
   clinics: clinicsReducer,
   patient: patientReducer, // Add patient reducer to the store
+  prescriptions: prescriptionReducer, // Add prescription reducer to the store
 });
 
 // Apply persistReducer to the rootReducer, not just the user slice

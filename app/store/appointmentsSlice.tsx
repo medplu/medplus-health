@@ -1,19 +1,51 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+interface Doctor {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profession: string;
+  profileImage: string;
+  attachedToClinic: boolean;
+  attachedToPharmacy: boolean;
+  certifications: any[];
+  clinic: string;
+  consultationFee: number;
+  createdAt: string;
+  updatedAt: string;
+  pharmacy: any;
+  pushNotifications: boolean;
+  user: string;
+}
+
+interface Patient {
+  _id: string;
+  name: string;
+  age: number;
+  gender: string;
+  email: string;
+  medicalHistory: any[];
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+}
+
 interface Appointment {
   _id: string;
-  doctorId: string;
+  doctorId: Doctor;
   userId: string;
+  patientId: Patient;
   patientName: string;
   status: string;
   createdAt: string;
   updatedAt: string;
-  patient: {
-    name: string;
-    age: number;
-    gender: string;
-    // Add other patient details as needed
-  };
+  time: string;
+  timeSlotId: string;
+  consultationFee?: number;
+  emailNotifications?: boolean;
+  pushNotifications?: boolean;
+  // Add other appointment details as needed
 }
 
 interface Notification {
@@ -21,6 +53,7 @@ interface Notification {
   patientName: string; // Name of the patient for the notification
   date: string; // Appointment date
   time: string; // Appointment time
+  status: string; // Status of the appointment
 }
 
 interface AppointmentsState {
