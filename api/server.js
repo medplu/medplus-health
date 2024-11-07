@@ -126,8 +126,8 @@ app.use('/api', prescriptionRoutes); // Use the prescription routes
 const appointmentsRoute = require('./routes/appointments');
 app.use('/api/appointments', appointmentsRoute);
 
-// Serve the prescriptions directory as static files
-app.use('/prescriptions', express.static(path.join(__dirname, '../prescriptions')));
+
+app.use('/prescriptions', prescriptionRoutes);
 
 // Define the route to fill the template with prescription data
 app.post('/api/fill-template', (req, res) => {
