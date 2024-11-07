@@ -1,108 +1,181 @@
 import React from 'react';
-import { View, Text, Button, StyleSheet, PermissionsAndroid, Platform } from 'react-native';
-import RNHTMLtoPDF from 'react-native-html-to-pdf';
+import { View, Button, Alert, ScrollView, StyleSheet, Text, Image } from 'react-native';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+
+// Ensure you have a logo image in your assets folder
+import Logo from '../assets/images/medical-symbol.png'; // Adjust the path as necessary
 
 const PrescriptionTemplate = ({ prescription }) => {
-    const requestStoragePermission = async () => {
-        if (Platform.OS === 'android') {
-            try {
-                const granted = await PermissionsAndroid.request(
-                    PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-                    {
-                        title: 'Storage Permission Required',
-                        message: 'This app needs access to your storage to download the PDF',
-                    }
-                );
-                return granted === PermissionsAndroid.RESULTS.GRANTED;
-            } catch (err) {
-                console.warn(err);
-                return false;
-            }
-        } else {
-            return true;
-        }
-    };
+    const generatePDF = async () => {
+        try {
+            // Prepare HTML content for PDF with improved styling and logo
+            const htmlContent = `
+                <html>
+                    <head>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+                            body { font-family: 'Roboto', sans-serif; padding: 20px; }
+                            .header { display: flex; align-items: center; }
+                            .logo { width: 100px; height: 100px; }
+                            h1 { text-align: center; color: #333; }
+                            .doctor-info, .patient-info { margin-bottom: 20px; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f4f4f4; }
+                            .section-title { font-size: 18px; margin-top: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <img src="https://your-domain.com/path-to-logo.png" class="logo" alt="Logo" />
+                            <h1>Prescription</h1>
+                        </div>
 
-    const downloadPDF = async () => {
-        const hasPermission = await requestStoragePermission();
-        if (!hasPermission) {
-            alert('Storage permission denied');
-            return;
-        }
+                        <div class="doctor-info">
+                            <strong>Doctor:</strong> ${prescription?.doctorId?.firstName || 'N/A'} ${prescription?.doctorId?.lastName || 'N/A'}<br/>
+                            <strong>Specialization:</strong> ${prescription?.doctorId?.profession || 'N/A'}<br/>
+                            <strong>Date:</strong> ${new Date(prescription?.dateIssued || Date.now()).toLocaleDateString()}
+                        </div>
 
-        const htmlContent = `
-            <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h1 { text-align: center; }
-                        table { width: 100%; border-collapse: collapse; }
-                        th, td { border: 1px solid #ddd; padding: 8px; }
-                        th { background-color: #f2f2f2; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Prescription</h1>
-                    <p>Issued by: Dr. ${prescription.doctor.name}</p>
-                    <p>Specialization: ${prescription.doctor.specialization}</p>
-                    <p>Date Issued: ${new Date(prescription.dateIssued).toLocaleDateString()}</p>
+                        <div class="patient-info">
+                            <strong>Patient:</strong> ${prescription?.patientId?.name || 'N/A'}<br/>
+                            <strong>Email:</strong> ${prescription?.patientId?.email || 'N/A'}<br/>
+                        </div>
 
-                    <h2>Patient Details</h2>
-                    <p>Name: ${prescription.patient.name}</p>
-                    <p>Age: ${prescription.patient.age}</p>
-                    <p>Gender: ${prescription.patient.gender}</p>
-
-                    <h2>Medications</h2>
-                    <table>
-                        <thead>
+                        <div class="section-title">Medications</div>
+                        <table>
                             <tr>
                                 <th>Drug Name</th>
                                 <th>Strength</th>
                                 <th>Frequency</th>
                                 <th>Duration</th>
                             </tr>
-                        </thead>
-                        <tbody>
-                            ${prescription.medication.map(med => `
-                                <tr key=${med._id}>
+                            ${prescription?.medication?.map(med => `
+                                <tr>
                                     <td>${med.drugName}</td>
                                     <td>${med.strength}</td>
                                     <td>${med.frequency}</td>
                                     <td>${med.duration}</td>
                                 </tr>
                             `).join('')}
-                        </tbody>
-                    </table>
-                </body>
-            </html>
-        `;
+                        </table>
+                    </body>
+                </html>
+            `;
 
-        const options = {
-            html: htmlContent,
-            fileName: `prescription_${prescription.patient.name}`,
-            directory: 'Documents',
-        };
+            // Generate the PDF file
+            const { uri } = await Print.printToFileAsync({
+                html: htmlContent,
+                base64: false,
+            });
 
-        try {
-            const file = await RNHTMLtoPDF.convert(options);
-            alert(`PDF saved to: ${file.filePath}`);
+            // Share the PDF
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(uri);
+            } else {
+                Alert.alert('Sharing is not available on this device');
+            }
         } catch (error) {
             console.error('Error generating PDF:', error);
+            Alert.alert('Error', 'Failed to generate the PDF.');
         }
     };
 
     return (
-        <View style={styles.container}>
-            <Button title="Download Prescription as PDF" onPress={downloadPDF} />
-        </View>
+        <ScrollView contentContainerStyle={styles.container}>
+            <View style={styles.header}>
+                <Image source={Logo} style={styles.logo} />
+                <Text style={styles.title}>Prescription</Text>
+            </View>
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Doctor Information</Text>
+                <Text style={styles.infoText}>Doctor: {prescription?.doctorId?.firstName || 'N/A'} {prescription?.doctorId?.lastName || 'N/A'}</Text>
+                <Text style={styles.infoText}>Specialization: {prescription?.doctorId?.profession || 'N/A'}</Text>
+                <Text style={styles.infoText}>Date: {new Date(prescription?.dateIssued || Date.now()).toLocaleDateString()}</Text>
+            </View>
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Patient Information</Text>
+                <Text style={styles.infoText}>Patient: {prescription?.patientId?.name || 'N/A'}</Text>
+                <Text style={styles.infoText}>Email: {prescription?.patientId?.email || 'N/A'}</Text>
+            </View>
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Medications</Text>
+                <View style={styles.tableHeader}>
+                    <Text style={[styles.tableCell, styles.tableHeaderCell]}>Drug Name</Text>
+                    <Text style={[styles.tableCell, styles.tableHeaderCell]}>Strength</Text>
+                    <Text style={[styles.tableCell, styles.tableHeaderCell]}>Frequency</Text>
+                    <Text style={[styles.tableCell, styles.tableHeaderCell]}>Duration</Text>
+                </View>
+                {prescription?.medication?.map((med, index) => (
+                    <View key={index} style={styles.tableRow}>
+                        <Text style={styles.tableCell}>{med.drugName}</Text>
+                        <Text style={styles.tableCell}>{med.strength}</Text>
+                        <Text style={styles.tableCell}>{med.frequency}</Text>
+                        <Text style={styles.tableCell}>{med.duration}</Text>
+                    </View>
+                ))}
+            </View>
+            <Button title="Download Prescription as PDF" onPress={generatePDF} />
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         padding: 20,
-        maxWidth: 600,
-        margin: 'auto',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    logo: {
+        width: 80,
+        height: 80,
+        resizeMode: 'contain',
+        marginRight: 20,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    section: {
+        marginBottom: 20,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        marginBottom: 10,
+        color: '#555',
+    },
+    infoText: {
+        fontSize: 16,
+        marginBottom: 5,
+        color: '#666',
+    },
+    tableHeader: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+        paddingBottom: 5,
+        marginBottom: 5,
+    },
+    tableRow: {
+        flexDirection: 'row',
+        paddingVertical: 5,
+        borderBottomWidth: 0.5,
+        borderBottomColor: '#eee',
+    },
+    tableCell: {
+        flex: 1,
+        fontSize: 16,
+        color: '#444',
+    },
+    tableHeaderCell: {
+        fontWeight: '700',
+        color: '#333',
     },
 });
 

@@ -21,6 +21,7 @@ const PatientDetails: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
   const [modalVisible, setModalVisible] = useState(false);
+  const [prescriptionModalVisible, setPrescriptionModalVisible] = useState(false); // State for prescription modal visibility
   const [newEntry, setNewEntry] = useState({
     drugName: '',
     strength: '',
@@ -261,7 +262,17 @@ const PatientDetails: React.FC = () => {
       </Snackbar>
 
       {prescription && (
-        <PrescriptionTemplate prescription={prescription} />
+        <>
+          <Button mode="contained" onPress={() => setPrescriptionModalVisible(true)} style={styles.viewButton}>View Prescription</Button>
+          <Modal
+            visible={prescriptionModalVisible}
+            onDismiss={() => setPrescriptionModalVisible(false)}
+            contentContainerStyle={styles.modalContainer}
+          >
+            <PrescriptionTemplate prescription={prescription} />
+            <Button mode="outlined" onPress={() => setPrescriptionModalVisible(false)} style={styles.cancelButton}>Close</Button>
+          </Modal>
+        </>
       )}
     </View>
   );
