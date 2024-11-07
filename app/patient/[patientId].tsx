@@ -20,10 +20,6 @@ const PatientDetails: React.FC = () => {
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
   const [modalVisible, setModalVisible] = useState(false);
   const [newEntry, setNewEntry] = useState({
-    medication: '',
-    strength: '',
-    dosageForm: '',
-    quantity: '',
     dosageAmount: '',
     route: '',
     frequency: '',
@@ -109,7 +105,8 @@ const PatientDetails: React.FC = () => {
       }
     }
 
-    setNewEntry({ medication: '', strength: '', dosageForm: '', quantity: '', dosageAmount: '', route: '', frequency: '', duration: '', instructions: '', refills: '', warnings: '' });
+    setNewEntry({ dosageAmount: '', route: '', frequency: '', duration: '', instructions: '', refills: '', warnings: '' });
+    setMedications([{ drugName: '', strength: '', dosageForm: '', quantity: '' }]);
     setModalVisible(false);
   };
 
@@ -213,7 +210,7 @@ const PatientDetails: React.FC = () => {
                   <TextInput
                     mode="outlined"
                     label="Medication"
-                    placeholder="Medication"
+                    placeholder="e.g., Panadol"
                     value={medication.drugName}
                     onChangeText={text => handleMedicationChange(index, 'drugName', text)}
                     style={styles.modalInput}
@@ -221,7 +218,7 @@ const PatientDetails: React.FC = () => {
                   <TextInput
                     mode="outlined"
                     label="Strength"
-                    placeholder="Strength"
+                    placeholder="e.g., 500 mg"
                     value={medication.strength}
                     onChangeText={text => handleMedicationChange(index, 'strength', text)}
                     style={styles.modalInput}
@@ -231,7 +228,7 @@ const PatientDetails: React.FC = () => {
                   <TextInput
                     mode="outlined"
                     label="Dosage Form"
-                    placeholder="Dosage Form"
+                    placeholder="e.g., Tablet"
                     value={medication.dosageForm}
                     onChangeText={text => handleMedicationChange(index, 'dosageForm', text)}
                     style={styles.modalInput}
@@ -239,7 +236,7 @@ const PatientDetails: React.FC = () => {
                   <TextInput
                     mode="outlined"
                     label="Quantity"
-                    placeholder="Quantity"
+                    placeholder="e.g., 30"
                     value={medication.quantity}
                     onChangeText={text => handleMedicationChange(index, 'quantity', text)}
                     style={styles.modalInput}
@@ -251,8 +248,26 @@ const PatientDetails: React.FC = () => {
             <View style={styles.row}>
               <TextInput
                 mode="outlined"
+                label="Dosage Amount"
+                placeholder="e.g., 1 tablet"
+                value={newEntry.dosageAmount}
+                onChangeText={text => setNewEntry({ ...newEntry, dosageAmount: text })}
+                style={styles.modalInput}
+              />
+              <TextInput
+                mode="outlined"
+                label="Route"
+                placeholder="e.g., Orally"
+                value={newEntry.route}
+                onChangeText={text => setNewEntry({ ...newEntry, route: text })}
+                style={styles.modalInput}
+              />
+            </View>
+            <View style={styles.row}>
+              <TextInput
+                mode="outlined"
                 label="Frequency"
-                placeholder="Frequency"
+                placeholder="e.g., Every 8 hours"
                 value={newEntry.frequency}
                 onChangeText={text => setNewEntry({ ...newEntry, frequency: text })}
                 style={styles.modalInput}
@@ -260,12 +275,36 @@ const PatientDetails: React.FC = () => {
               <TextInput
                 mode="outlined"
                 label="Duration"
-                placeholder="Duration"
+                placeholder="e.g., For 7 days"
                 value={newEntry.duration}
                 onChangeText={text => setNewEntry({ ...newEntry, duration: text })}
                 style={styles.modalInput}
               />
             </View>
+            <TextInput
+              mode="outlined"
+              label="Additional Instructions"
+              placeholder="e.g., Take with food"
+              value={newEntry.instructions}
+              onChangeText={text => setNewEntry({ ...newEntry, instructions: text })}
+              style={styles.modalInput}
+            />
+            <TextInput
+              mode="outlined"
+              label="Refills"
+              placeholder="e.g., 2"
+              value={newEntry.refills}
+              onChangeText={text => setNewEntry({ ...newEntry, refills: text })}
+              style={styles.modalInput}
+            />
+            <TextInput
+              mode="outlined"
+              label="Warnings"
+              placeholder="e.g., May cause drowsiness"
+              value={newEntry.warnings}
+              onChangeText={text => setNewEntry({ ...newEntry, warnings: text })}
+              style={styles.modalInput}
+            />
           </View>
         )}
         <Button mode="contained" onPress={handleAddEntry} style={styles.saveButton}>Save Entry</Button>
