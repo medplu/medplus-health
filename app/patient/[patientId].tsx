@@ -6,7 +6,6 @@ import { selectUser } from '../store/userSlice';
 import { fetchPatientById, selectPatientById, selectPatientLoading, selectPatientError } from '../store/patientSlice';
 import { AppDispatch } from '../store/configureStore';
 import { Text, Button, TextInput, Modal, Card, Title, Paragraph, ActivityIndicator, Snackbar } from 'react-native-paper';
-import { WebView } from 'react-native-webview';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Colors from '@/components/Shared/Colors';
 
@@ -21,7 +20,6 @@ const PatientDetails: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
   const [modalVisible, setModalVisible] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [newEntry, setNewEntry] = useState({
     drugName: '',
     strength: '',
@@ -86,10 +84,10 @@ const PatientDetails: React.FC = () => {
           throw new Error('Failed to create prescription');
         }
 
-        const { prescription } = await response.json();
-        const pdfResponse = await fetch(`https://medplus-health.onrender.com/api/prescriptions/${prescription._id}/pdf`);
-        const { pdfUrl } = await pdfResponse.json();
-        setPdfUrl(pdfUrl); // Set the PDF URL to state
+        // const { prescription } = await response.json();
+        // const pdfResponse = await fetch(`https://medplus-health.onrender.com/api/prescriptions/${prescription._id}/pdf`);
+        // const { pdfUrl } = await pdfResponse.json();
+        // setPdfUrl(pdfUrl); // Set the PDF URL to state
         setSnackbarVisible(true);
       } catch (error) {
         console.error('Error creating prescription:', error);
@@ -116,15 +114,6 @@ const PatientDetails: React.FC = () => {
         <Text style={styles.errorText}>{error}</Text>
         <Button mode="contained" onPress={() => dispatch(fetchPatientById(patientId as string))}>Retry</Button>
       </View>
-    );
-  }
-
-  if (pdfUrl) {
-    return (
-      <WebView
-        source={{ uri: pdfUrl }}
-        style={{ flex: 1 }}
-      />
     );
   }
 
