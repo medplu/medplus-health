@@ -1,5 +1,7 @@
 const Joi = require('joi');
 const Prescription = require('../models/prescription.model');
+const Patient = require('../models/patient.model');
+const Professional = require('../models/professional.model'); // Use Professional model instead of User model
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
@@ -28,14 +30,14 @@ const generatePrescriptionPDF = (prescription) => {
   const doc = new PDFDocument();
   doc.fontSize(16).text('Prescription', { align: 'center' });
   doc.moveDown();
-  doc.fontSize(12).text(`Patient Name: ${prescription.patientId.name || 'N/A'}`);
-  doc.text(`Date of Birth: ${prescription.patientId.dob ? new Date(prescription.patientId.dob).toLocaleDateString() : 'N/A'}`);
-  doc.text(`Weight: ${prescription.patientId.weight || 'N/A'} kg`);
+  doc.fontSize(12).text(`Patient Name: ${prescription.patientId?.name || 'N/A'}`);
+  doc.text(`Date of Birth: ${prescription.patientId?.dob ? new Date(prescription.patientId.dob).toLocaleDateString() : 'N/A'}`);
+  doc.text(`Weight: ${prescription.patientId?.weight || 'N/A'} kg`);
   doc.moveDown();
-  doc.text(`Prescriber: ${prescription.doctorId.name || 'N/A'}`);
-  doc.text(`License Number: ${prescription.doctorId.licenseNumber || 'N/A'}`);
-  doc.text(`Contact Phone: ${prescription.doctorId.contact.phone || 'N/A'}`);
-  doc.text(`Contact Address: ${prescription.doctorId.contact.address || 'N/A'}`);
+  doc.text(`Prescriber: ${prescription.doctorId?.name || 'N/A'}`);
+  doc.text(`License Number: ${prescription.doctorId?.licenseNumber || 'N/A'}`);
+  doc.text(`Contact Phone: ${prescription.doctorId?.contact?.phone || 'N/A'}`);
+  doc.text(`Contact Address: ${prescription.doctorId?.contact?.address || 'N/A'}`);
   doc.moveDown();
   doc.text('Medications:');
   prescription.medication.forEach((med, index) => {
@@ -165,10 +167,18 @@ exports.deletePrescriptionById = async (req, res) => {
 exports.getPrescriptionPDF = async (req, res) => {
   try {
     const { id } = req.params;
-    const prescription = await Prescription.findById(id).populate('patientId').populate('doctorId');
+    let prescription = await Prescription.findById(id).populate('patientId').populate('doctorId');
 
     if (!prescription) {
       return res.status(404).json({ error: 'Prescription not found' });
+    }
+
+    // Ensure patientId and doctorId are populated
+    if (!prescription.patientId || !prescription.patientId.name) {
+      prescription.patientId = await Patient.findById(prescription.patientId) || null;
+    }
+    if (!prescription.doctorId || !prescription.doctorId.name) {
+      prescription.doctorId = await Professional.findById(prescription.doctorId) || null;
     }
 
     const pdfDoc = generatePrescriptionPDF(prescription);
