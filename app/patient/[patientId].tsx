@@ -8,6 +8,7 @@ import { AppDispatch } from '../store/configureStore';
 import { Text, Button, TextInput, Modal, Card, Title, Paragraph, ActivityIndicator, Snackbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Colors from '@/components/Shared/Colors';
+import PrescriptionTemplate from '@/components/PrescriptionTemplate';
 
 interface RootState {
   patient: any; 
@@ -33,6 +34,7 @@ const PatientDetails: React.FC = () => {
     duration: '',
   }]);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [prescription, setPrescription] = useState(null); // State to hold the created prescription
 
   const patient = useSelector((state: RootState) => selectPatientById(state, patientId as string));
   const loading = useSelector(selectPatientLoading);
@@ -84,10 +86,8 @@ const PatientDetails: React.FC = () => {
           throw new Error('Failed to create prescription');
         }
 
-        // const { prescription } = await response.json();
-        // const pdfResponse = await fetch(`https://medplus-health.onrender.com/api/prescriptions/${prescription._id}/pdf`);
-        // const { pdfUrl } = await pdfResponse.json();
-        // setPdfUrl(pdfUrl); // Set the PDF URL to state
+        const { prescription } = await response.json();
+        setPrescription(prescription); // Set the created prescription to state
         setSnackbarVisible(true);
       } catch (error) {
         console.error('Error creating prescription:', error);
@@ -259,6 +259,10 @@ const PatientDetails: React.FC = () => {
       >
         Prescription created successfully!
       </Snackbar>
+
+      {prescription && (
+        <PrescriptionTemplate prescription={prescription} />
+      )}
     </View>
   );
 };
