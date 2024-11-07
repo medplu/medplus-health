@@ -11,10 +11,10 @@ const prescriptionSchema = new mongoose.Schema({
   dateIssued: { type: Date, default: Date.now, required: true },
   medication: [
     {
-      drugName: { type: String, required: true },
-      strength: { type: String, required: true }, // e.g., "500 mg"
-      dosageForm: { type: String, required: true }, // e.g., "tablet", "capsule"
-      quantity: { type: Number, required: true }, // total quantity to dispense
+      drugName: { type: String, required: false },
+      strength: { type: String, required: false }, // e.g., "500 mg"
+      dosageForm: { type: String, required: false }, // e.g., "tablet", "capsule"
+      quantity: { type: Number, required: false }, // total quantity to dispense
     },
   ],
   instructions: {
