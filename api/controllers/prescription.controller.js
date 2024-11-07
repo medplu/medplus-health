@@ -148,6 +148,7 @@ exports.deletePrescriptionById = async (req, res) => {
 exports.getPrescriptionPDF = async (req, res) => {
   try {
     const { patientId } = req.params; 
+    console.log('Patient ID:', patientId); // Log the patientId here
     let prescription = await Prescription.findOne({ patientId })
       .populate('patientId')
       .populate('doctorId');
@@ -163,7 +164,6 @@ exports.getPrescriptionPDF = async (req, res) => {
       prescription.doctorId = await Professional.findById(prescription.doctorId) || null;
     }
 
-    
     res.status(200).json({ prescription });
   } catch (error) {
     console.error('Error retrieving prescription data:', error);
