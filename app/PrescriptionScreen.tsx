@@ -26,7 +26,15 @@ const PrescriptionScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* ...existing code... */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="arrow-back" size={24} color="black" />
+      </TouchableOpacity>
+      <PrescriptionTemplate prescription={prescription} />
+      {/* <Doctors 
+        searchQuery="" 
+        selectedCategory="" 
+        onViewAll={() => {}} 
+      /> */}
     </View>
   );
 };
