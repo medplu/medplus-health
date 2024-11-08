@@ -11,4 +11,7 @@ router.post('/prescriptions', prescriptionController.createPrescription);
 // Route to fetch the prescription data
 router.get('/prescriptions/:id', prescriptionController.getPrescriptionPDF);
 
+// Add route to get prescriptions by appointmentId
+router.get('/appointment/:appointmentId', prescriptionController.getPrescriptionsByAppointmentId);
+
 module.exports = router;

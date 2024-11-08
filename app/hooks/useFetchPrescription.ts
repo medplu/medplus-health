@@ -4,17 +4,17 @@ import { useDispatch } from 'react-redux';
 import { setPrescription, clearPrescription } from '@/redux/prescriptionSlice';
 import { AppDispatch } from '../store/configureStore';
 
-const useFetchPrescription = (patientId: string | undefined) => {
+const useFetchPrescription = (appointmentId: string | undefined) => {
   const dispatch = useDispatch<AppDispatch>();
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (patientId) {
+    if (appointmentId) {
       const fetchPrescription = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`https://medplus-health.onrender.com/api/prescriptions/${encodeURIComponent(patientId)}`);
+          const response = await axios.get(`https://medplus-health.onrender.com/api/prescriptions/appointment/${encodeURIComponent(appointmentId)}`);
           console.log('Fetched prescription:', response.data.prescription);
           dispatch(setPrescription(response.data.prescription));
         } catch (err: any) {
@@ -30,7 +30,7 @@ const useFetchPrescription = (patientId: string | undefined) => {
     } else {
       dispatch(clearPrescription());
     }
-  }, [patientId, dispatch]);
+  }, [appointmentId, dispatch]);
 
   return { loading, error };
 };

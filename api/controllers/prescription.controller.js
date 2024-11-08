@@ -117,6 +117,27 @@ exports.getPrescriptionsByPatientId = async (req, res) => {
   }
 };
 
+// Add a new controller function to get prescriptions by appointmentId
+exports.getPrescriptionsByAppointmentId = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+
+    // Find prescriptions associated with the appointmentId and populate related fields
+    const prescriptions = await Prescription.find({ appointmentId })
+      .populate('patientId')
+      .populate('doctorId')
+      .populate('appointmentId');
+
+    if (!prescriptions || prescriptions.length === 0) {
+      return res.status(404).json({ message: 'No prescriptions found for this appointment' });
+    }
+
+    res.status(200).json({ prescriptions });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to get prescriptions', error });
+  }
+};
+
 exports.updatePrescriptionById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -173,11 +194,13 @@ exports.deletePrescriptionById = async (req, res) => {
   }
 };
 
+// Modify the getPrescriptionPDF function to ensure appointmentId matches
 exports.getPrescriptionPDF = async (req, res) => {
   try {
-    const { id, appointmentId } = req.query; // Accept appointmentId from query
+    const { id } = req.params; // Prescription ID from route parameters
+    const { appointmentId } = req.query; // Get appointmentId from query
 
-    // Find the prescription by ID and populate the patient, doctor, and appointment fields
+    // Find the prescription by ID and populate related fields
     const prescription = await Prescription.findById(id)
       .populate('patientId')
       .populate('doctorId')
