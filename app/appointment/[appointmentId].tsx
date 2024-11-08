@@ -1,39 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, FlatList } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectAppointments } from '../store/appointmentsSlice';
-
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router'; // Updated import
+import { useSelector } from 'react-redux';
 import { Card, IconButton, Button, Modal } from 'react-native-paper';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
-import PrescriptionTemplate from '@/components/PrescriptionTemplate'; // Ensure correct import path
-import { fetchPrescriptionsByPatientId, selectPrescriptions } from '../store/prescriptionSlice';
-import { AppDispatch } from '../store/configureStore'; // Import AppDispatch type
+import PrescriptionTemplate from '@/components/PrescriptionTemplate';
+import useFetchPrescription from '../hooks/useFetchPrescription';
 
 const AppointmentDetails = () => {
-  const { appointmentId } = useLocalSearchParams(); // Extract appointmentId from route params
-  const dispatch = useDispatch<AppDispatch>(); // Use AppDispatch type
-  const appointment = useSelector((state) => 
+  const { appointmentId } = useLocalSearchParams();
+  const router = useRouter(); // Use Expo Router's router
+
+  const appointment = useSelector((state: RootState) => 
     state.appointments.appointments.find(a => a._id === appointmentId)
   );
-  const prescriptions = useSelector(selectPrescriptions) || []; // Ensure prescriptions is always an array
 
-  // Define patientId on a global scope
   const patientId = appointment?.patientId?._id;
+  
+  const { loading, error } = useFetchPrescription(patientId);
+  
+  const prescription = useSelector((state: RootState) => state.prescription);
+  
+  const [activeSection, setActiveSection] = useState<'notes' | 'labResults' | null>(null);
+  const [prescriptionModalVisible, setPrescriptionModalVisible] = useState(false);
 
-  // Log the appointment data
-  console.log('Appointment Details:', appointment);
-
-  const [activeSection, setActiveSection] = useState<'prescription' | 'notes' | 'labResults' | null>(null);
-  const [selectedPrescription, setSelectedPrescription] = useState(null); // State for selected prescription
-
-  useEffect(() => {
-    console.log('Appointment before fetching prescriptions:', appointment); // Log the appointment data before fetching prescriptions
-    if (patientId) {
-      console.log('Fetching prescriptions for patientId:', patientId); // Log the patientId before fetching prescriptions
-      dispatch(fetchPrescriptionsByPatientId(patientId)); // Fetch prescriptions for the patient using extracted patientId
+  const handlePrescriptionIconPress = () => {
+    if (prescription) {
+      router.push('/PrescriptionScreen'); // Remove params
+    } else {
+      Alert.alert('No prescription available');
     }
-  }, [dispatch, patientId]); // Run this effect when dispatch or patientId changes
+  };
 
   if (!appointment) {
     return (
@@ -46,10 +43,8 @@ const AppointmentDetails = () => {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Appointment Details</Text>
-
-      {/* Profile Section */}
       <View style={styles.profileSection}>
-        {appointment.doctorId && appointment.doctorId.profileImage && (
+        {appointment.doctorId?.profileImage && (
           <Image source={{ uri: appointment.doctorId.profileImage }} style={styles.profileImage} />
         )}
         <View style={styles.doctorInfo}>
@@ -61,7 +56,6 @@ const AppointmentDetails = () => {
         </View>
       </View>
 
-      {/* Appointment Details Card */}
       <Card style={styles.appointmentCard}>
         <Card.Title title="Appointment Details" left={() => <MaterialIcons name="event" size={24} color="black" />} />
         <Card.Content>
@@ -80,12 +74,11 @@ const AppointmentDetails = () => {
         </Card.Content>
       </Card>
 
-      {/* Actions Section */}
       <View style={styles.actionsRow}>
         <IconButton
           icon={() => <FontAwesome5 name="prescription-bottle-alt" size={24} color="#4CAF50" />}
           size={30}
-          onPress={() => setActiveSection(activeSection === 'prescription' ? null : 'prescription')}
+          onPress={handlePrescriptionIconPress}
         />
         <IconButton
           icon={() => <FontAwesome5 name="flask" size={24} color="#2196F3" />}
@@ -99,65 +92,35 @@ const AppointmentDetails = () => {
         />
       </View>
 
-      {/* Prescription Section */}
-      {activeSection === 'prescription' && (
-        <View style={[styles.section, styles.prescriptionSection]}>
-          <Text style={styles.sectionTitle}>Prescriptions</Text>
-          {prescriptions.length > 0 ? (
-            <FlatList
-              data={prescriptions}
-              keyExtractor={(item) => item._id}
-              renderItem={({ item }) => (
-                <Card style={styles.prescriptionCard}>
-                  <Card.Content>
-                    <Text style={styles.prescriptionDate}>Date: {new Date(item.dateIssued).toLocaleDateString()}</Text>
-                    <Text style={styles.prescriptionDoctor}>Prescribed by: Dr. {item.doctorId.firstName} {item.doctorId.lastName}</Text>
-                  </Card.Content>
-                  <Card.Actions>
-                    <Button onPress={() => setSelectedPrescription(item)}>View Prescription</Button>
-                  </Card.Actions>
-                </Card>
-              )}
-            />
-          ) : (
-            <Text>No prescriptions available.</Text>
-          )}
-        </View>
-      )}
-
-      {/* Notes Section */}
       {activeSection === 'notes' && (
         <View style={[styles.section, styles.notesSection]}>
           <Text style={styles.sectionTitle}>Notes</Text>
-          {appointment.notes ? (
-            <Text>{appointment.notes}</Text>
-          ) : (
-            <Text>No notes available.</Text>
-          )}
+          <Text>{appointment.notes || 'No notes available.'}</Text>
         </View>
       )}
 
-      {/* Lab Results Section */}
       {activeSection === 'labResults' && (
         <View style={[styles.section, styles.labSection]}>
           <Text style={styles.sectionTitle}>Lab Results</Text>
-          {appointment.labResults ? (
-            <Text>{appointment.labResults}</Text>
-          ) : (
-            <Text>No lab results available.</Text>
-          )}
+          <Text>{appointment.labResults || 'No lab results available.'}</Text>
         </View>
       )}
 
-      {/* Prescription Modal */}
       <Modal
-        visible={!!selectedPrescription}
-        onDismiss={() => setSelectedPrescription(null)}
+        visible={prescriptionModalVisible}
+        onDismiss={() => setPrescriptionModalVisible(false)}
         contentContainerStyle={styles.modalContainer}
       >
-        {selectedPrescription && <PrescriptionTemplate prescription={selectedPrescription} />}
-        <Button onPress={() => setSelectedPrescription(null)} style={styles.closeButton}>Close</Button>
+        {loading ? (
+          <Text>Loading prescription...</Text>
+        ) : prescription ? (
+          <PrescriptionTemplate prescription={prescription} />
+        ) : (
+          <Text>No prescription available</Text>
+        )}
+        <Button onPress={() => setPrescriptionModalVisible(false)} style={styles.closeButton}>Close</Button>
       </Modal>
+
     </ScrollView>
   );
 };
@@ -172,16 +135,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
-  },
-  section: {
-    marginBottom: 20,
-    padding: 10,
-    borderRadius: 8,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   profileSection: {
     flexDirection: 'row',
@@ -230,23 +183,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  prescriptionSection: {
-    backgroundColor: '#fff3e0',
-  },
-  prescriptionCard: {
-    marginVertical: 8,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-  },
-  prescriptionDate: {
-    fontSize: 14,
-    color: '#555',
-  },
-  prescriptionDoctor: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 4,
-  },
   notesSection: {
     backgroundColor: '#e3f2fd',
   },
@@ -267,4 +203,3 @@ const styles = StyleSheet.create({
 });
 
 export default AppointmentDetails;
-

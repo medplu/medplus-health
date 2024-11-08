@@ -53,7 +53,6 @@ const Layout = () => {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        // Check user sign-in status from SecureStore or other methods
         // Example: const userInfo = await SecureStore.getItemAsync('user');
         // setUser(userInfo);
       } catch (error) {
@@ -76,11 +75,7 @@ const Layout = () => {
 
   if (!user) {
     return (
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <UnauthenticatedLayout />
-        </PersistGate>
-      </Provider>
+      <UnauthenticatedLayout />
     );
   }
 
@@ -103,6 +98,7 @@ const Layout = () => {
         <Stack.Screen name="pharmacist/dashboard" options={{ title: 'Pharmacist Dashboard' }} />
         <Stack.Screen name="pharmacist/tabs" options={{ headerShown: false }} />
         <Stack.Screen name="appointment/[appointmentId]" options={{ title: 'Appointment Details' }} />
+        <Stack.Screen name="PrescriptionScreen" options={{ title: 'Prescription' }} />
       </Stack>
     </SafeAreaView>
   );
