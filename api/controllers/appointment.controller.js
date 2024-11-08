@@ -137,8 +137,9 @@ exports.bookAppointment = async (req, res) => {
       { $set: { 'slots.$.isBooked': true } }
     );
 
+    // Emit event for new appointment to the specific user
     const io = req.app.get("socketio");
-    io.emit("newAppointment", {
+    io.to(userId).emit("newAppointment", {
       appointment: newAppointment,
       userId: userId,
       doctorId: doctorId

@@ -13,7 +13,6 @@ export default function Header() {
 
   // Obtain user data from Redux state
   const user = useSelector(selectUser);
-  const [newAppointmentCount, setNewAppointmentCount] = useState(0); // State to track new appointments
 
   const handleLogout = async () => {
     try {
@@ -28,20 +27,11 @@ export default function Header() {
   useEffect(() => {
     const socket = io('https://medplus-health.onrender.com');
 
-    socket.on('newAppointment', (appointment) => {
-      setNewAppointmentCount((prevCount) => prevCount + 1); // Increment new appointment count
-    });
-
     // Cleanup function to disconnect the socket
     return () => {
       socket.disconnect();
     };
   }, []);
-
-  const handleNotificationPress = () => {
-    setNewAppointmentCount(0); // Reset count when notifications are viewed
-    navigation.navigate('notifications/index'); // Navigate to the Notifications screen
-  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -53,17 +43,6 @@ export default function Header() {
           />
         </TouchableOpacity>
         <View style={styles.iconContainer}>
-          <TouchableOpacity 
-            style={styles.notificationIcon} 
-            onPress={handleNotificationPress}
-          >
-            <Ionicons name="notifications-outline" size={28} color={Colors.PRIMARY} />
-            {newAppointmentCount > 0 && ( // Show badge if there are new appointments
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{newAppointmentCount > 99 ? '99+' : newAppointmentCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
           <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
             <AntDesign name="logout" size={28} color={Colors.PRIMARY} />
           </TouchableOpacity>
@@ -95,33 +74,6 @@ const styles = StyleSheet.create({
   iconContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  notificationIcon: {
-    marginRight: 20,
-    backgroundColor: Colors.white,
-    padding: 10,
-    borderRadius: 10,
-    shadowColor: '#171717',
-    shadowOffset: { width: 2, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    position: 'relative', // Position for badge
-  },
-  badge: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    backgroundColor: 'red',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
   },
   logoutIcon: {
     marginRight: 0,
