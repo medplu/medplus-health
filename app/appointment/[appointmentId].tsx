@@ -17,7 +17,7 @@ const AppointmentDetails = () => {
 
   const patientId = appointment?.patientId?._id;
   
-  const { loading, error } = useFetchPrescription(patientId);
+  const { loading, error } = useFetchPrescription(patientId, appointmentId); // Pass appointmentId
   
   const prescription = useSelector((state: RootState) => state.prescription);
   
