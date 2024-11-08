@@ -2,6 +2,7 @@ const Joi = require('joi');
 const Prescription = require('../models/prescription.model');
 const Patient = require('../models/patient.model');
 const Professional = require('../models/professional.model'); // Use Professional model instead of User model
+const Appointment = require('../models/appointment.model'); // Import Appointment model
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
@@ -9,6 +10,7 @@ const path = require('path');
 const prescriptionSchema = Joi.object({
   patientId: Joi.string().required(),
   doctorId: Joi.string().required(),
+  appointmentId: Joi.string().required(), // Added appointmentId to validation
   medication: Joi.array().items(Joi.object({
     drugName: Joi.string().required(),
     strength: Joi.string().required(),
@@ -39,7 +41,7 @@ const generatePrescriptionPDF = (prescription) => {
 
 exports.createPrescription = async (req, res) => {
   try {
-    const { patientId, doctorId, medication } = req.body;
+    const { patientId, doctorId, appointmentId, medication } = req.body;
 
     // Validate the request body
     const { error } = prescriptionSchema.validate(req.body);
@@ -47,20 +49,32 @@ exports.createPrescription = async (req, res) => {
       return res.status(400).json({ message: error.details[0].message });
     }
 
+    // Verify that the appointment exists and is associated with the patient
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    if (appointment.patientId.toString() !== patientId) {
+      return res.status(400).json({ message: 'Appointment does not belong to the specified patient' });
+    }
+
     // Create a new prescription document
     const newPrescription = new Prescription({
       patientId,
       doctorId,
+      appointmentId, // Include appointmentId
       medication,
     });
 
     // Save the prescription to the database
     const savedPrescription = await newPrescription.save();
 
-    // Populate the patient and doctor fields
+    // Populate the patient, doctor, and appointment fields
     const populatedPrescription = await Prescription.findById(savedPrescription._id)
       .populate('patientId')
-      .populate('doctorId');
+      .populate('doctorId')
+      .populate('appointmentId'); // Populate appointmentId
 
     res.status(201).json({ prescription: populatedPrescription });
   } catch (error) {
@@ -72,10 +86,11 @@ exports.getPrescriptionById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Find the prescription by ID and populate the patient and doctor fields
+    // Find the prescription by ID and populate the patient, doctor, and appointment fields
     const prescription = await Prescription.findById(id)
       .populate('patientId')
-      .populate('doctorId');
+      .populate('doctorId')
+      .populate('appointmentId'); // Populate appointmentId
 
     if (!prescription) {
       return res.status(404).json({ message: 'Prescription not found' });
@@ -91,8 +106,10 @@ exports.getPrescriptionsByPatientId = async (req, res) => {
   try {
     const { patientId } = req.params;
 
-    // Find all prescriptions for the patient
-    const prescriptions = await Prescription.find({ patientId }).populate('doctorId');
+    // Find all prescriptions for the patient and populate the doctor and appointment fields
+    const prescriptions = await Prescription.find({ patientId })
+      .populate('doctorId')
+      .populate('appointmentId');
 
     res.status(200).json({ prescriptions });
   } catch (error) {
@@ -103,7 +120,7 @@ exports.getPrescriptionsByPatientId = async (req, res) => {
 exports.updatePrescriptionById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { medication } = req.body;
+    const { medication, appointmentId } = req.body; // Accept appointmentId if updating
 
     // Validate the request body
     const { error } = prescriptionSchema.validate(req.body);
@@ -111,12 +128,23 @@ exports.updatePrescriptionById = async (req, res) => {
       return res.status(400).json({ message: error.details[0].message });
     }
 
+    // Optionally, verify the appointment existence
+    if (appointmentId) {
+      const appointment = await Appointment.findById(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ message: 'Appointment not found' });
+      }
+    }
+
     // Find the prescription by ID and update it
     const updatedPrescription = await Prescription.findByIdAndUpdate(
       id,
-      { medication },
+      { medication, appointmentId }, // Update fields
       { new: true }
-    ).populate('patientId').populate('doctorId');
+    )
+      .populate('patientId')
+      .populate('doctorId')
+      .populate('appointmentId'); // Populate appointmentId
 
     if (!updatedPrescription) {
       return res.status(404).json({ message: 'Prescription not found' });
@@ -150,17 +178,24 @@ exports.getPrescriptionPDF = async (req, res) => {
     const { id } = req.params; // Use 'id' to match the route parameter
     console.log('Prescription ID:', id); // Debugging line to check if id is correct
 
-    // Find the prescription by `_id` or if you meant to find it by `patientId`, adjust the query
-    let prescription = await Prescription.findOne({ patientId: id }) // Assuming `id` is `patientId`
+    // Find the prescription by ID and populate the patient, doctor, and appointment fields
+    const prescription = await Prescription.findById(id)
       .populate('patientId')
-      .populate('doctorId');
+      .populate('doctorId')
+      .populate('appointmentId'); // Populate appointmentId
 
     if (!prescription) {
       return res.status(404).json({ error: 'Prescription not found' });
     }
 
-    // Additional checks and response
-    res.status(200).json({ prescription });
+    // Generate PDF
+    const doc = generatePrescriptionPDF(prescription);
+    let filename = `prescription_${id}.pdf`;
+    // Stream the PDF back to the client
+    res.setHeader('Content-disposition', `attachment; filename=${filename}`);
+    res.setHeader('Content-type', 'application/pdf');
+    doc.pipe(res);
+    doc.end();
   } catch (error) {
     console.error('Error retrieving prescription data:', error);
     res.status(500).json({ error: error.message });

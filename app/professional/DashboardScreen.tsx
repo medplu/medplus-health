@@ -17,8 +17,8 @@ const DashboardScreen: React.FC = () => {
     const user = useSelector(selectUser);
     const { appointments, loading, error } = useAppointments();
 
-    const handleViewPatient = (patientId: string) => {
-        router.push(`/patient/${patientId}`);
+    const handleViewPatient = (patientId: string, appointmentId: string) => {
+        router.push(`/patient/${patientId}?appointmentId=${appointmentId}`);
     };
 
     // Calculate statistics based on real data
@@ -120,7 +120,7 @@ const DashboardScreen: React.FC = () => {
                     </View>
                     <TouchableOpacity
                         style={styles.viewButton}
-                        onPress={() => handleViewPatient(appointment.patientId._id)}
+                        onPress={() => handleViewPatient(appointment.patientId._id, appointment._id)}
                     >
                         <Text style={styles.buttonText}>View Patient</Text>
                     </TouchableOpacity>

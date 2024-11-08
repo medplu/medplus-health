@@ -90,15 +90,23 @@ const PrescriptionTemplate = ({ prescription }) => {
                 </html>
             `;
 
-            const { uri } = await Print.printToFileAsync({
+            console.log('Generating PDF with HTML content:', htmlContent); // Added log
+
+            const result = await Print.printToFileAsync({
                 html: htmlContent,
                 base64: false,
             });
 
-            if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(uri);
+            console.log('Print result:', result); // Added log
+
+            if (result && result.uri) {
+                if (await Sharing.isAvailableAsync()) {
+                    await Sharing.shareAsync(result.uri);
+                } else {
+                    Alert.alert('Sharing is not available on this device');
+                }
             } else {
-                Alert.alert('Sharing is not available on this device');
+                Alert.alert('Failed to generate PDF. Please try again.');
             }
         } catch (error) {
             console.error('Error generating PDF:', error);

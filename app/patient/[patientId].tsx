@@ -26,8 +26,9 @@ interface RootState {
 }
 
 const PatientDetails: React.FC = () => {
-  const { patientId } = useLocalSearchParams(); // Get patientId from URL parameters
+  const { patientId, appointmentId } = useLocalSearchParams(); // Get patientId and appointmentId from URL parameters
   console.log('Patient ID:', patientId); // Log patientId for debugging
+  console.log('Appointment ID:', appointmentId); // Log appointmentId for debugging
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [selectedSegment, setSelectedSegment] = useState('prescriptions');
@@ -79,8 +80,16 @@ const PatientDetails: React.FC = () => {
 
   const handleAddEntry = async () => {
     if (selectedSegment === 'prescriptions') {
+      if (!appointmentId) {
+        console.error('appointmentId is missing');
+        // Optionally, show a message to the user
+        setSnackbarVisible(true);
+        return;
+      }
+
       const formData = {
         patientId: patientId as string, // Use patientId from URL parameters
+        appointmentId: appointmentId as string, // Add appointmentId from URL parameters
         doctorId: user.professional?._id as string, // Use doctorId from the current user in the Redux store
         medication: medications,
       };

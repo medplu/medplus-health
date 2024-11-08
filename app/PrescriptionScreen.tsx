@@ -4,6 +4,9 @@ import { useSelector } from 'react-redux';
 import PrescriptionTemplate from '@/components/PrescriptionTemplate';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import Colors from '@/components/Shared/Colors';
+
+import Doctors from '@/components/dashboard/Doctors';
 
 const PrescriptionScreen = () => {
   const navigation = useNavigation();
@@ -25,6 +28,11 @@ const PrescriptionScreen = () => {
         <Ionicons name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
       <PrescriptionTemplate prescription={prescription} />
+      {/* <Doctors 
+        searchQuery="" 
+        selectedCategory="" 
+        onViewAll={() => {}} 
+      /> */}
     </View>
   );
 };
@@ -32,7 +40,7 @@ const PrescriptionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.ligh_gray,
     padding: 16,
   },
   errorContainer: {

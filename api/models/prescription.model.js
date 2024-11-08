@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const prescriptionSchema = new mongoose.Schema({
   patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
   doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Professional', required: true },
+  appointmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', required: true }, // Added appointmentId
   dateIssued: { type: Date, default: Date.now, required: true },
   medication: [
     {
