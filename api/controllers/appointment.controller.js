@@ -33,7 +33,7 @@ exports.getAppointmentsByDoctor = async (req, res) => {
       doctorId,
       status: 'confirmed',
       date: { $gte: today.toDate() }
-    }).populate('patientId');
+    }).populate('patientId'); // Only populates patientId
     res.status(200).json(appointments);
   } catch (error) {
     console.error('Error fetching appointments:', error);
@@ -46,10 +46,15 @@ exports.getAppointmentsByUser = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const appointments = await Appointment.find({ userId })
-      .select('doctorId userId patientName status timeSlotId time createdAt updatedAt')
-      .populate('patientId')
-      .populate('doctorId'); // Populate doctorId to get professional information
+    const today = moment().startOf('day');
+    const appointments = await Appointment.find({
+      userId,
+      status: 'confirmed',
+      date: { $gte: today.toDate() }
+    })
+      .select('doctorId userId patientName status timeSlotId time createdAt updatedAt') // Selects specific fields
+      .populate('patientId') // Populates patientId
+      .populate('doctorId'); // Populates doctorId
 
     if (!appointments.length) {
       return res.status(404).json({ error: 'No appointments found for this user' });
