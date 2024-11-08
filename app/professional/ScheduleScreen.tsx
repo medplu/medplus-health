@@ -1,111 +1,64 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { Agenda } from 'react-native-calendars';
-import { Card, TextInput, Button, Modal, Portal, Provider, RadioButton } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useSelector } from 'react-redux';
 import moment from 'moment';
 import useSchedule from '../../hooks/useSchedule';
-import { selectUser } from '../store/userSlice'; 
-import { useSelector } from 'react-redux';
-import * as Notifications from 'expo-notifications';
+import useAppointments from '../../hooks/useAppointments'; // Import useAppointments
+import { selectUser } from '../store/userSlice';
+import Colors from '../../components/Shared/Colors';
+import axios from 'axios'; // Import axios for making API calls
 
-const timeToString = (time) => {
-  const date = new Date(time);
-  return date.toISOString().split('T')[0];
-};
-
-// Update the function to generate time slots with start and end times
-const generateTimeSlots = (startTime, duration, slots) => {
-  const timeSlots = [];
-  let [hours, minutes] = startTime.split(':').map(Number);
-
-  for (let i = 0; i < slots; i++) {
-    const start = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    const endMinutes = minutes + duration;
-    const endHours = Math.floor(endMinutes / 60);
-    const end = `${String(hours + endHours).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}`;
-    
-    timeSlots.push({ startTime: start, endTime: end, status: 'available' });
-
-    // Increment the start time for the next slot
-    minutes += duration;
-    if (minutes >= 60) {
-      hours += Math.floor(minutes / 60);
-      minutes = minutes % 60;
-    }
-  }
-
-  return timeSlots;
-};
-
-const getDates = (startDate, pattern, duration) => {
-  const dates = [];
-  const start = moment(startDate);
-
-  for (let i = 0; i < duration; i++) {
-    dates.push(start.format('YYYY-MM-DD'));
-
-    switch (pattern) {
-      case 'daily':
-        start.add(1, 'days');
-        break;
-      case 'weekly':
-        start.add(1, 'weeks');
-        break;
-      case 'monthly':
-        start.add(1, 'months');
-        break;
-      default:
-        break;
-    }
-  }
-
-  return dates;
-};
-
-// Add this function at the top level
-async function schedulePushNotification(title, body, trigger) {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-    },
-    trigger,
-  });
+// Define interfaces
+interface Patient {
+  name: string;
 }
 
-// Add notification permission setup
-async function registerForPushNotificationsAsync() {
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-  
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-  
-  return finalStatus === 'granted';
+interface Appointment {
+  _id: string;
+  patientId: Patient;
+  date: string;
+  time: string;
+  status: string;
+  slotId: string; // Add slotId to associate appointment with a slot
 }
 
-const Schedule = () => {
-  const user = useSelector(selectUser);
+interface Slot {
+  _id: string;
+  startTime: string;
+  endTime: boolean;
+  isBooked: boolean;
+  patientId?: Patient;
+  date: string;
+  appointment?: Appointment; // Add optional appointment property
+}
+
+interface User {
+  name: string;
+  professional?: {
+    _id: string;
+  };
+}
+
+const ScheduleScreen: React.FC = () => {
+  const user: User = useSelector(selectUser);
   const { schedule, fetchSchedule } = useSchedule();
-  const [items, setItems] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(timeToString(Date.now()));
-  const [eventDetails, setEventDetails] = useState({ slots: 1, duration: 30 });
-  const [timeRange, setTimeRange] = useState({ start: '08:00', duration: 30 });
-  const [repeatPattern, setRepeatPattern] = useState('daily');
-  const [repeatDuration, setRepeatDuration] = useState(1);
-  const [step, setStep] = useState(1);
-  const [todayAppointments, setTodayAppointments] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const { appointments, loading: appointmentsLoading, error: appointmentsError } = useAppointments(); // Fetch appointments
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [loading, setLoading] = useState<boolean>(true);
+  const [items, setItems] = useState<{ [key: string]: Slot[] }>({});
+  const [todayAppointments, setTodayAppointments] = useState<Slot[]>([]);
+
+  // Log user data when the component mounts
+  useEffect(() => {
+    console.log('User data:', user);
+  }, [user]);
 
   const fetchProfessionalId = async () => {
     try {
-      const professionalId = user?.professional?._id; 
+      const professionalId = user?.professional?._id;
       if (!professionalId) throw new Error('Professional ID not found');
-
+      
+      console.log('Professional ID:', professionalId);
       fetchSchedule(professionalId);
     } catch (error) {
       console.error('Error fetching professional ID:', error);
@@ -117,288 +70,352 @@ const Schedule = () => {
   }, [user]);
 
   useEffect(() => {
-    registerForPushNotificationsAsync();
-  }, []);
+    // Log appointments data to inspect structure
+    console.log('Appointments Data:', appointments);
 
-  useEffect(() => {
     const transformSchedule = () => {
-      const newItems = {};
-      const todayAppointments = [];
+      // Log the schedule data before transforming
+      console.log('Schedule data before transform:', schedule);
 
-      schedule.forEach((slot) => {
-        const strTime = moment(slot.date).format('YYYY-MM-DD');
-        if (!newItems[strTime]) {
-          newItems[strTime] = [];
-        }
+      const newItems: { [key: string]: Slot[] } = {};
+      const todayAppointmentsList: Slot[] = [];
 
-        const { startTime, endTime, status, patientId } = slot;
-        const slotInfo = {
-          name: status === 'booked' ? `Appointment with ${patientId?.name || 'Patient'}` : 'Available Slot',
-          type: status === 'booked' ? 'appointment' : 'availability',
-          height: 80,
-          startTime,
-          endTime,
-          patientId,
-        };
-
-        newItems[strTime].push(slotInfo);
-
-        // Schedule notification for booked appointments
-        if (status === 'booked') {
-          const appointmentDate = moment(`${strTime} ${startTime}`, 'YYYY-MM-DD HH:mm');
-          const notificationDate = appointmentDate.subtract(30, 'minutes').toDate();
-          
-          schedulePushNotification(
-            'Upcoming Appointment',
-            `You have an appointment with ${patientId?.name || 'Patient'} at ${startTime}`,
-            { date: notificationDate }
-          );
-        }
-
-        if (strTime === moment().format('YYYY-MM-DD') && status === 'booked') {
-          todayAppointments.push(slotInfo);
+      // Create a map of timeSlotId to appointment for quick lookup
+      const appointmentMap: { [key: string]: Appointment } = {};
+      appointments.forEach((appointment) => {
+        if (appointment.timeSlotId) { // Use timeSlotId instead of slotId
+          appointmentMap[appointment.timeSlotId] = appointment;
         }
       });
 
+      // Ensure schedule is an array
+      if (Array.isArray(schedule)) {
+        schedule.forEach((slot) => {
+          const strDate = moment(slot.date).format('YYYY-MM-DD');
+          if (!newItems[strDate]) {
+            newItems[strDate] = [];
+          }
+
+          const { _id: slotId, startTime, endTime, isBooked, patientId, date } = slot;
+
+          // Find associated appointment using timeSlotId
+          const associatedAppointment = appointmentMap[slotId];
+
+          const slotInfo: Slot = {
+            ...slot,
+            name: isBooked
+              ? associatedAppointment
+                ? `Appointment with ${associatedAppointment.patientId.name}`
+                : 'Booked Slot'
+              : 'Available Slot',
+            type: isBooked ? 'appointment' : 'availability',
+            appointment: associatedAppointment, // Attach appointment data if exists
+          };
+
+          newItems[strDate].push(slotInfo);
+
+          if (strDate === moment().format('YYYY-MM-DD') && isBooked) {
+            todayAppointmentsList.push(slotInfo);
+          }
+        });
+      } else {
+        console.warn('Schedule is not an array:', schedule);
+      }
+
+      console.log('Transformed Schedule:', newItems);
+      console.log('Today\'s Appointments:', todayAppointmentsList);
+
       setItems(newItems);
-      setTodayAppointments(todayAppointments);
+      setTodayAppointments(todayAppointmentsList);
       setLoading(false);
     };
 
-    transformSchedule();
-  }, [schedule]);
+    if (!appointmentsLoading && !appointmentsError) { // Ensure appointments data is loaded
+      transformSchedule();
+    }
+  }, [schedule, appointments, appointmentsLoading, appointmentsError]);
 
-  const handleAddAvailability = async () => {
+  const resetElapsedSlots = async () => {
     try {
-      const professionalId = user?.professional?._id; 
-      if (!professionalId) {
-        throw new Error('Professional ID not found');
-      }
+      const professionalId = user?.professional?._id;
+      if (!professionalId) throw new Error('Professional ID not found');
 
-      const timeSlots = generateTimeSlots(timeRange.start, eventDetails.duration, eventDetails.slots);
-      const dates = getDates(selectedDate, repeatPattern, repeatDuration);
-      const availability = dates.flatMap((date) => 
-        timeSlots.map(({ startTime, endTime }) => ({
-          date,
-          startTime,
-          endTime,
-          status: 'available', // Set status as available by default
-        }))
-      );
-
-      const response = await fetch(`https://medplus-health.onrender.com/api/schedule`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ professionalId, availability }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update availability');
-      }
-
-      const newItems = { ...items };
-      dates.forEach((date) => {
-        if (!newItems[date]) {
-          newItems[date] = [];
-        }
-        timeSlots.forEach(({ startTime, endTime }) => {
-          newItems[date].push({
-            name: 'Available Slot',
-            height: 80,
-            type: 'availability',
-            startTime,
-            endTime,
-          });
-        });
-      });
-
-      setItems(newItems);
-      setModalVisible(false);
-      setEventDetails({ slots: 1, duration: 30 });
-      setStep(1);
+      await axios.post(`/api/schedule/resetElapsedSlots/${professionalId}`);
+      fetchSchedule(professionalId); // Refresh the schedule after resetting slots
     } catch (error) {
-      console.error('Error updating availability:', error);
+      console.error('Error resetting elapsed slots:', error);
     }
   };
 
-  const renderStepContent = () => {
-    switch (step) {
-      case 1:
-        return (
-          <View>
-            <Text style={styles.modalTitle}>Set Availability</Text>
-            <Button mode="contained" onPress={() => setStep(2)} style={styles.button}>
-              Start
-            </Button>
-          </View>
-        );
-      case 2:
-        return (
-          <View>
-            <Text style={styles.modalTitle}>Choose Start Time</Text>
-            <TextInput
-              label="Start Time"
-              value={timeRange.start}
-              onChangeText={(text) => setTimeRange((prev) => ({ ...prev, start: text }))}
-              style={styles.input}
-            />
-            <Button mode="contained" onPress={() => setStep(3)} style={styles.button}>
-              Next
-            </Button>
-          </View>
-        );
-      case 3:
-        return (
-          <View>
-            <Text style={styles.modalTitle}>Specify Duration for Each Patient</Text>
-            <TextInput
-              label="Duration (minutes)"
-              value={eventDetails.duration.toString()}
-              onChangeText={(text) => setEventDetails((prev) => ({ ...prev, duration: Number(text) }))}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            <Button mode="contained" onPress={() => setStep(4)} style={styles.button}>
-              Next
-            </Button>
-          </View>
-        );
-      case 4:
-        return (
-          <View>
-            <Text style={styles.modalTitle}>Specify Number of Patients</Text>
-            <TextInput
-              label="Number of Slots"
-              value={eventDetails.slots.toString()}
-              onChangeText={(text) => setEventDetails((prev) => ({ ...prev, slots: Number(text) }))}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            <Button mode="contained" onPress={() => setStep(5)} style={styles.button}>
-              Next
-            </Button>
-          </View>
-        );
-      case 5:
-        return (
-          <View>
-            <Text style={styles.modalTitle}>Choose Repeat Pattern and Duration</Text>
-            <RadioButton.Group onValueChange={value => setRepeatPattern(value)} value={repeatPattern}>
-              <View style={styles.radioButtonContainer}>
-                <RadioButton value="daily" />
-                <Text>Daily</Text>
-              </View>
-              <View style={styles.radioButtonContainer}>
-                <RadioButton value="weekly" />
-                <Text>Weekly</Text>
-              </View>
-              <View style={styles.radioButtonContainer}>
-                <RadioButton value="monthly" />
-                <Text>Monthly</Text>
-              </View>
-            </RadioButton.Group>
-            <TextInput
-              label="Duration (times)"
-              value={repeatDuration.toString()}
-              onChangeText={(text) => setRepeatDuration(Number(text))}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-            <Button mode="contained" onPress={handleAddAvailability} style={styles.button}>
-              Submit
-            </Button>
-          </View>
-        );
-      default:
-        return null;
-    }
-  };
+  useEffect(() => {
+    const interval = setInterval(resetElapsedSlots, 60000); // Check every minute
+    return () => clearInterval(interval); // Cleanup interval on component unmount
+  }, [user]);
 
-  const renderItem = (item) => (
-    <Card style={styles.card}>
-      <Card.Content>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemTime}>{item.startTime} - {item.endTime}</Text>
-        {item.type === 'appointment' && (
-          <Button 
-            mode="contained" 
-            onPress={() => handleReminder(item)}
-            style={styles.reminderButton}
-          >
-            Set Reminder
-          </Button>
-        )}
-      </Card.Content>
-    </Card>
+  const renderClassItem = ({ item }: { item: Slot }) => (
+    <View style={styles.classItem}>
+      <View style={styles.timelineContainer}>
+        <View style={styles.timelineDot} />
+        <View style={styles.timelineLine} />
+      </View>
+
+      <View style={styles.classContent}>
+        <View style={styles.classHours}>
+          <Text style={styles.startTime}>{item.startTime}</Text>
+          <Text style={styles.endTime}>{item.endTime}</Text>
+        </View>
+
+        <View style={[styles.card, { backgroundColor: item.type === 'appointment' ? '#f7f39a' : '#a3de83' }]}>
+          {item.type === 'appointment' ? (
+            item.appointment ? (
+              <>
+                <Text style={styles.cardTitle}>{item.appointment.patientId.name}</Text>
+                <Text style={styles.cardDate}>{moment(item.appointment.date).format('DD MMM, HH:mm')}</Text>
+                <Text style={styles.cardStatus}>{item.appointment.status}</Text>
+              </>
+            ) : (
+              <Text style={styles.cardTitle}>Booked Slot</Text>
+            )
+          ) : (
+            <>
+              <Text style={styles.cardTitle}>{item.name}</Text>
+              <Text style={styles.cardDate}>{moment(item.date).format('DD MMM, HH:mm')}</Text>
+            </>
+          )}
+        </View>
+      </View>
+    </View>
   );
 
-  // Add handleReminder function
-  const handleReminder = async (appointment) => {
-    try {
-      const { date, startTime } = appointment;
-      const appointmentDate = moment(`${date} ${startTime}`, 'YYYY-MM-DD HH:mm');
-      const notificationDate = appointmentDate.subtract(30, 'minutes').toDate();
-
-      await schedulePushNotification(
-        'Upcoming Appointment',
-        `You have an appointment at ${startTime}`,
-        { date: notificationDate }
-      );
-
-      alert('Reminder set successfully!');
-    } catch (error) {
-      console.error('Error setting reminder:', error);
-      alert('Failed to set reminder');
-    }
+  const renderHeader = () => {
+    const now = moment();
+    const upcomingAppointment = todayAppointments.find(
+      (appointment) => appointment.appointment?.status === 'confirmed' && moment(appointment.appointment?.date).isAfter(now)
+    );
+  
+    return (
+      <View style={styles.headerCard}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Today's Appointments</Text>
+          <Text style={styles.headerSubtitle}>{moment().format('DD MMM, YYYY')}</Text>
+        </View>
+        <View style={styles.body}>
+          {upcomingAppointment ? (
+            <>
+              <Image source={{ uri: 'https://bootdey.com/img/Content/avatar/avatar6.png' }} style={styles.avatar} />
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>{upcomingAppointment.appointment?.patientId.name}</Text>
+                <Text style={styles.userRole}>{moment(upcomingAppointment.appointment?.date).format('DD MMM, HH:mm')}</Text>
+                <Text style={styles.cardStatus}>{upcomingAppointment.appointment?.status}</Text>
+              </View>
+            </>
+          ) : (
+            <Text style={styles.noAppointments}>No upcoming appointments</Text>
+          )}
+        </View>
+      </View>
+    );
   };
+  
+
+  const dateOptions = Array.from({ length: 7 }).map((_, i) => moment().add(i, 'days').toDate());
 
   return (
-    <Provider>
-      <View style={styles.container}>
-        {loading ? (
-          <ActivityIndicator size="large" />
-        ) : (
-          <Agenda
-            items={items}
-            renderItem={renderItem}
-            renderEmptyData={() => <View><Text>No Availability</Text></View>}
-            onDayPress={(day) => {
-              setSelectedDate(day.dateString);
-              setModalVisible(true);
-            }}
+    <View style={styles.container}>
+      <Text style={styles.title}>Today's Schedule</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color={Colors.primary} style={styles.loading} />
+      ) : (
+        <>
+          <FlatList
+            horizontal
+            data={dateOptions}
+            keyExtractor={(item) => item.toISOString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => setSelectedDate(item)}
+                style={[
+                  styles.dateButton,
+                  selectedDate.toDateString() === item.toDateString() ? styles.selectedDateButton : null,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.dateText,
+                    selectedDate.toDateString() === item.toDateString() ? styles.selectedDateText : null,
+                  ]}
+                >
+                  {moment(item).format('ddd, DD')}
+                </Text>
+              </TouchableOpacity>
+            )}
+            showsHorizontalScrollIndicator={false}
           />
-        )}
-        <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modalContainer}>
-          {renderStepContent()}
-        </Modal>
-      </View>
-    </Provider>
+          <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
+          <FlatList
+            contentContainerStyle={styles.contentContainer}
+            data={items[moment(selectedDate).format('YYYY-MM-DD')] || []}
+            ListHeaderComponent={renderHeader}
+            renderItem={renderClassItem}
+            keyExtractor={(item, index) => index.toString()}
+          />
+        </>
+      )}
+    </View>
   );
+
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10 },
-  card: { margin: 5 },
-  modalContainer: { padding: 20 },
-  modalTitle: { fontSize: 20, marginBottom: 20 },
-  input: { marginBottom: 10 },
-  button: { marginTop: 10 },
-  radioButtonContainer: { flexDirection: 'row', alignItems: 'center' },
-  itemName: {
-    fontSize: 16,
+  container: {
+    flex: 1,
+    paddingTop: 60,
+    backgroundColor: '#f7f39a', // e.g., '#FFFFFF' for white
+  },
+  title: {
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 5,
+    color: Colors.primary,
+    marginHorizontal: 16,
+    marginBottom: 16,
   },
-  itemTime: {
+  headerCard: {
+    backgroundColor: '#a3de83',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: Colors.primary,
+    fontWeight: 'bold',
+  },
+  headerSubtitle: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
+    color: Colors.primary,
   },
-  reminderButton: {
-    marginTop: 5,
+  body: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  userRole: {
+    fontSize: 14,
+    color: Colors.primary,
+  },
+  dateButton: {
+    padding: 10,
+    borderRadius: 8,
+    marginRight: 8,
+    borderWidth: 2, // Add border width
+    borderColor: 'transparent', // Default border color
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedDateButton: {
+    borderColor: Colors.primary, 
+  },
+  dateText: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+  },
+  selectedDateText: {
+    borderColor: Colors.primary, 
+  },
+  dateTitle: {
+    fontSize: 18,
+    color: Colors.primary,
+    marginVertical: 12,
+    marginHorizontal: 16,
+  },
+  classItem: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginVertical: 4,
+  },
+  timelineContainer: {
+    width: 40,
+    alignItems: 'center',
+  },
+  timelineDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#346473',
+  },
+  timelineLine: {
+    width: 2,
+    height: '100%',
+    backgroundColor: Colors.primary,
+  },
+  classContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+    backgroundColor: '#f7f39a',
+    borderRadius: 8,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  startTime: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.primaryText,
+  },
+  endTime: {
+    fontSize: 12,
+    color: Colors.secondaryText,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.primary,
+  },
+  cardDate: {
+    fontSize: 14,
+    color: Colors.primary,
+  },
+  cardStatus: { // New style for appointment status
+    fontSize: 12,
+    color: Colors.secondaryText,
+  },
+  loading: {
+    marginTop: 20,
+  },
+  contentContainer: {
+    paddingHorizontal: 16,
+  },
+  noAppointments: {
+    fontSize: 16,
+    color: Colors.primary,
+    fontWeight: '600',
   },
 });
 
-export default Schedule;
+export default ScheduleScreen;

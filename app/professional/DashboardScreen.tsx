@@ -3,10 +3,10 @@ import { useSelector } from 'react-redux';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 import { PieChart, BarChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { selectUser } from '../store/userSlice'; // Adjust the import based on your project structure
-import { RootState } from '../store/configureStore'; // Adjust the import based on your project structure
+import { selectUser } from '../store/userSlice';
+import { RootState } from '../store/configureStore';
 import { useRouter } from 'expo-router';
-import useAppointments from '../../hooks/useAppointments'; // Adjust the import based on your project structure
+import useAppointments from '../../hooks/useAppointments';
 import moment from 'moment';
 
 const screenWidth = Dimensions.get('window').width;
@@ -21,9 +21,7 @@ const DashboardScreen: React.FC = () => {
         router.push(`/patient/${patientId}?appointmentId=${appointmentId}`);
     };
 
-    // Calculate statistics based on real data
     const totalAppointments = appointments.length;
-    // Filter to get upcoming appointments (keep as an array)
     const upcomingAppointments = appointments.filter(appointment => {
         const appointmentDate = appointment.date && moment(appointment.date);
         return (
@@ -32,7 +30,6 @@ const DashboardScreen: React.FC = () => {
         );
     });
     
-    // Log appointments and upcomingAppointments for debugging
     useEffect(() => {
         console.log('All Appointments:', appointments);
         console.log('Upcoming Appointments:', upcomingAppointments);
@@ -61,12 +58,10 @@ const DashboardScreen: React.FC = () => {
         <ScrollView style={styles.container}>
             {user.isLoggedIn ? (
                 <>
-                    {/* Welcome Card */}
                     <View style={styles.card}>
                         <Text style={styles.greetingText}>Welcome, {user.name}!</Text>
                     </View>
 
-                    {/* Overview Section */}
                     <View style={styles.overviewContainer}>
                         <View style={styles.overviewHeader}>
                             <Text style={styles.sectionTitle}>Overview</Text>
@@ -98,17 +93,15 @@ const DashboardScreen: React.FC = () => {
                         </View>
                     </View>
 
-                    {/* Upcoming Appointments Section */}
 <View style={styles.upcomingContainer}>
     <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
     {upcomingAppointments.length > 0 ? (
         upcomingAppointments.map((appointment) => {
-            // Format the date to a friendly format
             const appointmentDate = moment(appointment.date).calendar(null, {
-                sameDay: '[Today]', // e.g., Today
-                nextDay: '[Tomorrow]', // e.g., Tomorrow
-                nextWeek: 'dddd', // e.g., Monday
-                sameElse: 'MMMM D, YYYY' // e.g., November 6, 2024
+                sameDay: '[Today]',
+                nextDay: '[Tomorrow]',
+                nextWeek: 'dddd',
+                sameElse: 'MMMM D, YYYY'
             });
             
             return (

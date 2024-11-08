@@ -1,3 +1,4 @@
+const moment = require('moment'); // Import moment for date manipulation
 const Schedule = require('../models/schedule.model');
 const Professional = require('../models/professional.model');
 
@@ -95,6 +96,33 @@ exports.getAvailableSlots = async (req, res) => {
         return res.status(200).json(availableSlots);
     } catch (error) {
         console.error('Error fetching available slots:', error);
+        return res.status(500).json({ message: 'Internal server error.' });
+    }
+};
+
+// Reset slots that have elapsed
+exports.resetElapsedSlots = async (req, res) => {
+    const { professionalId } = req.params;
+
+    try {
+        const schedule = await Schedule.findOne({ doctorId: professionalId });
+
+        if (!schedule) {
+            return res.status(404).json({ message: 'Schedule not found.' });
+        }
+
+        const now = moment();
+        schedule.slots.forEach(slot => {
+            if (slot.isBooked && moment(slot.endTime).isBefore(now)) {
+                slot.isBooked = false;
+            }
+        });
+
+        await schedule.save();
+
+        return res.status(200).json({ message: 'Elapsed slots reset successfully.', schedule });
+    } catch (error) {
+        console.error('Error resetting elapsed slots:', error);
         return res.status(500).json({ message: 'Internal server error.' });
     }
 };

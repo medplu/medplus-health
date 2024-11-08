@@ -26,7 +26,7 @@ export default function ClientTabs() {
   }, [appointments]);
 
   useEffect(() => {
-    const socket = io('http://your-backend-url'); // Replace with your backend URL
+    const socket = io('https://medplus-health.onrender.com'); // Replace with your backend URL
 
     if (user) {
       socket.emit('join', user.userId); // Join the socket room for the specific user
