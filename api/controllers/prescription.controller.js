@@ -175,17 +175,21 @@ exports.deletePrescriptionById = async (req, res) => {
 
 exports.getPrescriptionPDF = async (req, res) => {
   try {
-    const { id } = req.params; // Use 'id' to match the route parameter
-    console.log('Prescription ID:', id); // Debugging line to check if id is correct
+    const { id, appointmentId } = req.query; // Accept appointmentId from query
 
     // Find the prescription by ID and populate the patient, doctor, and appointment fields
     const prescription = await Prescription.findById(id)
       .populate('patientId')
       .populate('doctorId')
-      .populate('appointmentId'); // Populate appointmentId
+      .populate('appointmentId');
 
     if (!prescription) {
       return res.status(404).json({ error: 'Prescription not found' });
+    }
+
+    // Check if the appointmentId matches
+    if (prescription.appointmentId.toString() !== appointmentId) {
+      return res.status(400).json({ error: 'Appointment ID does not match the prescription' });
     }
 
     // Generate PDF
