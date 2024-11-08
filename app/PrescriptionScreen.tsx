@@ -7,12 +7,14 @@ import { Ionicons } from '@expo/vector-icons';
 import Colors from '@/components/Shared/Colors';
 
 import Doctors from '@/components/dashboard/Doctors';
+import { RootState } from './store/configureStore';
 
 const PrescriptionScreen = () => {
   const navigation = useNavigation();
   const prescription = useSelector((state: RootState) => state.prescription);
 
-  console.log('Current prescription state:', prescription); // Debugging log
+  // Remove or comment out the debugging log
+  // console.log('Current prescription state:', prescription);
 
   if (!prescription) {
     return (
@@ -24,15 +26,7 @@ const PrescriptionScreen = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={24} color="black" />
-      </TouchableOpacity>
-      <PrescriptionTemplate prescription={prescription} />
-      {/* <Doctors 
-        searchQuery="" 
-        selectedCategory="" 
-        onViewAll={() => {}} 
-      /> */}
+      {/* ...existing code... */}
     </View>
   );
 };

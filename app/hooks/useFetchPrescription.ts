@@ -14,9 +14,13 @@ const useFetchPrescription = (appointmentId: string | undefined) => {
       const fetchPrescription = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`https://medplus-health.onrender.com/api/prescriptions/appointment/${encodeURIComponent(appointmentId)}`);
-          console.log('Fetched prescription:', response.data.prescription);
-          dispatch(setPrescription(response.data.prescription));
+          const response = await axios.get(`https://medplus-health.onrender.com/api/appointment/${encodeURIComponent(appointmentId)}`);
+          console.log('Fetched prescription:', response.data.prescriptions);
+          if (response.data.prescriptions && response.data.prescriptions.length > 0) {
+            dispatch(setPrescription(response.data.prescriptions[0])); // Use the first prescription
+          } else {
+            console.log('Fetched prescription: undefined');
+          }
         } catch (err: any) {
           console.error('Failed to fetch prescription:', err.message || err);
           setError(err.message || 'Failed to fetch prescription');
