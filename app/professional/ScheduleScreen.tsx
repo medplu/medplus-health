@@ -140,7 +140,7 @@ const ScheduleScreen: React.FC = () => {
       const professionalId = user?.professional?._id;
       if (!professionalId) throw new Error('Professional ID not found');
 
-      await axios.post(`/api/schedule/resetElapsedSlots/${professionalId}`);
+      await axios.post(`https://medplus-health.onrender.com/api/schedule/resetElapsedSlots/${professionalId}`);
       fetchSchedule(professionalId); // Refresh the schedule after resetting slots
     } catch (error) {
       console.error('Error resetting elapsed slots:', error);
@@ -227,6 +227,7 @@ const ScheduleScreen: React.FC = () => {
         <ActivityIndicator size="large" color={Colors.primary} style={styles.loading} />
       ) : (
         <>
+          {/* Date Selection */}
           <FlatList
             horizontal
             data={dateOptions}
@@ -252,20 +253,28 @@ const ScheduleScreen: React.FC = () => {
             showsHorizontalScrollIndicator={false}
           />
           <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
-          <FlatList
-            contentContainerStyle={styles.contentContainer}
-            data={items[moment(selectedDate).format('YYYY-MM-DD')] || []}
-            ListHeaderComponent={renderHeader}
-            renderItem={renderClassItem}
-            keyExtractor={(item, index) => index.toString()}
-          />
+
+          {/* Time Slots Container */}
+          <View style={styles.timeSlotsContainer}>
+            <FlatList
+              contentContainerStyle={styles.contentContainer}
+              data={items[moment(selectedDate).format('YYYY-MM-DD')] || []}
+              ListHeaderComponent={renderHeader}
+              renderItem={renderClassItem}
+              keyExtractor={(item, index) => index.toString()}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No time slots available for this date.</Text>
+                </View>
+              }
+            />
+          </View>
         </>
       )}
     </View>
   );
 
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -415,6 +424,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.primary,
     fontWeight: '600',
+  },
+  
+  timeSlotsContainer: {
+    minHeight: 300, // Ensure the container has a minimum height
+    paddingHorizontal: 16,
+  },
+  emptyContainer: {
+    height: 200, // Fixed height to occupy space when FlatList is empty
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: Colors.secondaryText,
   },
 });
 
