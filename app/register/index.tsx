@@ -4,19 +4,16 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Image,
   StyleSheet,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
 import { registerUser } from '@/Services/auth';
 import axios from 'axios';
-
-const { width } = Dimensions.get('window');
 
 const SignupScreen: React.FC = () => {
   const [firstName, setFirstName] = useState('');
@@ -32,9 +29,9 @@ const SignupScreen: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [buttonAnimation] = useState(new Animated.Value(1));
-  const [countdown, setCountdown] = useState(60); // Countdown timer state
-  const [timerActive, setTimerActive] = useState(false); // Timer active state
-
+  const [countdown, setCountdown] = useState(60);
+  const [timerActive, setTimerActive] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const router = useRouter();
 
   const animateButton = () => {
@@ -53,7 +50,6 @@ const SignupScreen: React.FC = () => {
   };
 
   const handleSignupPress = async () => {
-    // ... (existing code for validation)
     if (
       firstName === '' ||
       lastName === '' ||
@@ -70,13 +66,13 @@ const SignupScreen: React.FC = () => {
       setErrorMessage('Passwords do not match.');
       return;
     }
-  
-    // Check for profession if userType is professional
+
     if (userType === 'professional' && (profession === '' || !profession)) {
       setErrorMessage('Please select a profession.');
       return;
     }
-  
+
+    setIsRegistering(true);
     try {
       const userData = {
         firstName,
@@ -92,10 +88,12 @@ const SignupScreen: React.FC = () => {
       setErrorMessage(null);
       setSuccessMessage('Signup successful! Please check your email for verification.');
       setIsVerifying(true);
-      setCountdown(60); // Reset countdown to 60 seconds
-      setTimerActive(true); // Start the timer
+      setCountdown(60);
+      setTimerActive(true);
     } catch (error) {
       setErrorMessage(error.message || 'Error creating user');
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -109,13 +107,12 @@ const SignupScreen: React.FC = () => {
       setErrorMessage(null);
       setSuccessMessage('Verification successful! You can now log in.');
       setIsVerifying(false);
-      router.push('/login'); // Route to login page after successful verification
+      router.push('/login');
     } catch (error) {
       setErrorMessage('Verification failed. Please try again.');
     }
   };
 
-  // Effect to handle countdown
   useEffect(() => {
     let timer: NodeJS.Timeout;
 
@@ -130,40 +127,52 @@ const SignupScreen: React.FC = () => {
       setErrorMessage('Verification code has expired.');
     }
 
-    return () => clearInterval(timer); // Clear interval on cleanup
+    return () => clearInterval(timer);
   }, [timerActive, countdown]);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.formContainer}>
-          <Text style={styles.heading}>Create an Account</Text>
-          <Text style={styles.subHeading}>Sign up to get started</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.formContainer}>
+        <Text style={styles.heading}>Create an Account</Text>
+        <Text style={styles.subHeading}>Sign up to get started</Text>
 
-          {!isVerifying ? (
-            <>
-              {/* ... (existing input fields) */}
+        {!isVerifying ? (
+          <>
+            <View style={styles.inputContainer}>
+              <Image
+                style={[styles.icon, styles.inputIcon]}
+                source={{ uri: 'https://img.icons8.com/ios-filled/512/user.png' }}
+              />
               <TextInput
-                style={styles.input}
+                style={styles.inputs}
                 placeholder="First Name"
                 value={firstName}
                 onChangeText={setFirstName}
                 placeholderTextColor="#888"
               />
+            </View>
 
+            <View style={styles.inputContainer}>
+              <Image
+                style={[styles.icon, styles.inputIcon]}
+                source={{ uri: 'https://img.icons8.com/ios-filled/512/user.png' }}
+              />
               <TextInput
-                style={styles.input}
+                style={styles.inputs}
                 placeholder="Last Name"
                 value={lastName}
                 onChangeText={setLastName}
                 placeholderTextColor="#888"
               />
+            </View>
 
+            <View style={styles.inputContainer}>
+              <Image
+                style={[styles.icon, styles.inputIcon]}
+                source={{ uri: 'https://img.icons8.com/ios-filled/512/circled-envelope.png' }}
+              />
               <TextInput
-                style={styles.input}
+                style={styles.inputs}
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
@@ -171,150 +180,170 @@ const SignupScreen: React.FC = () => {
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
+            </View>
 
+            <View style={styles.inputContainer}>
+              <Image
+                style={[styles.icon, styles.inputIcon]}
+                source={{ uri: 'https://img.icons8.com/ios-glyphs/512/key.png' }}
+              />
               <TextInput
-                style={styles.input}
+                style={styles.inputs}
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
                 placeholderTextColor="#888"
                 secureTextEntry
+                autoCapitalize="none"
               />
+            </View>
 
+            <View style={styles.inputContainer}>
+              <Image
+                style={[styles.icon, styles.inputIcon]}
+                source={{ uri: 'https://img.icons8.com/ios-glyphs/512/key.png' }}
+              />
               <TextInput
-                style={styles.input}
+                style={styles.inputs}
                 placeholder="Confirm Password"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholderTextColor="#888"
                 secureTextEntry
+                autoCapitalize="none"
               />
+            </View>
 
-              {/* Gender Selection */}
-              <View style={styles.genderContainer}>
-                <TouchableOpacity
-                  style={[styles.genderButton, gender === 'Male' && styles.selectedGender]}
-                  onPress={() => setGender('Male')}
-                >
-                  <Text style={styles.genderText}>Male</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.genderButton, gender === 'Female' && styles.selectedGender]}
-                  onPress={() => setGender('Female')}
-                >
-                  <Text style={styles.genderText}>Female</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.genderButton, gender === 'Other' && styles.selectedGender]}
-                  onPress={() => setGender('Other')}
-                >
-                  <Text style={styles.genderText}>Other</Text>
-                </TouchableOpacity>
-              </View>
+            <View style={styles.genderContainer}>
+              <TouchableOpacity
+                style={[styles.genderButton, gender === 'Male' && styles.selectedGender]}
+                onPress={() => setGender('Male')}
+              >
+                <Text style={styles.genderText}>Male</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.genderButton, gender === 'Female' && styles.selectedGender]}
+                onPress={() => setGender('Female')}
+              >
+                <Text style={styles.genderText}>Female</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.genderButton, gender === 'Other' && styles.selectedGender]}
+                onPress={() => setGender('Other')}
+              >
+                <Text style={styles.genderText}>Other</Text>
+              </TouchableOpacity>
+            </View>
 
-              {/* Account Type Selection */}
-              <View style={styles.accountTypeContainer}>
-                <TouchableOpacity
-                  style={[styles.accountTypeButton, userType === 'client' && styles.selectedAccountType]}
-                  onPress={() => setUserType('client')}
-                >
-                  <Text style={styles.accountTypeText}>Client</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.accountTypeButton, userType === 'professional' && styles.selectedAccountType]}
-                  onPress={() => setUserType('professional')}
-                >
-                  <Text style={styles.accountTypeText}>Professional</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.accountTypeButton, userType === 'student' && styles.selectedAccountType]}
-                  onPress={() => setUserType('student')}
-                >
-                  <Text style={styles.accountTypeText}>Student</Text>
-                </TouchableOpacity>
-              </View>
+            <View style={styles.accountTypeContainer}>
+              <TouchableOpacity
+                style={[styles.accountTypeButton, userType === 'client' && styles.selectedAccountType]}
+                onPress={() => setUserType('client')}
+              >
+                <Text style={styles.accountTypeText}>Client</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.accountTypeButton, userType === 'professional' && styles.selectedAccountType]}
+                onPress={() => setUserType('professional')}
+              >
+                <Text style={styles.accountTypeText}>Professional</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.accountTypeButton, userType === 'student' && styles.selectedAccountType]}
+                onPress={() => setUserType('student')}
+              >
+                <Text style={styles.accountTypeText}>Student</Text>
+              </TouchableOpacity>
+            </View>
 
-              {userType === 'professional' && (
-                <Picker
-                  selectedValue={profession}
-                  style={styles.input}
-                  onValueChange={(itemValue) => setProfession(itemValue)}  // Update to profession
-                >
-                  <Picker.Item label="Select Profession" value="" />
-                  <Picker.Item label="Doctor" value="doctor" />
-                  <Picker.Item label="Dentist" value="dentist" />
-                  <Picker.Item label="Pharmacist" value="pharmacist" />
-                  <Picker.Item label="Nurse" value="nurse" />
-                  <Picker.Item label="Other" value="other" />
-                </Picker>
-              )}
+            {userType === 'professional' && (
+              <Picker
+                selectedValue={profession}
+                style={styles.inputs}
+                onValueChange={(itemValue) => setProfession(itemValue)}
+              >
+                <Picker.Item label="Select Profession" value="" />
+                <Picker.Item label="Doctor" value="doctor" />
+                <Picker.Item label="Dentist" value="dentist" />
+                <Picker.Item label="Pharmacist" value="pharmacist" />
+                <Picker.Item label="Nurse" value="nurse" />
+                <Picker.Item label="Other" value="other" />
+              </Picker>
+            )}
 
-              {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-              {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
+            {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+            {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
 
-              <Animated.View style={{ transform: [{ scale: buttonAnimation }] }}>
-                <TouchableOpacity
-                  style={styles.signupButton}
-                  onPress={() => {
-                    animateButton();
-                    handleSignupPress();
-                  }}
-                >
+            <Animated.View style={{ transform: [{ scale: buttonAnimation }] }}>
+              <TouchableOpacity
+                style={styles.signupButton}
+                onPress={() => {
+                  animateButton();
+                  handleSignupPress();
+                }}
+                disabled={isRegistering}
+              >
+                {isRegistering ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
                   <Text style={styles.signupButtonText}>Sign Up</Text>
-                </TouchableOpacity>
-              </Animated.View>
+                )}
+              </TouchableOpacity>
+            </Animated.View>
 
-              <View style={styles.signupContainer}>
-                <Text style={styles.signupText}>Already have an account? </Text>
-                <TouchableOpacity onPress={() => router.push('/login')}>
-                  <Text style={styles.signupLink}>Login</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={styles.subHeading}>Enter the verification code sent to your email</Text>
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push('/login')}>
+                <Text style={styles.signupLink}>Login</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.subHeading}>Enter the verification code sent to your email</Text>
+            <View style={styles.inputContainer}>
+              <Image
+                style={[styles.icon, styles.inputIcon]}
+                source={{ uri: 'https://img.icons8.com/ios-filled/512/verification-code.png' }}
+              />
               <TextInput
-                style={styles.input}
+                style={styles.inputs}
                 placeholder="Verification Code"
                 value={verificationCode}
                 onChangeText={setVerificationCode}
                 placeholderTextColor="#888"
                 keyboardType="numeric"
               />
+            </View>
 
-              <Text style={styles.countdownText}>
-                {countdown > 0 ? `Time remaining: ${countdown}s` : 'Code expired!'}
-              </Text>
+            <Text style={styles.countdownText}>
+              {countdown > 0 ? `Time remaining: ${countdown}s` : 'Code expired!'}
+            </Text>
 
-              {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-              {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
+            {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+            {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
 
-              <TouchableOpacity style={styles.signupButton} onPress={handleVerificationPress}>
-                <Text style={styles.signupButtonText}>Verify</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <TouchableOpacity style={styles.signupButton} onPress={handleVerificationPress}>
+              <Text style={styles.signupButtonText}>Verify</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </ScrollView>
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#c5f0a4',
     padding: 20,
   },
   formContainer: {
-    width: width * 0.8,
-    alignSelf: 'center',
+    width: '100%',
+    alignItems: 'center',
   },
   heading: {
     fontSize: 24,
@@ -325,12 +354,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    padding: 10,
+  inputContainer: {
+    borderBottomColor: '#F5FCFF',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    borderBottomWidth: 1,
+    width: 250,
+    height: 45,
     marginBottom: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputs: {
+    height: 45,
+    marginLeft: 16,
+    borderBottomColor: '#FFFFFF',
+    flex: 1,
+  },
+  icon: {
+    width: 30,
+    height: 30,
+  },
+  inputIcon: {
+    marginLeft: 15,
+    justifyContent: 'center',
   },
   genderContainer: {
     flexDirection: 'row',
@@ -381,10 +428,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   signupButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#226b80',
     padding: 15,
-    borderRadius: 5,
+    borderRadius: 30,
     alignItems: 'center',
+    width: 250,
   },
   signupButtonText: {
     color: '#fff',
@@ -402,6 +450,11 @@ const styles = StyleSheet.create({
   signupLink: {
     fontSize: 14,
     color: '#007BFF',
+  },
+  countdownText: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 10,
   },
 });
 

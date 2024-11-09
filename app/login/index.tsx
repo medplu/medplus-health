@@ -1,70 +1,62 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import { login } from '../store/userSlice';
-import { LinearGradient } from 'expo-linear-gradient';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import SignInWithOAuth from '../../components/SignInWithOAuth';
 import GlobalApi from '../../Services/GlobalApi';
-
-const { width } = Dimensions.get('window');
+import SignInWithOAuth from '../../components/SignInWithOAuth';
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false); // New state for loading
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const router = useRouter();
-  const dispatch = useDispatch(); 
+  const dispatch = useDispatch();
 
   const handleLoginPress = async () => {
     if (email === '' || password === '') {
       setErrorMessage('Please enter both email and password.');
-      return; // Prevent further execution
+      return;
     }
 
-    setIsLoggingIn(true); // Set loading state to true
+    setIsLoggingIn(true);
     try {
       const response = await GlobalApi.loginUser(email, password);
       setErrorMessage(null);
 
-      // Destructure properties directly from the response
       const {
-        token,          // JWT token
-        userId,        // User ID
-        firstName,     // User's first name
-        lastName,      // User's last name
-        email: userEmail, // User's email
-        userType,      // User type (e.g., client, professional)
-        doctorId,       // Doctor ID (may be null)
-        professional    // Professional object (may be null)
-      } = response.data; // Adjusted to directly destructure from response.data
+        token,
+        userId,
+        firstName,
+        lastName,
+        email: userEmail,
+        userType,
+        doctorId,
+        professional
+      } = response.data;
 
-      // Check for missing names
       if (!firstName || !lastName) {
         console.error('First name or last name is missing:', { firstName, lastName });
       }
 
-      // Dispatch login action with userId included
       dispatch(
         login({
           name: `${firstName} ${lastName}`,
           email: userEmail,
           userType,
-          professional,  // Include the professional object
-          profileImage: professional?.profileImage || null, // Adjust if profile image is available
-          userId,  // Include userId in the dispatched action
+          professional,
+          profileImage: professional?.profileImage || null,
+          userId,
         })
       );
 
-      // Determine the route based on userType
       let route = '';
       switch (userType) {
         case 'professional':
           if (professional.profession === 'pharmacist') {
-            route = '/pharmacist/tabs'; // Route pharmacists to the PharmacistDashboardScreen
+            route = '/pharmacist/tabs';
           } else {
             route = '/professional/tabs';
           }
@@ -76,90 +68,86 @@ const LoginScreen: React.FC = () => {
           route = '/student/tabs';
           break;
         default:
-          route = '/student/tabs'; 
+          route = '/student/tabs';
       }
 
-      // Navigate to the determined route
       router.push(route);
     } catch (error) {
       console.error('Error during login:', error);
       setErrorMessage('Invalid email or password. Please try again.');
     } finally {
-      setIsLoggingIn(false); // Set loading state back to false
+      setIsLoggingIn(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <LinearGradient colors={['#43C6AC', '#191654']} style={styles.backgroundGradient}>
-        
+    <View style={styles.container}>
+      <View style={styles.inputContainer}>
+        <Image
+          style={[styles.icon, styles.inputIcon]}
+          source={{ uri: 'https://img.icons8.com/ios-filled/512/circled-envelope.png' }}
+        />
+        <TextInput
+          style={styles.inputs}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          underlineColorAndroid="transparent"
+          autoCapitalize="none"
+        />
+      </View>
 
-        <View style={styles.formContainer}>
-          <Text style={styles.heading}>Login</Text>
-          <Text style={styles.subHeading}>Welcome back, please login to your account</Text>
+      <View style={styles.inputContainer}>
+        <Image
+          style={[styles.icon, styles.inputIcon]}
+          source={{ uri: 'https://img.icons8.com/ios-glyphs/512/key.png' }}
+        />
+        <TextInput
+          style={styles.inputs}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+          underlineColorAndroid="transparent"
+          autoCapitalize="none"
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Image
+            style={styles.icon}
+            source={{ uri: showPassword ? 'https://img.icons8.com/ios-glyphs/512/visible.png' : 'https://img.icons8.com/ios-glyphs/512/invisible.png' }}
+          />
+        </TouchableOpacity>
+      </View>
 
-          {/* Email Input */}
-          <View style={styles.inputContainer}>
-            <FontAwesome name="envelope" size={20} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholderTextColor="#888"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
+      {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
 
-          {/* Password Input */}
-          <View style={styles.inputContainer}>
-            <FontAwesome name="lock" size={24} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              placeholderTextColor="#888"
-              autoCapitalize="none"
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons name={showPassword ? 'eye' : 'eye-off'} size={24} color="#666" style={styles.eyeIcon} />
-            </TouchableOpacity>
-          </View>
+      <TouchableOpacity style={styles.restoreButtonContainer}>
+        <Text>Forgot?</Text>
+      </TouchableOpacity>
 
-          {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+      <TouchableOpacity
+        style={[styles.buttonContainer, styles.loginButton]}
+        onPress={handleLoginPress}
+        disabled={isLoggingIn}
+      >
+        {isLoggingIn ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.loginText}>Login</Text>
+        )}
+      </TouchableOpacity>
 
-          {/* Login Button */}
-          <TouchableOpacity 
-            style={styles.loginButton} 
-            onPress={handleLoginPress} 
-            disabled={isLoggingIn} // Disable button when logging in
-          >
-            {isLoggingIn ? (
-              <ActivityIndicator size="small" color="#fff" /> // Show loading indicator
-            ) : (
-              <Text style={styles.loginButtonText}>Login</Text>
-            )}
-          </TouchableOpacity>
+      <TouchableOpacity style={styles.buttonContainer} onPress={() => router.push('/register')}>
+        <Text>Register</Text>
+      </TouchableOpacity>
 
-          <TouchableOpacity>
-            <Text style={styles.forgotPassword}>Forgot Password?</Text>
-          </TouchableOpacity>
+      <SignInWithOAuth setErrorMessage={setErrorMessage} router={router} />
 
-          {/* Google Login */}
-          <SignInWithOAuth setErrorMessage={setErrorMessage} router={router} />
+     
 
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>Don’t have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/register')}>
-              <Text style={styles.signupLink}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+     
+    </View>
   );
 };
 
@@ -168,96 +156,69 @@ export default LoginScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  backgroundGradient: {
-    flex: 1,
-    paddingHorizontal: 20,
     justifyContent: 'center',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 1,
-  },
-  formContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 10,
-    padding: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  heading: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 5,
-  },
-  subHeading: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
+    alignItems: 'center',
+    backgroundColor: '#c5f0a4',
   },
   inputContainer: {
+    borderBottomColor: '#F5FCFF',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    borderBottomWidth: 1,
+    width: 250,
+    height: 45,
+    marginBottom: 15,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#ddd',
   },
-  input: {
+  inputs: {
+    height: 45,
+    marginLeft: 16,
+    borderBottomColor: '#FFFFFF',
     flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
-    color: '#333',
+  },
+  icon: {
+    width: 30,
+    height: 30,
   },
   inputIcon: {
-    marginRight: 10,
+    marginLeft: 15,
+    justifyContent: 'center',
   },
-  eyeIcon: {
-    marginLeft: 10,
+  buttonContainer: {
+    height: 45,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: 250,
+    borderRadius: 30,
+  },
+  loginButton: {
+    backgroundColor: '#226b80',
+  },
+  fabookButton: {
+    backgroundColor: '#3b5998',
+  },
+  googleButton: {
+    backgroundColor: '#ff0000',
+  },
+  loginText: {
+    color: 'white',
+  },
+  restoreButtonContainer: {
+    width: 250,
+    marginBottom: 15,
+    alignItems: 'flex-end',
+  },
+  socialButtonContent: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   errorMessage: {
     color: 'red',
     marginBottom: 10,
     textAlign: 'center',
-  },
-  loginButton: {
-    backgroundColor: '#43C6AC',
-    paddingVertical: 15,
-    borderRadius: 8,
-    marginTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 18,
-  },
-  forgotPassword: {
-    color: '#43C6AC',
-    textAlign: 'center',
-    marginTop: 10,
-  },
-  signupContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  signupText: {
-    color: '#666',
-  },
-  signupLink: {
-    color: '#43C6AC',
-    fontWeight: 'bold',
   },
 });
