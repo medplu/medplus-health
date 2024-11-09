@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { useSelector } from 'react-redux';
 import moment from 'moment';
 import useSchedule from '../../hooks/useSchedule';
@@ -30,6 +30,7 @@ interface Slot {
   patientId?: Patient;
   date: string;
   appointment?: Appointment; // Add optional appointment property
+  color?: string; // Add optional color property
 }
 
 interface User {
@@ -38,6 +39,9 @@ interface User {
     _id: string;
   };
 }
+
+// Define an array of colors for booked slots
+const bookedSlotColors = ['#e6c39a', '#d4a76c', '#c39156']; // Add more colors as needed
 
 const ScheduleScreen: React.FC = () => {
   const user: User = useSelector(selectUser);
@@ -110,6 +114,9 @@ const ScheduleScreen: React.FC = () => {
               : 'Available Slot',
             type: isBooked ? 'appointment' : 'availability',
             appointment: associatedAppointment, // Attach appointment data if exists
+            color: isBooked
+              ? bookedSlotColors[todayAppointmentsList.length % bookedSlotColors.length]
+              : '#a3de83',
           };
 
           newItems[strDate].push(slotInfo);
@@ -165,7 +172,7 @@ const ScheduleScreen: React.FC = () => {
           <Text style={styles.endTime}>{item.endTime}</Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: item.type === 'appointment' ? '#f7f39a' : '#a3de83' }]}>
+        <View style={[styles.card, { backgroundColor: item.color || '#a3de83' }]}>
           {item.type === 'appointment' ? (
             item.appointment ? (
               <>
@@ -228,34 +235,37 @@ const ScheduleScreen: React.FC = () => {
       ) : (
         <>
           {/* Date Selection */}
-          <FlatList
-            horizontal
-            data={dateOptions}
-            keyExtractor={(item) => item.toISOString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => setSelectedDate(item)}
-                style={[
-                  styles.dateButton,
-                  selectedDate.toDateString() === item.toDateString() ? styles.selectedDateButton : null,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.dateText,
-                    selectedDate.toDateString() === item.toDateString() ? styles.selectedDateText : null,
-                  ]}
-                >
-                  {moment(item).format('ddd, DD')}
-                </Text>
-              </TouchableOpacity>
-            )}
-            showsHorizontalScrollIndicator={false}
-          />
+         <View style={styles.dateSelectorContainer}>
+  <FlatList
+    horizontal
+    data={dateOptions}
+    keyExtractor={(item) => item.toISOString()}
+    renderItem={({ item }) => (
+      <TouchableOpacity
+        onPress={() => setSelectedDate(item)}
+        style={[
+          styles.dateButton,
+          selectedDate.toDateString() === item.toDateString() ? styles.selectedDateButton : null,
+        ]}
+      >
+        <Text
+          style={[
+            styles.dateText,
+            selectedDate.toDateString() === item.toDateString() ? styles.selectedDateText : null,
+          ]}
+        >
+          {moment(item).format('ddd, DD')}
+        </Text>
+      </TouchableOpacity>
+    )}
+    showsHorizontalScrollIndicator={false}
+  />
+</View>
+
           <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
 
           {/* Time Slots Container */}
-          <View style={styles.timeSlotsContainer}>
+          <ScrollView style={styles.timeSlotsContainer}>
             <FlatList
               contentContainerStyle={styles.contentContainer}
               data={items[moment(selectedDate).format('YYYY-MM-DD')] || []}
@@ -268,7 +278,7 @@ const ScheduleScreen: React.FC = () => {
                 </View>
               }
             />
-          </View>
+          </ScrollView>
         </>
       )}
     </View>
@@ -279,7 +289,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 60,
-    backgroundColor: '#f7f39a', // e.g., '#FFFFFF' for white
+    backgroundColor: '#c5f0a4',
+  },
+   dateSelectorContainer: {
+    height: 80, // Ensure sufficient height for FlatList
+    paddingVertical: 8,
+    backgroundColor: '#c5f0a4',
+  },
+  dateButton: {
+    padding: 10,
+    
+    marginRight: 8,
+    
+    
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedDateButton: {
+    borderColor: Colors.primary,
+  },
+  dateText: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+  },
+  selectedDateText: {
+    color: Colors.primary,
   },
   title: {
     fontSize: 22,
@@ -332,25 +366,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.primary,
   },
-  dateButton: {
-    padding: 10,
-    borderRadius: 8,
-    marginRight: 8,
-    borderWidth: 2, // Add border width
-    borderColor: 'transparent', // Default border color
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  selectedDateButton: {
-    borderColor: Colors.primary, 
-  },
-  dateText: {
-    color: Colors.primary,
-    fontWeight: 'bold',
-  },
-  selectedDateText: {
-    borderColor: Colors.primary, 
-  },
+
   dateTitle: {
     fontSize: 18,
     color: Colors.primary,
@@ -366,6 +382,7 @@ const styles = StyleSheet.create({
   timelineContainer: {
     width: 40,
     alignItems: 'center',
+    
   },
   timelineDot: {
     width: 10,
@@ -376,7 +393,7 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: 2,
     height: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: '#226b80',
   },
   classContent: {
     flex: 1,
@@ -395,11 +412,11 @@ const styles = StyleSheet.create({
   startTime: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.primaryText,
+    color: Colors.primary,
   },
   endTime: {
     fontSize: 12,
-    color: Colors.secondaryText,
+    color: Colors.PRIMARY,
   },
   cardTitle: {
     fontSize: 16,
@@ -410,9 +427,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.primary,
   },
-  cardStatus: { // New style for appointment status
+  cardStatus: { 
     fontSize: 12,
-    color: Colors.secondaryText,
+    color: Colors.PRIMARY,
   },
   loading: {
     marginTop: 20,
@@ -427,17 +444,17 @@ const styles = StyleSheet.create({
   },
   
   timeSlotsContainer: {
-    minHeight: 300, // Ensure the container has a minimum height
+    minHeight: 300,
     paddingHorizontal: 16,
   },
   emptyContainer: {
-    height: 200, // Fixed height to occupy space when FlatList is empty
+    height: 200, 
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptyText: {
     fontSize: 16,
-    color: Colors.secondaryText,
+    color: Colors.primary,
   },
 });
 
