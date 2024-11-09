@@ -141,7 +141,7 @@ const SignupScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Image
                 style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios-filled/512/user.png' }}
+                source={{ uri: 'https://img.icons8.com/ios/50/000000/user--v1.png' }}
               />
               <TextInput
                 style={styles.inputs}
@@ -155,7 +155,7 @@ const SignupScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Image
                 style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios-filled/512/user.png' }}
+                source={{ uri: 'https://img.icons8.com/ios/50/000000/user--v1.png' }}
               />
               <TextInput
                 style={styles.inputs}
@@ -169,7 +169,7 @@ const SignupScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Image
                 style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios-filled/512/circled-envelope.png' }}
+                source={{ uri: 'https://img.icons8.com/ios/50/000000/new-post.png' }}
               />
               <TextInput
                 style={styles.inputs}
@@ -185,7 +185,7 @@ const SignupScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Image
                 style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios-glyphs/512/key.png' }}
+                source={{ uri: 'https://img.icons8.com/ios/50/000000/lock--v1.png' }}
               />
               <TextInput
                 style={styles.inputs}
@@ -201,7 +201,7 @@ const SignupScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Image
                 style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios-glyphs/512/key.png' }}
+                source={{ uri: 'https://img.icons8.com/ios/50/000000/lock--v1.png' }}
               />
               <TextInput
                 style={styles.inputs}
@@ -304,7 +304,7 @@ const SignupScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Image
                 style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios-filled/512/verification-code.png' }}
+                source={{ uri: 'https://img.icons8.com/ios/50/000000/verification-code.png' }}
               />
               <TextInput
                 style={styles.inputs}

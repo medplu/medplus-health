@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: 8,
-    // backgroundColor: '#f7f39a',
+    backgroundColor: '#f7f39a', // Uncomment this line
     borderRadius: 8,
     padding: 8,
     shadowColor: '#000',
