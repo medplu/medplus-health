@@ -234,33 +234,33 @@ const ScheduleScreen: React.FC = () => {
         <ActivityIndicator size="large" color={Colors.primary} style={styles.loading} />
       ) : (
         <>
-          {/* Date Selection */}
-         <View style={styles.dateSelectorContainer}>
-  <FlatList
-    horizontal
-    data={dateOptions}
-    keyExtractor={(item) => item.toISOString()}
-    renderItem={({ item }) => (
-      <TouchableOpacity
-        onPress={() => setSelectedDate(item)}
-        style={[
-          styles.dateButton,
-          selectedDate.toDateString() === item.toDateString() ? styles.selectedDateButton : null,
-        ]}
-      >
-        <Text
-          style={[
-            styles.dateText,
-            selectedDate.toDateString() === item.toDateString() ? styles.selectedDateText : null,
-          ]}
-        >
-          {moment(item).format('ddd, DD')}
-        </Text>
-      </TouchableOpacity>
-    )}
-    showsHorizontalScrollIndicator={false}
-  />
-</View>
+                    {/* Date Selection */}
+                  <View style={styles.dateSelectorContainer}>
+            <FlatList
+              horizontal
+              data={dateOptions}
+              keyExtractor={(item) => item.toISOString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => setSelectedDate(item)}
+                  style={[
+                    styles.dateButton,
+                    selectedDate.toDateString() === item.toDateString() ? styles.selectedDateButton : null,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.dateText,
+                      selectedDate.toDateString() === item.toDateString() ? styles.selectedDateText : null,
+                    ]}
+                  >
+                    {moment(item).format('ddd, DD')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
 
           <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
 
@@ -289,7 +289,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 60,
+    backgroundColor: '#c5f0a4',
   
+  },
+  header: {
+    marginBottom: 16,
+    backgroundColor: '#c5f0a4',
   },
    dateSelectorContainer: {
     height: 80, // Ensure sufficient height for FlatList
