@@ -3,12 +3,12 @@ import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ActivityIndi
 import { useSelector } from 'react-redux';
 import moment from 'moment';
 import useSchedule from '../../hooks/useSchedule';
-import useAppointments from '../../hooks/useAppointments'; // Import useAppointments
+import useAppointments from '../../hooks/useAppointments'; 
 import { selectUser } from '../store/userSlice';
 import Colors from '../../components/Shared/Colors';
-import axios from 'axios'; // Import axios for making API calls
+import axios from 'axios'; 
 
-// Define interfaces
+
 interface Patient {
   name: string;
 }
@@ -19,7 +19,7 @@ interface Appointment {
   date: string;
   time: string;
   status: string;
-  slotId: string; // Add slotId to associate appointment with a slot
+  slotId: string;
 }
 
 interface Slot {
@@ -29,8 +29,8 @@ interface Slot {
   isBooked: boolean;
   patientId?: Patient;
   date: string;
-  appointment?: Appointment; // Add optional appointment property
-  color?: string; // Add optional color property
+  appointment?: Appointment; 
+  color?: string; 
 }
 
 interface User {
@@ -40,19 +40,19 @@ interface User {
   };
 }
 
-// Define an array of colors for booked slots
-const bookedSlotColors = ['#e6c39a', '#d4a76c', '#c39156']; // Add more colors as needed
+
+const bookedSlotColors = ['#e6c39a', '#d4a76c', '#c39156']; 
 
 const ScheduleScreen: React.FC = () => {
   const user: User = useSelector(selectUser);
   const { schedule, fetchSchedule } = useSchedule();
-  const { appointments, loading: appointmentsLoading, error: appointmentsError } = useAppointments(); // Fetch appointments
+  const { appointments, loading: appointmentsLoading, error: appointmentsError } = useAppointments();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState<boolean>(true);
   const [items, setItems] = useState<{ [key: string]: Slot[] }>({});
   const [todayAppointments, setTodayAppointments] = useState<Slot[]>([]);
 
-  // Log user data when the component mounts
+ 
   useEffect(() => {
     console.log('User data:', user);
   }, [user]);
@@ -74,25 +74,24 @@ const ScheduleScreen: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    // Log appointments data to inspect structure
+    
     console.log('Appointments Data:', appointments);
 
     const transformSchedule = () => {
-      // Log the schedule data before transforming
+     
       console.log('Schedule data before transform:', schedule);
 
       const newItems: { [key: string]: Slot[] } = {};
       const todayAppointmentsList: Slot[] = [];
 
-      // Create a map of timeSlotId to appointment for quick lookup
+      
       const appointmentMap: { [key: string]: Appointment } = {};
       appointments.forEach((appointment) => {
-        if (appointment.timeSlotId) { // Use timeSlotId instead of slotId
+        if (appointment.timeSlotId) { 
           appointmentMap[appointment.timeSlotId] = appointment;
         }
       });
 
-      // Ensure schedule is an array
       if (Array.isArray(schedule)) {
         schedule.forEach((slot) => {
           const strDate = moment(slot.date).format('YYYY-MM-DD');
@@ -102,7 +101,7 @@ const ScheduleScreen: React.FC = () => {
 
           const { _id: slotId, startTime, endTime, isBooked, patientId, date } = slot;
 
-          // Find associated appointment using timeSlotId
+          
           const associatedAppointment = appointmentMap[slotId];
 
           const slotInfo: Slot = {
@@ -113,7 +112,7 @@ const ScheduleScreen: React.FC = () => {
                 : 'Booked Slot'
               : 'Available Slot',
             type: isBooked ? 'appointment' : 'availability',
-            appointment: associatedAppointment, // Attach appointment data if exists
+            appointment: associatedAppointment, 
             color: isBooked
               ? bookedSlotColors[todayAppointmentsList.length % bookedSlotColors.length]
               : '#a3de83',
@@ -137,7 +136,7 @@ const ScheduleScreen: React.FC = () => {
       setLoading(false);
     };
 
-    if (!appointmentsLoading && !appointmentsError) { // Ensure appointments data is loaded
+    if (!appointmentsLoading && !appointmentsError) { 
       transformSchedule();
     }
   }, [schedule, appointments, appointmentsLoading, appointmentsError]);
@@ -148,15 +147,15 @@ const ScheduleScreen: React.FC = () => {
       if (!professionalId) throw new Error('Professional ID not found');
 
       await axios.post(`https://medplus-health.onrender.com/api/schedule/resetElapsedSlots/${professionalId}`);
-      fetchSchedule(professionalId); // Refresh the schedule after resetting slots
+      fetchSchedule(professionalId); 
     } catch (error) {
       console.error('Error resetting elapsed slots:', error);
     }
   };
 
   useEffect(() => {
-    const interval = setInterval(resetElapsedSlots, 60000); // Check every minute
-    return () => clearInterval(interval); // Cleanup interval on component unmount
+    const interval = setInterval(resetElapsedSlots, 60000);
+    return () => clearInterval(interval);
   }, [user]);
 
   const renderClassItem = ({ item }: { item: Slot }) => (
@@ -229,13 +228,14 @@ const ScheduleScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <View></View>
       <Text style={styles.title}>Today's Schedule</Text>
       {loading ? (
         <ActivityIndicator size="large" color={Colors.primary} style={styles.loading} />
       ) : (
         <>
-                    {/* Date Selection */}
-                  <View style={styles.dateSelectorContainer}>
+                  
+          <View style={styles.dateSelectorContainer}>
             <FlatList
               horizontal
               data={dateOptions}
@@ -264,7 +264,7 @@ const ScheduleScreen: React.FC = () => {
 
           <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
 
-          {/* Time Slots Container */}
+        
           <ScrollView style={styles.timeSlotsContainer}>
             <FlatList
               contentContainerStyle={styles.contentContainer}
@@ -294,12 +294,16 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 16,
-    backgroundColor: '#c5f0a4',
+    
   },
    dateSelectorContainer: {
-    height: 80, // Ensure sufficient height for FlatList
+    height: 80, 
     paddingVertical: 8,
-    backgroundColor: '#c5f0a4',
+    backgroundColor: '#ffb03b',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    elevation: 4
+
   },
   dateButton: {
     padding: 10,
@@ -328,7 +332,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headerCard: {
-    backgroundColor: '#a3de83',
+    backgroundColor: '#f7f39a',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -405,7 +409,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: 8,
-    backgroundColor: '#f7f39a', // Uncomment this line
+    backgroundColor: '#f7f39a', 
     borderRadius: 8,
     padding: 8,
     shadowColor: '#000',
