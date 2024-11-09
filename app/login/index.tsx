@@ -24,6 +24,10 @@ const LoginScreen: React.FC = () => {
     setIsLoggingIn(true);
     try {
       const response = await GlobalApi.loginUser(email, password);
+    
+      if (!response || !response.data) {
+        throw new Error('Invalid response from server');
+      }
       setErrorMessage(null);
 
       const {

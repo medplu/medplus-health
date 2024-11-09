@@ -32,7 +32,7 @@ exports.getAppointmentsByDoctor = async (req, res) => {
     const appointments = await Appointment.find({
       doctorId,
       status: 'confirmed',
-      date: { $gte: today.toDate() }
+      
     }).populate('patientId'); // Only populates patientId
     res.status(200).json(appointments);
   } catch (error) {

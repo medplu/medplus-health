@@ -27,6 +27,9 @@ const useAppointments = () => {
     const dispatch = useDispatch();
     const { appointments, loading, error } = useSelector((state) => state.appointments);
     const user = useSelector(selectUser);
+    
+    // Define professionalId in the global scope of the hook
+    const professionalId = user?.professional?._id;
 
     useEffect(() => {
         const fetchAppointments = async () => {
@@ -39,7 +42,8 @@ const useAppointments = () => {
         
                     if (user.professional) {
                         const professionalId = user.professional._id;
-                        response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${professionalId}/all`);
+                        // Use the getAppointmentsByDoctor route instead of /all
+                        response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${professionalId}`);
                     } else {
                         const userId = user.userId;
                         response = await fetch(`https://medplus-health.onrender.com/api/appointments/user/${userId}`);
@@ -197,12 +201,69 @@ const useAppointments = () => {
         }
     };
 
+    // New function to fetch appointments by doctor using the getAppointmentsByDoctor route
+    const fetchAppointmentsByDoctor = async () => {
+        // Ensure professionalId is available
+        if (!professionalId) {
+            console.error('Professional ID is not defined.');
+            dispatch(setError('Professional ID is missing.'));
+            return;
+        }
+
+        dispatch(setLoading(true));
+        dispatch(setError(null));
+
+        try {
+            const response = await fetch(`https://medplus-health.onrender.com/api/appointments/doctor/${professionalId}`);
+            const data = await response.json();
+            console.log('Raw Data:', data); // Added logging for raw data
+            const appointmentsArray = Array.isArray(data) ? data : [];
+            dispatch(setAppointments(appointmentsArray));
+
+            // Log fetched appointments
+            console.log('Fetched Appointments by Doctor:', appointmentsArray);
+
+            // Get current date and time
+            const now = moment();
+
+            // Filter upcoming appointments by date and status
+            const upcomingAppointments = appointmentsArray.filter(
+                (appointment) =>
+                    appointment.status === 'confirmed' &&
+                    moment(appointment.date).isSameOrAfter(now, 'day')
+            );
+
+            const requestedAppointments = appointmentsArray.filter(
+                (appointment) => appointment.status === 'pending'
+            );
+            const completedAppointments = appointmentsArray.filter(
+                (appointment) => appointment.status === 'completed'
+            );
+
+            // Log filtered appointments
+            console.log('Upcoming Appointments:', upcomingAppointments);
+            console.log('Requested Appointments:', requestedAppointments);
+            console.log('Completed Appointments:', completedAppointments);
+
+            // Dispatch filtered appointments to Redux state
+            dispatch(setUpcomingAppointments(upcomingAppointments));
+            dispatch(setRequestedAppointments(requestedAppointments));
+            dispatch(setCompletedAppointments(completedAppointments));
+        } catch (err) {
+            console.error('Error fetching appointments by doctor:', err.message);
+            dispatch(setError('Error fetching appointments by doctor'));
+        } finally {
+            dispatch(setLoading(false));
+        }
+    };
+
     return {
         appointments,
         loading,
         error,
         confirmAppointment,
         cancelAppointment,
+        fetchAppointmentsByDoctor, // Expose the new function
     };
 };
 

@@ -51,40 +51,30 @@ const ScheduleScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [items, setItems] = useState<{ [key: string]: Slot[] }>({});
   const [todayAppointments, setTodayAppointments] = useState<Slot[]>([]);
+  const [scheduleFetched, setScheduleFetched] = useState<boolean>(false);
 
- 
   useEffect(() => {
-    console.log('User data:', user);
-  }, [user]);
+    const fetchProfessionalId = async () => {
+      try {
+        const professionalId = user?.professional?._id;
+        if (!professionalId) throw new Error('Professional ID not found');
+        await fetchSchedule(professionalId);
+        setScheduleFetched(true);
+      } catch (error) {
+        console.error('Error fetching professional ID:', error);
+      }
+    };
 
-  const fetchProfessionalId = async () => {
-    try {
-      const professionalId = user?.professional?._id;
-      if (!professionalId) throw new Error('Professional ID not found');
-      
-      console.log('Professional ID:', professionalId);
-      fetchSchedule(professionalId);
-    } catch (error) {
-      console.error('Error fetching professional ID:', error);
+    if (user?.professional?._id && !scheduleFetched) {
+      fetchProfessionalId();
     }
-  };
+  }, [user, scheduleFetched]);
 
   useEffect(() => {
-    fetchProfessionalId();
-  }, [user]);
-
-  useEffect(() => {
-    
-    console.log('Appointments Data:', appointments);
-
     const transformSchedule = () => {
-     
-      console.log('Schedule data before transform:', schedule);
-
       const newItems: { [key: string]: Slot[] } = {};
       const todayAppointmentsList: Slot[] = [];
 
-      
       const appointmentMap: { [key: string]: Appointment } = {};
       appointments.forEach((appointment) => {
         if (appointment.timeSlotId) { 
@@ -100,8 +90,6 @@ const ScheduleScreen: React.FC = () => {
           }
 
           const { _id: slotId, startTime, endTime, isBooked, patientId, date } = slot;
-
-          
           const associatedAppointment = appointmentMap[slotId];
 
           const slotInfo: Slot = {
@@ -128,9 +116,6 @@ const ScheduleScreen: React.FC = () => {
         console.warn('Schedule is not an array:', schedule);
       }
 
-      console.log('Transformed Schedule:', newItems);
-      console.log('Today\'s Appointments:', todayAppointmentsList);
-
       setItems(newItems);
       setTodayAppointments(todayAppointmentsList);
       setLoading(false);
@@ -141,54 +126,49 @@ const ScheduleScreen: React.FC = () => {
     }
   }, [schedule, appointments, appointmentsLoading, appointmentsError]);
 
-  const resetElapsedSlots = async () => {
-    try {
-      const professionalId = user?.professional?._id;
-      if (!professionalId) throw new Error('Professional ID not found');
-
-      await axios.post(`https://medplus-health.onrender.com/api/schedule/resetElapsedSlots/${professionalId}`);
-      fetchSchedule(professionalId); 
-    } catch (error) {
-      console.error('Error resetting elapsed slots:', error);
-    }
-  };
-
   useEffect(() => {
-    const interval = setInterval(resetElapsedSlots, 60000);
-    return () => clearInterval(interval);
-  }, [user]);
+    console.log('Schedule:', schedule);
+    console.log('Appointments:', appointments);
+    console.log('Today\'s Appointments:', todayAppointments);
+    console.log('Selected Date:', selectedDate);
+    // ...existing code...
+  }, [schedule, appointments, todayAppointments, selectedDate]);
 
   const renderClassItem = ({ item }: { item: Slot }) => (
     <View style={styles.classItem}>
       <View style={styles.timelineContainer}>
         <View style={styles.timelineDot} />
-        <View style={styles.timelineLine} />
+        <View
+          style={[
+            styles.timelineLine,
+            { backgroundColor: item.isBooked ? item.color || '#e6c39a' : '#226b80' },
+          ]}
+        />
       </View>
 
       <View style={styles.classContent}>
-        <View style={styles.classHours}>
-          <Text style={styles.startTime}>{item.startTime}</Text>
-          <Text style={styles.endTime}>{item.endTime}</Text>
-        </View>
+        <Text style={styles.timeText}>
+          {item.startTime} - {item.endTime ? item.endTime : ''}
+        </Text>
 
-        <View style={[styles.card, { backgroundColor: item.color || '#a3de83' }]}>
-          {item.type === 'appointment' ? (
-            item.appointment ? (
-              <>
-                <Text style={styles.cardTitle}>{item.appointment.patientId.name}</Text>
-                <Text style={styles.cardDate}>{moment(item.appointment.date).format('DD MMM, HH:mm')}</Text>
-                <Text style={styles.cardStatus}>{item.appointment.status}</Text>
-              </>
-            ) : (
-              <Text style={styles.cardTitle}>Booked Slot</Text>
-            )
-          ) : (
+        {item.type === 'appointment' ? (
+          item.appointment ? (
             <>
-              <Text style={styles.cardTitle}>{item.name}</Text>
-              <Text style={styles.cardDate}>{moment(item.date).format('DD MMM, HH:mm')}</Text>
+              <Text style={styles.cardTitle}>{item.appointment.patientId.name}</Text>
+              <Text style={styles.cardDate}>
+                {moment(item.appointment.date).format('DD MMM, HH:mm')}
+              </Text>
+              <Text style={styles.cardStatus}>{item.appointment.status}</Text>
             </>
-          )}
-        </View>
+          ) : (
+            <Text style={styles.cardTitle}>Booked Slot</Text>
+          )
+        ) : (
+          <>
+            <Text style={styles.cardTitle}>{item.name}</Text>
+            <Text style={styles.cardDate}>{moment(item.date).format('DD MMM, HH:mm')}</Text>
+          </>
+        )}
       </View>
     </View>
   );
@@ -265,20 +245,18 @@ const ScheduleScreen: React.FC = () => {
           <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
 
         
-          <ScrollView style={styles.timeSlotsContainer}>
-            <FlatList
-              contentContainerStyle={styles.contentContainer}
-              data={items[moment(selectedDate).format('YYYY-MM-DD')] || []}
-              ListHeaderComponent={renderHeader}
-              renderItem={renderClassItem}
-              keyExtractor={(item, index) => index.toString()}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>No time slots available for this date.</Text>
-                </View>
-              }
-            />
-          </ScrollView>
+          <FlatList
+            contentContainerStyle={styles.contentContainer}
+            data={items[moment(selectedDate).format('YYYY-MM-DD')] || []}
+            ListHeaderComponent={renderHeader}
+            renderItem={renderClassItem}
+            keyExtractor={(item, index) => index.toString()}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No time slots available for this date.</Text>
+              </View>
+            }
+          />
         </>
       )}
     </View>
@@ -332,7 +310,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headerCard: {
-    backgroundColor: '#f7f39a',
+    backgroundColor: '#a3de83',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -402,14 +380,12 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: 2,
     flex: 1, 
-    backgroundColor: '#226b80',
   },
   classContent: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     marginLeft: 8,
-    backgroundColor: '#f7f39a', 
     borderRadius: 8,
     padding: 8,
     shadowColor: '#000',
@@ -417,17 +393,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
+    backgroundColor: '#f7f39a',
   },
-  card: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: '#a3de83',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+  timeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.primary,
+    marginBottom: 4,
   },
   startTime: {
     fontSize: 14,
@@ -442,10 +414,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: Colors.primary,
+    marginBottom: 4,
   },
   cardDate: {
     fontSize: 14,
     color: Colors.primary,
+    marginBottom: 4,
   },
   cardStatus: { 
     fontSize: 12,
@@ -464,9 +438,11 @@ const styles = StyleSheet.create({
   },
   
   timeSlotsContainer: {
-    minHeight: 300,
-    paddingHorizontal: 16,
+    fontSize: 16,
+    color: Colors.primary,
+    fontWeight: '600',
   },
+  
   emptyContainer: {
     height: 200, 
     justifyContent: 'center',
@@ -476,6 +452,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.primary,
   },
+  card: {
+    width: '100%', // Ensure card takes full width
+    padding: 10,
+    borderRadius: 8,
+    // ...removed backgroundColor...
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
 });
 
 export default ScheduleScreen;
+

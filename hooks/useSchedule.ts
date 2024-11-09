@@ -34,10 +34,6 @@ const useSchedule = (): UseScheduleHook => {
     fetchProfessionalId();
   }, []);
 
-
-
-
-
   const fetchSchedule = async (professionalId: string) => {
     try {
       const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);
@@ -49,13 +45,6 @@ const useSchedule = (): UseScheduleHook => {
     } catch (error) {
       console.error('Error fetching schedule:', axios.isAxiosError(error) ? error.message : error);
     }
-  };
-
-
-  const validateProfessionalId = (id: string): boolean => {
-    // Add your validation logic here (e.g., regex for ObjectId format)
-    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-    return objectIdRegex.test(id);
   };
 
   return {

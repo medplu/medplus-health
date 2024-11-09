@@ -99,6 +99,8 @@ const Layout = () => {
         <Stack.Screen name="pharmacist/tabs" options={{ headerShown: false }} />
         <Stack.Screen name="appointment/[appointmentId]" options={{ title: 'Appointment Details' }} />
         <Stack.Screen name="PrescriptionScreen" options={{ title: 'Prescription' }} />
+        <Stack.Screen name="tasks" options={{ title: 'Tasks', headerShown: true }} />
+        <Stack.Screen name="consultations/index" options={{ title: 'Patients', headerShown: true }} />
       </Stack>
     </SafeAreaView>
   );
