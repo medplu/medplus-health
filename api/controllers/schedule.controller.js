@@ -19,6 +19,11 @@ exports.createOrUpdateSchedule = async (req, res) => {
             return res.status(400).json({ message: 'Each availability entry must have date, startTime, endTime, and status.' });
         }
 
+        // Ensure date is in ISO format
+        if (!moment(slot.date, moment.ISO_8601, true).isValid()) {
+            return res.status(400).json({ message: 'Invalid date format. Must be in ISO format.' });
+        }
+
         // Optional: Validate the status field (for example, must be "available" or "booked")
         const validStatuses = ['available', 'booked'];
         if (!validStatuses.includes(status)) {
@@ -90,7 +95,7 @@ exports.getAvailableSlots = async (req, res) => {
 
         let availableSlots = schedule.slots.filter(slot => !slot.isBooked);
         if (day) {
-            availableSlots = availableSlots.filter(slot => moment(slot.date).format('dddd') === day);
+            availableSlots = availableSlots.filter(slot => moment(slot.date, moment.ISO_8601).format('dddd') === day);
         }
 
         return res.status(200).json(availableSlots);
@@ -113,7 +118,7 @@ exports.resetElapsedSlots = async (req, res) => {
 
         const now = moment();
         schedule.slots.forEach(slot => {
-            if (slot.isBooked && moment(slot.endTime).isBefore(now)) {
+            if (slot.isBooked && moment(slot.endTime, moment.ISO_8601).isBefore(now)) {
                 slot.isBooked = false;
             }
         });
