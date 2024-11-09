@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 60,
-    backgroundColor: '#c5f0a4',
+  
   },
    dateSelectorContainer: {
     height: 80, // Ensure sufficient height for FlatList
@@ -382,17 +382,17 @@ const styles = StyleSheet.create({
   timelineContainer: {
     width: 40,
     alignItems: 'center',
-    
   },
   timelineDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: '#346473',
+    marginBottom: 4, 
   },
   timelineLine: {
     width: 2,
-    height: '100%',
+    flex: 1, 
     backgroundColor: '#226b80',
   },
   classContent: {
@@ -400,9 +400,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: 8,
-    backgroundColor: '#f7f39a',
+    // backgroundColor: '#f7f39a',
     borderRadius: 8,
     padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  card: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#a3de83',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
