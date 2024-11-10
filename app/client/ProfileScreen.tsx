@@ -67,14 +67,14 @@ export default function ProfileScreen() {
     });
 
     try {
-      const response = await axios.post('https://medplus-app.onrender.com/api/upload-image', formData, {
+      const response = await axios.post('https://medplus-health.onrender.com/api/upload-image', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       return response.data.imageUrl; // Assuming the response contains the URL of the uploaded image
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error uploading image:', error.response ? error.response.data : error.message);
       Alert.alert('Error', 'Failed to upload image');
       return null;
     }

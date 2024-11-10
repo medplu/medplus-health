@@ -7,6 +7,7 @@ const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken'); 
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
+const path = require('path');
 
 // Configure Cloudinary
 cloudinary.config({
@@ -245,39 +246,35 @@ exports.deactivateAccount = async (req, res) => {
 // Controller method to update profile image
 exports.updateProfileImage = async (req, res) => {
     try {
-      // Check if the file is provided in the request
-      if (!req.files || !req.files.image) {
+      const file = req.file;
+  
+      if (!file) {
         return res.status(400).json({ message: 'No image file uploaded' });
       }
   
-      const imageFile = req.files.image;
-  
       // Upload image to Cloudinary
-      cloudinary.uploader.upload(imageFile.tempFilePath, { 
-        folder: 'mediplus/users' // Optional: Specify a folder in Cloudinary
-      }, async (err, result) => {
-        if (err) {
-          return res.status(500).json({ message: 'Error uploading image', error: err });
-        }
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder: 'medplus/users',
+      });
   
-        // Extract the URL of the uploaded image
-        const imageUrl = result.secure_url;
+      // Remove the temporary file
+      fs.unlinkSync(file.path);
   
-        // Update the user's profile image URL in the database
-        const userId = req.user._id; // Assuming the user's ID is stored in req.user (from the authenticate middleware)
+      // Update the user's profile image URL in the database
+      const userId = req.user._id; // Assuming the user's ID is stored in req.user (from the authenticate middleware)
   
-        const updatedUser = await User.findByIdAndUpdate(
-          userId, 
-          { profileImage: imageUrl }, 
-          { new: true }
-        );
+      const updatedUser = await User.findByIdAndUpdate(
+        userId, 
+        { profileImage: result.secure_url }, 
+        { new: true }
+      );
   
-        return res.status(200).json({
-          message: 'Profile image updated successfully',
-          imageUrl: updatedUser.profileImage, // Send back the updated image URL
-        });
+      return res.status(200).json({
+        message: 'Profile image updated successfully',
+        imageUrl: updatedUser.profileImage, // Send back the updated image URL
       });
     } catch (error) {
+      console.error('Error uploading image:', error);
       return res.status(500).json({ message: 'Server error', error: error.message });
     }
   };

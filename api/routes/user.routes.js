@@ -2,7 +2,19 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user.controller');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' }); // Temporary storage for uploaded files
+const path = require('path');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
 
 // User routes
 router.post('/register', userController.register);
@@ -25,7 +37,7 @@ router.patch('/change-password', userController.changePassword);
 router.patch('/deactivate', userController.deactivateAccount);
 
 // Route to update profile image
-router.patch('/profile-image', userController.updateProfileImage);
+router.patch('/profile-image', upload.single('image'), userController.updateProfileImage);
 
 // Route to upload image
 router.post('/upload-image', upload.single('file'), userController.uploadImage);
