@@ -82,44 +82,55 @@ export default function ProfileScreen() {
 
   // Function to handle image picking with compression and resizing
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permissionResult.granted === false) {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
       Alert.alert('Permission to access camera roll is required!');
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.5, // Compress the image
+      quality: 1,
     });
 
-    if (!result.canceled) {
-      const resizedImage = await ImageManipulator.manipulateAsync(
-        result.assets[0].uri,
-        [{ resize: { width: 800 } }], // Resize the image to a width of 800px
-        { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
-      );
-      const imageUrl = await uploadImageToBackend(resizedImage.uri);
-      if (imageUrl) {
-        setForm((prevForm) => ({ ...prevForm, profileImage: imageUrl }));
-      }
+    if (!result.canceled && result.assets) {
+      setForm((prevForm) => ({ ...prevForm, profileImage: result.assets[0].uri })); // Accessing the uri from the assets array
     }
   };
 
   const handleUpdateProfile = async () => {
     try {
+      const formData = new FormData();
+      formData.append('firstName', form.firstName);
+      formData.append('lastName', form.lastName);
+      formData.append('email', form.email);
+      if (form.profileImage) {
+        const uriParts = form.profileImage.split('.');
+        const fileType = uriParts[uriParts.length - 1];
+        formData.append('profileImage', {
+          uri: form.profileImage,
+          name: `photo.${fileType}`,
+          type: `image/${fileType}`,
+        } as any); // TypeScript workaround for FormData
+      }
+
       const response = await axios.put(
         `https://medplus-app.onrender.com/api/users/update-profile/${userId}`, // Use userId for the request
-        form
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       );
+
       if (response.status === 200) {
         dispatch(updateUserProfile({
           name: `${form.firstName} ${form.lastName}`,
           email: form.email,
-          profileImage: form.profileImage,
+          profileImage: response.data.user.profileImage, // Use the updated profileImage URL from the response
         }));
         Alert.alert('Success', 'Profile updated successfully');
       }

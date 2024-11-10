@@ -164,31 +164,49 @@ exports.changePassword = async (req, res) => {
 
 // Update user profile
 exports.updateUserProfile = async (req, res) => {
-    try {
-        const userId = req.userId; // Assuming user ID is stored in the token
-        const { firstName, lastName, email, gender, profileImage } = req.body;
+  try {
+    const userId = req.userId; // Assuming user ID is stored in the token
+    const { firstName, lastName, email, gender } = req.body;
 
-        // Find the user to update
-        const user = await User.findById(userId);
+    // Find the user to update
+    const user = await User.findById(userId);
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Update user details
-        user.firstName = firstName || user.firstName;
-        user.lastName = lastName || user.lastName;
-        user.email = email || user.email;
-        user.gender = gender || user.gender;
-        user.profileImage = profileImage || user.profileImage;
-
-        await user.save();
-
-        res.status(200).json({ message: 'Profile updated successfully' });
-    } catch (error) {
-        console.log("Error updating user profile:", error);
-        res.status(500).json({ error: 'Internal server error' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
+
+    let profileImage = user.profileImage;
+
+    // Check if an image file is uploaded
+    if (req.files && req.files.profileImage) {
+      console.log('Image file detected:', req.files.profileImage); // Debugging log
+      const file = req.files.profileImage;
+      const uploadedResponse = await cloudinary.uploader.upload(file.tempFilePath, {
+        folder: 'medplus/users', // Optionally, specify a folder in Cloudinary
+      });
+      profileImage = uploadedResponse.secure_url;
+      console.log('Image uploaded to Cloudinary:', profileImage); // Debugging log
+    } else {
+      console.warn('No image file detected, proceeding without it.'); // Changed to warn log for clarity
+    }
+
+    // Update user details
+    user.firstName = firstName || user.firstName;
+    user.lastName = lastName || user.lastName;
+    user.email = email || user.email;
+    user.gender = gender || user.gender;
+    user.profileImage = profileImage;
+
+    await user.save();
+
+    res.status(200).json({ 
+      message: 'Profile updated successfully',
+      user: user // Include the updated user object in the response
+    });
+  } catch (error) {
+    console.log("Error updating user profile:", error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
 // Verify email
@@ -253,7 +271,7 @@ exports.updateProfileImage = async (req, res) => {
     }
 
     // Upload image to Cloudinary
-    const result = await cloudinary.uploader.upload(file.path, {
+    const result = await cloudinary.uploader.upload(file.tempFilePath, {
       folder: 'medplus/users',
     });
 
