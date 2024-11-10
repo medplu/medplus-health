@@ -126,7 +126,6 @@ app.use('/api', prescriptionRoutes); // Use the prescription routes
 const appointmentsRoute = require('./routes/appointments');
 app.use('/api/appointments', appointmentsRoute);
 
-
 app.use('/prescriptions', prescriptionRoutes);
 
 // Define the route to fill the template with prescription data
