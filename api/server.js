@@ -10,6 +10,8 @@ const { Server } = require("socket.io");
 const fileUpload = require("express-fileupload");
 const cloudinary = require('cloudinary').v2;
 const path = require('path');
+const fs = require('fs');
+const ejs = require('ejs');
 dotenv.config();
 
 cloudinary.config({
@@ -146,6 +148,25 @@ app.post('/api/fill-template', (req, res) => {
     // Send the filled template as the response
     res.send(filledTemplate);
   });
+});
+
+// Define the route to upload images to Cloudinary
+app.post('/api/upload-image', async (req, res) => {
+  if (!req.files || !req.files.image) {
+    return res.status(400).send('No image file uploaded');
+  }
+
+  const imageFile = req.files.image;
+
+  try {
+    const result = await cloudinary.uploader.upload(imageFile.tempFilePath, {
+      folder: 'profile_images', // Optional: specify a folder in Cloudinary
+    });
+    res.json({ imageUrl: result.secure_url });
+  } catch (error) {
+    console.error('Error uploading image to Cloudinary:', error);
+    res.status(500).send('Error uploading image');
+  }
 });
 
 // Handle WebSocket connections

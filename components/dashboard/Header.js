@@ -14,6 +14,8 @@ export default function Header() {
   // Obtain user data from Redux state
   const user = useSelector(selectUser);
 
+  console.log('User:', user);
+
   const handleLogout = async () => {
     try {
       dispatch(logout()); // Dispatch logout action

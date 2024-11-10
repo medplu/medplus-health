@@ -55,7 +55,25 @@ export default function ProfileScreen() {
     setForm((prevForm) => ({ ...prevForm, [name]: value }));
   };
 
-  // Function to handle image picking with compression
+  // Function to upload image to cloud storage
+  const uploadImageToCloud = async (base64Image) => {
+    try {
+      const response = await axios.post('https://medplus-app.onrender.com/api/upload-image', {
+        image: base64Image,
+      }, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.imageUrl; // Assuming the response contains the URL of the uploaded image
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      Alert.alert('Error', 'Failed to upload image');
+      return null;
+    }
+  };
+
+  // Function to handle image picking with compression and resizing
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -73,13 +91,16 @@ export default function ProfileScreen() {
 
     if (!result.canceled) {
       if (Platform.OS !== 'web') {
-        const compressedImage = await ImageManipulator.manipulateAsync(
+        const resizedImage = await ImageManipulator.manipulateAsync(
           result.assets[0].uri,
-          [],
+          [{ resize: { width: 800 } }], // Resize the image to a width of 800px
           { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
         );
-        const base64Image = await FileSystem.readAsStringAsync(compressedImage.uri, { encoding: FileSystem.EncodingType.Base64 });
-        setForm((prevForm) => ({ ...prevForm, profileImage: `data:image/jpeg;base64,${base64Image}` }));
+        const base64Image = await FileSystem.readAsStringAsync(resizedImage.uri, { encoding: FileSystem.EncodingType.Base64 });
+        const imageUrl = await uploadImageToCloud(base64Image);
+        if (imageUrl) {
+          setForm((prevForm) => ({ ...prevForm, profileImage: imageUrl }));
+        }
       } else {
         setForm((prevForm) => ({ ...prevForm, profileImage: result.assets[0].uri }));
       }

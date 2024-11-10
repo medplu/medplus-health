@@ -1,6 +1,6 @@
 // Clinics.tsx
 import React, { useEffect } from 'react';
-import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchClinics, filterClinics, selectClinics } from '../../app/store/clinicSlice'; // Update the import path as needed
 import SubHeading from '../dashboard/SubHeading';
@@ -17,6 +17,8 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   const [fontsLoaded] = useFonts({
     'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
   });
+
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -40,6 +42,16 @@ const Clinics = ({ searchQuery, onViewAll }) => {
     }
   }, [searchQuery, dispatch]);
 
+  useEffect(() => {
+    if (!loading && filteredClinicList.length > 0) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [loading, filteredClinicList]);
+
   const handlePress = async (item) => {
     router.push({
       pathname: `/hospital/book-appointment/${item._id}`,
@@ -58,8 +70,8 @@ const Clinics = ({ searchQuery, onViewAll }) => {
         )}
         <View style={styles.textContainer}>
           <Text style={styles.clinicName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
-          <Text style={styles.clinicAddress} numberOfLines={1} ellipsizeMode="tail">{item.address}</Text>
           <Text style={styles.clinicCategory} numberOfLines={1} ellipsizeMode="tail">{item.category}</Text>
+          <Text style={styles.clinicAddress} numberOfLines={1} ellipsizeMode="tail">{item.address}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -74,7 +86,7 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   }
 
   return (
-    <View style={{ marginTop: 10 }}>
+    <Animated.View style={{ marginTop: 10, opacity: fadeAnim }}>
       <SubHeading subHeadingTitle={'Discover Clinics Near You'} onViewAll={onViewAll} />
       <FlatList
         data={filteredClinicList}
@@ -83,7 +95,7 @@ const Clinics = ({ searchQuery, onViewAll }) => {
         keyExtractor={item => item._id.toString()}
         showsHorizontalScrollIndicator={false}
       />
-    </View>
+    </Animated.View>
   );
 };
 

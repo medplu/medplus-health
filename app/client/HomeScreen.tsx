@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Dimensions, ActivityIndicator, Text } from 'react-native';
+import { View, FlatList, StyleSheet, Dimensions, Text } from 'react-native';
 import AppSearchBar from '../../components/dashboard/SearchBar';
 import Category from '../../components/dashboard/Category';
 import Doctors from '../../components/dashboard/Doctors';
@@ -7,6 +7,9 @@ import Clinics from '../../components/dashboard/Clinics';
 import Colors from '../../components/Shared/Colors';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
+import DoctorsSkeleton from '../../components/dashboard/DoctorsSkeleton'; // Import Doctors Skeleton
+import ClinicsSkeleton from '../../components/dashboard/ClinicsSkeleton'; // Import Clinics Skeleton
+import SearchBarSkeleton from '../../components/dashboard/SearchBarSkeleton'; // Import SearchBar Skeleton
 
 const { width, height } = Dimensions.get('window');
 
@@ -54,7 +57,9 @@ export default function Home() {
   const renderItem = ({ item }) => {
     switch (item.key) {
       case 'searchBar':
-        return (
+        return loading ? (
+          <SearchBarSkeleton />  // Show SearchBar skeleton while loading
+        ) : (
           <AppSearchBar
             value={searchQuery}
             onChangeText={(query) => setSearchQuery(query)}
@@ -68,7 +73,9 @@ export default function Home() {
           />
         );
       case 'doctors':
-        return (
+        return loading ? (
+          <DoctorsSkeleton />  // Show Doctors skeleton while loading
+        ) : (
           <Doctors
             searchQuery={searchQuery}
             selectedCategory={selectedCategory}
@@ -76,7 +83,9 @@ export default function Home() {
           />
         );
       case 'clinics':
-        return (
+        return loading ? (
+          <ClinicsSkeleton />  // Show Clinics skeleton while loading
+        ) : (
           <Clinics
             searchQuery={searchQuery}
             onViewAll={() => handleViewAll('Clinics')}
@@ -86,14 +95,6 @@ export default function Home() {
         return null;
     }
   };
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.PRIMARY} />
-      </View>
-    );
-  }
 
   if (error) {
     return (
@@ -119,12 +120,12 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.ligh_gray,
+    backgroundColor: Colors.light_gray,
     padding: 20,
   },
   scrollView: {
     paddingVertical: 20,
-    backgroundColor: Colors.ligh_gray,
+    backgroundColor: Colors.light_gray,
   },
   loadingContainer: {
     flex: 1,

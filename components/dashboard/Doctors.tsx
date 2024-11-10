@@ -18,7 +18,7 @@ interface DoctorsProps {
   searchQuery: string;
   selectedCategory: string;
   onViewAll: (category: string) => void;
-  excludeDoctorId?: string; // Add this line
+  excludeDoctorId?: string;
 }
 
 const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onViewAll, excludeDoctorId }) => {
