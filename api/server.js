@@ -11,7 +11,7 @@ const fileUpload = require("express-fileupload");
 const cloudinary = require('cloudinary').v2;
 const path = require('path');
 const fs = require('fs');
-const ejs = require('ejs');
+const ejs = require('ejs'); // Ensure ejs is imported
 dotenv.config();
 
 cloudinary.config({
