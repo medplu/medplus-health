@@ -245,63 +245,57 @@ exports.deactivateAccount = async (req, res) => {
 };
 // Controller method to update profile image
 exports.updateProfileImage = async (req, res) => {
-    try {
-      const file = req.file;
-  
-      if (!file) {
-        return res.status(400).json({ message: 'No image file uploaded' });
-      }
-  
-      // Upload image to Cloudinary
-      const result = await cloudinary.uploader.upload(file.path, {
-        folder: 'medplus/users',
-      });
-  
-      // Remove the temporary file
-      fs.unlinkSync(file.path);
-  
-      // Update the user's profile image URL in the database
-      const userId = req.user._id; // Assuming the user's ID is stored in req.user (from the authenticate middleware)
-  
-      const updatedUser = await User.findByIdAndUpdate(
-        userId, 
-        { profileImage: result.secure_url }, 
-        { new: true }
-      );
-  
-      return res.status(200).json({
-        message: 'Profile image updated successfully',
-        imageUrl: updatedUser.profileImage, // Send back the updated image URL
-      });
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      return res.status(500).json({ message: 'Server error', error: error.message });
+  try {
+    const { image } = req.body;
+
+    if (!image) {
+      return res.status(400).json({ message: 'No image file uploaded' });
     }
-  };
+
+    // Upload image to Cloudinary
+    const result = await cloudinary.uploader.upload(image, {
+      folder: 'medplus/users',
+    });
+
+    // Update the user's profile image URL in the database
+    const userId = req.user._id; // Assuming the user's ID is stored in req.user (from the authenticate middleware)
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId, 
+      { profileImage: result.secure_url }, 
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: 'Profile image updated successfully',
+      imageUrl: updatedUser.profileImage, // Send back the updated image URL
+    });
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 
 // Controller method to handle image upload
 exports.uploadImage = async (req, res) => {
-    try {
-      const file = req.file;
-  
-      if (!file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-      }
-  
-      // Upload image to Cloudinary
-      const result = await cloudinary.uploader.upload(file.path, {
-        folder: 'medplus/users',
-      });
-  
-      // Remove the temporary file
-      fs.unlinkSync(file.path);
-  
-      res.status(200).json({ imageUrl: result.secure_url });
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      res.status(500).json({ message: 'Server error', error: error.message });
+  try {
+    const { file } = req.body;
+
+    if (!file) {
+      return res.status(400).json({ message: 'No file uploaded' });
     }
-  };
+
+    // Upload image to Cloudinary
+    const result = await cloudinary.uploader.upload(file, {
+      folder: 'medplus/users',
+    });
+
+    res.status(200).json({ imageUrl: result.secure_url });
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 
 
 exports.checkUserExists = async (req, res) => {

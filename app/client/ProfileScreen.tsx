@@ -67,7 +67,7 @@ export default function ProfileScreen() {
     });
 
     try {
-      const response = await axios.post('https://medplus-health.onrender.com/api/upload-image', formData, {
+      const response = await axios.post('https://medplus-app.onrender.com/api/upload-image', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
