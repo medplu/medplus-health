@@ -15,16 +15,16 @@ router.get('/auth/check-user', userController.checkUserExists);
 
 
 // Route to update user profile
-router.patch('/profile', authenticate, userController.updateUserProfile);
+router.patch('/profile', userController.updateUserProfile);
 
 // Route to change password
-router.patch('/change-password', authenticate, userController.changePassword);
+router.patch('/change-password', userController.changePassword);
 
 // Route to deactivate user account
-router.patch('/deactivate', authenticate, userController.deactivateAccount);
+router.patch('/deactivate', userController.deactivateAccount);
 
 // Route to update profile image
-router.patch('/profile-image', authenticate, userController.updateProfileImage);
+router.patch('/profile-image', userController.updateProfileImage);
 
 
 module.exports = router;
