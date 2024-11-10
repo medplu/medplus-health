@@ -246,14 +246,14 @@ exports.deactivateAccount = async (req, res) => {
 // Controller method to update profile image
 exports.updateProfileImage = async (req, res) => {
   try {
-    const { image } = req.body;
+    const { file } = req.files;
 
-    if (!image) {
+    if (!file) {
       return res.status(400).json({ message: 'No image file uploaded' });
     }
 
     // Upload image to Cloudinary
-    const result = await cloudinary.uploader.upload(image, {
+    const result = await cloudinary.uploader.upload(file.path, {
       folder: 'medplus/users',
     });
 
@@ -279,14 +279,14 @@ exports.updateProfileImage = async (req, res) => {
 // Controller method to handle image upload
 exports.uploadImage = async (req, res) => {
   try {
-    const { file } = req.body;
+    const { file } = req.files;
 
     if (!file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
     // Upload image to Cloudinary
-    const result = await cloudinary.uploader.upload(file, {
+    const result = await cloudinary.uploader.upload(file.path, {
       folder: 'medplus/users',
     });
 
