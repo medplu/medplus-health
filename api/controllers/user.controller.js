@@ -6,6 +6,14 @@ const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken'); 
 const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -271,6 +279,30 @@ exports.updateProfileImage = async (req, res) => {
       });
     } catch (error) {
       return res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  };
+
+// Controller method to handle image upload
+exports.uploadImage = async (req, res) => {
+    try {
+      const file = req.file;
+  
+      if (!file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+  
+      // Upload image to Cloudinary
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder: 'medplus/users',
+      });
+  
+      // Remove the temporary file
+      fs.unlinkSync(file.path);
+  
+      res.status(200).json({ imageUrl: result.secure_url });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      res.status(500).json({ message: 'Server error', error: error.message });
     }
   };
 
