@@ -5,6 +5,7 @@ const User = require('../models/user.model');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken'); 
+const cloudinary = require('cloudinary').v2;
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -96,6 +97,91 @@ exports.register = async (req, res) => {
     }
 };
 
+// Get user profile
+exports.getUserProfile = async (req, res) => {
+    try {
+        const userId = req.userId; // Assuming user ID is stored in the token
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.status(200).json({
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            gender: user.gender,
+            userType: user.userType,
+            profileImage: user.profileImage,
+            status: user.status
+        });
+    } catch (error) {
+        console.log("Error fetching user profile:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
+// Change user password
+exports.changePassword = async (req, res) => {
+    try {
+        const userId = req.userId; // Assuming user ID is stored in the token
+        const { oldPassword, newPassword } = req.body;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Check if the old password matches
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Old password is incorrect' });
+        }
+
+        // Hash the new password
+        user.password = await bcrypt.hash(newPassword, 10);
+
+        await user.save();
+
+        res.status(200).json({ message: 'Password updated successfully' });
+    } catch (error) {
+        console.log("Error changing password:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Update user profile
+exports.updateUserProfile = async (req, res) => {
+    try {
+        const userId = req.userId; // Assuming user ID is stored in the token
+        const { firstName, lastName, email, gender, profileImage } = req.body;
+
+        // Find the user to update
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Update user details
+        user.firstName = firstName || user.firstName;
+        user.lastName = lastName || user.lastName;
+        user.email = email || user.email;
+        user.gender = gender || user.gender;
+        user.profileImage = profileImage || user.profileImage;
+
+        await user.save();
+
+        res.status(200).json({ message: 'Profile updated successfully' });
+    } catch (error) {
+        console.log("Error updating user profile:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
 // Verify email
 exports.verifyEmail = async (req, res) => {
     try {
@@ -126,6 +212,68 @@ exports.verifyEmail = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// Deactivate user account
+exports.deactivateAccount = async (req, res) => {
+    try {
+        const userId = req.userId; // Assuming user ID is stored in the token
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Deactivate the user's account
+        user.status = 'deactivated';
+        await user.save();
+
+        res.status(200).json({ message: 'Account deactivated successfully' });
+    } catch (error) {
+        console.log("Error deactivating account:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+// Controller method to update profile image
+exports.updateProfileImage = async (req, res) => {
+    try {
+      // Check if the file is provided in the request
+      if (!req.files || !req.files.image) {
+        return res.status(400).json({ message: 'No image file uploaded' });
+      }
+  
+      const imageFile = req.files.image;
+  
+      // Upload image to Cloudinary
+      cloudinary.uploader.upload(imageFile.tempFilePath, { 
+        folder: 'mediplus/users' // Optional: Specify a folder in Cloudinary
+      }, async (err, result) => {
+        if (err) {
+          return res.status(500).json({ message: 'Error uploading image', error: err });
+        }
+  
+        // Extract the URL of the uploaded image
+        const imageUrl = result.secure_url;
+  
+        // Update the user's profile image URL in the database
+        const userId = req.user._id; // Assuming the user's ID is stored in req.user (from the authenticate middleware)
+  
+        const updatedUser = await User.findByIdAndUpdate(
+          userId, 
+          { profileImage: imageUrl }, 
+          { new: true }
+        );
+  
+        return res.status(200).json({
+          message: 'Profile image updated successfully',
+          imageUrl: updatedUser.profileImage, // Send back the updated image URL
+        });
+      });
+    } catch (error) {
+      return res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  };
+
 
 exports.checkUserExists = async (req, res) => {
     const { email } = req.query; // Assuming you're passing email as a query parameter

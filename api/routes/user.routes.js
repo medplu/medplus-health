@@ -11,6 +11,20 @@ router.post('/login', userController.login);
 router.post('/auth/google', userController.googleAuth);
 
 // Route to check if user exists
-router.get('/auth/check-user', userController.checkUserExists); // New route for checking if user exists
+router.get('/auth/check-user', userController.checkUserExists); 
+
+
+// Route to update user profile
+router.patch('/profile', authenticate, userController.updateUserProfile);
+
+// Route to change password
+router.patch('/change-password', authenticate, userController.changePassword);
+
+// Route to deactivate user account
+router.patch('/deactivate', authenticate, userController.deactivateAccount);
+
+// Route to update profile image
+router.patch('/profile-image', authenticate, userController.updateProfileImage);
+
 
 module.exports = router;

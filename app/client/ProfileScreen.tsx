@@ -12,7 +12,6 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { Feather as Icon } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import SSLight from '../../assets/fonts/SourceSansPro/SourceSans3-Light.ttf';
 import SSRegular from '../../assets/fonts/SourceSansPro/SourceSans3-Regular.ttf';
@@ -55,12 +54,20 @@ export default function ProfileScreen() {
     setForm((prevForm) => ({ ...prevForm, [name]: value }));
   };
 
-  // Function to upload image to cloud storage
-  const uploadImageToCloud = async (base64Image) => {
+  // Function to upload image to the backend
+  const uploadImageToBackend = async (uri) => {
+    const formData = new FormData();
+    const fileName = uri.split('/').pop();
+    const fileType = uri.split('.').pop();
+
+    formData.append('file', {
+      uri,
+      name: fileName,
+      type: `image/${fileType}`,
+    });
+
     try {
-      const response = await axios.post('https://medplus-app.onrender.com/api/upload-image', {
-        image: base64Image,
-      }, {
+      const response = await axios.post('https://medplus-app.onrender.com/api/upload-image', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -90,19 +97,14 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled) {
-      if (Platform.OS !== 'web') {
-        const resizedImage = await ImageManipulator.manipulateAsync(
-          result.assets[0].uri,
-          [{ resize: { width: 800 } }], // Resize the image to a width of 800px
-          { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
-        );
-        const base64Image = await FileSystem.readAsStringAsync(resizedImage.uri, { encoding: FileSystem.EncodingType.Base64 });
-        const imageUrl = await uploadImageToCloud(base64Image);
-        if (imageUrl) {
-          setForm((prevForm) => ({ ...prevForm, profileImage: imageUrl }));
-        }
-      } else {
-        setForm((prevForm) => ({ ...prevForm, profileImage: result.assets[0].uri }));
+      const resizedImage = await ImageManipulator.manipulateAsync(
+        result.assets[0].uri,
+        [{ resize: { width: 800 } }], // Resize the image to a width of 800px
+        { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      const imageUrl = await uploadImageToBackend(resizedImage.uri);
+      if (imageUrl) {
+        setForm((prevForm) => ({ ...prevForm, profileImage: imageUrl }));
       }
     }
   };
@@ -180,6 +182,7 @@ export default function ProfileScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   coverImage: { height: 300, width: '100%' },
