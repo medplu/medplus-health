@@ -24,6 +24,12 @@ const DashboardScreen: React.FC = () => {
   const [newTask, setNewTask] = useState<string>('');
 
   useEffect(() => {
+    if (!user.professional?.attachedToClinic) {
+      router.push('/Addclinic');
+    }
+  }, [user, router]);
+
+  useEffect(() => {
     // Fetch or generate dummy data
     const data = [
       { id: 1, name: 'John Doe', date: '2023-10-01', time: '10:00 AM', status: 'confirmed' },
@@ -76,14 +82,13 @@ const DashboardScreen: React.FC = () => {
       appointmentDate && appointmentDate.isSame(moment(), 'day')
     );
   });
+  const requestedAppointments = appointments.filter(appointment => appointment.status === 'requested');
+  const completedAppointments = appointments.filter(appointment => appointment.status === 'completed');
 
   useEffect(() => {
     console.log('All Appointments:', appointments);
     console.log('Upcoming Appointments:', upcomingAppointments);
   }, [appointments, upcomingAppointments]);
-
-  const requestedAppointments = appointments.filter(appointment => appointment.status === 'requested');
-  const completedAppointments = appointments.filter(appointment => appointment.status === 'completed');
 
   if (loading) {
     return (
@@ -120,7 +125,7 @@ const DashboardScreen: React.FC = () => {
               <View style={styles.userInfo}>
                 <Text style={styles.userName}>{upcomingAppointment.patientName}</Text>
                 <Text style={styles.userRole}>{moment(upcomingAppointment.date).format('DD MMM, HH:mm')}</Text>
-                <Text style={styles.cardStatus}>{upcomingAppointment.status}</Text>
+                <Text style={[styles.cardStatus, { color: Colors.confirmed }]}>{upcomingAppointment.status}</Text>
               </View>
             </>
           ) : (
@@ -145,10 +150,7 @@ const DashboardScreen: React.FC = () => {
     <ScrollView style={styles.container}>
       {user.isLoggedIn ? (
         <>
-          <View style={styles.card}>
-            <Text style={styles.greetingText}>Welcome, {user.name}!</Text>
-            
-          </View>
+          
 
           <View style={styles.overviewContainer}>
             <View style={styles.overviewHeader}>

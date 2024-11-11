@@ -62,7 +62,7 @@ const LoginScreen: React.FC = () => {
           if (professional.profession === 'pharmacist') {
             route = '/pharmacist/tabs';
           } else {
-            route = '/professional/tabs';
+            route = '/professional'; // Updated route
           }
           break;
         case 'client':
@@ -75,7 +75,7 @@ const LoginScreen: React.FC = () => {
           route = '/student/tabs';
       }
 
-      router.push(route);
+      router.push(route); // This will navigate to the appropriate layout
     } catch (error) {
       console.error('Error during login:', error);
       setErrorMessage('Invalid email or password. Please try again.');

@@ -151,7 +151,7 @@ const ScheduleScreen: React.FC = () => {
           {item.startTime} - {item.endTime ? item.endTime : ''}
         </Text>
 
-        {item.type === 'appointment' ? (
+        {item.isBooked ? (
           item.appointment ? (
             <>
               <Text style={styles.cardTitle}>{item.appointment.patientId.name}</Text>
@@ -164,10 +164,7 @@ const ScheduleScreen: React.FC = () => {
             <Text style={styles.cardTitle}>Booked Slot</Text>
           )
         ) : (
-          <>
-            <Text style={styles.cardTitle}>{item.name}</Text>
-            <Text style={styles.cardDate}>{moment(item.date).format('DD MMM, HH:mm')}</Text>
-          </>
+          <Text style={styles.cardTitle}>Available Slot</Text>
         )}
       </View>
     </View>
@@ -277,7 +274,7 @@ const styles = StyleSheet.create({
    dateSelectorContainer: {
     height: 80, 
     paddingVertical: 8,
-    backgroundColor: '#ffb03b',
+    backgroundColor: 'rgba(56, 129, 122, 0.8)', // Add transparency
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     elevation: 4

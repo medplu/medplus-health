@@ -2,12 +2,14 @@ import * as SecureStore from 'expo-secure-store';
 import { StyleSheet, SafeAreaView, StatusBar, Text } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store/configureStore'; // Adjust path as needed
 import { ScheduleProvider } from './context/ScheduleContext'; // Adjust path as needed
 import UnauthenticatedLayout from './UnauthenticatedLayout';
 import * as NavigationBar from 'expo-navigation-bar';
+import ProfessionalLayout from './professional/ProfessionalLayout';
+import { selectUser } from './store/userSlice';
 
 const tokenCache = {
   async getToken(key: string) {
@@ -82,9 +84,16 @@ const Layout = () => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <StatusBar barStyle="dark-content" />
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Navigator>
         <Stack.Screen name="oauth/callback" options={{ headerShown: false }} />
-        <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
+        {/* Remove the 'professional/layout' screen */}
+        {/* <Stack.Screen
+          name="professional/layout"
+          component={ProfessionalLayout}
+          options={{ headerShown: false }}
+        /> */}
+        {/* Remove or comment out the 'tabs' screen to avoid conflicts */}
+        {/* <Stack.Screen name="tabs" options={{ headerShown: false }} /> */}
         <Stack.Screen name="clinics/index" options={{ title: 'Clinics', headerShown: true }} />
         <Stack.Screen name="clinics/[name]" options={{ title: '', headerShown: false }} />
         <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '', headerShown: false }} />
@@ -99,18 +108,27 @@ const Layout = () => {
         <Stack.Screen name="pharmacist/tabs" options={{ headerShown: false }} />
         <Stack.Screen name="appointment/[appointmentId]" options={{ title: 'Appointment Details' }} />
         <Stack.Screen name="PrescriptionScreen" options={{ title: 'Prescription' }} />
+        <Stack.Screen name="AddClinicForm" options={{ title: 'AddClinic' }} />
         <Stack.Screen name="tasks" options={{ title: 'Tasks', headerShown: true }} />
         <Stack.Screen name="consultations/index" options={{ title: 'Patients', headerShown: true }} />
-      </Stack>
+      </Stack.Navigator>
     </SafeAreaView>
   );
+};
+
+// Modify MainLayout to remove conditional rendering of ProfessionalLayout
+const MainLayout = () => {
+  const user = useSelector(selectUser);
+
+  // No longer conditionally render ProfessionalLayout here
+  return <Layout />;
 };
 
 const LayoutWithProviders = () => (
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
       <ScheduleProvider>
-        <Layout />
+        <MainLayout />
       </ScheduleProvider>
     </PersistGate>
   </Provider>

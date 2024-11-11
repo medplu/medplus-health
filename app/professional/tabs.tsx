@@ -1,7 +1,7 @@
 // app/professional/tabs.tsx
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons'; // Import icons
+import { Ionicons } from '@expo/vector-icons'; 
 import DashboardScreen from './DashboardScreen';
 import ScheduleScreen from './ScheduleScreen';
 import SettingsScreen from './SettingsScreen';
@@ -14,29 +14,29 @@ export default function ProfessionalTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: string = 'help'; // Default icon name
-
-          // Define icon based on the route name
+          let iconName: string = 'help'; 
+          
           if (route.name === 'Dashboard') {
-            iconName = focused ? 'stats-chart' : 'stats-chart-outline'; // Example icons for Dashboard
+            iconName = focused ? 'stats-chart' : 'stats-chart-outline'; 
           } else if (route.name === 'Schedule') {
-            iconName = focused ? 'calendar' : 'calendar-outline'; // Example icons for Schedule
+            iconName = focused ? 'calendar' : 'calendar-outline'; 
           } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline'; // Example icons for Settings
+            iconName = focused ? 'settings' : 'settings-outline'; 
           } else if (route.name === 'Wallet') {
-            iconName = focused ? 'wallet' : 'wallet-outline'; // Example icons for Wallet
+            iconName = focused ? 'wallet' : 'wallet-outline'; 
           }
 
-          // Return the icon component
+          
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: 'tomato', // Active icon color
-        tabBarInactiveTintColor: 'gray', // Inactive icon color
+        tabBarActiveTintColor: 'tomato', 
+        tabBarInactiveTintColor: 'gray', 
         tabBarStyle: {
-          backgroundColor: 'white', // Background color of the tab bar
-          borderTopColor: 'transparent', // Remove the top border
-          height: 60, // Height of the tab bar
+          backgroundColor: 'white', 
+          borderTopColor: 'transparent',
+          height: 60, 
         },
+        headerShown: false,
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />

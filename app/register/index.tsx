@@ -9,11 +9,27 @@ import {
   ScrollView,
   Animated,
   ActivityIndicator,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
 import { registerUser } from '@/Services/auth';
 import axios from 'axios';
+
+const commonTitles = [
+  'General Practitioner',
+  'Cardiologist',
+  'Neurologist',
+  'Dermatologist',
+  'Pediatrician',
+  'Oncologist',
+  'Orthopedic Surgeon',
+  'Psychiatrist',
+  'Radiologist',
+  'Anesthesiologist',
+];
 
 const SignupScreen: React.FC = () => {
   const [firstName, setFirstName] = useState('');
@@ -24,6 +40,7 @@ const SignupScreen: React.FC = () => {
   const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | null>(null);
   const [userType, setUserType] = useState<'client' | 'professional' | 'student' | null>(null);
   const [profession, setProfession] = useState('');
+  const [title, setTitle] = useState(''); // New state for doctor's title
   const [verificationCode, setVerificationCode] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -57,18 +74,17 @@ const SignupScreen: React.FC = () => {
       password === '' ||
       confirmPassword === '' ||
       !gender ||
-      !userType
+      !userType ||
+      (userType === 'professional' && (
+        profession === '' ||
+        (profession === 'doctor' && title === '') // Validate title if profession is doctor
+      ))
     ) {
-      setErrorMessage('Please fill all fields.');
+      setErrorMessage('Please fill all required fields.');
       return;
     }
     if (password !== confirmPassword) {
       setErrorMessage('Passwords do not match.');
-      return;
-    }
-
-    if (userType === 'professional' && (profession === '' || !profession)) {
-      setErrorMessage('Please select a profession.');
       return;
     }
 
@@ -81,7 +97,10 @@ const SignupScreen: React.FC = () => {
         password,
         gender,
         userType,
-        ...(userType === 'professional' ? { profession } : {}),
+        ...(userType === 'professional' ? { 
+          profession,
+          ...(profession === 'doctor' ? { title } : {}),
+        } : {}),
       };
 
       await registerUser(userData);
@@ -131,205 +150,231 @@ const SignupScreen: React.FC = () => {
   }, [timerActive, countdown]);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.formContainer}>
-        <Text style={styles.heading}>Create an Account</Text>
-        <Text style={styles.subHeading}>Sign up to get started</Text>
+    <SafeAreaView style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.formContainer}>
+            <Text style={styles.heading}>Create an Account</Text>
+            <Text style={styles.subHeading}>Sign up to get started</Text>
 
-        {!isVerifying ? (
-          <>
-            <View style={styles.inputContainer}>
-              <Image
-                style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios/50/000000/user--v1.png' }}
-              />
-              <TextInput
-                style={styles.inputs}
-                placeholder="First Name"
-                value={firstName}
-                onChangeText={setFirstName}
-                placeholderTextColor="#888"
-              />
-            </View>
+            {!isVerifying ? (
+              <>
+                <View style={styles.inputContainer}>
+                  <Image
+                    style={[styles.icon, styles.inputIcon]}
+                    source={{ uri: 'https://img.icons8.com/ios/50/000000/user--v1.png' }}
+                  />
+                  <TextInput
+                    style={styles.inputs}
+                    placeholder="First Name"
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    placeholderTextColor="#888"
+                  />
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Image
-                style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios/50/000000/user--v1.png' }}
-              />
-              <TextInput
-                style={styles.inputs}
-                placeholder="Last Name"
-                value={lastName}
-                onChangeText={setLastName}
-                placeholderTextColor="#888"
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <Image
+                    style={[styles.icon, styles.inputIcon]}
+                    source={{ uri: 'https://img.icons8.com/ios/50/000000/user--v1.png' }}
+                  />
+                  <TextInput
+                    style={styles.inputs}
+                    placeholder="Last Name"
+                    value={lastName}
+                    onChangeText={setLastName}
+                    placeholderTextColor="#888"
+                  />
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Image
-                style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios/50/000000/new-post.png' }}
-              />
-              <TextInput
-                style={styles.inputs}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholderTextColor="#888"
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <Image
+                    style={[styles.icon, styles.inputIcon]}
+                    source={{ uri: 'https://img.icons8.com/ios/50/000000/new-post.png' }}
+                  />
+                  <TextInput
+                    style={styles.inputs}
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholderTextColor="#888"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Image
-                style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios/50/000000/lock--v1.png' }}
-              />
-              <TextInput
-                style={styles.inputs}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholderTextColor="#888"
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <Image
+                    style={[styles.icon, styles.inputIcon]}
+                    source={{ uri: 'https://img.icons8.com/ios/50/000000/lock--v1.png' }}
+                  />
+                  <TextInput
+                    style={styles.inputs}
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholderTextColor="#888"
+                    secureTextEntry
+                    autoCapitalize="none"
+                  />
+                </View>
 
-            <View style={styles.inputContainer}>
-              <Image
-                style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios/50/000000/lock--v1.png' }}
-              />
-              <TextInput
-                style={styles.inputs}
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                placeholderTextColor="#888"
-                secureTextEntry
-                autoCapitalize="none"
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <Image
+                    style={[styles.icon, styles.inputIcon]}
+                    source={{ uri: 'https://img.icons8.com/ios/50/000000/lock--v1.png' }}
+                  />
+                  <TextInput
+                    style={styles.inputs}
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholderTextColor="#888"
+                    secureTextEntry
+                    autoCapitalize="none"
+                  />
+                </View>
 
-            <View style={styles.genderContainer}>
-              <TouchableOpacity
-                style={[styles.genderButton, gender === 'Male' && styles.selectedGender]}
-                onPress={() => setGender('Male')}
-              >
-                <Text style={styles.genderText}>Male</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.genderButton, gender === 'Female' && styles.selectedGender]}
-                onPress={() => setGender('Female')}
-              >
-                <Text style={styles.genderText}>Female</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.genderButton, gender === 'Other' && styles.selectedGender]}
-                onPress={() => setGender('Other')}
-              >
-                <Text style={styles.genderText}>Other</Text>
-              </TouchableOpacity>
-            </View>
+                {/* Gender Selection */}
+                <Text style={styles.sectionHeader}>Gender</Text>
+                <View style={styles.genderContainer}>
+                  <TouchableOpacity
+                    style={[styles.genderButton, gender === 'Male' && styles.selectedGender]}
+                    onPress={() => setGender('Male')}
+                  >
+                    <Text style={styles.genderText}>Male</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.genderButton, gender === 'Female' && styles.selectedGender]}
+                    onPress={() => setGender('Female')}
+                  >
+                    <Text style={styles.genderText}>Female</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.genderButton, gender === 'Other' && styles.selectedGender]}
+                    onPress={() => setGender('Other')}
+                  >
+                    <Text style={styles.genderText}>Other</Text>
+                  </TouchableOpacity>
+                </View>
 
-            <View style={styles.accountTypeContainer}>
-              <TouchableOpacity
-                style={[styles.accountTypeButton, userType === 'client' && styles.selectedAccountType]}
-                onPress={() => setUserType('client')}
-              >
-                <Text style={styles.accountTypeText}>Client</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.accountTypeButton, userType === 'professional' && styles.selectedAccountType]}
-                onPress={() => setUserType('professional')}
-              >
-                <Text style={styles.accountTypeText}>Professional</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.accountTypeButton, userType === 'student' && styles.selectedAccountType]}
-                onPress={() => setUserType('student')}
-              >
-                <Text style={styles.accountTypeText}>Student</Text>
-              </TouchableOpacity>
-            </View>
+                {/* User Type Selection */}
+                <Text style={styles.sectionHeader}>Account Type</Text>
+                <View style={styles.accountTypeContainer}>
+                  <TouchableOpacity
+                    style={[styles.accountTypeButton, userType === 'client' && styles.selectedAccountType]}
+                    onPress={() => setUserType('client')}
+                  >
+                    <Text style={styles.accountTypeText}>Client</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.accountTypeButton, userType === 'professional' && styles.selectedAccountType]}
+                    onPress={() => setUserType('professional')}
+                  >
+                    <Text style={styles.accountTypeText}>Professional</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.accountTypeButton, userType === 'student' && styles.selectedAccountType]}
+                    onPress={() => setUserType('student')}
+                  >
+                    <Text style={styles.accountTypeText}>Student</Text>
+                  </TouchableOpacity>
+                </View>
 
-            {userType === 'professional' && (
-              <Picker
-                selectedValue={profession}
-                style={styles.inputs}
-                onValueChange={(itemValue) => setProfession(itemValue)}
-              >
-                <Picker.Item label="Select Profession" value="" />
-                <Picker.Item label="Doctor" value="doctor" />
-                <Picker.Item label="Dentist" value="dentist" />
-                <Picker.Item label="Pharmacist" value="pharmacist" />
-                <Picker.Item label="Nurse" value="nurse" />
-                <Picker.Item label="Other" value="other" />
-              </Picker>
-            )}
+                {userType === 'professional' && (
+                  <>
+                    <Picker
+                      selectedValue={profession}
+                      style={styles.picker}
+                      onValueChange={(itemValue) => setProfession(itemValue)}
+                    >
+                      <Picker.Item label="Select Profession" value="" />
+                      <Picker.Item label="Doctor" value="doctor" />
+                      <Picker.Item label="Pharmacist" value="pharmacist" />
+                    </Picker>
 
-            {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-            {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
-
-            <Animated.View style={{ transform: [{ scale: buttonAnimation }] }}>
-              <TouchableOpacity
-                style={styles.signupButton}
-                onPress={() => {
-                  animateButton();
-                  handleSignupPress();
-                }}
-                disabled={isRegistering}
-              >
-                {isRegistering ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.signupButtonText}>Sign Up</Text>
+                    {profession === 'doctor' && (
+                      <Picker
+                        selectedValue={title}
+                        style={styles.picker}
+                        onValueChange={(itemValue) => setTitle(itemValue)}
+                      >
+                        <Picker.Item label="Select Title" value="" />
+                        {commonTitles.map((title) => (
+                          <Picker.Item key={title} label={title} value={title} />
+                        ))}
+                      </Picker>
+                    )}
+                  </>
                 )}
-              </TouchableOpacity>
-            </Animated.View>
 
-            <View style={styles.signupContainer}>
-              <Text style={styles.signupText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/login')}>
-                <Text style={styles.signupLink}>Login</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        ) : (
-          <>
-            <Text style={styles.subHeading}>Enter the verification code sent to your email</Text>
-            <View style={styles.inputContainer}>
-              <Image
-                style={[styles.icon, styles.inputIcon]}
-                source={{ uri: 'https://img.icons8.com/ios/50/000000/verification-code.png' }}
-              />
-              <TextInput
-                style={styles.inputs}
-                placeholder="Verification Code"
-                value={verificationCode}
-                onChangeText={setVerificationCode}
-                placeholderTextColor="#888"
-                keyboardType="numeric"
-              />
-            </View>
+                {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+                {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
 
-            <Text style={styles.countdownText}>
-              {countdown > 0 ? `Time remaining: ${countdown}s` : 'Code expired!'}
-            </Text>
+                <Animated.View style={{ transform: [{ scale: buttonAnimation }] }}>
+                  <TouchableOpacity
+                    style={styles.signupButton}
+                    onPress={() => {
+                      animateButton();
+                      handleSignupPress();
+                    }}
+                    disabled={isRegistering}
+                  >
+                    {isRegistering ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.signupButtonText}>Sign Up</Text>
+                    )}
+                  </TouchableOpacity>
+                </Animated.View>
 
-            {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-            {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
+                <View style={styles.signupContainer}>
+                  <Text style={styles.signupText}>Already have an account? </Text>
+                  <TouchableOpacity onPress={() => router.push('/login')}>
+                    <Text style={styles.signupLink}>Login</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.subHeading}>Enter the verification code sent to your email</Text>
+                <View style={styles.inputContainer}>
+                  <Image
+                    style={[styles.icon, styles.inputIcon]}
+                    source={{ uri: 'https://img.icons8.com/ios/50/000000/verification-code.png' }}
+                  />
+                  <TextInput
+                    style={styles.inputs}
+                    placeholder="Verification Code"
+                    value={verificationCode}
+                    onChangeText={setVerificationCode}
+                    placeholderTextColor="#888"
+                    keyboardType="numeric"
+                  />
+                </View>
 
-            <TouchableOpacity style={styles.signupButton} onPress={handleVerificationPress}>
-              <Text style={styles.signupButtonText}>Verify</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-    </ScrollView>
+                <Text style={styles.countdownText}>
+                  {countdown > 0 ? `Time remaining: ${countdown}s` : 'Code expired!'}
+                </Text>
+
+                {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
+                {successMessage && <Text style={styles.successMessage}>{successMessage}</Text>}
+
+                <TouchableOpacity style={styles.signupButton} onPress={handleVerificationPress}>
+                  <Text style={styles.signupButtonText}>Verify</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -342,7 +387,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   formContainer: {
-    width: '100%',
+    width: '100%', // Changed from fixed width to percentage
     alignItems: 'center',
   },
   heading: {
@@ -354,12 +399,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
   },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: '600',
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+    marginLeft: '5%',
+  },
   inputContainer: {
     borderBottomColor: '#F5FCFF',
     backgroundColor: '#FFFFFF',
     borderRadius: 30,
     borderBottomWidth: 1,
-    width: 250,
+    width: '90%', // Changed from fixed width to percentage
     height: 45,
     marginBottom: 15,
     flexDirection: 'row',
@@ -382,7 +434,8 @@ const styles = StyleSheet.create({
   genderContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 25, // Increased spacing for distinction
+    width: '90%',
   },
   genderButton: {
     flex: 1,
@@ -392,9 +445,11 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 5,
     marginHorizontal: 5,
+    backgroundColor: '#f0f0f0', // Distinct background color
   },
   selectedGender: {
     backgroundColor: '#cce5ff',
+    borderColor: '#007BFF',
   },
   genderText: {
     fontSize: 16,
@@ -402,7 +457,8 @@ const styles = StyleSheet.create({
   accountTypeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 25, // Increased spacing for distinction
+    width: '90%',
   },
   accountTypeButton: {
     flex: 1,
@@ -412,9 +468,11 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 5,
     marginHorizontal: 5,
+    backgroundColor: '#f0f0f0', // Distinct background color
   },
   selectedAccountType: {
     backgroundColor: '#cce5ff',
+    borderColor: '#007BFF',
   },
   accountTypeText: {
     fontSize: 16,
@@ -432,7 +490,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 30,
     alignItems: 'center',
-    width: 250,
+    width: '90%', // Changed from fixed width to percentage
   },
   signupButtonText: {
     color: '#fff',
@@ -455,6 +513,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     marginBottom: 10,
+  },
+  picker: {
+    height: 50,
+    width: '90%', // Changed from fixed width to percentage
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    marginBottom: 15,
   },
 });
 

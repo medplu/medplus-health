@@ -28,7 +28,11 @@ const professionalSchema = new Schema({
     profession: {  // Add profession field to identify pharmacist, doctor, etc.
         type: String,
         required: false,
-        enum: ['doctor', 'pharmacist', 'nurse', 'dentist'],  // Restrict to valid professions
+        enum: ['doctor', 'pharmacist'],  // Restrict to valid professions
+    },
+    title: { // New field for doctor's title
+        type: String,
+        required: function() { return this.profession === 'doctor'; },
     },
     category: {
         type: String,

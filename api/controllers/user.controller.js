@@ -40,7 +40,7 @@ const sendVerificationEmail = async (email, verificationCode) => {
 exports.register = async (req, res) => {
     try {
         const {
-            userType, profession, consultationFee = 5000, category,
+            userType, profession, title, consultationFee = 5000, category,
             yearsOfExperience, certifications, bio, profileImage,
             emailNotifications, pushNotifications, location,
             attachedToClinic, ...userData
@@ -69,10 +69,15 @@ exports.register = async (req, res) => {
                 return res.status(400).json({ error: 'Profession is required for professionals.' });
             }
 
+            if (profession === 'doctor' && !title) { // Validate title for doctors
+                return res.status(400).json({ error: 'Title is required for doctors.' });
+            }
+
             await new Professional({
                 ...userData,
                 user: newUser._id,
                 profession,
+                title, // Include title if profession is doctor
                 consultationFee,
                 category,
                 yearsOfExperience,
@@ -150,8 +155,8 @@ exports.changePassword = async (req, res) => {
             return res.status(400).json({ error: 'Old password is incorrect' });
         }
 
-        // Hash the new password
-        user.password = await bcrypt.hash(newPassword, 10);
+        // Assign the new password; hashing is handled by the model's pre-save middleware
+        user.password = newPassword;
 
         await user.save();
 
