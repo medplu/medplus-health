@@ -10,7 +10,7 @@ const ProfessionalRouteLayout = () => {
 
   useEffect(() => {
     if (!user.isLoggedIn) {
-      router.push('/login'); // Redirect to login if not authenticated
+      router.push('/login'); 
     }
   }, [user, router]);
 
