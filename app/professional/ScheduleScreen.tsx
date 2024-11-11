@@ -131,7 +131,7 @@ const ScheduleScreen: React.FC = () => {
     console.log('Appointments:', appointments);
     console.log('Today\'s Appointments:', todayAppointments);
     console.log('Selected Date:', selectedDate);
-    // ...existing code...
+    
   }, [schedule, appointments, todayAppointments, selectedDate]);
 
   const renderClassItem = ({ item }: { item: Slot }) => (
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
    dateSelectorContainer: {
     height: 80, 
     paddingVertical: 8,
-    backgroundColor: 'rgba(56, 129, 122, 0.8)', // Add transparency
+    backgroundColor: 'rgba(56, 129, 122, 0.8)', 
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     elevation: 4

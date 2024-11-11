@@ -23,15 +23,12 @@ const TaskScreen: React.FC = () => {
   useEffect(() => {
     console.log('Appointments Data:', appointments);
     
-    // Get the current date and time
     const currentTime = moment();
     
-    // Filter appointments with status 'booked' and time not past
     const filteredAppointments = appointments.filter(app => 
       app.status === 'booked' && moment(`${app.date} ${app.time}`, 'YYYY-MM-DD HH:mm').isAfter(currentTime)
     );
     
-    // Map filtered appointments to tasks
     const transformedTasks = filteredAppointments.map(app => ({
       id: app._id,
       description: `Meet with ${app.patientId.name}`,
@@ -40,8 +37,6 @@ const TaskScreen: React.FC = () => {
     
     console.log('Transformed Tasks:', transformedTasks);
     setTasks(transformedTasks);
-    
-    // ...existing code...
   }, [appointments]);
 
   const addTask = () => {

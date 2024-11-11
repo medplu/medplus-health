@@ -4,7 +4,7 @@ import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import { selectUser } from './store/userSlice'; // Adjust the import path as needed
+import { selectUser } from './store/userSlice';
 
 interface AddClinicFormProps {
   onClose: () => void;
@@ -13,13 +13,13 @@ interface AddClinicFormProps {
 const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUser);
-  const professionalId = user.professional?._id; // Obtain professionalId from Redux
+  const professionalId = user.professional?._id;
   const [name, setName] = useState<string>('');
   const [contactInfo, setContactInfo] = useState<string>('');
   const [address, setAddress] = useState<string>('');
-  const [category, setCategory] = useState<string>(''); // Add category state
+  const [category, setCategory] = useState<string>('');
   const [image, setImage] = useState<string | null>(null);
-  const [uploading, setUploading] = useState<boolean>(false); // Add uploading state
+  const [uploading, setUploading] = useState<boolean>(false);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -36,19 +36,18 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
     });
 
     if (!result.canceled && result.assets) {
-      setImage(result.assets[0].uri); // Accessing the uri from the assets array
+      setImage(result.assets[0].uri);
     }
   };
 
   const uploadImageToCloudinary = async (imageUri: string): Promise<string> => {
     const data = new FormData();
 
-    // Convert image URI to blob
     const response = await fetch(imageUri);
     const blob = await response.blob();
 
     data.append('file', blob);
-    data.append('upload_preset', 'medplus'); // Replace with your upload preset
+    data.append('upload_preset', 'medplus');
 
     try {
       const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
@@ -80,25 +79,24 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
         name,
         contactInfo,
         address,
-        category, // Include category in form data
-        image: imageUrl, // Include image URL
+        category,
+        image: imageUrl,
       };
 
-      console.log('Submitting form with professionalId:', professionalId); // Debugging log
+      console.log('Submitting form with professionalId:', professionalId);
 
       const response = await axios.post(
         `https://medplus-health.onrender.com/api/clinics/register/${professionalId}`,
         formData,
         {
           headers: {
-            'Content-Type': 'application/json', // Set content type to JSON
+            'Content-Type': 'application/json',
           },
         }
       );
 
       console.log('Clinic created:', response.data);
       
-      // Replace onClose() with navigation.goBack()
       if (navigation && typeof navigation.goBack === 'function') {
         navigation.goBack();
       } else {

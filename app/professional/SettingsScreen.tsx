@@ -16,19 +16,33 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';
 import { TextInput } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateUserProfile, selectUser } from '../store/userSlice'; // Adjust the import based on your project structure
+import { updateUserProfile, selectUser } from '../store/userSlice';
 
 const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dws2bgxg4/image/medplus';
 const CLOUDINARY_UPLOAD_PRESET = 'medplus';
 
+interface FormState {
+  firstName: string;
+  lastName: string;
+  email: string;
+  profession: string;
+  certifications: string[];
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  clinic: string;
+  attachedToClinic: boolean;
+  profileImage: string;
+  consultationFee: string;
+  availability: string[];
+}
 
-const SettingsScreen = () => {
+const SettingsScreen: React.FC = () => {
   const dispatch = useDispatch();
-  const user = useSelector(selectUser); // Use the same selector to access the user
-  const professionalId = user?.professional?._id; // Safely access professionalId
+  const user = useSelector(selectUser);
+  const professionalId = user?.professional?._id;
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [form, setForm] = useState({
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [form, setForm] = useState<FormState>({
     firstName: '',
     lastName: '',
     email: '',
@@ -43,7 +57,7 @@ const SettingsScreen = () => {
     availability: [],
   });
 
-  const [isProfileUpdated, setIsProfileUpdated] = useState(false); // State to manage success feedback
+  const [isProfileUpdated, setIsProfileUpdated] = useState<boolean>(false);
 
   useEffect(() => {
     if (user?.professional) {
@@ -65,52 +79,49 @@ const SettingsScreen = () => {
     }
   }, [user]);
 
-  const handleProfileChange = (key, value) => {
+  const handleProfileChange = (key: keyof FormState, value: any) => {
     setForm((prevForm) => ({
       ...prevForm,
       [key]: value,
     }));
   };
 
- const pickImage = async () => {
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [4, 3],
-    quality: 1,
-  });
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
 
-  if (!result.canceled && result.assets) {
-    const localUri = result.assets[0].uri;
-    const filename = localUri.split('/').pop();
-    const match = /\.(\w+)$/.exec(filename || '');
-    const type = match ? `image/${match[1]}` : `image`;
+    if (!result.canceled && result.assets) {
+      const localUri = result.assets[0].uri;
+      const filename = localUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename || '');
+      const type = match ? `image/${match[1]}` : `image`;
 
-    const formData = new FormData();
-    formData.append('file', { uri: localUri, name: filename, type });
-    formData.append('upload_preset', 'medplus'); // Make sure this is the correct unsigned preset
+      const formData = new FormData();
+      formData.append('file', { uri: localUri, name: filename, type });
+      formData.append('upload_preset', 'medplus');
 
-    try {
-      const response = await fetch(CLOUDINARY_URL, {
-        method: 'POST',
-        body: formData,
-      });
+      try {
+        const response = await fetch(CLOUDINARY_URL, {
+          method: 'POST',
+          body: formData,
+        });
 
-      const data = await response.json();
-      if (data.secure_url) {
-        handleProfileChange('profileImage', data.secure_url);
-      } else {
-        Alert.alert('Error', 'Failed to upload image to Cloudinary.');
+        const data = await response.json();
+        if (data.secure_url) {
+          handleProfileChange('profileImage', data.secure_url);
+        } else {
+          Alert.alert('Error', 'Failed to upload image to Cloudinary.');
+        }
+      } catch (error) {
+        console.error('Error uploading image to Cloudinary:', error);
+        Alert.alert('Error', 'Failed to upload image. Please try again.');
       }
-    } catch (error) {
-      console.error('Error uploading image to Cloudinary:', error);
-      Alert.alert('Error', 'Failed to upload image. Please try again.');
     }
-  }
-};
-
-  
-  
+  };
 
   const updateProfile = async () => {
     if (!professionalId) {
@@ -137,7 +148,6 @@ const SettingsScreen = () => {
           method: 'PUT',
           headers: {
             Accept: 'application/json',
-            // Let the browser automatically set the Content-Type for FormData
           },
           body: formData,
         }
@@ -159,7 +169,6 @@ const SettingsScreen = () => {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
-  
 
   const resetForm = () => {
     setForm({
@@ -176,7 +185,7 @@ const SettingsScreen = () => {
       consultationFee: user.professional.consultationFee,
       availability: user.professional.availability || [],
     });
-    setIsProfileUpdated(false); // Reset feedback state
+    setIsProfileUpdated(false);
   };
 
   return (

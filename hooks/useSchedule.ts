@@ -6,7 +6,7 @@ interface Slot {
   date: string;
   time: string;
   isBooked: boolean;
-  _id: string; // Ensure _id is part of the Slot type
+  _id: string; 
 }
 
 interface UseScheduleHook {
