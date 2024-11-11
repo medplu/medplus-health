@@ -1,38 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, Platform } from 'react-native';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { selectUser } from './store/userSlice'; // Adjust the import path as needed
 
 interface AddClinicFormProps {
   onClose: () => void;
 }
 
 const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
+  const navigation = useNavigation();
+  const user = useSelector(selectUser);
+  const professionalId = user.professional?._id; // Obtain professionalId from Redux
   const [name, setName] = useState<string>('');
   const [contactInfo, setContactInfo] = useState<string>('');
   const [address, setAddress] = useState<string>('');
   const [category, setCategory] = useState<string>(''); // Add category state
   const [image, setImage] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string>('');
-
-  useEffect(() => {
-    const fetchUserId = async () => {
-      try {
-        const storedUserId = await AsyncStorage.getItem('userId');
-        if (storedUserId) {
-          setUserId(storedUserId);
-          console.log('User ID fetched from AsyncStorage:', storedUserId); // Debugging log
-        } else {
-          console.error('User ID not found in AsyncStorage');
-        }
-      } catch (error) {
-        console.error('Error fetching user ID from AsyncStorage:', error);
-      }
-    };
-
-    fetchUserId();
-  }, []);
+  const [uploading, setUploading] = useState<boolean>(false); // Add uploading state
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -53,39 +40,74 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
     }
   };
 
+  const uploadImageToCloudinary = async (imageUri: string): Promise<string> => {
+    const data = new FormData();
+
+    // Convert image URI to blob
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+
+    data.append('file', blob);
+    data.append('upload_preset', 'medplus'); // Replace with your upload preset
+
+    try {
+      const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+        method: 'POST',
+        body: data,
+      });
+      const result = await response.json();
+      return result.secure_url;
+    } catch (error) {
+      console.error('Error uploading image to Cloudinary:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async () => {
     try {
-      if (!userId) {
-        throw new Error('User ID is required to create a clinic');
+      if (!professionalId) {
+        throw new Error('Professional ID is required to create a clinic');
       }
 
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('contactInfo', contactInfo);
-      formData.append('address', address);
-      formData.append('category', category); // Include category in form data
+      setUploading(true);
+
+      let imageUrl = '';
       if (image) {
-        const uriParts = image.split('.');
-        const fileType = uriParts[uriParts.length - 1];
-        formData.append('image', {
-          uri: image,
-          name: `photo.${fileType}`,
-          type: `image/${fileType}`,
-        } as any); // TypeScript workaround for FormData
+        imageUrl = await uploadImageToCloudinary(image);
       }
 
-      console.log('Submitting form with userId:', userId); // Debugging log
+      const formData = {
+        name,
+        contactInfo,
+        address,
+        category, // Include category in form data
+        image: imageUrl, // Include image URL
+      };
 
-      const response = await axios.post(`https://medplus-health.onrender.com/api/clinics/register/${userId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      console.log('Submitting form with professionalId:', professionalId); // Debugging log
+
+      const response = await axios.post(
+        `https://medplus-health.onrender.com/api/clinics/register/${professionalId}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/json', // Set content type to JSON
+          },
+        }
+      );
 
       console.log('Clinic created:', response.data);
-      onClose();
+      
+      // Replace onClose() with navigation.goBack()
+      if (navigation && typeof navigation.goBack === 'function') {
+        navigation.goBack();
+      } else {
+        console.error('navigation.goBack is not available');
+      }
     } catch (error) {
       console.error('Error creating clinic:', error);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -123,8 +145,8 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
           style={styles.image}
         />
       )}
-      <Button title="Submit" onPress={handleSubmit} />
-      <Button title="Cancel" onPress={onClose} />
+      <Button title={uploading ? "Submitting..." : "Submit"} onPress={handleSubmit} disabled={uploading} />
+      <Button title="Cancel" onPress={() => navigation.goBack()} />
     </ScrollView>
   );
 };

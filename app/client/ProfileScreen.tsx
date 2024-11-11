@@ -22,6 +22,7 @@ import { selectUser, updateUserProfile } from '../store/userSlice';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ProfileScreen() {
   const [loaded] = useFonts({ SSLight, SSRegular, SSBold });
@@ -54,29 +55,27 @@ export default function ProfileScreen() {
     setForm((prevForm) => ({ ...prevForm, [name]: value }));
   };
 
-  // Function to upload image to the backend
-  const uploadImageToBackend = async (uri) => {
-    const formData = new FormData();
-    const fileName = uri.split('/').pop();
-    const fileType = uri.split('.').pop();
+  // Function to upload image to Cloudinary
+  const uploadImageToCloudinary = async (imageUri: string): Promise<string> => {
+    const data = new FormData();
 
-    formData.append('file', {
-      uri,
-      name: fileName,
-      type: `image/${fileType}`,
-    });
+    // Convert image URI to blob
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+
+    data.append('file', blob);
+    data.append('upload_preset', 'medplus'); // Use the same upload preset
 
     try {
-      const response = await axios.post('https://medplus-health.onrender.com/api/upload-image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+        method: 'POST',
+        body: data,
       });
-      return response.data.imageUrl; // Assuming the response contains the URL of the uploaded image
+      const result = await response.json();
+      return result.secure_url;
     } catch (error) {
-      console.error('Error uploading image:', error.response ? error.response.data : error.message);
-      Alert.alert('Error', 'Failed to upload image');
-      return null;
+      console.error('Error uploading image to Cloudinary:', error);
+      throw error;
     }
   };
 
@@ -102,18 +101,17 @@ export default function ProfileScreen() {
 
   const handleUpdateProfile = async () => {
     try {
+      let imageUrl = form.profileImage;
+      if (form.profileImage && form.profileImage.startsWith('file://')) {
+        imageUrl = await uploadImageToCloudinary(form.profileImage);
+      }
+
       const formData = new FormData();
       formData.append('firstName', form.firstName);
       formData.append('lastName', form.lastName);
       formData.append('email', form.email);
-      if (form.profileImage) {
-        const uriParts = form.profileImage.split('.');
-        const fileType = uriParts[uriParts.length - 1];
-        formData.append('profileImage', {
-          uri: form.profileImage,
-          name: `photo.${fileType}`,
-          type: `image/${fileType}`,
-        } as any); // TypeScript workaround for FormData
+      if (imageUrl) {
+        formData.append('profileImage', imageUrl);
       }
 
       const response = await axios.put(

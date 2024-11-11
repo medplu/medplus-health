@@ -1,30 +1,32 @@
 const Clinic = require('../models/clinic.model');
 const Professional = require('../models/professional.model'); 
 const cloudinary = require('cloudinary').v2; // Use require for cloudinary
+// const multer = require('multer'); // Remove multer import
+
+// // Configure multer for file uploads
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, 'uploads/'); // Specify your upload directory
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, Date.now() + '-' + file.originalname);
+//   },
+// });
+
+// const upload = multer({ storage: storage }); // Initialize multer
 
 const generateReferenceCode = () => {
   // Simple example: generating a unique reference code
   return 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 };
-const registerClinic = async (req, res) => {
-  const { userId } = req.params; // Expecting userId in the request parameters
-  const { name, contactInfo, address, category } = req.body; // Include category in the request body
+
+const registerClinic = async (req, res) => { // Change from array to async function
+  const { professionalId } = req.params; // Change from userId to professionalId
+  const { name, contactInfo, address, category, image } = req.body; // Include image in the request body
 
   try {
-    let image = null;
-
-    // Check if an image file is uploaded
-    if (req.files && req.files.image) {
-      console.log('Image file detected:', req.files.image); // Debugging log
-      const file = req.files.image;
-      const uploadedResponse = await cloudinary.uploader.upload(file.tempFilePath, {
-        folder: 'clinics', // Optionally, specify a folder in Cloudinary
-      });
-      image = uploadedResponse.secure_url;
-      console.log('Image uploaded to Cloudinary:', image); // Debugging log
-    } else {
-      console.warn('No image file detected, proceeding without it.'); // Changed to warn log for clarity
-    }
+    // Since image is already a URL, no need to upload to Cloudinary here
+    // You can validate the URL if necessary
 
     // Generate a unique reference code for the clinic
     const referenceCode = generateReferenceCode();
@@ -34,7 +36,7 @@ const registerClinic = async (req, res) => {
       name,
       contactInfo,
       address,
-      image, // Can be null if no image was uploaded
+      image: image || null, // Can be null if no image was uploaded
       category, // Include category in the clinic creation
       referenceCode, // Store the reference code in the clinic
       professionals: [], // Start with an empty array for professionals
@@ -43,8 +45,8 @@ const registerClinic = async (req, res) => {
     await clinic.save();
 
     // Update the professional model to associate it with the clinic
-    const professional = await Professional.findOneAndUpdate(
-      { user: userId }, // Find the professional with the given userId
+    const professional = await Professional.findByIdAndUpdate(
+      professionalId, // Use professionalId to find the professional
       {
         clinic: clinic._id, // Link the clinic ID to the professional's clinic field
         attachedToClinic: true, // Set attachedToClinic to true
@@ -53,7 +55,7 @@ const registerClinic = async (req, res) => {
     );
 
     if (!professional) {
-      console.warn(`No professional found for userId: ${userId}`); // Debugging log if no professional is found
+      console.warn(`No professional found for professionalId: ${professionalId}`); // Debugging log if no professional is found
     }
 
     res.status(201).send(clinic);
@@ -62,6 +64,13 @@ const registerClinic = async (req, res) => {
     res.status(400).send(error);
   }
 };
+
+// Remove the array and multer middleware from registerClinic
+// const registerClinic = [
+//   upload.single('image'), // Remove multer middleware
+//   async (req, res) => { /* ... */ }
+// ];
+
 const fetchClinics = async (req, res) => {
   try {
     const clinics = await Clinic.find().populate('professionals'); // Populate professionals
@@ -70,8 +79,9 @@ const fetchClinics = async (req, res) => {
     res.status(500).send(error);
   }
 };
+
 const joinClinic = async (req, res) => {
-  const { userId } = req.params; // Expecting userId in the request parameters
+  const { professionalId } = req.params; // Change from userId to professionalId
   const { referenceCode } = req.body; // Expecting the referenceCode in the request body
 
   try {
@@ -81,8 +91,8 @@ const joinClinic = async (req, res) => {
       return res.status(404).json({ error: 'Clinic not found with the provided reference code' });
     }
 
-    // Find the professional associated with the userId
-    const professional = await Professional.findOne({ user: userId });
+    // Find the professional associated with the professionalId
+    const professional = await Professional.findById(professionalId);
     if (!professional) {
       return res.status(404).json({ error: 'Professional not found' });
     }
@@ -97,11 +107,11 @@ const joinClinic = async (req, res) => {
     await clinic.save();
 
     // Update the professional document to reflect the clinic association
-    await Professional.findOneAndUpdate(
-      { user: userId },
+    await Professional.findByIdAndUpdate(
+      professionalId, // Use professionalId to find the professional
       {
         clinic: clinic._id,
-        attachedToClinic: true,
+        attachedToClinic: true, // Set attachedToClinic to true
       },
       { new: true }
     );
@@ -112,6 +122,7 @@ const joinClinic = async (req, res) => {
     res.status(500).send(error);
   }
 };
+
 const fetchClinicById = async (req, res) => {
   try {
     const clinic = await Clinic.findById(req.params.id).populate('professionals'); // Populate professionals

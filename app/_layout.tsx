@@ -66,6 +66,8 @@ const Layout = () => {
     checkUser();
   }, []);
 
+ 
+
   if (!isLoaded) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -84,7 +86,7 @@ const Layout = () => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <StatusBar barStyle="dark-content" />
-      <Stack.Navigator>
+      <Stack.Navigator initialRouteName={user.userType === 'professional' ? 'professional/dashboard' : 'client/tabs'}>
         <Stack.Screen name="oauth/callback" options={{ headerShown: false }} />
         {/* Remove the 'professional/layout' screen */}
         {/* <Stack.Screen
@@ -111,6 +113,20 @@ const Layout = () => {
         <Stack.Screen name="AddClinicForm" options={{ title: 'AddClinic' }} />
         <Stack.Screen name="tasks" options={{ title: 'Tasks', headerShown: true }} />
         <Stack.Screen name="consultations/index" options={{ title: 'Patients', headerShown: true }} />
+
+        {user.userType === 'professional' && (
+          <>
+            <Stack.Screen name="professional/dashboard" component={DashboardScreen} options={{ headerShown: false }} />
+            {/* ...other professional screens... */}
+          </>
+        )}
+
+        {user.userType === 'client' && (
+          <>
+            <Stack.Screen name="client/tabs" component={ClientTabs} options={{ headerShown: false }} />
+            {/* ...other client screens... */}
+          </>
+        )}
       </Stack.Navigator>
     </SafeAreaView>
   );
