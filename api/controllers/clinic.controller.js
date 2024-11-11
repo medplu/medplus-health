@@ -48,12 +48,12 @@ const registerClinic = async (req, res) => {
 
     await clinic.save();
 
-    // Link the clinic to the professional and update fields
+    // Link the clinic to the professional and update fields directly
     professional.clinic = clinic._id;
     professional.attachedToClinic = true;
-
-    // Save the professional to update the clinic link
     await professional.save();
+
+    console.log(`Professional after update: ${JSON.stringify(professional)}`); // Log updated professional
 
     // Add the professional to the clinic's professionals array and save clinic again
     clinic.professionals.push(professional._id);
