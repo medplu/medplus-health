@@ -56,6 +56,9 @@ const registerClinic = async (req, res) => { // Change from array to async funct
 
     if (!professional) {
       console.warn(`No professional found for professionalId: ${professionalId}`); // Debugging log if no professional is found
+    } else {
+      clinic.professionals.push(professional._id); // Add professional to clinic's professionals array
+      await clinic.save(); // Save the clinic after adding professional
     }
 
     res.status(201).send(clinic);
