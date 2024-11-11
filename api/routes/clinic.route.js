@@ -3,7 +3,7 @@ const router = express.Router();
 const clinicsController = require('../controllers/clinic.controller');
 
 // Route to register a new clinic
-router.post('/register/:userId', clinicsController.registerClinic);
+router.post('/register/:professionalId', clinicsController.registerClinic);
 
 // Route to get all clinics
 router.get('/', clinicsController.fetchClinics);

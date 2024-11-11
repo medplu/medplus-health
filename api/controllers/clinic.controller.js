@@ -23,6 +23,7 @@ const generateReferenceCode = () => {
 const registerClinic = async (req, res) => {
   const { professionalId } = req.params;
   const { name, contactInfo, address, category, image } = req.body;
+  console.log(professionalId)
 
   try {
     // Validate if the professional exists before creating the clinic
