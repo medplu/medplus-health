@@ -39,7 +39,7 @@ const LoginScreen: React.FC = () => {
         userType,
         doctorId,
         professional,
-        profileImage // Add profileImage to destructuring
+        profileImage 
       } = response.data;
 
       if (!firstName || !lastName) {
@@ -53,7 +53,7 @@ const LoginScreen: React.FC = () => {
           userId, 
           userType,
           professional,
-          profileImage // Set profileImage in Redux
+          profileImage 
         })
       );
 
