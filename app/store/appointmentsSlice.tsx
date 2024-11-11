@@ -45,15 +45,14 @@ interface Appointment {
   consultationFee?: number;
   emailNotifications?: boolean;
   pushNotifications?: boolean;
-  // Add other appointment details as needed
+ 
 }
 
 interface Notification {
-  _id: string; // Unique ID for the notification
-  patientName: string; // Name of the patient for the notification
-  date: string; // Appointment date
-  time: string; // Appointment time
-  status: string; // Status of the appointment
+  _id: string; 
+  patientName: string; 
+  time: string; 
+  status: string; 
 }
 
 interface AppointmentsState {
@@ -61,7 +60,7 @@ interface AppointmentsState {
   upcomingAppointments: Appointment[];
   requestedAppointments: Appointment[];
   completedAppointments: Appointment[];
-  notifications: Notification[]; // New state for notifications
+  notifications: Notification[]; 
   loading: boolean;
   error: string | null;
 }
@@ -71,7 +70,7 @@ const initialState: AppointmentsState = {
   upcomingAppointments: [],
   requestedAppointments: [],
   completedAppointments: [],
-  notifications: [], // Initialize notifications state
+  notifications: [],
   loading: false,
   error: null,
 };
@@ -99,13 +98,13 @@ const appointmentsSlice = createSlice({
       state.error = action.payload;
     },
     setNotifications: (state, action: PayloadAction<Notification[]>) => {
-      state.notifications = action.payload; // Set notifications in the state
+      state.notifications = action.payload; 
     },
     addNotification: (state, action: PayloadAction<Notification>) => {
-      state.notifications.push(action.payload); // Add a single notification
+      state.notifications.push(action.payload); 
     },
     clearNotifications: (state) => {
-      state.notifications = []; // Clear notifications
+      state.notifications = [];
     },
   },
 });

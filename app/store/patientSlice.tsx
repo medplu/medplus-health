@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { RootState } from './configureStore'; // Adjust the path based on your project structure
+import { RootState } from './configureStore';
 
-// Define the Patient interface
 interface Patient {
   _id: string;
   image: string;
@@ -11,12 +10,12 @@ interface Patient {
   diagnoses: string[];
   treatment: string[];
   labTests: string[];
-  name: string; // New field
-  medicalHistory: string[]; // New field
-  userId: string; // New field
-  createdAt: string; // New field
-  updatedAt: string; // New field
-  __v: number; // New field
+  name: string;
+  medicalHistory: string[];
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 interface MedicalHistory {
@@ -30,21 +29,18 @@ interface MedicalHistory {
   reviewOfSystems: string;
 }
 
-// Define the PatientState interface
 interface PatientState {
   patients: { [key: string]: Patient };
   loading: boolean;
   error: string | null;
 }
 
-// Initialize the state
 const initialState: PatientState = {
   patients: {},
   loading: false,
   error: null,
 };
 
-// Async thunk to fetch patient by ID
 export const fetchPatientById = createAsyncThunk<
   Patient,
   string,
@@ -83,7 +79,6 @@ export const saveMedicalHistory = createAsyncThunk<
   }
 });
 
-// Create the patient slice
 const patientSlice = createSlice({
   name: 'patient',
   initialState,
@@ -116,7 +111,6 @@ const patientSlice = createSlice({
   },
 });
 
-// Selectors
 export const selectPatientById = (state: RootState, patientId: string) =>
   state.patient.patients[patientId];
 export const selectPatientLoading = (state: RootState) => state.patient.loading;

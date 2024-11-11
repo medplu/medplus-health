@@ -3,20 +3,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { RootState } from '../store/configureStore';
 
-// Define the structure of a clinic
 interface Clinic {
-  _id: string; // Use the correct field name from your API response
+  _id: string;
   name: string;
   address: string;
   category: string;
-  image?: string; // Optional field
-  // Add any other fields as needed
+  image?: string;
 }
 
 interface ClinicsState {
   clinicList: Clinic[];
   filteredClinicList: Clinic[];
-  selectedClinic: Clinic | null; // For holding the specific clinic data
+  selectedClinic: Clinic | null;
   loading: boolean;
   error: string | null;
 }
@@ -24,42 +22,37 @@ interface ClinicsState {
 const initialState: ClinicsState = {
   clinicList: [],
   filteredClinicList: [],
-  selectedClinic: null, // Initialize as null
+  selectedClinic: null,
   loading: false,
   error: null,
 };
 
-// Async thunk for fetching clinics from the API or AsyncStorage
 export const fetchClinics = createAsyncThunk(
   'clinics/fetchClinics',
   async () => {
     const cachedClinics = await AsyncStorage.getItem('clinicList');
     if (cachedClinics) {
-      return JSON.parse(cachedClinics); // Return cached clinics if available
+      return JSON.parse(cachedClinics);
     }
 
-    // Fetch from API if no cached data
-    const response = await axios.get('https://medplus-health.onrender.com/api/clinics'); // Adjust the URL as necessary
+    const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
     await AsyncStorage.setItem('clinicList', JSON.stringify(response.data));
     return response.data;
   }
 );
 
-// Async thunk for fetching a specific clinic by ID
 export const fetchClinicById = createAsyncThunk(
   'clinics/fetchClinicById',
   async (clinicId: string) => {
     const cachedClinics = await AsyncStorage.getItem('clinicList');
     const clinics = cachedClinics ? JSON.parse(cachedClinics) : [];
 
-    // Check if the clinic exists in cached clinics
     const cachedClinic = clinics.find((clinic: Clinic) => clinic._id === clinicId);
     if (cachedClinic) {
-      return cachedClinic; // Return cached clinic if available
+      return cachedClinic;
     }
 
-    // Fetch from API if no cached data
-    const response = await axios.get(`https://medplus-health.onrender.com/api/clinics/${clinicId}`); // Adjust the URL as necessary
+    const response = await axios.get(`https://medplus-health.onrender.com/api/clinics/${clinicId}`);
     return response.data;
   }
 );
@@ -72,7 +65,6 @@ const clinicsSlice = createSlice({
       const { searchQuery } = action.payload;
       let filtered = state.clinicList;
 
-      // Filtering locally on the cached data
       if (searchQuery) {
         filtered = filtered.filter((clinic) =>
           (clinic.name && clinic.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -83,7 +75,7 @@ const clinicsSlice = createSlice({
       state.filteredClinicList = filtered;
     },
     clearSelectedClinic: (state) => {
-      state.selectedClinic = null; // Clear selected clinic when needed
+      state.selectedClinic = null;
     },
   },
   extraReducers: (builder) => {
@@ -94,7 +86,7 @@ const clinicsSlice = createSlice({
       })
       .addCase(fetchClinics.fulfilled, (state, action: PayloadAction<Clinic[]>) => {
         state.clinicList = action.payload;
-        state.filteredClinicList = action.payload; // Initialize filtered list with all clinics
+        state.filteredClinicList = action.payload;
         state.loading = false;
       })
       .addCase(fetchClinics.rejected, (state, action) => {
@@ -106,7 +98,7 @@ const clinicsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchClinicById.fulfilled, (state, action: PayloadAction<Clinic>) => {
-        state.selectedClinic = action.payload; // Store the fetched clinic data
+        state.selectedClinic = action.payload;
         state.loading = false;
       })
       .addCase(fetchClinicById.rejected, (state, action) => {
@@ -116,14 +108,11 @@ const clinicsSlice = createSlice({
   },
 });
 
-// Export actions
-export const { filterClinics, clearSelectedClinic  } = clinicsSlice.actions;
+export const { filterClinics, clearSelectedClinic } = clinicsSlice.actions;
 
-// Selectors to access clinic state
 export const selectClinics = (state: RootState) => state.clinics.filteredClinicList;
-export const selectClinicDetails = (state: RootState) => state.clinics.selectedClinic; // Selector for the selected clinic details
-export const selectClinicLoading = (state: RootState) => state.clinics.loading; // Selector for loading state
-export const selectClinicError = (state: RootState) => state.clinics.error; // Selector for error state
+export const selectClinicDetails = (state: RootState) => state.clinics.selectedClinic;
+export const selectClinicLoading = (state: RootState) => state.clinics.loading;
+export const selectClinicError = (state: RootState) => state.clinics.error;
 
-// Export the reducer
 export default clinicsSlice.reducer;

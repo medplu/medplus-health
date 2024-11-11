@@ -1,24 +1,24 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { RootState } from './configureStore'; // Corrected import path
+import { RootState } from './configureStore';
 
 export const fetchPrescriptionsByPatientId = createAsyncThunk(
   'prescriptions/fetchByPatientId',
-  async (patientId: string) => { // Update parameter to accept patientId string
-    console.log('Fetching prescriptions for patientId:', patientId); // Log the patientId
+  async (patientId: string) => {
+    console.log('Fetching prescriptions for patientId:', patientId);
     const response = await axios.get(`https://medplus-health.onrender.com/api/prescriptions/${encodeURIComponent(patientId)}`);
-    return response.data.prescription; // Return the single prescription object
+    return response.data.prescription;
   }
 );
 
 interface PrescriptionState {
-  prescription: any | null; // Change from prescriptions: any[]
+  prescription: any | null;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: PrescriptionState = {
-  prescription: null, // Initialize as null instead of an empty array
+  prescription: null,
   loading: false,
   error: null,
 };
@@ -35,7 +35,7 @@ const prescriptionSlice = createSlice({
       })
       .addCase(fetchPrescriptionsByPatientId.fulfilled, (state, action) => {
         state.loading = false;
-        state.prescription = action.payload; // Assign the single prescription object
+        state.prescription = action.payload;
       })
       .addCase(fetchPrescriptionsByPatientId.rejected, (state, action) => {
         state.loading = false;
@@ -44,5 +44,5 @@ const prescriptionSlice = createSlice({
   },
 });
 
-export const selectPrescription = (state: RootState) => state.prescriptions.prescription; // Update selector
+export const selectPrescription = (state: RootState) => state.prescriptions.prescription;
 export default prescriptionSlice.reducer;

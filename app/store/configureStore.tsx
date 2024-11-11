@@ -6,16 +6,16 @@ import appointmentsReducer from './appointmentsSlice';
 import scheduleReducer from './scheduleSlice';
 import doctorReducer from './doctorSlice';
 import clinicsReducer from './clinicSlice';
-import patientReducer from './patientSlice'; // Import the patient reducer
-import prescriptionReducer from '@/redux/prescriptionSlice'; // Import prescription reducer
+import patientReducer from './patientSlice'; 
+import prescriptionReducer from '@/redux/prescriptionSlice'; 
 
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['user', 'prescription', 'doctors', 'schedules', 'clinics'], // Add 'prescription' to the whitelist
+  whitelist: ['user', 'prescription', 'doctors', 'schedules', 'clinics'],
 };
 
-// Combine all reducers into a root reducer
+
 const rootReducer = combineReducers({
   user: userReducer,
   appointments: appointmentsReducer,
