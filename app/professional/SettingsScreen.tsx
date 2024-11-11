@@ -61,21 +61,23 @@ const SettingsScreen: React.FC = () => {
 
   useEffect(() => {
     if (user?.professional) {
-      setForm((prevForm) => ({
-        ...prevForm,
-        firstName: user.professional.firstName,
-        lastName: user.professional.lastName,
-        email: user.professional.email,
-        profession: user.professional.profession,
-        certifications: user.professional.certifications,
-        emailNotifications: user.professional.emailNotifications,
-        pushNotifications: user.professional.pushNotifications,
-        clinic: user.professional.clinic,
-        attachedToClinic: user.professional.attachedToClinic,
-        profileImage: user.professional.profileImage,
-        consultationFee: user.professional.consultationFee,
-        availability: user.professional.availability || [],
-      }));
+      if (user.professional) {
+        setForm((prevForm) => ({
+          ...prevForm,
+          firstName: user.professional.firstName || '',
+          lastName: user.professional.lastName || '',
+          email: user.professional.email || '',
+          profession: user.professional.profession || '',
+          certifications: user.professional.certifications || [],
+          emailNotifications: user.professional.emailNotifications || false,
+          pushNotifications: user.professional.pushNotifications || false,
+          clinic: user.professional.clinic || '',
+          attachedToClinic: user.professional.attachedToClinic || false,
+          profileImage: user.professional.profileImage || '',
+          consultationFee: user.professional.consultationFee || '',
+          availability: user.professional.availability || [],
+        }));
+      }
     }
   }, [user]);
 

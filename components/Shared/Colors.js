@@ -9,7 +9,7 @@ export default {
     lit: '#FBFF8F',
     light_gray: '#feffdf',
     selectedBackground: '#91d690',
-    gray: '#a6a4a4',
+    gray: '#388e3c',
     goofy: '#8bffff',
     background: '#F8F9FA', // Background color used in scrollContainer
     textPrimary: '#002D62', // Text color for primary text like title and name
