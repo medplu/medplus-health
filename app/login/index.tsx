@@ -38,7 +38,8 @@ const LoginScreen: React.FC = () => {
         email: userEmail,
         userType,
         doctorId,
-        professional
+        professional,
+        profileImage // Add profileImage to destructuring
       } = response.data;
 
       if (!firstName || !lastName) {
@@ -49,10 +50,10 @@ const LoginScreen: React.FC = () => {
         login({
           name: `${firstName} ${lastName}`,
           email: userEmail,
+          userId, 
           userType,
           professional,
-          profileImage: professional?.profileImage || null,
-          userId,
+          profileImage // Set profileImage in Redux
         })
       );
 
@@ -62,7 +63,7 @@ const LoginScreen: React.FC = () => {
           if (professional.profession === 'pharmacist') {
             route = '/pharmacist/tabs';
           } else {
-            route = '/professional'; // Updated route
+            route = '/professional';
           }
           break;
         case 'client':
@@ -75,7 +76,7 @@ const LoginScreen: React.FC = () => {
           route = '/student/tabs';
       }
 
-      router.push(route); // This will navigate to the appropriate layout
+      router.push(route);
     } catch (error) {
       console.error('Error during login:', error);
       setErrorMessage('Invalid email or password. Please try again.');
@@ -147,10 +148,6 @@ const LoginScreen: React.FC = () => {
       </TouchableOpacity>
 
       <SignInWithOAuth setErrorMessage={setErrorMessage} router={router} />
-
-     
-
-     
     </View>
   );
 };
@@ -226,3 +223,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+

@@ -18,26 +18,14 @@ const DashboardScreen: React.FC = () => {
   const router = useRouter();
   const user = useSelector(selectUser);
   const { appointments, loading, error } = useAppointments();
-  const [dummyData, setDummyData] = useState<any[]>([]);
   const [tasks, setTasks] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [newTask, setNewTask] = useState<string>('');
 
-  useEffect(() => {
-    if (!user.professional?.attachedToClinic) {
-      router.push('/Addclinic');
-    }
-  }, [user, router]);
-
-  useEffect(() => {
-    // Fetch or generate dummy data
-    const data = [
-      { id: 1, name: 'John Doe', date: '2023-10-01', time: '10:00 AM', status: 'confirmed' },
-      { id: 2, name: 'Jane Smith', date: '2023-10-01', time: '11:00 AM', status: 'pending' },
-      // ... more dummy data
-    ];
-    setDummyData(data);
-  }, []);
+  if (!user.professional?.attachedToClinic) {
+    router.push('/Addclinic');
+    return null;
+  }
 
   useEffect(() => {
     // Load tasks from AsyncStorage
@@ -150,8 +138,6 @@ const DashboardScreen: React.FC = () => {
     <ScrollView style={styles.container}>
       {user.isLoggedIn ? (
         <>
-          
-
           <View style={styles.overviewContainer}>
             <View style={styles.overviewHeader}>
               <Text style={styles.sectionTitle}>Overview</Text>

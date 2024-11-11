@@ -4,15 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { store, persistor } from './store/configureStore'; // Adjust path as needed
-import { ScheduleProvider } from './context/ScheduleContext'; // Adjust path as needed
+import { store, persistor } from './store/configureStore';
+import { ScheduleProvider } from './context/ScheduleContext';
 import UnauthenticatedLayout from './UnauthenticatedLayout';
 import * as NavigationBar from 'expo-navigation-bar';
-import ProfessionalLayout from './professional/ProfessionalLayout';
 import { selectUser } from './store/userSlice';
 
 const tokenCache = {
-  async getToken(key: string) {
+  async getToken(key: string): Promise<string | null> {
     try {
       const item = await SecureStore.getItemAsync(key);
       if (item) {
@@ -27,31 +26,28 @@ const tokenCache = {
       return null;
     }
   },
-  async saveToken(key: string, value: string) {
+  async saveToken(key: string, value: string): Promise<void> {
     try {
-      return SecureStore.setItemAsync(key, value);
+      await SecureStore.setItemAsync(key, value);
     } catch (err) {
       console.error('SecureStore save token error:', err);
     }
   },
 };
 
-const Layout = () => {
-  const [user, setUser] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+const Layout: React.FC = () => {
+  const [user, setUser] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
-    // Set up navigation bar
     NavigationBar.setBackgroundColorAsync('rgba(0, 0, 0, 0)');
     NavigationBar.setVisibilityAsync('visible');
 
-    // Clean up navigation bar on unmount
     return () => {
       NavigationBar.setBackgroundColorAsync('#FFFFFF');
     };
   }, []);
 
-  // Auto-login or check if user is already signed in
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -65,8 +61,6 @@ const Layout = () => {
     };
     checkUser();
   }, []);
-
- 
 
   if (!isLoaded) {
     return (
@@ -86,16 +80,8 @@ const Layout = () => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <StatusBar barStyle="dark-content" />
-      <Stack.Navigator initialRouteName={user.userType === 'professional' ? 'professional/dashboard' : 'client/tabs'}>
+      <Stack.Navigator>
         <Stack.Screen name="oauth/callback" options={{ headerShown: false }} />
-        {/* Remove the 'professional/layout' screen */}
-        {/* <Stack.Screen
-          name="professional/layout"
-          component={ProfessionalLayout}
-          options={{ headerShown: false }}
-        /> */}
-        {/* Remove or comment out the 'tabs' screen to avoid conflicts */}
-        {/* <Stack.Screen name="tabs" options={{ headerShown: false }} /> */}
         <Stack.Screen name="clinics/index" options={{ title: 'Clinics', headerShown: true }} />
         <Stack.Screen name="clinics/[name]" options={{ title: '', headerShown: false }} />
         <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '', headerShown: false }} />
@@ -110,37 +96,21 @@ const Layout = () => {
         <Stack.Screen name="pharmacist/tabs" options={{ headerShown: false }} />
         <Stack.Screen name="appointment/[appointmentId]" options={{ title: 'Appointment Details' }} />
         <Stack.Screen name="PrescriptionScreen" options={{ title: 'Prescription' }} />
-        <Stack.Screen name="AddClinicForm" options={{ title: 'AddClinic' }} />
+        <Stack.Screen name="AddClinic" options={{ title: 'AddClinic' }} />
         <Stack.Screen name="tasks" options={{ title: 'Tasks', headerShown: true }} />
         <Stack.Screen name="consultations/index" options={{ title: 'Patients', headerShown: true }} />
-
-        {user.userType === 'professional' && (
-          <>
-            <Stack.Screen name="professional/dashboard" component={DashboardScreen} options={{ headerShown: false }} />
-            {/* ...other professional screens... */}
-          </>
-        )}
-
-        {user.userType === 'client' && (
-          <>
-            <Stack.Screen name="client/tabs" component={ClientTabs} options={{ headerShown: false }} />
-            {/* ...other client screens... */}
-          </>
-        )}
       </Stack.Navigator>
     </SafeAreaView>
   );
 };
 
-// Modify MainLayout to remove conditional rendering of ProfessionalLayout
-const MainLayout = () => {
+const MainLayout: React.FC = () => {
   const user = useSelector(selectUser);
 
-  // No longer conditionally render ProfessionalLayout here
   return <Layout />;
 };
 
-const LayoutWithProviders = () => (
+const LayoutWithProviders: React.FC = () => (
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
       <ScheduleProvider>

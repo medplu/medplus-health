@@ -171,7 +171,7 @@ exports.changePassword = async (req, res) => {
 exports.updateUserProfile = async (req, res) => {
   try {
     const userId = req.userId; // Assuming user ID is stored in the token
-    const { firstName, lastName, email, gender } = req.body;
+    const { name, email, contactInfo, profileImage } = req.body;
 
     // Find the user to update
     const user = await User.findById(userId);
@@ -180,27 +180,11 @@ exports.updateUserProfile = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    let profileImage = user.profileImage;
-
-    // Check if an image file is uploaded
-    if (req.files && req.files.profileImage) {
-      console.log('Image file detected:', req.files.profileImage); // Debugging log
-      const file = req.files.profileImage;
-      const uploadedResponse = await cloudinary.uploader.upload(file.tempFilePath, {
-        folder: 'medplus/users', // Optionally, specify a folder in Cloudinary
-      });
-      profileImage = uploadedResponse.secure_url;
-      console.log('Image uploaded to Cloudinary:', profileImage); // Debugging log
-    } else {
-      console.warn('No image file detected, proceeding without it.'); // Changed to warn log for clarity
-    }
-
     // Update user details
-    user.firstName = firstName || user.firstName;
-    user.lastName = lastName || user.lastName;
+    user.name = name || user.name;
     user.email = email || user.email;
-    user.gender = gender || user.gender;
-    user.profileImage = profileImage;
+    user.contactInfo = contactInfo || user.contactInfo;
+    user.profileImage = profileImage || user.profileImage;
 
     await user.save();
 
@@ -365,7 +349,7 @@ exports.login = async (req, res) => {
             }
         }
 
-        // Include userId, firstName, lastName, doctorId, and professional in the response
+        // Include userId, firstName, lastName, doctorId, professional, and profileImage in the response
         res.status(200).json({ 
             token, 
             userId: user._id, 
@@ -374,7 +358,8 @@ exports.login = async (req, res) => {
             email: user.email, // Added email field
             doctorId, 
             userType: user.userType,
-            professional // Attach the professional object if userType is professional
+            professional, // Attach the professional object if userType is professional
+            profileImage: user.profileImage // Include profileImage in the response
         });
     } catch (error) {
         console.log("Error logging in", error);

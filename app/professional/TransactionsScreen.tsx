@@ -25,7 +25,7 @@ const TransactionScreen: React.FC = () => {
   const [isAccountInfoVisible, setIsAccountInfoVisible] = useState<boolean>(false);
   const [transactions, setTransactions] = useState<any[]>([]);
   
-  const user = useSelector(selectUser); // Get user data from Redux
+  const user = useSelector(selectUser); 
 
   useEffect(() => {
     const checkPaymentSetupStatus = async () => {
@@ -65,13 +65,11 @@ const TransactionScreen: React.FC = () => {
 
   const fetchSubaccountInfo = async () => {
     try {
-      const professionalId = user?.professional?._id; // Retrieve professionalId from nested professional object
+      const professionalId = user?.professional?._id; 
       if (!professionalId) {
         Alert.alert('Error', 'Professional ID not found. Please log in again.');
         return;
       }
-
-      // Log the professionalId for debugging
       console.log('Fetching subaccount info for professionalId:', professionalId);
 
       const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${professionalId}`);
@@ -108,7 +106,7 @@ const TransactionScreen: React.FC = () => {
 
   const handleCreateSubaccount = async () => {
     try {
-      const professionalId = user?.professional?._id; // Use nested professionalId here
+      const professionalId = user?.professional?._id; 
       if (!professionalId) {
         Alert.alert('Error', 'Professional ID not found. Please log in again.');
         return;
@@ -117,7 +115,7 @@ const TransactionScreen: React.FC = () => {
       const subaccountPayload = {
         ...subaccountData,
         professionalId,
-        percentage_charge: '10', // Set default percentage charge to 10%
+        percentage_charge: '10', 
       };
 
       const response = await axios.post('https://medplus-health.onrender.com/api/payment/create-subaccount', subaccountPayload);
@@ -133,7 +131,7 @@ const TransactionScreen: React.FC = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        {/* Account Info Section */}
+      
         <View style={styles.section}>
           <View style={styles.infoHeader}>
             <Text style={styles.sectionTitle}>Account Information</Text>
@@ -158,7 +156,7 @@ const TransactionScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Example Button to create a subaccount (will be enabled after payment setup) */}
+        
         <TouchableOpacity
           style={[styles.card, !isPaymentSetupCompleted && styles.disabledCard]}
           onPress={() => {
@@ -192,7 +190,7 @@ const TransactionScreen: React.FC = () => {
         ))}
       </View>
 
-      {/* Payment Setup Prompt Modal */}
+     
       <Modal
         visible={showPaymentSetupModal}
         transparent
