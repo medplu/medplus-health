@@ -20,13 +20,17 @@ const generateReferenceCode = () => {
   return 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 };
 
-const registerClinic = async (req, res) => { // Change from array to async function
-  const { professionalId } = req.params; // Change from userId to professionalId
-  const { name, contactInfo, address, category, image } = req.body; // Include image in the request body
+const registerClinic = async (req, res) => {
+  const { professionalId } = req.params;
+  const { name, contactInfo, address, category, image } = req.body;
 
   try {
-    // Since image is already a URL, no need to upload to Cloudinary here
-    // You can validate the URL if necessary
+    // Validate if the professional exists before creating the clinic
+    const professional = await Professional.findById(professionalId);
+    if (!professional) {
+      console.warn(`No professional found for professionalId: ${professionalId}`);
+      return res.status(404).send({ message: 'Professional not found' });
+    }
 
     // Generate a unique reference code for the clinic
     const referenceCode = generateReferenceCode();
@@ -36,43 +40,32 @@ const registerClinic = async (req, res) => { // Change from array to async funct
       name,
       contactInfo,
       address,
-      image: image || null, // Can be null if no image was uploaded
-      category, // Include category in the clinic creation
-      referenceCode, // Store the reference code in the clinic
-      professionals: [], // Start with an empty array for professionals
+      image: image || null,
+      category,
+      referenceCode,
+      professionals: [], // Initialize with an empty array for professionals
     });
 
     await clinic.save();
 
-    // Update the professional model to associate it with the clinic
-    const professional = await Professional.findByIdAndUpdate(
-      professionalId, // Use professionalId to find the professional
-      {
-        clinic: clinic._id, // Link the clinic ID to the professional's clinic field
-        attachedToClinic: true, // Set attachedToClinic to true
-      },
-      { new: true } // Return the updated document
-    );
+    // Link the clinic to the professional and update fields
+    professional.clinic = clinic._id;
+    professional.attachedToClinic = true;
 
-    if (!professional) {
-      console.warn(`No professional found for professionalId: ${professionalId}`); // Debugging log if no professional is found
-    } else {
-      clinic.professionals.push(professional._id); // Add professional to clinic's professionals array
-      await clinic.save(); // Save the clinic after adding professional
-    }
+    // Save the professional to update the clinic link
+    await professional.save();
+
+    // Add the professional to the clinic's professionals array and save clinic again
+    clinic.professionals.push(professional._id);
+    await clinic.save();
 
     res.status(201).send(clinic);
   } catch (error) {
-    console.error('Error creating clinic:', error); // Debugging log
-    res.status(400).send(error);
+    console.error('Error creating clinic or updating professional:', error);
+    res.status(500).send({ message: 'Error creating clinic', error });
   }
 };
 
-// Remove the array and multer middleware from registerClinic
-// const registerClinic = [
-//   upload.single('image'), // Remove multer middleware
-//   async (req, res) => { /* ... */ }
-// ];
 
 const fetchClinics = async (req, res) => {
   try {
