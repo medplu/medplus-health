@@ -1,4 +1,4 @@
-// scheduleSlice.ts
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 export const fetchSchedule = createAsyncThunk('schedule/fetchSchedule', async (professionalId: string) => {

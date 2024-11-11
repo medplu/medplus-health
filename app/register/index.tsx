@@ -241,7 +241,7 @@ const SignupScreen: React.FC = () => {
                   />
                 </View>
 
-                {/* Gender Selection */}
+              
                 <Text style={styles.sectionHeader}>Gender</Text>
                 <View style={styles.genderContainer}>
                   <TouchableOpacity
