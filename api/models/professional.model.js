@@ -87,15 +87,15 @@ const professionalSchema = new Schema({
     },
     licenseNumber: { // Add licenseNumber field
         type: String,
-        required: true
+        required: false
     },
     phone: { // Add phone field
         type: String,
-        required: true
+        required: false
     },
-    address: { // Add address field
+    address: { 
         type: String,
-        required: true
+        required: false
     }
 }, { timestamps: true });
 
