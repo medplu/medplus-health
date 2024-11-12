@@ -26,7 +26,7 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
     const checkFavorite = async () => {
       try {
         const token = await AsyncStorage.getItem('token');
-        const response = await axios.get('https://medplus-health.onrender.com/api/users/favorites', {
+        const response = await axios.get('https://medplus-health.onrender.com/api/favorites', {
           headers: { Authorization: `Bearer ${token}` },
         });
         const favoriteProfessionalIds = response.data.favoriteDoctors.map((doc: Doctor) => doc._id);
@@ -42,17 +42,18 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
   const toggleFavorite = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      if (!token) {
+      const userId = await AsyncStorage.getItem('userId'); // Assuming userId is stored in AsyncStorage
+      if (!token || !userId) {
         // Handle unauthenticated state
         return;
       }
 
       if (isFavorite) {
-        await axios.post('https://medplus-health.onrender.com/api/users/removeFavorite', { professionalId: _id }, { // Updated key
+        await axios.post('https://medplus-health.onrender.com/api/removeFavorite', { userId, professionalId: _id }, { // Updated key
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        await axios.post('https://medplus-health.onrender.com/api/users/addFavorite', { professionalId: _id }, { // Updated key
+        await axios.post('https://medplus-health.onrender.com/api/addFavorite', { userId, professionalId: _id }, { // Updated key
           headers: { Authorization: `Bearer ${token}` },
         });
       }

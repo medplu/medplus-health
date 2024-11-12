@@ -97,7 +97,7 @@ const BookAppointment = () => {
       <View ref={bookingSectionRef}>
         <BookingSection clinic={clinic} navigation={undefined} />
       </View>
-      <StaticDoctors doctors={doctorsData} loading={loading} onBookPress={handleBookPress} />
+      <StaticDoctors doctors={doctorsData} loading={loading} />
       <ActionButton />
       <HorizontalLine />
     </>

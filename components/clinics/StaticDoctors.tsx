@@ -2,7 +2,7 @@ import React from 'react';
 import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
-
+import { useNavigation } from '@react-navigation/native'; 
 interface Doctor {
   _id: string;
   name: string; // Update: name is a single string now
@@ -14,10 +14,17 @@ interface Doctor {
 interface StaticDoctorsProps {
   doctors: Doctor[];
   loading: boolean;
-  onBookPress: () => void;
+  
 }
 
+
 const StaticDoctors: React.FC<StaticDoctorsProps> = ({ doctors, loading, onBookPress }) => {
+  const navigation = useNavigation();
+
+  const handleConsult = (doctor: Doctor) => {
+    navigation.navigate('doctor/index', { doctor: JSON.stringify(doctor) });
+  };
+ 
   return (
     <View style={styles.container}>
       <SubHeading subHeadingTitle={'Consult a Specialist'} onViewAll={() => {}} />
@@ -42,12 +49,9 @@ const StaticDoctors: React.FC<StaticDoctorsProps> = ({ doctors, loading, onBookP
                 <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text> 
               </View>
               <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
-              <TouchableOpacity
-                style={styles.consultButton}
-                onPress={onBookPress}
-              >
-                <Text style={styles.buttonText}>Book</Text>
-              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
+              <Text style={styles.buttonText}>View</Text>
+            </TouchableOpacity>
             </View>
           )}
           keyExtractor={(item) => item._id.toString()}
@@ -63,6 +67,12 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 10,
     paddingHorizontal: 10,
+  },
+  button: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginTop: 10,
   },
   loadingContainer: {
     flex: 1,

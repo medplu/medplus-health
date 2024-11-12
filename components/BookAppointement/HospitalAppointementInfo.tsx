@@ -36,13 +36,14 @@ const HospitalAppointementInfo: React.FC<HospitalAppointementInfoProps> = ({ cli
 
   return (
     <View style={styles.container}>
-      {clinic.image && <Image source={{ uri: clinic.image }} style={styles.image} />}
-      
       <View style={styles.headerRow}>
-        <Text style={styles.title}>{clinic.name}</Text>
-        <View style={styles.infoRow}>
-          <EvilIcons name="location" size={16} color={Colors.gray} />
-          <Text style={styles.title}>{clinic.address}</Text>
+        {clinic.image && <Image source={{ uri: clinic.image }} style={styles.image} />}
+        <View style={styles.headerText}>
+          <Text style={styles.title}>{clinic.name}</Text>
+          <View style={styles.infoRow}>
+            <EvilIcons name="location" size={16} color={Colors.gray} />
+            <Text style={styles.address}>{clinic.address}</Text>
+          </View>
         </View>
       </View>
 
@@ -71,8 +72,8 @@ const HospitalAppointementInfo: React.FC<HospitalAppointementInfoProps> = ({ cli
 
 const styles = StyleSheet.create({
   container: {
-    padding: 10,
-    backgroundColor: '#f9f9f9',
+    padding: 15,
+    backgroundColor: '#fff',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -83,28 +84,28 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   image: {
-    width: '100%',
-    height: 150,
-    borderRadius: 8,
-    marginBottom: 10,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
   },
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 10,
+  },
+  headerText: {
+    flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: 'Inter-Black-Semi',
-    flexShrink: 1,
-    marginRight: 10,
+    marginBottom: 2,
   },
   address: {
     fontSize: 14,
     fontFamily: 'Inter-Black',
     color: Colors.gray,
-    flexShrink: 1,
   },
   category: {
     marginTop: 5,
