@@ -54,7 +54,7 @@ const useSchedule = (): UseScheduleHook => {
 
   const createOrUpdateSchedule = async (professionalId: string, availability: Slot[]) => {
     try {
-      const response = await axios.post(`https://medplus-health.onrender.com/api/schedule/create-or-update`, {
+      const response = await axios.put(`https://medplus-health.onrender.com/api/schedule`, {
         professionalId,
         availability,
       });

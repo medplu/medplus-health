@@ -56,6 +56,8 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
       return;
     }
 
+    console.log('Selected Time Slot:', selectedTimeSlot); // Add this line to log selectedTimeSlot
+
     setIsSubmitting(true);
     setShowAlert(false);
     setAlertMessage('');
@@ -88,7 +90,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
         userId: userId,
         patientName: patientName,
         date: moment(selectedDate).format('YYYY-MM-DD'), // Ensure date is included
-        timeSlotId: selectedTimeSlot.id,
+        timeSlotId: selectedTimeSlot.id, // Ensure timeSlotId is included
         time: selectedTimeSlot.time,
         status: 'pending',
       });

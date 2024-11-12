@@ -1,4 +1,5 @@
 const moment = require('moment');
+const mongoose = require('mongoose');
 const Schedule = require('../models/schedule.model');
 const Professional = require('../models/professional.model');
 const Appointment = require('../models/appointment.model');
@@ -32,7 +33,8 @@ exports.createOrUpdateSchedule = async (req, res) => {
                 startTime: slot.startTime,
                 endTime: slot.endTime,
                 isBooked: slot.isBooked,
-                appointmentId: slot.appointmentId || null
+                appointmentId: slot.appointmentId || null,
+                _id: new mongoose.Types.ObjectId(), // Ensure each slot has a unique ObjectId
             };
         });
 
@@ -152,6 +154,7 @@ exports.createRecurringSlots = async (req, res) => {
           endTime: slot.endTime,
           isBooked: slot.isBooked,
           appointmentId: slot.appointmentId || null,
+          _id: new mongoose.Types.ObjectId(), // Ensure each slot has a unique ObjectId
         });
       }
     });
@@ -167,5 +170,57 @@ exports.createRecurringSlots = async (req, res) => {
   } catch (error) {
     console.error('Error creating recurring slots:', error);
     return res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+// Create a new schedule
+exports.createSchedule = async (req, res) => {
+  const { doctorId, date, slots } = req.body;
+
+  try {
+    const newSlots = slots.map(slot => ({
+      ...slot,
+      _id: new mongoose.Types.ObjectId(), // Ensure each slot has a unique ObjectId
+    }));
+
+    const newSchedule = new Schedule({
+      doctorId,
+      date,
+      slots: newSlots,
+    });
+
+    await newSchedule.save();
+    res.status(201).json(newSchedule);
+  } catch (error) {
+    console.error('Error creating schedule:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Update an existing schedule
+exports.updateSchedule = async (req, res) => {
+  const { scheduleId } = req.params;
+  const { slots } = req.body;
+
+  try {
+    const updatedSlots = slots.map(slot => ({
+      ...slot,
+      _id: slot._id || new mongoose.Types.ObjectId(), // Ensure each slot has a unique ObjectId
+    }));
+
+    const updatedSchedule = await Schedule.findByIdAndUpdate(
+      scheduleId,
+      { slots: updatedSlots },
+      { new: true }
+    );
+
+    if (!updatedSchedule) {
+      return res.status(404).json({ error: 'Schedule not found' });
+    }
+
+    res.status(200).json(updatedSchedule);
+  } catch (error) {
+    console.error('Error updating schedule:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
