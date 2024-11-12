@@ -74,7 +74,9 @@ exports.register = async (req, res) => {
             }
 
             await new Professional({
-                ...userData,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+                email: newUser.email,
                 user: newUser._id,
                 profession,
                 title, // Include title if profession is doctor

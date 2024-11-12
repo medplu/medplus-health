@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { selectUser } from './store/userSlice';
 
-interface AddClinicFormProps {
-  onClose: () => void;
-}
-
-const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
+const AddClinicForm: React.FC = () => {
   const navigation = useNavigation();
   const user = useSelector(selectUser);
   const professionalId = user.professional?._id;
@@ -136,15 +132,21 @@ const AddClinicForm: React.FC<AddClinicFormProps> = ({ onClose }) => {
         value={category}
         onChangeText={setCategory}
       />
-      <Button title="Pick an image from camera roll" onPress={pickImage} />
+      <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+        <Text style={styles.imagePickerText}>Pick an image from camera roll</Text>
+      </TouchableOpacity>
       {image && (
         <Image
           source={{ uri: image }}
           style={styles.image}
         />
       )}
-      <Button title={uploading ? "Submitting..." : "Submit"} onPress={handleSubmit} disabled={uploading} />
-      <Button title="Cancel" onPress={() => navigation.goBack()} />
+      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={uploading}>
+        {uploading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Submit</Text>}
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
+        <Text style={styles.cancelButtonText}>Cancel</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -153,10 +155,14 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     backgroundColor: '#fff',
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   title: {
     fontSize: 24,
     marginBottom: 20,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   input: {
     height: 40,
@@ -164,11 +170,45 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
     paddingLeft: 8,
+    borderRadius: 5,
+  },
+  imagePicker: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  imagePickerText: {
+    color: '#fff',
+    fontSize: 16,
   },
   image: {
-    width: 200,
+    width: '100%',
     height: 200,
     marginBottom: 10,
+    borderRadius: 5,
+  },
+  submitButton: {
+    backgroundColor: '#28a745',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  cancelButton: {
+    backgroundColor: '#dc3545',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });
 
