@@ -13,4 +13,7 @@ router.get('/schedule/:professionalId', scheduleController.getScheduleByProfessi
 // Fetch available slots for a professional
 router.get('/schedule/available-slots/:professionalId', scheduleController.getAvailableSlots);
 
+// Add route for creating recurring slots
+router.post('/schedule/createRecurringSlots', scheduleController.createRecurringSlots);
+
 module.exports = router;

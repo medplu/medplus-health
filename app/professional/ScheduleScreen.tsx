@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal} from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal, Platform } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import { useSelector } from 'react-redux';
 import moment from 'moment';
@@ -9,6 +9,8 @@ import { selectUser } from '../store/userSlice';
 import Colors from '../../components/Shared/Colors';
 import axios from 'axios'; 
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface Patient {
   name: string;
@@ -148,41 +150,53 @@ const ScheduleScreen: React.FC = () => {
   }, [schedule, appointments, todayAppointments, selectedDate]);
 
   const showDatePicker = () => {
-    setDatePickerVisibility(true);
+    if (Platform.OS === 'web') {
+      setDatePickerVisibility(true);
+    } else {
+      setDatePickerVisibility(true);
+    }
   };
-  
+
   const hideDatePicker = () => {
     setDatePickerVisibility(false);
   };
-  
+
   const handleConfirmDate = (date: Date) => {
     setSelectedDateState(date);
     setNewSlotDate(moment(date).format('YYYY-MM-DD'));
     hideDatePicker();
   };
-  
+
   const showStartTimePicker = () => {
-    setStartTimePickerVisibility(true);
+    if (Platform.OS === 'web') {
+      setStartTimePickerVisibility(true);
+    } else {
+      setStartTimePickerVisibility(true);
+    }
   };
-  
+
   const hideStartTimePicker = () => {
     setStartTimePickerVisibility(false);
   };
-  
+
   const handleConfirmStartTime = (time: Date) => {
     setSelectedStartTime(time);
     setNewSlotStartTime(moment(time).format('HH:mm'));
     hideStartTimePicker();
   };
-  
+
   const showEndTimePicker = () => {
-    setEndTimePickerVisibility(true);
+    if (Platform.OS === 'web') {
+      setEndTimePickerVisibility(true);
+    } else {
+      setEndTimePickerVisibility(true);
+    }
   };
-  
+
   const hideEndTimePicker = () => {
     setEndTimePickerVisibility(false);
   };
-  
+
   const handleConfirmEndTime = (time: Date) => {
     setSelectedEndTime(time);
     setNewSlotEndTime(moment(time).format('HH:mm'));
@@ -227,7 +241,7 @@ const ScheduleScreen: React.FC = () => {
     if (recurrence === 'none') {
       await createOrUpdateSchedule(professionalId, availability);
     } else {
-      await axios.post('/api/schedule/createRecurringSlots', {
+      await axios.post('https://medplus-health.onrender.com/api/schedule/createRecurringSlots', {
         professionalId,
         slots: availability,
         recurrence,
@@ -375,43 +389,84 @@ const ScheduleScreen: React.FC = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Create New Slot</Text>
 
-            <TouchableOpacity onPress={showDatePicker} style={styles.pickerButton}>
-              <Text style={styles.pickerButtonText}>
-                {selectedDateState ? moment(selectedDateState).format('YYYY-MM-DD') : 'Select Date'}
-              </Text>
-            </TouchableOpacity>
-            <DateTimePickerModal
-              isVisible={isDatePickerVisible}
-              mode="date"
-              onConfirm={handleConfirmDate}
-              onCancel={hideDatePicker}
-            />
+            {Platform.OS === 'web' ? (
+              <DatePicker
+                selected={selectedDateState}
+                onChange={(date: Date) => handleConfirmDate(date)}
+                dateFormat="yyyy-MM-dd"
+                className="web-datepicker"
+              />
+            ) : (
+              <TouchableOpacity onPress={showDatePicker} style={styles.pickerButton}>
+                <Text style={styles.pickerButtonText}>
+                  {selectedDateState ? moment(selectedDateState).format('YYYY-MM-DD') : 'Select Date'}
+                </Text>
+              </TouchableOpacity>
+            )}
+            {Platform.OS !== 'web' && (
+              <DateTimePickerModal
+                isVisible={isDatePickerVisible}
+                mode="date"
+                onConfirm={handleConfirmDate}
+                onCancel={hideDatePicker}
+              />
+            )}
 
-            <TouchableOpacity onPress={showStartTimePicker} style={styles.pickerButton}>
-              <Text style={styles.pickerButtonText}>
-                {selectedStartTime ? moment(selectedStartTime).format('HH:mm') : 'Select Start Time'}
-              </Text>
-            </TouchableOpacity>
-            <DateTimePickerModal
-              isVisible={isStartTimePickerVisible}
-              mode="time"
-              onConfirm={handleConfirmStartTime}
-              onCancel={hideStartTimePicker}
-              headerTextIOS="Work start at:"
-            />
+            {Platform.OS === 'web' ? (
+              <DatePicker
+                selected={selectedStartTime}
+                onChange={(time: Date) => handleConfirmStartTime(time)}
+                showTimeSelect
+                showTimeSelectOnly
+                timeIntervals={15}
+                timeCaption="Time"
+                dateFormat="HH:mm"
+                className="web-timepicker"
+              />
+            ) : (
+              <TouchableOpacity onPress={showStartTimePicker} style={styles.pickerButton}>
+                <Text style={styles.pickerButtonText}>
+                  {selectedStartTime ? moment(selectedStartTime).format('HH:mm') : 'Select Start Time'}
+                </Text>
+              </TouchableOpacity>
+            )}
+            {Platform.OS !== 'web' && (
+              <DateTimePickerModal
+                isVisible={isStartTimePickerVisible}
+                mode="time"
+                onConfirm={handleConfirmStartTime}
+                onCancel={hideStartTimePicker}
+                headerTextIOS="Work start at:"
+              />
+            )}
 
-            <TouchableOpacity onPress={showEndTimePicker} style={styles.pickerButton}>
-              <Text style={styles.pickerButtonText}>
-                {selectedEndTime ? moment(selectedEndTime).format('HH:mm') : 'Select End Time'}
-              </Text>
-            </TouchableOpacity>
-            <DateTimePickerModal
-              isVisible={isEndTimePickerVisible}
-              mode="time"
-              onConfirm={handleConfirmEndTime}
-              onCancel={hideEndTimePicker}
-              headerTextIOS="Work ends at"
-            />
+            {Platform.OS === 'web' ? (
+              <DatePicker
+                selected={selectedEndTime}
+                onChange={(time: Date) => handleConfirmEndTime(time)}
+                showTimeSelect
+                showTimeSelectOnly
+                timeIntervals={15}
+                timeCaption="Time"
+                dateFormat="HH:mm"
+                className="web-timepicker"
+              />
+            ) : (
+              <TouchableOpacity onPress={showEndTimePicker} style={styles.pickerButton}>
+                <Text style={styles.pickerButtonText}>
+                  {selectedEndTime ? moment(selectedEndTime).format('HH:mm') : 'Select End Time'}
+                </Text>
+              </TouchableOpacity>
+            )}
+            {Platform.OS !== 'web' && (
+              <DateTimePickerModal
+                isVisible={isEndTimePickerVisible}
+                mode="time"
+                onConfirm={handleConfirmEndTime}
+                onCancel={hideEndTimePicker}
+                headerTextIOS="Work ends at"
+              />
+            )}
 
             <View style={styles.recurrenceContainer}>
               <Text style={styles.recurrenceLabel}>Repeat:</Text>
