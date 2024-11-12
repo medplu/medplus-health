@@ -3,102 +3,45 @@ const Schema = mongoose.Schema;
 
 // Define the professional-specific schema
 const professionalSchema = new Schema({
-    firstName: {
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    profession: {
         type: String,
         required: true
     },
-    lastName: {
-        type: String,
-        required: true
+    title: {
+        type: String
     },
     consultationFee: {
         type: Number,
-        required: false
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true // Ensure email is unique
-    },
-    user: {
-        type: Schema.ObjectId,
-        ref: 'User',  // Reference to the base User model
-        required: true
-    },
-    profession: {  // Add profession field to identify pharmacist, doctor, etc.
-        type: String,
-        required: false,
-        enum: ['doctor', 'pharmacist'],  // Restrict to valid professions
-    },
-    title: { // New field for doctor's title
-        type: String,
-        required: function() { return this.profession === 'doctor'; },
+        default: 5000
     },
     category: {
-        type: String,
+        type: String
     },
     yearsOfExperience: {
-        type: Number,
+        type: Number
     },
-    certifications: [String],
+    certifications: {
+        type: String
+    },
     bio: {
-        type: String,
-        required: false
+        type: String
     },
     profileImage: {
-        type: String,
-        required: false
-    },
-    emailNotifications: {
-        type: Boolean,
-        default: false
-    },
-    pushNotifications: {
-        type: Boolean,
-        default: false
+        type: String
     },
     location: {
-        latitude: {
-            type: Number,
-            required: false
-        },
-        longitude: {
-            type: Number,
-            required: false
-        }
+        type: String
     },
-    clinic: {  // Reference to the Clinic model
-        type: Schema.Types.ObjectId,
-        ref: 'Clinic',  // This ensures that a professional can be linked to a specific clinic
-        default: null // Default to null when not attached to a clinic
-    },
-    attachedToClinic: {  // New field to track clinic attachment status
-        type: Boolean,
-        default: false // Initialize as false
-    },
-    pharmacy: {  // Reference to the Pharmacy model
-        type: Schema.Types.ObjectId,
-        ref: 'Pharmacy',  // This ensures that a professional can be linked to a specific pharmacy
-        default: null // Default to null when not attached to a pharmacy
-    },
-    attachedToPharmacy: {  // New field to track pharmacy attachment status
-        type: Boolean,
-        default: false // Initialize as false
-    },
-    licenseNumber: { // Add licenseNumber field
-        type: String,
-        required: false
-    },
-    phone: { // Add phone field
-        type: String,
-        required: false
-    },
-    address: { 
-        type: String,
-        required: false
+    attachedToClinic: {
+        type: String
     }
-}, { timestamps: true });
+}, {
+    timestamps: true
+});
 
-// Create and export the 'Professional' model
-const Professional = mongoose.model('Professional', professionalSchema);
-module.exports = Professional;
+module.exports = mongoose.model('Professional', professionalSchema);

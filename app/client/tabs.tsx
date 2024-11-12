@@ -4,7 +4,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons'; 
 import { View, Text } from 'react-native';
 import HomeScreen from './HomeScreen';
-import SettingsScreen from './SettingsScreen';
 import ProfileScreen from './ProfileScreen';
 import NotificationsScreen from './NotificationsScreen';
 import Colors from '../../components/Shared/Colors';
@@ -12,6 +11,7 @@ import useAppointments from '../../hooks/useAppointments';
 import { io } from 'socket.io-client';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../store/userSlice'; // Assuming you have a userSlice
+import DoctorsScreen from './DoctorsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -51,9 +51,9 @@ export default function ClientTabs() {
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
+            iconName = focused ? 'person' : 'person-outline'; // Updated icon for Profile
+          } else if (route.name === 'Doctors') { // Changed from 'Settings' to 'Doctors'
+            iconName = focused ? 'medkit' : 'medkit-outline'; // Appropriate icon for Doctors
           } else if (route.name === 'Appointments') {
             iconName = focused ? 'calendar' : 'calendar-outline';
             badgeCount = newAppointmentsCount;
@@ -92,10 +92,10 @@ export default function ClientTabs() {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} />     
+      <Tab.Screen name="Doctors" component={DoctorsScreen} /> 
       <Tab.Screen name="Appointments" component={NotificationsScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }

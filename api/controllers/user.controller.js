@@ -420,3 +420,65 @@ exports.googleAuth = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// Add a doctor to favorites
+exports.addFavoriteDoctor = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { professionalId } = req.body; // Renamed to professionalId
+
+        // Check if the professional exists
+        const professional = await Professional.findById(professionalId);
+        if (!professional) {
+            return res.status(400).json({ error: 'Invalid professional ID' });
+        }
+
+        // Add to favoriteDoctors if not already added
+        const user = await User.findById(userId);
+        if (user.favoriteDoctors.includes(professionalId)) {
+            return res.status(400).json({ error: 'Professional already in favorites' });
+        }
+
+        user.favoriteDoctors.push(professionalId);
+        await user.save();
+
+        res.status(200).json({ message: 'Professional added to favorites' });
+    } catch (error) {
+        console.error("Error adding favorite professional:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Remove a doctor from favorites
+exports.removeFavoriteDoctor = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { professionalId } = req.body; // Renamed to professionalId
+
+        const user = await User.findById(userId);
+        if (!user.favoriteDoctors.includes(professionalId)) {
+            return res.status(400).json({ error: 'Professional not in favorites' });
+        }
+
+        user.favoriteDoctors = user.favoriteDoctors.filter(id => id.toString() !== professionalId);
+        await user.save();
+
+        res.status(200).json({ message: 'Professional removed from favorites' });
+    } catch (error) {
+        console.error("Error removing favorite professional:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Get list of favorite doctors
+exports.getFavoriteDoctors = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const user = await User.findById(userId).populate('favoriteDoctors', 'firstName lastName profession profileImage');
+
+        res.status(200).json({ favoriteDoctors: user.favoriteDoctors });
+    } catch (error) {
+        console.error("Error fetching favorite professionals:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};

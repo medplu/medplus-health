@@ -28,4 +28,9 @@ router.patch('/profile-image', userController.updateProfileImage);
 // Route to upload image
 router.post('/upload-image', userController.uploadImage);
 
+// Routes for managing favorite doctors
+router.post('/addFavorite', userController.addFavoriteDoctor);
+router.post('/removeFavorite', userController.removeFavoriteDoctor);
+router.get('/favorites', userController.getFavoriteDoctors);
+
 module.exports = router;

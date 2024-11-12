@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Avatar, Icon } from 'react-native-elements';
 import Colors from '../Shared/Colors';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Doctor {
   _id: string;
@@ -17,7 +19,49 @@ interface DoctorCardItemProps {
 }
 
 const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
-  const { firstName, lastName, profession, profileImage } = doctor;
+  const { firstName, lastName, profession, profileImage, _id } = doctor;
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    const checkFavorite = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const response = await axios.get('https://medplus-health.onrender.com/api/users/favorites', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const favoriteProfessionalIds = response.data.favoriteDoctors.map((doc: Doctor) => doc._id);
+        setIsFavorite(favoriteProfessionalIds.includes(_id));
+      } catch (error) {
+        console.error("Error fetching favorite status:", error);
+      }
+    };
+
+    checkFavorite();
+  }, [ _id ]);
+
+  const toggleFavorite = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        // Handle unauthenticated state
+        return;
+      }
+
+      if (isFavorite) {
+        await axios.post('https://medplus-health.onrender.com/api/users/removeFavorite', { professionalId: _id }, { // Updated key
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        await axios.post('https://medplus-health.onrender.com/api/users/addFavorite', { professionalId: _id }, { // Updated key
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+
+      setIsFavorite(!isFavorite);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
+  };
 
   return (
     <View style={styles.profileContainer}>
@@ -34,9 +78,10 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
       <View style={styles.profileInfo}>
         <Text style={styles.doctorName}>{`${firstName} ${lastName}`}</Text>
         <Text style={styles.categoryName}>{profession}</Text>
-      
       </View>
-      <Icon name="heart" type="font-awesome" color={Colors.primary} />
+      <TouchableOpacity onPress={toggleFavorite}>
+        <Icon name={isFavorite ? "heart" : "heart-o"} type="font-awesome" color={Colors.primary} />
+      </TouchableOpacity>
     </View>
   );
 };

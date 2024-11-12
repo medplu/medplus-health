@@ -51,7 +51,11 @@ const userSchema = new Schema({
         type: String,
         enum: ['active', 'suspended', 'deactivated'],
         default: 'active' // Indicates the user's account status
-    }
+    },
+    favoriteDoctors: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Professional'
+    }] // Updated to reference 'Professional' model instead of 'User'
 }, {
     timestamps: true // Automatically adds createdAt and updatedAt fields
 });

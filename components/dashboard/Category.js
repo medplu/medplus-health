@@ -1,10 +1,12 @@
-import { View, Text, Image, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import SubHeading from './SubHeading';
 import Colors from '../Shared/Colors';
 import GlobalApi from '../../Services/GlobalApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width, height } = Dimensions.get('window');
 
 export default function Category() {
   const [categoryList, setCategoryList] = useState([]);
@@ -100,26 +102,28 @@ const styles = StyleSheet.create({
   },
   categoryIconContainer: {
     backgroundColor: Colors.SECONDARY,
-    padding: 15,
+    padding: width < 350 ? width * 0.03 : width * 0.04, // Adjust padding for smaller screens
     borderRadius: 99,
   },
   categoryIconContainerActive: {
-    backgroundColor: Colors.PRIMARY, // Change background color for active state
-    padding: 15,
+    backgroundColor: Colors.PRIMARY,
+    padding: width < 350 ? width * 0.03 : width * 0.04, // Adjust padding for smaller screens
     borderRadius: 99,
   },
   categoryIcon: {
-    width: 30,
-    height: 30,
+    width: width < 350 ? width * 0.05 : width * 0.075, // Reduce icon size on small devices
+    height: width < 350 ? width * 0.05 : width * 0.075, // Maintain aspect ratio
   },
   categoryBtnTxt: {
-    marginTop: 5,
+    marginTop: height * 0.01, // Responsive margin
     textAlign: 'center',
     color: Colors.black,
+    fontSize: width < 350 ? width * 0.035 : width * 0.04, // Smaller font on small screens
   },
   categoryBtnActive: {
-    marginTop: 5,
+    marginTop: height * 0.01, // Responsive margin
     textAlign: 'center',
-    color: Colors.PRIMARY, // Change text color for active state
+    color: Colors.PRIMARY,
+    fontSize: width < 350 ? width * 0.035 : width * 0.04, // Smaller font on small screens
   },
 });
