@@ -42,13 +42,30 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
     }
   };
 
+  // Replace the existing dateOptions with state
+  const [dateOptions, setDateOptions] = useState<Array<Date>>(
+    Array.from({ length: 7 }).map((_, i) => moment().add(i, 'days').toDate())
+  );
+
   useEffect(() => {
     fetchSchedule();
+    
+    // Prevent selecting past dates
+    const today = new Date();
+    const availableDates = dateOptions.filter(date => moment(date).isSameOrAfter(today, 'day'));
+    setDateOptions(availableDates);
   }, [doctorId]);
 
   const handleBookPress = async () => {
     if (!selectedTimeSlot) {
       Alert.alert('Error', 'Please select a time slot.');
+      return;
+    }
+
+    // Ensure selected date and time are in the future
+    const selectedDateTime = moment(`${moment(selectedDate).format('YYYY-MM-DD')} ${selectedTimeSlot.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
+    if (selectedDateTime.isBefore(moment())) {
+      Alert.alert('Error', 'Cannot book an appointment in the past.');
       return;
     }
 
@@ -192,8 +209,6 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
     return acc;
   }, {});
 
-  const dateOptions = Array.from({ length: 7 }).map((_, i) => moment().add(i, 'days').toDate());
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Book an Appointment</Text>
@@ -219,42 +234,48 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
         horizontal
         data={groupedSlots[moment(selectedDate).format('YYYY-MM-DD')] || []}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => {
-              if (!item.isBooked) {
-                setSelectedTimeSlot({ id: item._id, time: `${item.startTime} - ${item.endTime}` });
-              } else {
-                Alert.alert('Slot already booked', 'Please choose another time slot.');
-              }
-            }}
-            style={[
-              styles.slotButton,
-              item.isBooked ? { backgroundColor: Colors.SECONDARY } : { backgroundColor: Colors.goofy },
-              selectedTimeSlot && selectedTimeSlot.id === item._id
-                ? { borderColor: Colors.SECONDARY, borderWidth: 2, backgroundColor: Colors.selectedBackground }
-                : {},
-            ]}
-          >
-            <View style={{ position: 'relative' }}>
-              <Text
-                style={[
-                  styles.slotText,
-                  selectedTimeSlot && selectedTimeSlot.id === item._id
-                    ? { color: Colors.selectedText }
-                    : {},
-                ]}
-              >
-                {`${item.startTime} - ${item.endTime}`}
-              </Text>
-              {item.isBooked && (
-                <View style={styles.overlay}>
-                  <Text style={styles.bookedText}>Booked</Text>
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => {
+          const slotTime = moment(`${moment(selectedDate).format('YYYY-MM-DD')} ${item.startTime}`, 'YYYY-MM-DD HH:mm');
+          const isPast = slotTime.isBefore(moment());
+        
+          return (
+            <TouchableOpacity
+              onPress={() => {
+                if (item.isBooked || isPast) {
+                  Alert.alert(item.isBooked ? 'Slot already booked' : 'Invalid slot', item.isBooked ? 'Please choose another time slot.' : 'Cannot select a past time slot.');
+                } else {
+                  setSelectedTimeSlot({ id: item._id, time: `${item.startTime} - ${item.endTime}` });
+                }
+              }}
+              style={[
+                styles.slotButton,
+                item.isBooked || isPast ? { backgroundColor: Colors.SECONDARY } : { backgroundColor: Colors.goofy },
+                selectedTimeSlot && selectedTimeSlot.id === item._id
+                  ? { borderColor: Colors.SECONDARY, borderWidth: 2, backgroundColor: Colors.selectedBackground }
+                  : {},
+              ]}
+              disabled={item.isBooked || isPast}
+            >
+              <View style={{ position: 'relative' }}>
+                <Text
+                  style={[
+                    styles.slotText,
+                    selectedTimeSlot && selectedTimeSlot.id === item._id
+                      ? { color: Colors.selectedText }
+                      : {},
+                  ]}
+                >
+                  {`${item.startTime} - ${item.endTime}`}
+                </Text>
+                {item.isBooked && (
+                  <View style={styles.overlay}>
+                    <Text style={styles.bookedText}>Booked</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
       <TouchableOpacity style={styles.bookButton} onPress={handleBookPress} disabled={isSubmitting}>
         <Text style={styles.bookButtonText}>Book Appointment</Text>

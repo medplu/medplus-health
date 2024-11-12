@@ -6,7 +6,7 @@ const Patient = require('../models/patient.model');
 const User = require('../models/user.model');
 const moment = require('moment');
 
-// Fetch all appointments for a doctor
+
 exports.getAllAppointmentsByDoctor = async (req, res) => {
   const { doctorId } = req.params;
 
@@ -14,7 +14,7 @@ exports.getAllAppointmentsByDoctor = async (req, res) => {
     const today = moment().startOf('day');
     const appointments = await Appointment.find({
       doctorId,
-      date: { $gte: today.toDate() } // Ensure it does not fetch past appointments
+      date: { $gte: today.toDate() } 
     }).populate('patientId');
     res.status(200).json(appointments);
   } catch (error) {
@@ -23,7 +23,6 @@ exports.getAllAppointmentsByDoctor = async (req, res) => {
   }
 };
 
-// Fetch upcoming appointments for a doctor
 exports.getAppointmentsByDoctor = async (req, res) => {
   const { doctorId } = req.params;
 
@@ -33,7 +32,7 @@ exports.getAppointmentsByDoctor = async (req, res) => {
       doctorId,
       status: 'confirmed',
       
-    }).populate('patientId'); // Only populates patientId
+    }).populate('patientId'); 
     res.status(200).json(appointments);
   } catch (error) {
     console.error('Error fetching appointments:', error);
@@ -41,7 +40,7 @@ exports.getAppointmentsByDoctor = async (req, res) => {
   }
 };
 
-// Fetch appointments by user ID
+
 exports.getAppointmentsByUser = async (req, res) => {
   const { userId } = req.params;
 
@@ -53,8 +52,8 @@ exports.getAppointmentsByUser = async (req, res) => {
       date: { $gte: today.toDate() }
     })
       .select('doctorId userId patientName status timeSlotId time createdAt updatedAt') // Selects specific fields
-      .populate('patientId') // Populates patientId
-      .populate('doctorId'); // Populates doctorId
+      .populate('patientId') 
+      .populate('doctorId'); 
 
     if (!appointments.length) {
       return res.status(404).json({ error: 'No appointments found for this user' });
@@ -67,7 +66,7 @@ exports.getAppointmentsByUser = async (req, res) => {
   }
 };
 
-// Book an appointment
+
 exports.bookAppointment = async (req, res) => {
   const { doctorId, userId, patientName, status, timeSlotId, time, date, patientDetails = {} } = req.body;
 

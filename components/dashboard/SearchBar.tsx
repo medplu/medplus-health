@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { Searchbar } from 'react-native-paper';
+import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 
 const SearchBar: React.FC = () => {
-  const [searchQuery, setSearchQuery] = React.useState<string>('');
   const router = useRouter();
 
   const handlePress = () => {
@@ -11,12 +11,9 @@ const SearchBar: React.FC = () => {
   };
 
   return (
-    <Searchbar
-      placeholder="Search"
-      onChangeText={setSearchQuery}
-      value={searchQuery}
-      onFocus={handlePress} // Navigate to full-screen search on focus
-    />
+    <TouchableOpacity onPress={handlePress}>
+      <Ionicons name="search" size={24} color="black" />
+    </TouchableOpacity>
   );
 };
 

@@ -65,6 +65,8 @@ const styles = StyleSheet.create({
     padding: 15,
     paddingTop: 30,
     backgroundColor: Colors.ligh_gray,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   profileImage: {
     width: 40,

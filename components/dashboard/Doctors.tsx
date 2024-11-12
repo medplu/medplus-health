@@ -92,7 +92,7 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
             </View>
             <Text >{item.category}</Text>
             <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
-              <Text style={styles.buttonText}>Book</Text>
+              <Text style={styles.buttonText}>View</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -146,7 +146,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   consultButton: {
-    backgroundColor: Colors.goofy,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
     alignSelf: 'center',
   },
   buttonText: {
