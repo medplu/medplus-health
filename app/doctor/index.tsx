@@ -140,7 +140,7 @@ const DoctorProfile: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.ligh_gray,
+    backgroundColor: Colors.light_gray,
   },
   scrollViewContent: {
     padding: 20,
