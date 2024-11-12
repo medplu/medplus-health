@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, logout } from '../store/userSlice';
@@ -13,10 +13,16 @@ const ProfessionalHeader: React.FC = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation<ProfessionalHeaderNavigationProp>();
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigation.navigate('Login'); 
+  const handleLogout = async () => {
+    try {
+      dispatch(logout()); // Dispatch logout action
+      navigation.navigate('Login'); // Navigate to the login route
+    } catch (error) {
+      console.error('Failed to logout', error);
+    }
   };
+
+  
 
   return (
     <View style={styles.headerContainer}>

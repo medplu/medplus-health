@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, ScrollView, Modal, TextInput, Button, Picker } from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal} from 'react-native';
+import {Picker} from '@react-native-picker/picker';
 import { useSelector } from 'react-redux';
 import moment from 'moment';
 import useSchedule from '../../hooks/useSchedule';
@@ -8,7 +9,6 @@ import { selectUser } from '../store/userSlice';
 import Colors from '../../components/Shared/Colors';
 import axios from 'axios'; 
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { Platform } from 'react-native';
 
 interface Patient {
   name: string;
