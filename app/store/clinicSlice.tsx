@@ -27,14 +27,24 @@ const initialState: ClinicsState = {
   error: null,
 };
 
+const fetchFreshClinics = async () => {
+  try {
+    const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
+    await AsyncStorage.setItem('clinicList', JSON.stringify(response.data));
+  } catch (error) {
+    console.error('Failed to fetch fresh clinics', error);
+  }
+};
+
 export const fetchClinics = createAsyncThunk(
   'clinics/fetchClinics',
-  async () => {
+  async (_, { dispatch }) => {
     const cachedClinics = await AsyncStorage.getItem('clinicList');
     if (cachedClinics) {
-      return JSON.parse(cachedClinics);
+      const parsedClinics = JSON.parse(cachedClinics);
+      fetchFreshClinics();
+      return parsedClinics;
     }
-
     const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
     await AsyncStorage.setItem('clinicList', JSON.stringify(response.data));
     return response.data;
