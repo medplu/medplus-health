@@ -4,6 +4,8 @@ import { Avatar, Icon } from 'react-native-elements';
 import Colors from '../Shared/Colors';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSelector } from 'react-redux';
+import { selectUser } from '../../app/store/userSlice';
 
 interface Doctor {
   _id: string;
@@ -21,6 +23,8 @@ interface DoctorCardItemProps {
 const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
   const { firstName, lastName, profession, profileImage, _id } = doctor;
   const [isFavorite, setIsFavorite] = useState(false);
+  const user = useSelector(selectUser);
+  const userId = user.userId;
 
   useEffect(() => {
     const checkFavorite = async () => {
@@ -42,7 +46,6 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
   const toggleFavorite = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      const userId = await AsyncStorage.getItem('userId'); // Assuming userId is stored in AsyncStorage
       if (!token || !userId) {
         // Handle unauthenticated state
         return;
