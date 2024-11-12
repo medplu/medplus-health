@@ -13,14 +13,7 @@ const ProfessionalHeader: React.FC = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation<ProfessionalHeaderNavigationProp>();
 
-  const handleLogout = async () => {
-    try {
-      dispatch(logout()); // Dispatch logout action
-      navigation.navigate('Login'); // Navigate to the login route
-    } catch (error) {
-      console.error('Failed to logout', error);
-    }
-  };
+  
 
   
 
@@ -30,7 +23,7 @@ const ProfessionalHeader: React.FC = () => {
       <Text style={styles.headerTitle}>
         Welcome, {user.professional?.firstName} {user.professional?.lastName}
       </Text>
-      <TouchableOpacity onPress={handleLogout}>
+      <TouchableOpacity>
         <Icon name="sign-out" size={24} color="#fff" />
       </TouchableOpacity>
     </View>
