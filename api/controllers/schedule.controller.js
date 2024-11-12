@@ -41,7 +41,7 @@ exports.createOrUpdateSchedule = async (req, res) => {
         // Update or create the schedule
         const schedule = await Schedule.findOneAndUpdate(
             { doctorId: professionalId },
-            { doctorId: professionalId, slots },
+            { $push: { slots: { $each: slots } } }, // Append new slots to existing slots
             { new: true, upsert: true }
         );
 
