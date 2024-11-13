@@ -1,11 +1,57 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Modal, Switch } from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { selectUser } from './store/userSlice';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { Ionicons } from '@expo/vector-icons'; // For Icons
+import { Picker } from '@react-native-picker/picker';
+import { MaterialCommunityIcons } from '@expo/vector-icons'; // For flag icon
+
+const degrees = [
+  'Bachelor of Medicine, Bachelor of Surgery (MBBS)',
+  'Doctor of Medicine (MD)',
+  'Doctor of Osteopathic Medicine (DO)',
+  'Bachelor of Dental Surgery (BDS)',
+  'Master of Dental Surgery (MDS)',
+  'Bachelor of Ayurvedic Medicine and Surgery (BAMS)',
+  'Bachelor of Homeopathic Medicine and Surgery (BHMS)',
+  'Bachelor of Physiotherapy (BPT)',
+  'Bachelor of Science in Nursing (B.Sc Nursing)',
+  'Doctor of Pharmacy (Pharm.D)',
+];
+
+const universities = [
+  'Harvard University',
+  'Stanford University',
+  'Johns Hopkins University',
+  'University of Oxford',
+  'University of Cambridge',
+  'University of California, San Francisco',
+  'Karolinska Institute',
+  'University of Toronto',
+  'University of Melbourne',
+  'National University of Singapore',
+];
+
+const years = Array.from({ length: 50 }, (_, i) => `${new Date().getFullYear() - i}`);
+
+const insuranceCompaniesList = [
+  'AAR Insurance',
+  'APA Insurance',
+  'Britam',
+  'CIC Insurance',
+  'GA Insurance',
+  'Jubilee Insurance',
+  'Kenindia Assurance',
+  'Madison Insurance',
+  'NHIF',
+  'Pacis Insurance',
+  'Resolution Insurance',
+  'UAP Old Mutual',
+];
 
 const AddClinicForm: React.FC = () => {
   const navigation = useNavigation();
@@ -19,9 +65,61 @@ const AddClinicForm: React.FC = () => {
   const [address, setAddress] = useState('');
   const [category, setCategory] = useState('');
   const [image, setImage] = useState(null);
+  const [specialties, setSpecialties] = useState('');
+  const [education, setEducation] = useState('');
+  const [experience, setExperience] = useState('');
+  const [languages, setLanguages] = useState('');
+  const [assistantName, setAssistantName] = useState('');
+  const [assistantPhone, setAssistantPhone] = useState('');
+  const [insuranceCompanies, setInsuranceCompanies] = useState('');
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState<boolean>(false);
+  const [selectedSpecialties, setSelectedSpecialties] = useState([]);
+  const [bio, setBio] = useState('');
+  const [showBioInput, setShowBioInput] = useState(false);
+  const bioTextLimit = 200;
 
+  // Education Modal state
+  const [educationModalVisible, setEducationModalVisible] = useState(false);
+  const [educationDetails, setEducationDetails] = useState({ country: '', degree: '', university: '', year: '', certificatePhoto: null });
+
+  // Specialties Modal state
+  const [specialtiesModalVisible, setSpecialtiesModalVisible] = useState(false);
+
+  // Experience Modal state
+  const [experienceModalVisible, setExperienceModalVisible] = useState(false);
+  const [experienceDetails, setExperienceDetails] = useState({ position: '', organization: '', startDate: '', endDate: '', currentlyWorking: false });
+
+  const [countries, setCountries] = useState([]);
+  const [bioModalVisible, setBioModalVisible] = useState(false);
+
+  const [clinicModalVisible, setClinicModalVisible] = useState(false);
+  const [clinicName, setClinicName] = useState('');
+  const [clinicPhone, setClinicPhone] = useState('');
+
+  const [street, setStreet] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+
+  const [selectedInsuranceCompanies, setSelectedInsuranceCompanies] = useState([]);
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await fetch('https://restcountries.com/v3.1/all');
+        const data = await response.json();
+        const countryNames = data.map((country) => country.name.common).sort();
+        setCountries(countryNames);
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+      }
+    };
+
+    fetchCountries();
+  }, []);
+
+  // Image Picker functionality
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -39,6 +137,7 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
+  // Upload image to Cloudinary
   const uploadImageToCloudinary = async (imageUri) => {
     const data = new FormData();
     const resizedImage = await ImageManipulator.manipulateAsync(
@@ -63,40 +162,43 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
+  // Submit Form
   const handleSubmit = async () => {
     try {
-      if (!professionalId) throw new Error('Professional ID is required');
+      console.log('Professional ID:', professionalId); // Log the professionalId
+      if (!professionalId) {
+        console.error('Professional ID is required');
+        Alert.alert("Error", "Professional ID is required");
+        return;
+      }
       setUploading(true);
       let imageUrl = '';
       if (image) imageUrl = await uploadImageToCloudinary(image);
 
-      const formData = { name, contactInfo, address, category, image: imageUrl };
+      const formData = {
+        name,
+        contactInfo,
+        address: `${street}, ${city}, ${state}, ${postalCode}`,
+        category,
+        image: imageUrl,
+        specialties,
+        education,
+        experience,
+        languages,
+        assistantName,
+        assistantPhone,
+        insuranceCompanies: selectedInsuranceCompanies,
+        bio, // Add bio to form data
+      };
+
       await axios.post(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, formData, {
         headers: { 'Content-Type': 'application/json' },
       });
 
       setSuccess(true);
-      Alert.alert(
-        "Success",
-        "Clinic created successfully!",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Reset form
-              setName('');
-              setContactInfo('');
-              setAddress('');
-              setCategory('');
-              setImage(null);
-              setStep(1);
-              // Navigate to professional screen
-              navigation.navigate('professional');
-            },
-          },
-        ],
-        { cancelable: false }
-      );
+      Alert.alert("Success", "Clinic created successfully!", [
+        { text: "OK", onPress: () => { navigation.navigate('professional'); } }
+      ]);
     } catch (error) {
       console.error('Error creating clinic:', error);
     } finally {
@@ -104,32 +206,150 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
+  // Handle Education Modal submit
+  const handleEducationSubmit = () => {
+    setEducation(`${educationDetails.degree}, ${educationDetails.university} (${educationDetails.year})`);
+    setEducationModalVisible(false);
+  };
+
+  // Handle Specialties Modal submit
+  const handleSpecialtiesSubmit = () => {
+    setSpecialties(selectedSpecialties.join(', '));
+    setSpecialtiesModalVisible(false);
+  };
+
+  // Toggle specialty selection
+  const toggleSpecialtySelection = (specialty) => {
+    setSelectedSpecialties((prevSelected) => {
+      if (prevSelected.includes(specialty)) {
+        return prevSelected.filter((item) => item !== specialty);
+      } else {
+        return [...prevSelected, specialty];
+      }
+    });
+  };
+
+  // Handle Experience Modal submit
+  const handleExperienceSubmit = () => {
+    setExperience(`${experienceDetails.position} at ${experienceDetails.organization} (${experienceDetails.startDate} - ${experienceDetails.currentlyWorking ? 'Present' : experienceDetails.endDate})`);
+    setExperienceModalVisible(false);
+  };
+
+  const handleBioSubmit = () => {
+    setBioModalVisible(false);
+  };
+
+  const handleClinicSubmit = () => {
+    setName(clinicName);
+    setContactInfo(clinicPhone);
+    setClinicModalVisible(false);
+  };
+
+  const toggleInsuranceSelection = (company) => {
+    setSelectedInsuranceCompanies((prevSelected) => {
+      if (prevSelected.includes(company)) {
+        return prevSelected.filter((item) => item !== company);
+      } else {
+        return [...prevSelected, company];
+      }
+    });
+  };
+
+  // Render form content based on the current step
   const renderStepContent = () => {
     switch (step) {
       case 1:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Clinic Details</Text>
-            <TextInput style={styles.input} placeholder="Clinic Name" value={name} onChangeText={setName} />
-            <TextInput style={styles.input} placeholder="Category" value={category} onChangeText={setCategory} />
-            <TextInput style={styles.input} placeholder="Address" value={address} onChangeText={setAddress} />
+            <Text style={styles.stepTitle}>Doctor's Information</Text>
+            <View style={styles.inputRow}>
+              <Ionicons name="md-medical" size={24} color="black" />
+              <TouchableOpacity style={styles.inputRow} onPress={() => setSpecialtiesModalVisible(true)}>
+                <Text style={styles.input}>Specialties</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.inputRow}>
+              <Ionicons name="school" size={24} color="black" />
+              <TouchableOpacity style={styles.inputRow} onPress={() => setEducationModalVisible(true)}>
+                <Text style={styles.input}>Education</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.inputRow}>
+              <Ionicons name="briefcase" size={24} color="black" />
+              <TouchableOpacity style={styles.inputRow} onPress={() => setExperienceModalVisible(true)}>
+                <Text style={styles.input}>Experience</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.inputRow}>
+              <Ionicons name="language" size={24} color="black" />
+              <TextInput style={styles.input} placeholder="Languages Spoken" value={languages} onChangeText={setLanguages} />
+            </View>
+            <View style={styles.inputRow}>
+              <Ionicons name="document-text" size={24} color="black" />
+              <TouchableOpacity style={styles.inputRow} onPress={() => setShowBioInput(!showBioInput)}>
+                <Text style={styles.input}>Add a Detailed Description</Text>
+              </TouchableOpacity>
+            </View>
+            {showBioInput && (
+              <View>
+                <TextInput
+                  style={styles.bioInput}
+                  placeholder="Enter Detailed Description"
+                  value={bio}
+                  onChangeText={(text) => setBio(text.slice(0, bioTextLimit))}
+                  multiline
+                  numberOfLines={4}
+                />
+                <Text style={styles.textLimit}>{bio.length}/{bioTextLimit}</Text>
+              </View>
+            )}
             <Button title="Next" onPress={() => setStep(2)} />
           </View>
         );
       case 2:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Contact Information</Text>
-            <TextInput style={styles.input} placeholder="Contact Info" value={contactInfo} onChangeText={setContactInfo} />
+            <Text style={styles.stepTitle}>Clinic Information</Text>
+            <View style={styles.inputRow}>
+              <Ionicons name="information-circle" size={24} color="black" />
+              <TouchableOpacity style={styles.inputRow} onPress={() => setClinicModalVisible(true)}>
+                <Text style={styles.input}>Clinic Name and Contact</Text>
+              </TouchableOpacity>
+            </View>
+            <TextInput style={styles.input} placeholder="Category" value={category} onChangeText={setCategory} />
+            <Text style={styles.sectionTitle}>Address</Text>
+            <View style={styles.addressContainer}>
+              <TextInput style={styles.addressInput} placeholder="Street" value={street} onChangeText={setStreet} />
+              <TextInput style={styles.addressInput} placeholder="City" value={city} onChangeText={setCity} />
+              <TextInput style={styles.addressInput} placeholder="State" value={state} onChangeText={setState} />
+              <TextInput style={styles.addressInput} placeholder="Postal Code" value={postalCode} onChangeText={setPostalCode} />
+            </View>
+            <Text style={styles.sectionTitle}>Insurance Companies</Text>
+            <View style={styles.insuranceContainer}>
+              {insuranceCompaniesList.map((company, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.insuranceCard,
+                    selectedInsuranceCompanies.includes(company) && styles.insuranceCardSelected,
+                  ]}
+                  onPress={() => toggleInsuranceSelection(company)}
+                >
+                  <Text style={styles.insuranceText}>{company}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             <Button title="Next" onPress={() => setStep(3)} />
           </View>
         );
       case 3:
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Upload Clinic Image</Text>
+            <Text style={styles.stepTitle}>Assistant Information</Text>
+            <TextInput style={styles.input} placeholder="Assistant's Name" value={assistantName} onChangeText={setAssistantName} />
+            <TextInput style={styles.input} placeholder="Assistant's Phone" value={assistantPhone} onChangeText={setAssistantPhone} />
             <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-              <Text style={styles.imagePickerText}>Pick an image from camera roll</Text>
+              <Text style={styles.imagePickerText}>Pick Clinic Image</Text>
             </TouchableOpacity>
             {image && <Image source={{ uri: image }} style={styles.image} />}
             <Button title="Next" onPress={() => setStep(4)} />
@@ -142,7 +362,12 @@ const AddClinicForm: React.FC = () => {
             <Text>Clinic Name: {name}</Text>
             <Text>Category: {category}</Text>
             <Text>Address: {address}</Text>
-            <Text>Contact Info: {contactInfo}</Text>
+            <Text>Specialties: {specialties}</Text>
+            <Text>Education: {education}</Text>
+            <Text>Experience: {experience}</Text>
+            <Text>Languages: {languages}</Text>
+            <Text>Assistant Name: {assistantName}</Text>
+            <Text>Assistant Phone: {assistantPhone}</Text>
             {image && <Image source={{ uri: image }} style={styles.image} />}
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={uploading}>
               {uploading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Submit</Text>}
@@ -154,24 +379,345 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
+  const medicalSpecialties = [
+    { name: 'Cardiology', icon: 'heart' },
+    { name: 'Dermatology', icon: 'leaf' },
+    { name: 'Neurology', icon: 'brain' },
+    { name: 'Pediatrics', icon: 'baby' },
+    { name: 'Psychiatry', icon: 'medkit' },
+    // Add more specialties as needed
+  ];
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {renderStepContent()}
       {step > 1 && <Button title="Back" onPress={() => setStep(step - 1)} />}
+      
+      {/* Education Modal */}
+      <Modal visible={educationModalVisible} animationType="slide">
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Enter Education Details</Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Country</Text>
+            <Picker
+              selectedValue={educationDetails.country}
+              onValueChange={(itemValue) => setEducationDetails({ ...educationDetails, country: itemValue })}
+              style={styles.modalPicker}
+            >
+              <Picker.Item label="Select Country" value="" />
+              {countries.map((country, index) => (
+                <Picker.Item key={index} label={country} value={country} />
+              ))}
+            </Picker>
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Degree</Text>
+            <Picker
+              selectedValue={educationDetails.degree}
+              onValueChange={(itemValue) => setEducationDetails({ ...educationDetails, degree: itemValue })}
+              style={styles.modalPicker}
+            >
+              <Picker.Item label="Select Degree" value="" />
+              {degrees.map((degree, index) => (
+                <Picker.Item key={index} label={degree} value={degree} />
+              ))}
+            </Picker>
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>University</Text>
+            <TextInput
+              placeholder="Enter University"
+              value={educationDetails.university}
+              onChangeText={(text) => setEducationDetails({ ...educationDetails, university: text })}
+              style={styles.modalInput}
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Year</Text>
+            <Picker
+              selectedValue={educationDetails.year}
+              onValueChange={(itemValue) => setEducationDetails({ ...educationDetails, year: itemValue })}
+              style={styles.modalPicker}
+            >
+              <Picker.Item label="Select Year" value="" />
+              {years.map((year, index) => (
+                <Picker.Item key={index} label={year} value={year} />
+              ))}
+            </Picker>
+          </View>
+          <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+            <Text style={styles.imagePickerText}>Upload Certificate</Text>
+          </TouchableOpacity>
+          {educationDetails.certificatePhoto && <Image source={{ uri: educationDetails.certificatePhoto }} style={styles.image} />}
+          <View style={styles.buttonGroup}>
+            <Button title="Submit" onPress={handleEducationSubmit} />
+            <Button title="Close" onPress={() => setEducationModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Specialties Modal */}
+      <Modal visible={specialtiesModalVisible} animationType="slide">
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Select Specialties</Text>
+          <ScrollView contentContainerStyle={styles.specialtiesContainer}>
+            {medicalSpecialties.map((specialty, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.specialtyCard,
+                  selectedSpecialties.includes(specialty.name) && styles.specialtyCardSelected,
+                ]}
+                onPress={() => toggleSpecialtySelection(specialty.name)}
+              >
+                <Ionicons name={specialty.icon} size={24} color="black" />
+                <Text style={styles.specialtyText}>{specialty.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <Button title="Submit" onPress={handleSpecialtiesSubmit} />
+          <Button title="Close" onPress={() => setSpecialtiesModalVisible(false)} />
+        </View>
+      </Modal>
+
+      {/* Experience Modal */}
+      <Modal visible={experienceModalVisible} animationType="slide">
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Enter Experience Details</Text>
+          <TextInput placeholder="Position" value={experienceDetails.position} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, position: text })} style={styles.modalInput} />
+          <TextInput placeholder="Organization" value={experienceDetails.organization} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, organization: text })} style={styles.modalInput} />
+          <TextInput placeholder="Start Date" value={experienceDetails.startDate} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, startDate: text })} style={styles.modalInput} />
+          <TextInput placeholder="End Date" value={experienceDetails.endDate} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, endDate: text })} style={styles.modalInput} />
+          <View style={styles.inputRow}>
+            <Text>Currently Working Here</Text>
+            <Switch value={experienceDetails.currentlyWorking} onValueChange={(value) => setExperienceDetails({ ...experienceDetails, currentlyWorking: value })} />
+          </View>
+          <Button title="Submit" onPress={handleExperienceSubmit} />
+          <Button title="Close" onPress={() => setExperienceModalVisible(false)} />
+        </View>
+      </Modal>
+
+      {/* Bio Modal */}
+      <Modal visible={bioModalVisible} animationType="slide">
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Enter Detailed Description</Text>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Enter Detailed Description"
+            value={bio}
+            onChangeText={setBio}
+            multiline
+            numberOfLines={4}
+          />
+          <View style={styles.buttonGroup}>
+            <Button title="Submit" onPress={handleBioSubmit} />
+            <Button title="Close" onPress={() => setBioModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Clinic Modal */}
+      <Modal visible={clinicModalVisible} animationType="slide">
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Enter Clinic Name and Contact</Text>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Clinic Name"
+            value={clinicName}
+            onChangeText={setClinicName}
+          />
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Clinic Phone"
+            value={clinicPhone}
+            onChangeText={setClinicPhone}
+            keyboardType="phone-pad"
+          />
+          <View style={styles.buttonGroup}>
+            <Button title="Submit" onPress={handleClinicSubmit} />
+            <Button title="Close" onPress={() => setClinicModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 20, flexGrow: 1, backgroundColor: '#fff' },
-  stepContainer: { marginBottom: 20 },
-  stepTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 15 },
-  input: { height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 10, paddingLeft: 8, borderRadius: 5 },
-  imagePicker: { backgroundColor: '#007bff', padding: 10, borderRadius: 5, alignItems: 'center', marginBottom: 10 },
-  imagePickerText: { color: '#fff', fontSize: 16 },
-  image: { width: '100%', height: 200, marginBottom: 10, borderRadius: 5 },
-  submitButton: { backgroundColor: '#28a745', padding: 10, borderRadius: 5, alignItems: 'center' },
-  submitButtonText: { color: '#fff', fontSize: 16 },
+  container: {
+    padding: 20,
+    flex: 1,
+  },
+  stepContainer: {
+    marginBottom: 20,
+  },
+  stepTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  input: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    fontSize: 16,
+    textAlignVertical: 'top', // For multiline input
+  },
+  addressContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  addressInput: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    fontSize: 16,
+    marginBottom: 10,
+    marginRight: 10,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  insuranceContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  insuranceCard: {
+    flexBasis: '48%',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    backgroundColor: '#f9f9f9',
+  },
+  insuranceCardSelected: {
+    backgroundColor: '#d0e8ff',
+    borderColor: '#007BFF',
+  },
+  insuranceText: {
+    fontSize: 16,
+  },
+  imagePicker: {
+    marginTop: 10,
+    backgroundColor: '#007BFF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  imagePickerText: {
+    color: '#fff',
+  },
+  image: {
+    width: 100,
+    height: 100,
+    resizeMode: 'cover',
+    marginTop: 10,
+  },
+  submitButton: {
+    backgroundColor: '#007BFF',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 18,
+  },
+  modalContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  modalInput: {
+    width: '100%',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  specialtiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  specialtyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    margin: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    backgroundColor: '#f9f9f9',
+  },
+  specialtyCardSelected: {
+    backgroundColor: '#d0e8ff',
+    borderColor: '#007BFF',
+  },
+  specialtyText: {
+    marginLeft: 10,
+    fontSize: 18,
+  },
+  specialtyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  modalPicker: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+  },
+  inputGroup: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  bioInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+    marginTop: 10,
+    textAlignVertical: 'top', // For multiline input
+  },
+  textLimit: {
+    textAlign: 'right',
+    color: '#888',
+    marginTop: 5,
+  },
 });
 
 export default AddClinicForm;

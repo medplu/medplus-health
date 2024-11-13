@@ -31,6 +31,38 @@ const clinicSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Professional'
     }],
+    insuranceCompanies: [{ // New field for insurance companies
+        type: String,
+        required: true,
+    }],
+    specialties: {
+        type: String,
+        required: true,
+    },
+    education: {
+        type: String,
+        required: true,
+    },
+    experience: {
+        type: String,
+        required: true,
+    },
+    languages: {
+        type: String,
+        required: true,
+    },
+    assistantName: {
+        type: String,
+        required: true,
+    },
+    assistantPhone: {
+        type: String,
+        required: true,
+    },
+    bio: {
+        type: String,
+        required: false,
+    },
 }, {
     timestamps: true // Automatically creates `createdAt` and `updatedAt` fields
 });

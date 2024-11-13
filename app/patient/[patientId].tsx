@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   profileSection: {
     marginBottom: 16,
     padding: 20,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.light_gray,
     borderRadius: 10,
     shadowColor: '#000',
     shadowOpacity: 0.1,

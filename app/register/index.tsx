@@ -13,7 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter } from 'expo-router'; // Removed useSearchParams import
 import { Picker } from '@react-native-picker/picker';
 import { registerUser } from '@/Services/auth';
 import axios from 'axios';
@@ -32,9 +32,13 @@ const commonTitles = [
 ];
 
 const SignupScreen: React.FC = () => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
+  const router = useRouter();
+  const { firstName: queryFirstName, lastName: queryLastName, email: queryEmail, profileImage: queryProfileImage } = router.query || {}; // Include profile image
+
+  const [firstName, setFirstName] = useState(queryFirstName || '');
+  const [lastName, setLastName] = useState(queryLastName || '');
+  const [email, setEmail] = useState(queryEmail || '');
+  const [profileImage, setProfileImage] = useState(queryProfileImage || ''); // New state for profile image
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | null>(null);
@@ -49,7 +53,6 @@ const SignupScreen: React.FC = () => {
   const [countdown, setCountdown] = useState(60);
   const [timerActive, setTimerActive] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const router = useRouter();
 
   const animateButton = () => {
     Animated.sequence([
@@ -162,6 +165,10 @@ const SignupScreen: React.FC = () => {
           <View style={styles.formContainer}>
             <Text style={styles.heading}>Create an Account</Text>
             <Text style={styles.subHeading}>Sign up to get started</Text>
+
+            {profileImage ? (
+              <Image source={{ uri: profileImage }} style={styles.profileImage} />
+            ) : null}
 
             {!isVerifying ? (
               <>
@@ -520,6 +527,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 30,
     marginBottom: 15,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 20,
   },
 });
 

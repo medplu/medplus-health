@@ -1,19 +1,6 @@
 const Clinic = require('../models/clinic.model');
 const Professional = require('../models/professional.model'); 
 const cloudinary = require('cloudinary').v2; // Use require for cloudinary
-// const multer = require('multer'); // Remove multer import
-
-// // Configure multer for file uploads
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, 'uploads/'); // Specify your upload directory
-//   },
-//   filename: function (req, file, cb) {
-//     cb(null, Date.now() + '-' + file.originalname);
-//   },
-// });
-
-// const upload = multer({ storage: storage }); // Initialize multer
 
 const generateReferenceCode = () => {
   // Simple example: generating a unique reference code
@@ -22,14 +9,12 @@ const generateReferenceCode = () => {
 
 const registerClinic = async (req, res) => {
   const { professionalId } = req.params;
-  const { name, contactInfo, address, category, image } = req.body;
-  console.log(professionalId)
+  const { name, contactInfo, address, category, image, insuranceCompanies, specialties, education, experience, languages, assistantName, assistantPhone, bio } = req.body;
 
   try {
     // Validate if the professional exists before creating the clinic
     const professional = await Professional.findById(professionalId);
     if (!professional) {
-      console.warn(`No professional found for professionalId: ${professionalId}`);
       return res.status(404).send({ message: 'Professional not found' });
     }
 
@@ -45,6 +30,14 @@ const registerClinic = async (req, res) => {
       category,
       referenceCode,
       professionals: [], // Initialize with an empty array for professionals
+      insuranceCompanies, // Add insurance companies to the clinic
+      specialties,
+      education,
+      experience,
+      languages,
+      assistantName,
+      assistantPhone,
+      bio,
     });
 
     await clinic.save();
@@ -53,8 +46,6 @@ const registerClinic = async (req, res) => {
     professional.clinic = clinic._id;
     professional.attachedToClinic = true;
     await professional.save();
-
-    console.log(`Professional after update: ${JSON.stringify(professional)}`); // Log updated professional
 
     // Add the professional to the clinic's professionals array and save clinic again
     clinic.professionals.push(professional._id);
@@ -66,7 +57,6 @@ const registerClinic = async (req, res) => {
     res.status(500).send({ message: 'Error creating clinic', error });
   }
 };
-
 
 const fetchClinics = async (req, res) => {
   try {

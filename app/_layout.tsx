@@ -51,8 +51,8 @@ const Layout: React.FC = () => {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        // Example: const userInfo = await SecureStore.getItemAsync('user');
-        // setUser(userInfo);
+        const userInfo = await SecureStore.getItemAsync('user');
+        setUser(userInfo);
       } catch (error) {
         console.error('Error checking user sign-in:', error);
       } finally {
@@ -82,6 +82,7 @@ const Layout: React.FC = () => {
       <StatusBar barStyle="dark-content" />
       <Stack.Navigator>
         <Stack.Screen name="oauth/callback" options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ title: 'Register', headerShown: true }} />
         <Stack.Screen name="clinics/index" options={{ title: 'Clinics', headerShown: true }} />
         <Stack.Screen name="clinics/[name]" options={{ title: '', headerShown: false }} />
         <Stack.Screen name="hospital/book-appointment/[id]" options={{ title: '', headerShown: false }} />
