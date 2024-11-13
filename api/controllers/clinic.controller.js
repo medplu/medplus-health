@@ -121,9 +121,22 @@ const fetchClinicById = async (req, res) => {
   }
 };
 
+const fetchClinicsBySpecialties = async (req, res) => {
+  const { specialty } = req.params;
+  try {
+    const clinics = await Clinic.find({ specialties: specialty }).populate('professionals');
+    res.status(200).json(clinics);
+  } catch (error) {
+    console.error('Error fetching clinics by specialties:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
   registerClinic,
   fetchClinics,
   fetchClinicById,
-  joinClinic, // Add joinClinic to the exported module
+  joinClinic, // Existing exported functions
+  fetchClinicsBySpecialties, // Added fetchClinicsBySpecialties
 };
+
