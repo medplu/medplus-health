@@ -17,15 +17,30 @@ const screenHeight = Dimensions.get('window').height;
 const DashboardScreen: React.FC = () => {
   const router = useRouter();
   const user = useSelector(selectUser);
+  const [clinic, setClinic] = useState(null);
   const { appointments, loading, error } = useAppointments();
   const [tasks, setTasks] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [newTask, setNewTask] = useState<string>('');
 
-  if (!user.professional?.attachedToClinic) {
-    router.push('/Addclinic');
-    return null;
-  }
+  useEffect(() => {
+    const fetchClinic = async () => {
+      try {
+        const response = await axios.get(`/api/clinics/${user.professional?._id}`);
+        setClinic(response.data);
+      } catch (error) {
+        console.error('Error fetching clinic:', error);
+      }
+    };
+
+    fetchClinic();
+  }, [user.professional?._id]);
+
+  useEffect(() => {
+    if (user && !clinic) {
+      router.push('/Addclinic'); // Ensure this path is correct
+    }
+  }, [user, clinic, router]);
 
   useEffect(() => {
     // Load tasks from AsyncStorage

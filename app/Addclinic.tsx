@@ -63,7 +63,6 @@ const AddClinicForm: React.FC = () => {
   const [name, setName] = useState('');
   const [contactInfo, setContactInfo] = useState('');
   const [address, setAddress] = useState('');
-  const [category, setCategory] = useState('');
   const [image, setImage] = useState(null);
   const [specialties, setSpecialties] = useState('');
   const [education, setEducation] = useState('');
@@ -203,7 +202,6 @@ const AddClinicForm: React.FC = () => {
     setName('');
     setContactInfo('');
     setAddress('');
-    setCategory('');
     setImage(null);
     setSpecialties('');
     setEducation('');
@@ -245,10 +243,9 @@ const AddClinicForm: React.FC = () => {
         name,
         contactInfo,
         address: `${street}, ${city}, ${state}, ${postalCode}`,
-        category,
         image: imageUrl,
-        specialties,
-        education: `${educationDetails.degree}, ${educationDetails.university} (${educationDetails.year})`,
+        specialties, // Use specialties instead of category
+        education: `${educationDetails.degree, educationDetails.university} (${educationDetails.year})`,
         experiences,
         languages,
         assistantName,
@@ -268,14 +265,14 @@ const AddClinicForm: React.FC = () => {
       if (Platform.OS === 'web') {
         window.alert("Success: Clinic created successfully!");
         resetForm();
-        router.push('/professional'); // Ensure the route is correct
+        router.push('/professional'); // Updated routing path
       } else {
         Alert.alert("Success", "Clinic created successfully!", [
           { 
             text: "OK", 
             onPress: () => { 
               resetForm(); 
-              router.push('/professional'); // Ensure the route is correct
+              router.push('/professional'); // Updated routing path
             } 
           }
         ]);
@@ -525,8 +522,11 @@ const AddClinicForm: React.FC = () => {
                 <Text style={styles.reviewLabel}>Clinic Name:</Text> {name}
               </Paragraph>
               <Paragraph>
-                <Text style={styles.reviewLabel}>Category:</Text> {category}
+                <Text style={styles.reviewLabel}>Address:</Text> {`${street}, ${city}, ${state}, ${postalCode}`}
               </Paragraph>
+            </Card>
+
+            <Card style={styles.card}>
               <Paragraph>
                 <Text style={styles.reviewLabel}>Address:</Text> {`${street}, ${city}, ${state}, ${postalCode}`}
               </Paragraph>
@@ -829,7 +829,7 @@ const backgroundColors = [
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    flex: 1,
+    flexGrow: 1, // Changed from flex: 1 to flexGrow: 1
   },
   stepContentContainer: {
     flexDirection: 'column',

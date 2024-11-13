@@ -9,7 +9,7 @@ const generateReferenceCode = () => {
 
 const registerClinic = async (req, res) => {
   const { professionalId } = req.params;
-  const { name, contactInfo, address, category, image, insuranceCompanies, specialties, education, experiences, languages, assistantName, assistantPhone, bio } = req.body;
+  const { name, contactInfo, address, image, insuranceCompanies, specialties, education, experiences, languages, assistantName, assistantPhone, bio } = req.body;
 
   try {
     // Validate if the professional exists before creating the clinic
@@ -27,7 +27,6 @@ const registerClinic = async (req, res) => {
       contactInfo,
       address,
       image: image || null,
-      category,
       referenceCode,
       professionals: [], // Initialize with an empty array for professionals
       insuranceCompanies, // Add insurance companies to the clinic
@@ -122,28 +121,9 @@ const fetchClinicById = async (req, res) => {
   }
 };
 
-const fetchClinicsByCategory = async (req, res) => {
-  try {
-    const category = req.query.category; // Use query parameter
-
-    // Ensure the category is not undefined or null
-    if (!category) {
-      return res.status(400).json({ error: 'Category is required' });
-    }
-
-    // Fetch clinics by category
-    const clinics = await Clinic.find({ category: category }).populate('professionals');
-
-    res.status(200).json(clinics);
-  } catch (error) {
-    res.status(500).send(error);
-  }
-};
-
 module.exports = {
   registerClinic,
   fetchClinics,
   fetchClinicById,
-  fetchClinicsByCategory,
   joinClinic, // Add joinClinic to the exported module
 };

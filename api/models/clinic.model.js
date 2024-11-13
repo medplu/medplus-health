@@ -18,10 +18,6 @@ const clinicSchema = new mongoose.Schema({
         type: String,
         required: false, // Change this to false to make the image optional
     },
-    category: {
-        type: String,
-        required: true,
-    },
     referenceCode: { // New field for the reference code
         type: String,
         required: true,
