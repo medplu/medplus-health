@@ -9,7 +9,7 @@ const generateReferenceCode = () => {
 
 const registerClinic = async (req, res) => {
   const { professionalId } = req.params;
-  const { name, contactInfo, address, category, image, insuranceCompanies, specialties, education, experience, languages, assistantName, assistantPhone, bio } = req.body;
+  const { name, contactInfo, address, category, image, insuranceCompanies, specialties, education, experiences, languages, assistantName, assistantPhone, bio } = req.body;
 
   try {
     // Validate if the professional exists before creating the clinic
@@ -33,7 +33,7 @@ const registerClinic = async (req, res) => {
       insuranceCompanies, // Add insurance companies to the clinic
       specialties,
       education,
-      experience,
+      experiences, // Ensure experiences array is added to the clinic
       languages,
       assistantName,
       assistantPhone,

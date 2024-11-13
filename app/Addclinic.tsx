@@ -103,6 +103,7 @@ const AddClinicForm: React.FC = () => {
   const [postalCode, setPostalCode] = useState('');
 
   const [selectedInsuranceCompanies, setSelectedInsuranceCompanies] = useState([]);
+  const [experiences, setExperiences] = useState([]);
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -137,6 +138,24 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
+  // Image Picker functionality for certificate
+  const pickCertificateImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    if (!result.canceled && result.assets) {
+      setEducationDetails({ ...educationDetails, certificatePhoto: result.assets[0].uri });
+    }
+  };
+
   // Upload image to Cloudinary
   const uploadImageToCloudinary = async (imageUri) => {
     const data = new FormData();
@@ -162,6 +181,57 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
+  // Upload certificate image to Cloudinary
+  const uploadCertificateToCloudinary = async (imageUri) => {
+    const data = new FormData();
+    const resizedImage = await ImageManipulator.manipulateAsync(
+      imageUri,
+      [{ resize: { width: 1000 } }],
+      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+    );
+    const response = await fetch(resizedImage.uri);
+    const blob = await response.blob();
+    data.append('file', blob);
+    data.append('upload_preset', 'medplus');
+    try {
+      const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+        method: 'POST',
+        body: data,
+      });
+      const result = await response.json();
+      return result.secure_url;
+    } catch (error) {
+      console.error('Error uploading certificate:', error);
+      throw error;
+    }
+  };
+
+  // Reset form state
+  const resetForm = () => {
+    setName('');
+    setContactInfo('');
+    setAddress('');
+    setCategory('');
+    setImage(null);
+    setSpecialties('');
+    setEducation('');
+    setExperience('');
+    setLanguages('');
+    setAssistantName('');
+    setAssistantPhone('');
+    setInsuranceCompanies('');
+    setSelectedSpecialties([]);
+    setBio('');
+    setShowBioInput(false);
+    setEducationDetails({ country: '', degree: '', university: '', year: '', certificatePhoto: null });
+    setExperienceDetails({ position: '', organization: '', startDate: '', endDate: '', currentlyWorking: false });
+    setStreet('');
+    setCity('');
+    setState('');
+    setPostalCode('');
+    setSelectedInsuranceCompanies([]);
+  };
+
   // Submit Form
   const handleSubmit = async () => {
     try {
@@ -175,6 +245,11 @@ const AddClinicForm: React.FC = () => {
       let imageUrl = '';
       if (image) imageUrl = await uploadImageToCloudinary(image);
 
+      let certificateUrl = '';
+      if (educationDetails.certificatePhoto) {
+        certificateUrl = await uploadCertificateToCloudinary(educationDetails.certificatePhoto);
+      }
+
       const formData = {
         name,
         contactInfo,
@@ -182,13 +257,14 @@ const AddClinicForm: React.FC = () => {
         category,
         image: imageUrl,
         specialties,
-        education,
-        experience,
+        education: `${educationDetails.degree}, ${educationDetails.university} (${educationDetails.year})`,
+        experiences, // Ensure experiences array is included in the form data
         languages,
         assistantName,
         assistantPhone,
         insuranceCompanies: selectedInsuranceCompanies,
         bio, // Add bio to form data
+        certificate: certificateUrl, // Add certificate URL to form data
       };
 
       await axios.post(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, formData, {
@@ -197,7 +273,10 @@ const AddClinicForm: React.FC = () => {
 
       setSuccess(true);
       Alert.alert("Success", "Clinic created successfully!", [
-        { text: "OK", onPress: () => { navigation.navigate('professional'); } }
+        { text: "OK", onPress: () => { 
+          resetForm(); // Reset form state
+          navigation.navigate('professional'); 
+        } }
       ]);
     } catch (error) {
       console.error('Error creating clinic:', error);
@@ -231,7 +310,8 @@ const AddClinicForm: React.FC = () => {
 
   // Handle Experience Modal submit
   const handleExperienceSubmit = () => {
-    setExperience(`${experienceDetails.position} at ${experienceDetails.organization} (${experienceDetails.startDate} - ${experienceDetails.currentlyWorking ? 'Present' : experienceDetails.endDate})`);
+    setExperiences([...experiences, experienceDetails]);
+    setExperienceDetails({ position: '', organization: '', startDate: '', endDate: '', currentlyWorking: false });
     setExperienceModalVisible(false);
   };
 
@@ -253,6 +333,11 @@ const AddClinicForm: React.FC = () => {
         return [...prevSelected, company];
       }
     });
+  };
+
+  // Remove experience
+  const removeExperience = (index) => {
+    setExperiences(experiences.filter((_, i) => i !== index));
   };
 
   // Render form content based on the current step
@@ -359,15 +444,29 @@ const AddClinicForm: React.FC = () => {
         return (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Review and Submit</Text>
-            <Text>Clinic Name: {name}</Text>
-            <Text>Category: {category}</Text>
-            <Text>Address: {address}</Text>
-            <Text>Specialties: {specialties}</Text>
-            <Text>Education: {education}</Text>
-            <Text>Experience: {experience}</Text>
-            <Text>Languages: {languages}</Text>
-            <Text>Assistant Name: {assistantName}</Text>
-            <Text>Assistant Phone: {assistantPhone}</Text>
+            <View style={styles.reviewSection}>
+              <Text style={styles.reviewTitle}>Clinic Information</Text>
+              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Clinic Name:</Text> {name}</Text>
+              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Category:</Text> {category}</Text>
+              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Address:</Text> {`${street}, ${city}, ${state}, ${postalCode}`}</Text>
+            </View>
+            <View style={styles.reviewSection}>
+              <Text style={styles.reviewTitle}>Doctor's Information</Text>
+              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Specialties:</Text> {specialties}</Text>
+              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Education:</Text> {education}</Text>
+              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Experience:</Text> {experience}</Text>
+              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Languages:</Text> {languages}</Text>
+              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Bio:</Text> {bio}</Text>
+            </View>
+            <View style={styles.reviewSection}>
+              <Text style={styles.reviewTitle}>Assistant Information</Text>
+              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Assistant Name:</Text> {assistantName}</Text>
+              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Assistant Phone:</Text> {assistantPhone}</Text>
+            </View>
+            <View style={styles.reviewSection}>
+              <Text style={styles.reviewTitle}>Insurance Companies</Text>
+              <Text style={styles.reviewItem}>{selectedInsuranceCompanies.join(', ')}</Text>
+            </View>
             {image && <Image source={{ uri: image }} style={styles.image} />}
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={uploading}>
               {uploading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Submit</Text>}
@@ -445,7 +544,7 @@ const AddClinicForm: React.FC = () => {
               ))}
             </Picker>
           </View>
-          <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+          <TouchableOpacity style={styles.imagePicker} onPress={pickCertificateImage}>
             <Text style={styles.imagePickerText}>Upload Certificate</Text>
           </TouchableOpacity>
           {educationDetails.certificatePhoto && <Image source={{ uri: educationDetails.certificatePhoto }} style={styles.image} />}
@@ -492,8 +591,10 @@ const AddClinicForm: React.FC = () => {
             <Text>Currently Working Here</Text>
             <Switch value={experienceDetails.currentlyWorking} onValueChange={(value) => setExperienceDetails({ ...experienceDetails, currentlyWorking: value })} />
           </View>
-          <Button title="Submit" onPress={handleExperienceSubmit} />
-          <Button title="Close" onPress={() => setExperienceModalVisible(false)} />
+          <View style={styles.buttonGroup}>
+            <Button title="Submit" onPress={handleExperienceSubmit} />
+            <Button title="Close" onPress={() => setExperienceModalVisible(false)} />
+          </View>
         </View>
       </Modal>
 
@@ -717,6 +818,40 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     color: '#888',
     marginTop: 5,
+  },
+  reviewSection: {
+    marginBottom: 20,
+  },
+  reviewTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  reviewItem: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  reviewLabel: {
+    fontWeight: 'bold',
+  },
+  experienceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  experienceText: {
+    fontSize: 16,
+  },
+  removeButton: {
+    backgroundColor: '#ff4d4d',
+    padding: 5,
+    borderRadius: 5,
+  },
+  removeButtonText: {
+    color: '#fff',
   },
 });
 

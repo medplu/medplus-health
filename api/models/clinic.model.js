@@ -43,10 +43,28 @@ const clinicSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    experience: {
-        type: String,
-        required: true,
-    },
+    experiences: [{ // Ensure experiences is an array of objects and required
+        position: {
+            type: String,
+            required: true,
+        },
+        organization: {
+            type: String,
+            required: true,
+        },
+        startDate: {
+            type: String,
+            required: true,
+        },
+        endDate: {
+            type: String,
+            required: false,
+        },
+        currentlyWorking: {
+            type: Boolean,
+            required: true,
+        },
+    }],
     languages: {
         type: String,
         required: true,
