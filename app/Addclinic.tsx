@@ -2,18 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Modal, Switch } from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { selectUser } from './store/userSlice';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { Ionicons } from '@expo/vector-icons'; // For Icons
+import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import { MaterialCommunityIcons } from '@expo/vector-icons'; // For flag icon
+
+import { Card, Title, Paragraph, Button as PaperButton, Divider, ProgressBar } from 'react-native-paper';
+
+import { useRouter } from 'expo-router';
 
 const degrees = [
   'Bachelor of Medicine, Bachelor of Surgery (MBBS)',
   'Doctor of Medicine (MD)',
-  'Doctor of Osteopathic Medicine (DO)',
   'Bachelor of Dental Surgery (BDS)',
   'Master of Dental Surgery (MDS)',
   'Bachelor of Ayurvedic Medicine and Surgery (BAMS)',
@@ -54,12 +55,11 @@ const insuranceCompaniesList = [
 ];
 
 const AddClinicForm: React.FC = () => {
-  const navigation = useNavigation();
+  const router = useRouter(); // Initialize router
   const user = useSelector(selectUser);
   const professionalId = user.professional?._id;
 
-  // State management
-  const [step, setStep] = useState(1); // Step state
+  const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [contactInfo, setContactInfo] = useState('');
   const [address, setAddress] = useState('');
@@ -79,14 +79,11 @@ const AddClinicForm: React.FC = () => {
   const [showBioInput, setShowBioInput] = useState(false);
   const bioTextLimit = 200;
 
-  // Education Modal state
   const [educationModalVisible, setEducationModalVisible] = useState(false);
   const [educationDetails, setEducationDetails] = useState({ country: '', degree: '', university: '', year: '', certificatePhoto: null });
 
-  // Specialties Modal state
   const [specialtiesModalVisible, setSpecialtiesModalVisible] = useState(false);
 
-  // Experience Modal state
   const [experienceModalVisible, setExperienceModalVisible] = useState(false);
   const [experienceDetails, setExperienceDetails] = useState({ position: '', organization: '', startDate: '', endDate: '', currentlyWorking: false });
 
@@ -120,7 +117,6 @@ const AddClinicForm: React.FC = () => {
     fetchCountries();
   }, []);
 
-  // Image Picker functionality
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -138,7 +134,6 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
-  // Image Picker functionality for certificate
   const pickCertificateImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -156,7 +151,6 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
-  // Upload image to Cloudinary
   const uploadImageToCloudinary = async (imageUri) => {
     const data = new FormData();
     const resizedImage = await ImageManipulator.manipulateAsync(
@@ -181,7 +175,6 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
-  // Upload certificate image to Cloudinary
   const uploadCertificateToCloudinary = async (imageUri) => {
     const data = new FormData();
     const resizedImage = await ImageManipulator.manipulateAsync(
@@ -206,7 +199,6 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
-  // Reset form state
   const resetForm = () => {
     setName('');
     setContactInfo('');
@@ -232,10 +224,9 @@ const AddClinicForm: React.FC = () => {
     setSelectedInsuranceCompanies([]);
   };
 
-  // Submit Form
   const handleSubmit = async () => {
     try {
-      console.log('Professional ID:', professionalId); // Log the professionalId
+      console.log('Professional ID:', professionalId);
       if (!professionalId) {
         console.error('Professional ID is required');
         Alert.alert("Error", "Professional ID is required");
@@ -258,13 +249,13 @@ const AddClinicForm: React.FC = () => {
         image: imageUrl,
         specialties,
         education: `${educationDetails.degree}, ${educationDetails.university} (${educationDetails.year})`,
-        experiences, // Ensure experiences array is included in the form data
+        experiences,
         languages,
         assistantName,
         assistantPhone,
         insuranceCompanies: selectedInsuranceCompanies,
-        bio, // Add bio to form data
-        certificate: certificateUrl, // Add certificate URL to form data
+        bio,
+        certificate: certificateUrl,
       };
 
       await axios.post(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, formData, {
@@ -273,11 +264,14 @@ const AddClinicForm: React.FC = () => {
 
       setSuccess(true);
       Alert.alert("Success", "Clinic created successfully!", [
-        { text: "OK", onPress: () => { 
-          resetForm(); // Reset form state
-          navigation.navigate('professional'); 
-        } }
-      ]);
+        { 
+          text: "OK", 
+          onPress: () => { 
+            resetForm(); 
+            router.push('/professional'); // Update routing here
+          } 
+        }
+      ]); // Added closing brackets here
     } catch (error) {
       console.error('Error creating clinic:', error);
     } finally {
@@ -285,19 +279,16 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
-  // Handle Education Modal submit
   const handleEducationSubmit = () => {
     setEducation(`${educationDetails.degree}, ${educationDetails.university} (${educationDetails.year})`);
     setEducationModalVisible(false);
   };
 
-  // Handle Specialties Modal submit
   const handleSpecialtiesSubmit = () => {
     setSpecialties(selectedSpecialties.join(', '));
     setSpecialtiesModalVisible(false);
   };
 
-  // Toggle specialty selection
   const toggleSpecialtySelection = (specialty) => {
     setSelectedSpecialties((prevSelected) => {
       if (prevSelected.includes(specialty)) {
@@ -308,7 +299,6 @@ const AddClinicForm: React.FC = () => {
     });
   };
 
-  // Handle Experience Modal submit
   const handleExperienceSubmit = () => {
     setExperiences([...experiences, experienceDetails]);
     setExperienceDetails({ position: '', organization: '', startDate: '', endDate: '', currentlyWorking: false });
@@ -335,142 +325,256 @@ const AddClinicForm: React.FC = () => {
     });
   };
 
-  // Remove experience
   const removeExperience = (index) => {
     setExperiences(experiences.filter((_, i) => i !== index));
   };
 
-  // Render form content based on the current step
   const renderStepContent = () => {
     switch (step) {
       case 1:
         return (
-          <View style={styles.stepContainer}>
+          <View style={styles.stepContentContainer}>
             <Text style={styles.stepTitle}>Doctor's Information</Text>
-            <View style={styles.inputRow}>
-              <Ionicons name="md-medical" size={24} color="black" />
-              <TouchableOpacity style={styles.inputRow} onPress={() => setSpecialtiesModalVisible(true)}>
-                <Text style={styles.input}>Specialties</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.inputRow}>
-              <Ionicons name="school" size={24} color="black" />
-              <TouchableOpacity style={styles.inputRow} onPress={() => setEducationModalVisible(true)}>
-                <Text style={styles.input}>Education</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.inputRow}>
-              <Ionicons name="briefcase" size={24} color="black" />
-              <TouchableOpacity style={styles.inputRow} onPress={() => setExperienceModalVisible(true)}>
-                <Text style={styles.input}>Experience</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.inputRow}>
-              <Ionicons name="language" size={24} color="black" />
-              <TextInput style={styles.input} placeholder="Languages Spoken" value={languages} onChangeText={setLanguages} />
-            </View>
-            <View style={styles.inputRow}>
-              <Ionicons name="document-text" size={24} color="black" />
-              <TouchableOpacity style={styles.inputRow} onPress={() => setShowBioInput(!showBioInput)}>
-                <Text style={styles.input}>Add a Detailed Description</Text>
-              </TouchableOpacity>
-            </View>
-            {showBioInput && (
-              <View>
-                <TextInput
-                  style={styles.bioInput}
-                  placeholder="Enter Detailed Description"
-                  value={bio}
-                  onChangeText={(text) => setBio(text.slice(0, bioTextLimit))}
-                  multiline
-                  numberOfLines={4}
-                />
-                <Text style={styles.textLimit}>{bio.length}/{bioTextLimit}</Text>
+            
+            <TouchableOpacity style={styles.card} onPress={() => setSpecialtiesModalVisible(true)}>
+              <View style={styles.cardContent}>
+                <Ionicons name="medkit" size={24} color="black" />
+                <Text style={styles.cardText}>Specialties</Text>
               </View>
-            )}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.card} onPress={() => setEducationModalVisible(true)}>
+              <View style={styles.cardContent}>
+                <Ionicons name="school" size={24} color="black" />
+                <Text style={styles.cardText}>Education</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.card} onPress={() => setExperienceModalVisible(true)}>
+              <View style={styles.cardContent}>
+                <Ionicons name="briefcase" size={24} color="black" />
+                <Text style={styles.cardText}>Experience</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.card}>
+              <View style={styles.cardContent}>
+                <Ionicons name="globe" size={24} color="black" />
+                <Picker
+                  selectedValue={languages}
+                  onValueChange={(itemValue) => setLanguages(itemValue)}
+                  style={styles.cardInput}
+                >
+                  <Picker.Item label="Select Language" value="" />
+                  <Picker.Item label="English" value="English" />
+                  <Picker.Item label="Swahili" value="Swahili" />
+                  <Picker.Item label="French" value="French" />
+                  <Picker.Item label="Arabic" value="Arabic" />
+                </Picker>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.card} onPress={() => setShowBioInput(!showBioInput)}>
+              <View style={styles.cardContent}>
+                <Ionicons name="document-text" size={24} color="black" />
+                <Text style={styles.cardText}>Add a Detailed Description</Text>
+              </View>
+              {showBioInput && (
+                <View style={styles.bioContainer}>
+                  <TextInput
+                    style={styles.bioInput}
+                    placeholder="Enter Detailed Description"
+                    value={bio}
+                    onChangeText={(text) => setBio(text.slice(0, bioTextLimit))}
+                    multiline
+                    numberOfLines={4}
+                  />
+                  <Text style={styles.textLimit}>{bio.length}/{bioTextLimit}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
             <Button title="Next" onPress={() => setStep(2)} />
           </View>
         );
       case 2:
         return (
-          <View style={styles.stepContainer}>
+          <View style={styles.stepContentContainer}>
             <Text style={styles.stepTitle}>Clinic Information</Text>
-            <View style={styles.inputRow}>
-              <Ionicons name="information-circle" size={24} color="black" />
-              <TouchableOpacity style={styles.inputRow} onPress={() => setClinicModalVisible(true)}>
-                <Text style={styles.input}>Clinic Name and Contact</Text>
-              </TouchableOpacity>
-            </View>
-            <TextInput style={styles.input} placeholder="Category" value={category} onChangeText={setCategory} />
-            <Text style={styles.sectionTitle}>Address</Text>
-            <View style={styles.addressContainer}>
-              <TextInput style={styles.addressInput} placeholder="Street" value={street} onChangeText={setStreet} />
-              <TextInput style={styles.addressInput} placeholder="City" value={city} onChangeText={setCity} />
-              <TextInput style={styles.addressInput} placeholder="State" value={state} onChangeText={setState} />
-              <TextInput style={styles.addressInput} placeholder="Postal Code" value={postalCode} onChangeText={setPostalCode} />
-            </View>
-            <Text style={styles.sectionTitle}>Insurance Companies</Text>
-            <View style={styles.insuranceContainer}>
-              {insuranceCompaniesList.map((company, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.insuranceCard,
-                    selectedInsuranceCompanies.includes(company) && styles.insuranceCardSelected,
-                  ]}
-                  onPress={() => toggleInsuranceSelection(company)}
-                >
-                  <Text style={styles.insuranceText}>{company}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            
+            <TouchableOpacity style={styles.card} onPress={() => setClinicModalVisible(true)}>
+              <View style={styles.cardContent}>
+                <Ionicons name="information-circle" size={24} color="black" />
+                <Text style={styles.cardText}>Clinic Name and Contact</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.card}>
+              <View style={styles.cardContent}>
+                <Ionicons name="briefcase" size={24} color="black" />
+                <Text style={styles.cardText}>Category</Text>
+              </View>
+              <TextInput
+                style={styles.cardInput}
+                placeholder="Category"
+                value={category}
+                onChangeText={setCategory}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.card}>
+              <View style={styles.cardContent}>
+                <Ionicons name="location-sharp" size={24} color="black" />
+                <Text style={styles.cardText}>Address</Text>
+              </View>
+              <View style={styles.addressContainer}>
+                <TextInput style={styles.addressInput} placeholder="Street" value={street} onChangeText={setStreet} />
+                <TextInput style={styles.addressInput} placeholder="City" value={city} onChangeText={setCity} />
+                <TextInput style={styles.addressInput} placeholder="State" value={state} onChangeText={setState} />
+                <TextInput style={styles.addressInput} placeholder="Postal Code" value={postalCode} onChangeText={setPostalCode} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.card}>
+              <View style={styles.cardContent}>
+                <Ionicons name="shield-checkmark" size={24} color="black" />
+                <Text style={styles.cardText}>Insurance Companies</Text>
+              </View>
+              <View style={styles.insuranceContainer}>
+                {insuranceCompaniesList.map((company, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.insuranceCard,
+                      selectedInsuranceCompanies.includes(company) && styles.insuranceCardSelected,
+                    ]}
+                    onPress={() => toggleInsuranceSelection(company)}
+                  >
+                    <Text style={styles.insuranceText}>{company}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </TouchableOpacity>
+
             <Button title="Next" onPress={() => setStep(3)} />
           </View>
         );
       case 3:
         return (
-          <View style={styles.stepContainer}>
+          <View style={styles.stepContentContainer}>
             <Text style={styles.stepTitle}>Assistant Information</Text>
-            <TextInput style={styles.input} placeholder="Assistant's Name" value={assistantName} onChangeText={setAssistantName} />
-            <TextInput style={styles.input} placeholder="Assistant's Phone" value={assistantPhone} onChangeText={setAssistantPhone} />
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-              <Text style={styles.imagePickerText}>Pick Clinic Image</Text>
+            
+            <TouchableOpacity style={styles.card}>
+              <View style={styles.cardContent}>
+                <Ionicons name="person" size={24} color="black" />
+                <Text style={styles.cardText}>Assistant's Name</Text>
+              </View>
+              <TextInput
+                style={styles.cardInput}
+                placeholder="Assistant's Name"
+                value={assistantName}
+                onChangeText={setAssistantName}
+              />
             </TouchableOpacity>
-            {image && <Image source={{ uri: image }} style={styles.image} />}
+
+            <TouchableOpacity style={styles.card}>
+              <View style={styles.cardContent}>
+                <Ionicons name="call" size={24} color="black" />
+                <Text style={styles.cardText}>Assistant's Phone</Text>
+              </View>
+              <TextInput
+                style={styles.cardInput}
+                placeholder="Assistant's Phone"
+                value={assistantPhone}
+                onChangeText={setAssistantPhone}
+                keyboardType="phone-pad"
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.card} onPress={pickImage}>
+              <View style={styles.cardContent}>
+                <Ionicons name="image" size={24} color="black" />
+                <Text style={styles.cardText}>Clinic Image</Text>
+              </View>
+              <Text style={styles.imagePickerText}>Pick Clinic Image</Text>
+              {image && <Image source={{ uri: image }} style={styles.image} />}
+            </TouchableOpacity>
+
             <Button title="Next" onPress={() => setStep(4)} />
           </View>
         );
       case 4:
         return (
-          <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Review and Submit</Text>
-            <View style={styles.reviewSection}>
-              <Text style={styles.reviewTitle}>Clinic Information</Text>
-              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Clinic Name:</Text> {name}</Text>
-              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Category:</Text> {category}</Text>
-              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Address:</Text> {`${street}, ${city}, ${state}, ${postalCode}`}</Text>
-            </View>
-            <View style={styles.reviewSection}>
-              <Text style={styles.reviewTitle}>Doctor's Information</Text>
-              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Specialties:</Text> {specialties}</Text>
-              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Education:</Text> {education}</Text>
-              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Experience:</Text> {experience}</Text>
-              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Languages:</Text> {languages}</Text>
-              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Bio:</Text> {bio}</Text>
-            </View>
-            <View style={styles.reviewSection}>
-              <Text style={styles.reviewTitle}>Assistant Information</Text>
-              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Assistant Name:</Text> {assistantName}</Text>
-              <Text style={styles.reviewItem}><Text style={styles.reviewLabel}>Assistant Phone:</Text> {assistantPhone}</Text>
-            </View>
-            <View style={styles.reviewSection}>
-              <Text style={styles.reviewTitle}>Insurance Companies</Text>
-              <Text style={styles.reviewItem}>{selectedInsuranceCompanies.join(', ')}</Text>
-            </View>
-            {image && <Image source={{ uri: image }} style={styles.image} />}
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={uploading}>
-              {uploading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Submit</Text>}
-            </TouchableOpacity>
+          <View style={styles.stepContentContainer}>
+            <Card style={styles.card}>
+              <View style={styles.cardContent}>
+                <Ionicons name="information-circle" size={24} color="black" />
+                <Text style={styles.cardText}>Clinic Information</Text>
+              </View>
+              <Paragraph>
+                <Text style={styles.reviewLabel}>Clinic Name:</Text> {name}
+              </Paragraph>
+              <Paragraph>
+                <Text style={styles.reviewLabel}>Category:</Text> {category}
+              </Paragraph>
+              <Paragraph>
+                <Text style={styles.reviewLabel}>Address:</Text> {`${street}, ${city}, ${state}, ${postalCode}`}
+              </Paragraph>
+            </Card>
+
+            <Card style={styles.card}>
+              <View style={styles.cardContent}>
+                <Ionicons name="medkit" size={24} color="black" />
+                <Text style={styles.cardText}>Doctor's Information</Text>
+              </View>
+              <Paragraph>
+                <Text style={styles.reviewLabel}>Specialties:</Text> {specialties}
+              </Paragraph>
+              <Paragraph>
+                <Text style={styles.reviewLabel}>Education:</Text> {education}
+              </Paragraph>
+              <Paragraph>
+                <Text style={styles.reviewLabel}>Experience:</Text> {experiences.map(exp => `${exp.position} at ${exp.organization}`).join('; ')}
+              </Paragraph>
+              <Paragraph>
+                <Text style={styles.reviewLabel}>Languages:</Text> {languages}
+              </Paragraph>
+              <Paragraph>
+                <Text style={styles.reviewLabel}>Bio:</Text> {bio}
+              </Paragraph>
+            </Card>
+
+            <Card style={styles.card}>
+              <View style={styles.cardContent}>
+                <Ionicons name="person" size={24} color="black" />
+                <Text style={styles.cardText}>Assistant Information</Text>
+              </View>
+              <Paragraph>
+                <Text style={styles.reviewLabel}>Assistant Name:</Text> {assistantName}
+              </Paragraph>
+              <Paragraph>
+                <Text style={styles.reviewLabel}>Assistant Phone:</Text> {assistantPhone}
+              </Paragraph>
+            </Card>
+
+            <Card style={styles.card}>
+              <View style={styles.cardContent}>
+                <Ionicons name="shield-checkmark" size={24} color="black" />
+                <Text style={styles.cardText}>Insurance Companies</Text>
+              </View>
+              <Paragraph>{selectedInsuranceCompanies.join(', ')}</Paragraph>
+            </Card>
+
+            {image && <Card.Cover source={{ uri: image }} style={styles.imageCard} />}
+
+            <PaperButton
+              mode="contained"
+              onPress={handleSubmit}
+              style={styles.submitButton}
+              disabled={uploading}
+            >
+              {uploading ? <ActivityIndicator color="#fff" /> : 'Submit'}
+            </PaperButton>
           </View>
         );
       default:
@@ -479,183 +583,260 @@ const AddClinicForm: React.FC = () => {
   };
 
   const medicalSpecialties = [
-    { name: 'Cardiology', icon: 'heart' },
-    { name: 'Dermatology', icon: 'leaf' },
-    { name: 'Neurology', icon: 'brain' },
-    { name: 'Pediatrics', icon: 'baby' },
-    { name: 'Psychiatry', icon: 'medkit' },
-    // Add more specialties as needed
+    { name: 'Cardiology' },
+    { name: 'Dermatology' },
+    { name: 'Neurology' },
+    { name: 'Pediatrics' },
+    { name: 'Psychiatry' },
   ];
 
+  const renderStepIndicator = () => {
+    const indicators = [];
+    const totalSteps = 4;
+    for (let i = 1; i <= totalSteps; i++) {
+      indicators.push(
+        <View key={i} style={styles.stepContainer}>
+          <View style={[styles.stepIndicator, i <= step && styles.activeStep]}>
+            <Text style={[styles.stepText, i <= step && styles.activeStepText]}>{i}</Text>
+          </View>
+          {i < totalSteps && <View style={[styles.line, i < step && styles.activeLine]} />}
+        </View>
+      );
+    }
+    return <View style={styles.indicatorContainer}>{indicators}</View>;
+  };
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {renderStepContent()}
-      {step > 1 && <Button title="Back" onPress={() => setStep(step - 1)} />}
-      
-      {/* Education Modal */}
-      <Modal visible={educationModalVisible} animationType="slide">
-        <ScrollView contentContainerStyle={styles.modalContent}>
-          <Text style={styles.modalTitle}>Enter Education Details</Text>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Country</Text>
-            <Picker
-              selectedValue={educationDetails.country}
-              onValueChange={(itemValue) => setEducationDetails({ ...educationDetails, country: itemValue })}
-              style={styles.modalPicker}
-            >
-              <Picker.Item label="Select Country" value="" />
-              {countries.map((country, index) => (
-                <Picker.Item key={index} label={country} value={country} />
-              ))}
-            </Picker>
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Degree</Text>
-            <Picker
-              selectedValue={educationDetails.degree}
-              onValueChange={(itemValue) => setEducationDetails({ ...educationDetails, degree: itemValue })}
-              style={styles.modalPicker}
-            >
-              <Picker.Item label="Select Degree" value="" />
-              {degrees.map((degree, index) => (
-                <Picker.Item key={index} label={degree} value={degree} />
-              ))}
-            </Picker>
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>University</Text>
-            <TextInput
-              placeholder="Enter University"
-              value={educationDetails.university}
-              onChangeText={(text) => setEducationDetails({ ...educationDetails, university: text })}
-              style={styles.modalInput}
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Year</Text>
-            <Picker
-              selectedValue={educationDetails.year}
-              onValueChange={(itemValue) => setEducationDetails({ ...educationDetails, year: itemValue })}
-              style={styles.modalPicker}
-            >
-              <Picker.Item label="Select Year" value="" />
-              {years.map((year, index) => (
-                <Picker.Item key={index} label={year} value={year} />
-              ))}
-            </Picker>
-          </View>
-          <TouchableOpacity style={styles.imagePicker} onPress={pickCertificateImage}>
-            <Text style={styles.imagePickerText}>Upload Certificate</Text>
-          </TouchableOpacity>
-          {educationDetails.certificatePhoto && <Image source={{ uri: educationDetails.certificatePhoto }} style={styles.image} />}
-          <View style={styles.buttonGroup}>
-            <Button title="Submit" onPress={handleEducationSubmit} />
-            <Button title="Close" onPress={() => setEducationModalVisible(false)} />
-          </View>
-        </ScrollView>
-      </Modal>
+    <View style={{ flex: 1 }}>
+      {renderStepIndicator()}
+      <ScrollView contentContainerStyle={styles.container}>
+        {renderStepContent()}
+        {step > 1 && <Button title="Back" onPress={() => setStep(step - 1)} />}
+        
+        <Modal visible={educationModalVisible} animationType="slide">
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <Card style={styles.modalCard}>
+              <Card.Content>
+                <Title>Enter Education Details</Title>
+                <Divider style={styles.divider} />
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Country</Text>
+                  <Picker
+                    selectedValue={educationDetails.country}
+                    onValueChange={(itemValue) => setEducationDetails({ ...educationDetails, country: itemValue })}
+                    style={styles.modalPicker}
+                  >
+                    <Picker.Item label="Select Country" value="" />
+                    {countries.map((country, index) => (
+                      <Picker.Item key={index} label={country} value={country} />
+                    ))}
+                  </Picker>
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Degree</Text>
+                  <Picker
+                    selectedValue={educationDetails.degree}
+                    onValueChange={(itemValue) => setEducationDetails({ ...educationDetails, degree: itemValue })}
+                    style={styles.modalPicker}
+                  >
+                    <Picker.Item label="Select Degree" value="" />
+                    {degrees.map((degree, index) => (
+                      <Picker.Item key={index} label={degree} value={degree} />
+                    ))}
+                  </Picker>
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>University</Text>
+                  <TextInput
+                    placeholder="Enter University"
+                    value={educationDetails.university}
+                    onChangeText={(text) => setEducationDetails({ ...educationDetails, university: text })}
+                    style={styles.modalInput}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Year</Text>
+                  <Picker
+                    selectedValue={educationDetails.year}
+                    onValueChange={(itemValue) => setEducationDetails({ ...educationDetails, year: itemValue })}
+                    style={styles.modalPicker}
+                  >
+                    <Picker.Item label="Select Year" value="" />
+                    {years.map((year, index) => (
+                      <Picker.Item key={index} label={year} value={year} />
+                    ))}
+                  </Picker>
+                </View>
+                <TouchableOpacity style={styles.imagePicker} onPress={pickCertificateImage}>
+                  <Text style={styles.imagePickerText}>Upload Certificate</Text>
+                </TouchableOpacity>
+                {educationDetails.certificatePhoto && <Image source={{ uri: educationDetails.certificatePhoto }} style={styles.image} />}
+                <View style={styles.buttonGroup}>
+                  <PaperButton mode="contained" onPress={handleEducationSubmit} style={styles.paperButton}>
+                    Submit
+                  </PaperButton>
+                  <PaperButton mode="text" onPress={() => setEducationModalVisible(false)} style={styles.paperButton}>
+                    Close
+                  </PaperButton>
+                </View>
+              </Card.Content>
+            </Card>
+          </ScrollView>
+        </Modal>
 
-      {/* Specialties Modal */}
-      <Modal visible={specialtiesModalVisible} animationType="slide">
-        <ScrollView contentContainerStyle={styles.modalContent}>
-          <Text style={styles.modalTitle}>Select Specialties</Text>
-          <View style={styles.specialtiesContainer}>
-            {medicalSpecialties.map((specialty, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.specialtyCard,
-                  selectedSpecialties.includes(specialty.name) && styles.specialtyCardSelected,
-                ]}
-                onPress={() => toggleSpecialtySelection(specialty.name)}
-              >
-                <Ionicons name={specialty.icon} size={24} color="black" />
-                <Text style={styles.specialtyText}>{specialty.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <Button title="Submit" onPress={handleSpecialtiesSubmit} />
-          <Button title="Close" onPress={() => setSpecialtiesModalVisible(false)} />
-        </ScrollView>
-      </Modal>
+        <Modal visible={specialtiesModalVisible} animationType="slide">
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <Card style={styles.modalCard}>
+              <Card.Content>
+                <Title>Select Specialties</Title>
+                <Divider style={styles.divider} />
+                <View style={styles.specialtiesContainer}>
+                  {medicalSpecialties.map((specialty, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.specialtyCard,
+                        selectedSpecialties.includes(specialty.name) && styles.specialtyCardSelected,
+                        { backgroundColor: backgroundColors[index % backgroundColors.length] },
+                      ]}
+                      onPress={() => toggleSpecialtySelection(specialty.name)}
+                    >
+                      <Text style={styles.specialtyText}>{specialty.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={styles.buttonGroup}>
+                  <PaperButton mode="contained" onPress={handleSpecialtiesSubmit} style={styles.paperButton}>
+                    Submit
+                  </PaperButton>
+                  <PaperButton mode="text" onPress={() => setSpecialtiesModalVisible(false)} style={styles.paperButton}>
+                    Close
+                  </PaperButton>
+                </View>
+              </Card.Content>
+            </Card>
+          </ScrollView>
+        </Modal>
 
-      {/* Experience Modal */}
-      <Modal visible={experienceModalVisible} animationType="slide">
-        <ScrollView contentContainerStyle={styles.modalContent}>
-          <Text style={styles.modalTitle}>Enter Experience Details</Text>
-          <TextInput placeholder="Position" value={experienceDetails.position} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, position: text })} style={styles.modalInput} />
-          <TextInput placeholder="Organization" value={experienceDetails.organization} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, organization: text })} style={styles.modalInput} />
-          <TextInput placeholder="Start Date" value={experienceDetails.startDate} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, startDate: text })} style={styles.modalInput} />
-          <TextInput placeholder="End Date" value={experienceDetails.endDate} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, endDate: text })} style={styles.modalInput} />
-          <View style={styles.inputRow}>
-            <Text>Currently Working Here</Text>
-            <Switch value={experienceDetails.currentlyWorking} onValueChange={(value) => setExperienceDetails({ ...experienceDetails, currentlyWorking: value })} />
-          </View>
-          <View style={styles.buttonGroup}>
-            <Button title="Submit" onPress={handleExperienceSubmit} />
-            <Button title="Close" onPress={() => setExperienceModalVisible(false)} />
-          </View>
-        </ScrollView>
-      </Modal>
+        <Modal visible={experienceModalVisible} animationType="slide">
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <Card style={styles.modalCard}>
+              <Card.Content>
+                <Title>Enter Experience Details</Title>
+                <Divider style={styles.divider} />
+                <TextInput placeholder="Position" value={experienceDetails.position} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, position: text })} style={styles.modalInput} />
+                <TextInput placeholder="Organization" value={experienceDetails.organization} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, organization: text })} style={styles.modalInput} />
+                <TextInput placeholder="Start Date" value={experienceDetails.startDate} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, startDate: text })} style={styles.modalInput} />
+                <TextInput placeholder="End Date" value={experienceDetails.endDate} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, endDate: text })} style={styles.modalInput} />
+                <View style={styles.inputRow}>
+                  <Text>Currently Working Here</Text>
+                  <Switch value={experienceDetails.currentlyWorking} onValueChange={(value) => setExperienceDetails({ ...experienceDetails, currentlyWorking: value })} />
+                </View>
+                <View style={styles.buttonGroup}>
+                  <PaperButton mode="contained" onPress={handleExperienceSubmit} style={styles.paperButton}>
+                    Submit
+                  </PaperButton>
+                  <PaperButton mode="text" onPress={() => setExperienceModalVisible(false)} style={styles.paperButton}>
+                    Close
+                  </PaperButton>
+                </View>
+              </Card.Content>
+            </Card>
+          </ScrollView>
+        </Modal>
 
-      {/* Bio Modal */}
-      <Modal visible={bioModalVisible} animationType="slide">
-        <ScrollView contentContainerStyle={styles.modalContent}>
-          <Text style={styles.modalTitle}>Enter Detailed Description</Text>
-          <TextInput
-            style={styles.modalInput}
-            placeholder="Enter Detailed Description"
-            value={bio}
-            onChangeText={setBio}
-            multiline
-            numberOfLines={4}
-          />
-          <View style={styles.buttonGroup}>
-            <Button title="Submit" onPress={handleBioSubmit} />
-            <Button title="Close" onPress={() => setBioModalVisible(false)} />
-          </View>
-        </ScrollView>
-      </Modal>
+        <Modal visible={bioModalVisible} animationType="slide">
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <Card style={styles.modalCard}>
+              <Card.Content>
+                <Title>Enter Detailed Description</Title>
+                <Divider style={styles.divider} />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Enter Detailed Description"
+                  value={bio}
+                  onChangeText={setBio}
+                  multiline
+                  numberOfLines={4}
+                />
+                <View style={styles.buttonGroup}>
+                  <PaperButton mode="contained" onPress={handleBioSubmit} style={styles.paperButton}>
+                    Submit
+                  </PaperButton>
+                  <PaperButton mode="text" onPress={() => setBioModalVisible(false)} style={styles.paperButton}>
+                    Close
+                  </PaperButton>
+                </View>
+              </Card.Content>
+            </Card>
+          </ScrollView>
+        </Modal>
 
-      {/* Clinic Modal */}
-      <Modal visible={clinicModalVisible} animationType="slide">
-        <ScrollView contentContainerStyle={styles.modalContent}>
-          <Text style={styles.modalTitle}>Enter Clinic Name and Contact</Text>
-          <TextInput
-            style={styles.modalInput}
-            placeholder="Clinic Name"
-            value={clinicName}
-            onChangeText={setClinicName}
-          />
-          <TextInput
-            style={styles.modalInput}
-            placeholder="Clinic Phone"
-            value={clinicPhone}
-            onChangeText={setClinicPhone}
-            keyboardType="phone-pad"
-          />
-          <View style={styles.buttonGroup}>
-            <Button title="Submit" onPress={handleClinicSubmit} />
-            <Button title="Close" onPress={() => setClinicModalVisible(false)} />
-          </View>
-        </ScrollView>
-      </Modal>
-    </ScrollView>
+        <Modal visible={clinicModalVisible} animationType="slide">
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <Card style={styles.modalCard}>
+              <Card.Content>
+                <Title>Enter Clinic Name and Contact</Title>
+                <Divider style={styles.divider} />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Clinic Name"
+                  value={clinicName}
+                  onChangeText={setClinicName}
+                />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Clinic Phone"
+                  value={clinicPhone}
+                  onChangeText={setClinicPhone}
+                  keyboardType="phone-pad"
+                />
+                <View style={styles.buttonGroup}>
+                  <PaperButton mode="contained" onPress={handleClinicSubmit} style={styles.paperButton}>
+                    Submit
+                  </PaperButton>
+                  <PaperButton mode="text" onPress={() => setClinicModalVisible(false)} style={styles.paperButton}>
+                    Close
+                  </PaperButton>
+                </View>
+              </Card.Content>
+            </Card>
+          </ScrollView>
+        </Modal>
+      </ScrollView>
+    </View>
   );
 };
+
+const backgroundColors = [
+  '#F0F8FF',
+  '#FAFAD2',
+  '#FFE4E1',
+  '#F5F5DC',
+  '#E6E6FA',
+];
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
     flex: 1,
   },
+  stepContentContainer: {
+    flexDirection: 'column',
+  },
   stepContainer: {
-    marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   stepTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
+  },
+  subSection: {
+    marginBottom: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   inputRow: {
     flexDirection: 'row',
@@ -668,7 +849,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     padding: 10,
     fontSize: 16,
-    textAlignVertical: 'top', // For multiline input
+    textAlignVertical: 'top',
   },
   addressContainer: {
     flexDirection: 'row',
@@ -740,13 +921,19 @@ const styles = StyleSheet.create({
   modalContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'stretch',
     padding: 20,
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  modalCard: {
+    width: '100%',
+    padding: 20,
+    marginTop: 20,
+  },
+  divider: {
+    marginVertical: 10,
+  },
+  paperButton: {
+    marginTop: 10,
   },
   modalInput: {
     width: '100%',
@@ -762,22 +949,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   specialtyCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     padding: 10,
     margin: 5,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 10,
-    backgroundColor: '#f9f9f9',
   },
   specialtyCardSelected: {
-    backgroundColor: '#d0e8ff',
     borderColor: '#007BFF',
   },
   specialtyText: {
-    marginLeft: 10,
     fontSize: 18,
+    textAlign: 'center',
   },
   specialtyItem: {
     flexDirection: 'row',
@@ -814,7 +997,7 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
     marginTop: 10,
-    textAlignVertical: 'top', // For multiline input
+    textAlignVertical: 'top',
   },
   textLimit: {
     textAlign: 'right',
@@ -855,6 +1038,88 @@ const styles = StyleSheet.create({
   removeButtonText: {
     color: '#fff',
   },
-});
+  indicatorContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    justifyContent: 'center',
+  },
+  stepContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stepIndicator: {
+    width: 35,
+    height: 35,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#E7E7E7',
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeStep: {
+    borderColor: 'pink',
+    backgroundColor: 'pink',
+  },
+  stepText: {
+    color: '#E7E7E7',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  activeStepText: {
+    color: 'white',
+  },
+  line: {
+    width: 20,
+    height: 2,
+    backgroundColor: '#E7E7E7',
+    marginHorizontal: 10,
+  },
+  activeLine: {
+    backgroundColor: 'pink',
+  },
+  stepContentContainer: {
+    flexDirection: 'column',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cardText: {
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  cardInput: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  bioContainer: {
+    marginTop: 10,
+    },
+    bioInput: {
+      borderWidth: 1,
+      borderColor: '#ccc',
+      borderRadius: 5,
+      padding: 10,
+      fontSize: 16,
+      textAlignVertical: 'top',
+    },
+  }); 
+
 
 export default AddClinicForm;
