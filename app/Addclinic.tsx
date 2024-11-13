@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Modal, Switch } from 'react-native';
+import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Modal, Switch, Platform } from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { useSelector } from 'react-redux';
@@ -263,15 +263,24 @@ const AddClinicForm: React.FC = () => {
       });
 
       setSuccess(true);
-      Alert.alert("Success", "Clinic created successfully!", [
-        { 
-          text: "OK", 
-          onPress: () => { 
-            resetForm(); 
-            router.push('/professional'); // Update routing here
-          } 
-        }
-      ]); // Added closing brackets here
+      console.log('Alert about to be shown'); // Existing debug line
+
+      if (Platform.OS === 'web') {
+        window.alert("Success: Clinic created successfully!");
+        resetForm();
+        router.push('/professional'); // Ensure the route is correct
+      } else {
+        Alert.alert("Success", "Clinic created successfully!", [
+          { 
+            text: "OK", 
+            onPress: () => { 
+              resetForm(); 
+              router.push('/professional'); // Ensure the route is correct
+            } 
+          }
+        ]);
+      }
+      
     } catch (error) {
       console.error('Error creating clinic:', error);
     } finally {
@@ -409,20 +418,21 @@ const AddClinicForm: React.FC = () => {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.card}>
+            <TouchableOpacity style={styles.card} onPress={() => setSpecialtiesModalVisible(true)}>
               <View style={styles.cardContent}>
                 <Ionicons name="briefcase" size={24} color="black" />
-                <Text style={styles.cardText}>Category</Text>
+                <Text style={styles.cardText}>Specialty</Text>
               </View>
               <TextInput
                 style={styles.cardInput}
-                placeholder="Category"
-                value={category}
-                onChangeText={setCategory}
+                placeholder="Specialty"
+                value={specialties}
+                onChangeText={setSpecialties}
+                editable={false}
               />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.card}>
+            <View style={styles.card}>
               <View style={styles.cardContent}>
                 <Ionicons name="location-sharp" size={24} color="black" />
                 <Text style={styles.cardText}>Address</Text>
@@ -433,7 +443,7 @@ const AddClinicForm: React.FC = () => {
                 <TextInput style={styles.addressInput} placeholder="State" value={state} onChangeText={setState} />
                 <TextInput style={styles.addressInput} placeholder="Postal Code" value={postalCode} onChangeText={setPostalCode} />
               </View>
-            </TouchableOpacity>
+            </View>
 
             <TouchableOpacity style={styles.card}>
               <View style={styles.cardContent}>
@@ -607,7 +617,7 @@ const AddClinicForm: React.FC = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, paddingTop: 20 }}>
       {renderStepIndicator()}
       <ScrollView contentContainerStyle={styles.container}>
         {renderStepContent()}
