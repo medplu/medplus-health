@@ -494,7 +494,7 @@ const AddClinicForm: React.FC = () => {
       
       {/* Education Modal */}
       <Modal visible={educationModalVisible} animationType="slide">
-        <View style={styles.modalContent}>
+        <ScrollView contentContainerStyle={styles.modalContent}>
           <Text style={styles.modalTitle}>Enter Education Details</Text>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Country</Text>
@@ -552,14 +552,14 @@ const AddClinicForm: React.FC = () => {
             <Button title="Submit" onPress={handleEducationSubmit} />
             <Button title="Close" onPress={() => setEducationModalVisible(false)} />
           </View>
-        </View>
+        </ScrollView>
       </Modal>
 
       {/* Specialties Modal */}
       <Modal visible={specialtiesModalVisible} animationType="slide">
-        <View style={styles.modalContent}>
+        <ScrollView contentContainerStyle={styles.modalContent}>
           <Text style={styles.modalTitle}>Select Specialties</Text>
-          <ScrollView contentContainerStyle={styles.specialtiesContainer}>
+          <View style={styles.specialtiesContainer}>
             {medicalSpecialties.map((specialty, index) => (
               <TouchableOpacity
                 key={index}
@@ -573,15 +573,15 @@ const AddClinicForm: React.FC = () => {
                 <Text style={styles.specialtyText}>{specialty.name}</Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </View>
           <Button title="Submit" onPress={handleSpecialtiesSubmit} />
           <Button title="Close" onPress={() => setSpecialtiesModalVisible(false)} />
-        </View>
+        </ScrollView>
       </Modal>
 
       {/* Experience Modal */}
       <Modal visible={experienceModalVisible} animationType="slide">
-        <View style={styles.modalContent}>
+        <ScrollView contentContainerStyle={styles.modalContent}>
           <Text style={styles.modalTitle}>Enter Experience Details</Text>
           <TextInput placeholder="Position" value={experienceDetails.position} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, position: text })} style={styles.modalInput} />
           <TextInput placeholder="Organization" value={experienceDetails.organization} onChangeText={(text) => setExperienceDetails({ ...experienceDetails, organization: text })} style={styles.modalInput} />
@@ -595,12 +595,12 @@ const AddClinicForm: React.FC = () => {
             <Button title="Submit" onPress={handleExperienceSubmit} />
             <Button title="Close" onPress={() => setExperienceModalVisible(false)} />
           </View>
-        </View>
+        </ScrollView>
       </Modal>
 
       {/* Bio Modal */}
       <Modal visible={bioModalVisible} animationType="slide">
-        <View style={styles.modalContent}>
+        <ScrollView contentContainerStyle={styles.modalContent}>
           <Text style={styles.modalTitle}>Enter Detailed Description</Text>
           <TextInput
             style={styles.modalInput}
@@ -614,12 +614,12 @@ const AddClinicForm: React.FC = () => {
             <Button title="Submit" onPress={handleBioSubmit} />
             <Button title="Close" onPress={() => setBioModalVisible(false)} />
           </View>
-        </View>
+        </ScrollView>
       </Modal>
 
       {/* Clinic Modal */}
       <Modal visible={clinicModalVisible} animationType="slide">
-        <View style={styles.modalContent}>
+        <ScrollView contentContainerStyle={styles.modalContent}>
           <Text style={styles.modalTitle}>Enter Clinic Name and Contact</Text>
           <TextInput
             style={styles.modalInput}
@@ -638,7 +638,7 @@ const AddClinicForm: React.FC = () => {
             <Button title="Submit" onPress={handleClinicSubmit} />
             <Button title="Close" onPress={() => setClinicModalVisible(false)} />
           </View>
-        </View>
+        </ScrollView>
       </Modal>
     </ScrollView>
   );
@@ -738,7 +738,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   modalContent: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -795,6 +795,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 15,
+    width: '100%',
   },
   label: {
     fontSize: 16,
@@ -804,6 +805,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 20,
+    width: '100%',
   },
   bioInput: {
     borderWidth: 1,
