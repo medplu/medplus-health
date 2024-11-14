@@ -93,6 +93,12 @@ const DashboardScreen: React.FC = () => {
     console.log('Upcoming Appointments:', upcomingAppointments);
   }, [appointments, upcomingAppointments]);
 
+  useEffect(() => {
+    if (someCondition) {
+      setSomeState(value);
+    }
+  }, [someCondition]);
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -606,6 +612,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+});
+export default DashboardScreen;
+const rgba = (r: number, g: number, b: number, a: number) => {
+  return `rgba(${r},${b},${g},${a})`;
+};
+
+
 
 export default DashboardScreen;
 const rgba = (r: number, g: number, b: number, a: number) => {

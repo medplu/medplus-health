@@ -55,7 +55,7 @@ const insuranceCompaniesList = [
 ];
 
 const AddClinicForm: React.FC = () => {
-  const router = useRouter(); // Initialize router
+  const router = useRouter(); 
   const user = useSelector(selectUser);
   const professionalId = user.professional?._id;
 
@@ -244,7 +244,7 @@ const AddClinicForm: React.FC = () => {
         contactInfo,
         address: `${street}, ${city}, ${state}, ${postalCode}`,
         image: imageUrl,
-        specialties, // Use specialties instead of category
+        specialties, 
         education: `${educationDetails.degree, educationDetails.university} (${educationDetails.year})`,
         experiences,
         languages,
@@ -265,7 +265,7 @@ const AddClinicForm: React.FC = () => {
       if (Platform.OS === 'web') {
         window.alert("Success: Clinic created successfully!");
         resetForm();
-        router.push('/professional'); // Updated routing path
+        router.push('/professional/tabs'); // Updated routing path
       } else {
         Alert.alert("Success", "Clinic created successfully!", [
           { 
@@ -448,18 +448,20 @@ const AddClinicForm: React.FC = () => {
                 <Text style={styles.cardText}>Insurance Companies</Text>
               </View>
               <View style={styles.insuranceContainer}>
-                {insuranceCompaniesList.map((company, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.insuranceCard,
-                      selectedInsuranceCompanies.includes(company) && styles.insuranceCardSelected,
-                    ]}
-                    onPress={() => toggleInsuranceSelection(company)}
-                  >
-                    <Text style={styles.insuranceText}>{company}</Text>
-                  </TouchableOpacity>
-                ))}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {insuranceCompaniesList.map((company) => (
+                    <TouchableOpacity
+                      key={company}
+                      style={[
+                        styles.insuranceCard,
+                        selectedInsuranceCompanies.includes(company) && styles.insuranceCardSelected,
+                      ]}
+                      onPress={() => toggleInsuranceSelection(company)}
+                    >
+                      <Text style={styles.insuranceText}>{company}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
             </TouchableOpacity>
 
@@ -883,17 +885,11 @@ const styles = StyleSheet.create({
   },
   insuranceContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    // ...existing styles...
   },
   insuranceCard: {
-    flexBasis: '48%',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: '#f9f9f9',
+    // ...existing styles...
+    marginRight: 10, // Add spacing between cards
   },
   insuranceCardSelected: {
     backgroundColor: '#d0e8ff',
