@@ -868,18 +868,14 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   addressContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: 'column', // Changed from 'row' to 'column' for vertical layout
+    // ...existing styles...
   },
   addressInput: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    fontSize: 16,
-    marginBottom: 10,
-    marginRight: 10,
+    width: '100%', // Ensures inputs take full width in block layout
+    marginRight: 0, // Removed right margin for vertical stacking
+    marginBottom: 10, // Added spacing between fields
+    // ...existing styles...
   },
   sectionTitle: {
     fontSize: 18,
