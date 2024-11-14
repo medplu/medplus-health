@@ -272,7 +272,7 @@ const AddClinicForm: React.FC = () => {
             text: "OK", 
             onPress: () => { 
               resetForm(); 
-              router.push('/professional'); // Updated routing path
+              router.push('/professional/tabs'); // Updated routing path
             } 
           }
         ]);
