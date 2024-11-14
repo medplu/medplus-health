@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Modal, Switch, Platform } from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
+import * as SecureStore from 'expo-secure-store';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, updateAttachedToClinic } from '../store/userSlice';
 import { Ionicons } from '@expo/vector-icons';
@@ -165,7 +166,9 @@ const AddClinicForm: React.FC = () => {
   };
 
   const uploadCertificateToCloudinary = async (imageUri: string): Promise<string> => {
-    return uploadImage(imageUri);
+    const certificateUrl = await uploadImage(imageUri);
+    await SecureStore.setItemAsync('certificateUrl', certificateUrl);
+    return certificateUrl;
   };
 
   const resetForm = () => {

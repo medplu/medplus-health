@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ProfessionalHeader from './ProfessionalHeader'; 
 import ProfessionalTabs from './tabs';
 
-
 const Stack = createNativeStackNavigator();
 
 const ProfessionalLayout = () => {

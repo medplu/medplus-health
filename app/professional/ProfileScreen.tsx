@@ -19,7 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../store/userSlice';
 
-const SettingsScreen: React.FC = () => {
+const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const user = useSelector(selectUser);
   const userId = user.userId;
@@ -30,9 +30,6 @@ const SettingsScreen: React.FC = () => {
   const [image, setImage] = useState<string | null>(user.profileImage || null);
   const [uploading, setUploading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [consultationFee, setConsultationFee] = useState<string>(user.consultationFee || '');
-  const [permissions, setPermissions] = useState<string>(user.permissions || '');
-  const [wallet, setWallet] = useState<string>(user.wallet || '');
 
   const resizeImage = async (uri: string) => {
     const result = await ImageManipulator.manipulateAsync(uri, [
@@ -104,9 +101,6 @@ const SettingsScreen: React.FC = () => {
         email,
         contactInfo,
         profileImage: imageUrl,
-        consultationFee,
-        permissions,
-        wallet,
       };
 
       const response = await axios.put(
@@ -120,7 +114,7 @@ const SettingsScreen: React.FC = () => {
       );
 
       console.log('Profile updated:', response.data);
-      
+      // Reset form fields
       setName('');
       setEmail('');
       setContactInfo('');
@@ -132,7 +126,7 @@ const SettingsScreen: React.FC = () => {
     } finally {
       setUploading(false);
     }
-  }, [userId, name, email, contactInfo, image, consultationFee, permissions, wallet, navigation]);
+  }, [userId, name, email, contactInfo, image, navigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -183,37 +177,12 @@ const SettingsScreen: React.FC = () => {
               value={contactInfo}
               onChangeText={setContactInfo}
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Consultation Fee"
-              value={consultationFee}
-              onChangeText={setConsultationFee}
-              keyboardType="numeric"
-            />
             <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
               <Text style={styles.uploadButtonText}>Pick an image from camera roll</Text>
             </TouchableOpacity>
            
             <Button title={uploading ? "Updating..." : "Update Profile"} onPress={handleSubmit} disabled={uploading} />
             {uploading && <ActivityIndicator size="large" color="#0000ff" />}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>System Settings</Text>
-          <View style={styles.sectionBody}>
-            <TextInput
-              style={styles.input}
-              placeholder="Permissions"
-              value={permissions}
-              onChangeText={setPermissions}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Wallet"
-              value={wallet}
-              onChangeText={setWallet}
-            />
           </View>
         </View>
 
@@ -344,4 +313,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SettingsScreen;
+export default ProfileScreen;
