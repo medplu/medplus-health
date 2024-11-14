@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Modal, Switch, Platform } from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-import { useSelector } from 'react-redux';
-import { selectUser } from './store/userSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectUser, updateAttachedToClinic } from './store/userSlice';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
@@ -58,6 +58,7 @@ const AddClinicForm: React.FC = () => {
   const router = useRouter(); 
   const user = useSelector(selectUser);
   const professionalId = user.professional?._id;
+  const dispatch = useDispatch();
 
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
@@ -260,6 +261,7 @@ const AddClinicForm: React.FC = () => {
       });
 
       setSuccess(true);
+      dispatch(updateAttachedToClinic(true));
       console.log('Alert about to be shown'); // Existing debug line
 
       if (Platform.OS === 'web') {
