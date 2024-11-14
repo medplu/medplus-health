@@ -120,7 +120,7 @@ const AddClinicForm: React.FC = () => {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert('Sorry, we need camera roll permissions to make this work!');
+      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
       return;
     }
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -153,21 +153,21 @@ const AddClinicForm: React.FC = () => {
 
   const uploadImageToCloudinary = async (imageUri) => {
     const data = new FormData();
-    const resizedImage = await ImageManipulator.manipulateAsync(
-      imageUri,
-      [{ resize: { width: 1000 } }],
-      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-    );
-    const response = await fetch(resizedImage.uri);
-    const blob = await response.blob();
-    data.append('file', blob);
-    data.append('upload_preset', 'medplus');
     try {
-      const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+      const resizedImage = await ImageManipulator.manipulateAsync(
+        imageUri,
+        [{ resize: { width: 1000 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      const response = await fetch(resizedImage.uri);
+      const blob = await response.blob();
+      data.append('file', blob);
+      data.append('upload_preset', 'medplus');
+      const responseUpload = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
         method: 'POST',
         body: data,
       });
-      const result = await response.json();
+      const result = await responseUpload.json();
       return result.secure_url;
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -177,21 +177,21 @@ const AddClinicForm: React.FC = () => {
 
   const uploadCertificateToCloudinary = async (imageUri) => {
     const data = new FormData();
-    const resizedImage = await ImageManipulator.manipulateAsync(
-      imageUri,
-      [{ resize: { width: 1000 } }],
-      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-    );
-    const response = await fetch(resizedImage.uri);
-    const blob = await response.blob();
-    data.append('file', blob);
-    data.append('upload_preset', 'medplus');
     try {
-      const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+      const resizedImage = await ImageManipulator.manipulateAsync(
+        imageUri,
+        [{ resize: { width: 1000 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      const response = await fetch(resizedImage.uri);
+      const blob = await response.blob();
+      data.append('file', blob);
+      data.append('upload_preset', 'medplus');
+      const responseUpload = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
         method: 'POST',
         body: data,
       });
-      const result = await response.json();
+      const result = await responseUpload.json();
       return result.secure_url;
     } catch (error) {
       console.error('Error uploading certificate:', error);
@@ -233,7 +233,9 @@ const AddClinicForm: React.FC = () => {
       }
       setUploading(true);
       let imageUrl = '';
-      if (image) imageUrl = await uploadImageToCloudinary(image);
+      if (image) {
+        imageUrl = await uploadImageToCloudinary(image);
+      }
 
       let certificateUrl = '';
       if (educationDetails.certificatePhoto) {
@@ -262,19 +264,18 @@ const AddClinicForm: React.FC = () => {
 
       setSuccess(true);
       dispatch(updateAttachedToClinic(true));
-      console.log('Alert about to be shown'); // Existing debug line
 
       if (Platform.OS === 'web') {
         window.alert("Success: Clinic created successfully!");
         resetForm();
-        router.push('/professional/tabs'); // Updated routing path
+        router.push('/professional/tabs');
       } else {
         Alert.alert("Success", "Clinic created successfully!", [
           { 
             text: "OK", 
             onPress: () => { 
               resetForm(); 
-              router.push('/professional/tabs'); // Updated routing path
+              router.push('/professional/tabs');
             } 
           }
         ]);
@@ -282,13 +283,14 @@ const AddClinicForm: React.FC = () => {
       
     } catch (error) {
       console.error('Error creating clinic:', error);
+      Alert.alert("Submission Error", "An error occurred while creating the clinic. Please try again.");
     } finally {
       setUploading(false);
     }
   };
 
   const handleEducationSubmit = () => {
-    setEducation(`${educationDetails.degree}, ${educationDetails.university} (${educationDetails.year})`);
+    setEducation(`${educationDetails.degree, educationDetails.university} (${educationDetails.year})`);
     setEducationModalVisible(false);
   };
 
