@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, Image, StyleSheet, ScrollView, Touchable
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectUser, updateAttachedToClinic } from './store/userSlice';
+import { selectUser, updateAttachedToClinic } from '../store/userSlice';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';

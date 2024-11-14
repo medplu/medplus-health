@@ -15,6 +15,7 @@ const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
 const DashboardScreen: React.FC = () => {
+  const router = useRouter(); // Initialize router
   const user = useSelector(selectUser);
   const navigation = useNavigation();
   const { appointments, loading, error } = useAppointments();
@@ -24,12 +25,12 @@ const DashboardScreen: React.FC = () => {
 
   useEffect(() => {
     if (!user.professional?.attachedToClinic) {
-      navigation.navigate('AddClinic'); // Replace 'AddClinic' with your actual route name
+      router.push('/addclinic'); // Use router.push instead of navigation.navigate
     }
   }, [user.professional?.attachedToClinic]);
 
   useEffect(() => {
-    // Load tasks from AsyncStorage
+   
     const loadTasks = async () => {
       try {
         const storedTasks = await AsyncStorage.getItem('@tasks');
