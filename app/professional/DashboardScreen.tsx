@@ -613,16 +613,9 @@ const styles = StyleSheet.create({
   },
 });
 
-});
 export default DashboardScreen;
 const rgba = (r: number, g: number, b: number, a: number) => {
   return `rgba(${r},${b},${g},${a})`;
 };
 
-
-
-export default DashboardScreen;
-const rgba = (r: number, g: number, b: number, a: number) => {
-  return `rgba(${r},${b},${g},${a})`;
-};
 
