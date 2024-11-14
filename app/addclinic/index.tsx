@@ -172,9 +172,13 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
-  const uploadImageToCloudinary = async (imageUri: string): Promise<string> => {
-    if (!imageUri) {
-      throw new Error('No image URI provided');
+  const isValidUri = (uri: string): boolean => {
+    return typeof uri === 'string' && uri.startsWith('file://');
+  };
+
+  const uploadToCloudinary = async (imageUri: string, preset: string, fileName: string): Promise<string> => {
+    if (!isValidUri(imageUri)) {
+      throw new Error('Invalid image URI provided');
     }
   
     const data = new FormData();
@@ -187,59 +191,41 @@ const AddClinicForm: React.FC = () => {
   
       const response = await fetch(resizedImage.uri);
       const blob = await response.blob();
-      data.append('file', blob, 'image.jpg');
-      data.append('upload_preset', 'medplus');
+      const file = new File([blob], fileName, { type: blob.type });
   
-      const responseUpload = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
-        method: 'POST',
-        body: data,
+      data.append('file', file);
+      data.append('upload_preset', preset);
+  
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload');
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            const result = JSON.parse(xhr.response);
+            resolve(result.secure_url);
+          } else {
+            console.error(`${fileName} upload failed with status:`, xhr.status);
+            reject(new Error(`${fileName} upload failed`));
+          }
+        };
+        xhr.onerror = (e) => {
+          console.error('Network request failed:', e);
+          reject(new Error('Network request failed'));
+        };
+        xhr.send(data);
       });
-  
-      if (!responseUpload.ok) {
-        throw new Error('Image upload failed');
-      }
-  
-      const result = await responseUpload.json();
-      return result.secure_url;
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error(`Error uploading ${fileName}:`, error);
       throw error;
     }
   };
   
-  const uploadCertificateToCloudinary = async (imageUri: string): Promise<string> => {
-    if (!imageUri) {
-      throw new Error('No certificate image URI provided');
-    }
+  const uploadImageToCloudinary = (imageUri: string): Promise<string> => {
+    return uploadToCloudinary(imageUri, 'medplus', 'image.jpg');
+  };
   
-    const data = new FormData();
-    try {
-      const resizedImage = await ImageManipulator.manipulateAsync(
-        imageUri,
-        [{ resize: { width: 1000 } }],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-      );
-  
-      const response = await fetch(resizedImage.uri);
-      const blob = await response.blob();
-      data.append('file', blob, 'certificate.jpg');
-      data.append('upload_preset', 'medplus');
-  
-      const responseUpload = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
-        method: 'POST',
-        body: data,
-      });
-  
-      if (!responseUpload.ok) {
-        throw new Error('Certificate upload failed');
-      }
-  
-      const result = await responseUpload.json();
-      return result.secure_url;
-    } catch (error) {
-      console.error('Error uploading certificate:', error);
-      throw error;
-    }
+  const uploadCertificateToCloudinary = (imageUri: string): Promise<string> => {
+    return uploadToCloudinary(imageUri, 'medplus', 'certificate.jpg');
   };
   
 
@@ -292,7 +278,7 @@ const AddClinicForm: React.FC = () => {
         address: `${street}, ${city}, ${state}, ${postalCode}`,
         image: imageUrl,
         specialties, 
-        education: `${educationDetails.degree}, ${educationDetails.university} (${educationDetails.year})`,
+        education: `${educationDetails.degree, educationDetails.university} (${educationDetails.year})`,
         experiences,
         languages,
         assistantName,
