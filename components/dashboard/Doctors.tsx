@@ -27,6 +27,7 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
   const navigation = useNavigation();
 
   useEffect(() => {
+    console.log('Received doctorList:', doctorList); // Add this line
     filterDoctors();
   }, [searchQuery, selectedCategory, doctorList]);
 

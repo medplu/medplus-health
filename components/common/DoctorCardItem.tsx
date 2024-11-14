@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Avatar, Icon } from 'react-native-elements';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Avatar } from 'react-native-elements';
 import Colors from '../Shared/Colors';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../../app/store/userSlice';
 
@@ -21,51 +19,9 @@ interface DoctorCardItemProps {
 }
 
 const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
-  const { firstName, lastName, profession, profileImage, _id } = doctor;
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { firstName, lastName, profession, profileImage } = doctor;
   const user = useSelector(selectUser);
   const userId = user.userId;
-
-  useEffect(() => {
-    const checkFavorite = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const response = await axios.get('https://medplus-health.onrender.com/api/favorites', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const favoriteProfessionalIds = response.data.favoriteDoctors.map((doc: Doctor) => doc._id);
-        setIsFavorite(favoriteProfessionalIds.includes(_id));
-      } catch (error) {
-        console.error("Error fetching favorite status:", error);
-      }
-    };
-
-    checkFavorite();
-  }, [ _id ]);
-
-  const toggleFavorite = async () => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token || !userId) {
-        // Handle unauthenticated state
-        return;
-      }
-
-      if (isFavorite) {
-        await axios.post('https://medplus-health.onrender.com/api/removeFavorite', { userId, professionalId: _id }, { // Updated key
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      } else {
-        await axios.post('https://medplus-health.onrender.com/api/addFavorite', { userId, professionalId: _id }, { // Updated key
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
-
-      setIsFavorite(!isFavorite);
-    } catch (error) {
-      console.error("Error toggling favorite:", error);
-    }
-  };
 
   return (
     <View style={styles.profileContainer}>
@@ -83,9 +39,6 @@ const DoctorCardItem: React.FC<DoctorCardItemProps> = ({ doctor }) => {
         <Text style={styles.doctorName}>{`${firstName} ${lastName}`}</Text>
         <Text style={styles.categoryName}>{profession}</Text>
       </View>
-      <TouchableOpacity onPress={toggleFavorite}>
-        <Icon name={isFavorite ? "heart" : "heart-o"} type="font-awesome" color={Colors.primary} />
-      </TouchableOpacity>
     </View>
   );
 };
