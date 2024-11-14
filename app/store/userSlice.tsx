@@ -76,11 +76,16 @@ const userSlice = createSlice({
     updateUserProfile(state, action: PayloadAction<Partial<UserState>>) {
       return { ...state, ...action.payload };
     },
+    updateAttachedToClinic(state, action: PayloadAction<boolean>) {
+      if (state.professional) {
+        state.professional.attachedToClinic = action.payload;
+      }
+    },
   },
 });
 
 export const selectUser = (state: RootState) => state.user;
 
-export const { login, logout, updateUserProfile } = userSlice.actions;
+export const { login, logout, updateUserProfile, updateAttachedToClinic } = userSlice.actions;
 
 export default userSlice.reducer;

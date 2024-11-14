@@ -5,7 +5,7 @@ import { PieChart, BarChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { selectUser } from '../store/userSlice';
 import { RootState } from '../store/configureStore';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import useAppointments from '../../hooks/useAppointments';
 import moment from 'moment';
 import Colors from '../../components/Shared/Colors';
@@ -15,32 +15,18 @@ const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
 
 const DashboardScreen: React.FC = () => {
-  const router = useRouter();
   const user = useSelector(selectUser);
-  const [clinic, setClinic] = useState(null);
+  const navigation = useNavigation();
   const { appointments, loading, error } = useAppointments();
   const [tasks, setTasks] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [newTask, setNewTask] = useState<string>('');
 
   useEffect(() => {
-    const fetchClinic = async () => {
-      try {
-        const response = await axios.get(`/api/clinics/${user.professional?._id}`);
-        setClinic(response.data);
-      } catch (error) {
-        console.error('Error fetching clinic:', error);
-      }
-    };
-
-    fetchClinic();
-  }, [user.professional?._id]);
-
-  useEffect(() => {
-    if (user && !clinic) {
-      router.push('/Addclinic'); // Ensure this path is correct
+    if (!user.professional?.attachedToClinic) {
+      navigation.navigate('AddClinic'); // Replace 'AddClinic' with your actual route name
     }
-  }, [user, clinic, router]);
+  }, [user.professional?.attachedToClinic]);
 
   useEffect(() => {
     // Load tasks from AsyncStorage
@@ -92,12 +78,6 @@ const DashboardScreen: React.FC = () => {
     console.log('All Appointments:', appointments);
     console.log('Upcoming Appointments:', upcomingAppointments);
   }, [appointments, upcomingAppointments]);
-
-  useEffect(() => {
-    if (someCondition) {
-      setSomeState(value);
-    }
-  }, [someCondition]);
 
   if (loading) {
     return (
@@ -617,5 +597,4 @@ export default DashboardScreen;
 const rgba = (r: number, g: number, b: number, a: number) => {
   return `rgba(${r},${b},${g},${a})`;
 };
-
 
