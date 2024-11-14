@@ -220,12 +220,12 @@ const AddClinicForm: React.FC = () => {
       await axios.post(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, formData, {
   };
   
-  const uploadImageToCloudinary = (imageUri: string): Promise<string> => {
-    return uploadToCloudinary(imageUri, 'medplus', 'image.jpg');
+  const uploadImageToCloudinary = (imageUri: string, p0: string, p1: string): Promise<string> => {
+    return uploadImageToCloudinary(imageUri, 'medplus', 'image.jpg');
   };
   
   const uploadCertificateToCloudinary = (imageUri: string): Promise<string> => {
-    return uploadToCloudinary(imageUri, 'medplus', 'certificate.jpg');
+    return uploadImageToCloudinary(imageUri, 'medplus', 'certificate.jpg');
   };
   
 
@@ -264,7 +264,7 @@ const AddClinicForm: React.FC = () => {
       setUploading(true);
       let imageUrl = '';
       if (image) {
-        imageUrl = await uploadImageToCloudinary(image);
+        imageUrl = await uploadImageToCloudinary(image, 'medplus', 'image.jpg');
       }
 
       let certificateUrl = '';
