@@ -164,6 +164,10 @@ const AddClinicForm: React.FC = () => {
     return result.secure_url;
   };
 
+  const uploadCertificateToCloudinary = async (imageUri: string): Promise<string> => {
+    return uploadImage(imageUri);
+  };
+
   const resetForm = () => {
     setName('');
     setContactInfo('');
@@ -200,71 +204,6 @@ const AddClinicForm: React.FC = () => {
       let imageUrl = '';
       if (image) {
         imageUrl = await uploadImage(image);
-      }
-
-      const formData = {
-        name,
-        contactInfo,
-        address: `${street}, ${city}, ${state}, ${postalCode}`,
-        image: imageUrl,
-        specialties, 
-        education: `${educationDetails.degree, educationDetails.university} (${educationDetails.year})`,
-        experiences,
-        languages,
-        assistantName,
-        assistantPhone,
-        insuranceCompanies: selectedInsuranceCompanies,
-        bio,
-      };
-
-      await axios.post(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, formData, {
-  };
-  
-  const uploadImageToCloudinary = (imageUri: string, p0: string, p1: string): Promise<string> => {
-    return uploadImageToCloudinary(imageUri, 'medplus', 'image.jpg');
-  };
-  
-  const uploadCertificateToCloudinary = (imageUri: string): Promise<string> => {
-    return uploadImageToCloudinary(imageUri, 'medplus', 'certificate.jpg');
-  };
-  
-
-  const resetForm = () => {
-    setName('');
-    setContactInfo('');
-    setAddress('');
-    setImage(null);
-    setSpecialties('');
-    setEducation('');
-    setExperience('');
-    setLanguages('');
-    setAssistantName('');
-    setAssistantPhone('');
-    setInsuranceCompanies('');
-    setSelectedSpecialties([]);
-    setBio('');
-    setShowBioInput(false);
-    setEducationDetails({ country: '', degree: '', university: '', year: '', certificatePhoto: null });
-    setExperienceDetails({ position: '', organization: '', startDate: '', endDate: '', currentlyWorking: false });
-    setStreet('');
-    setCity('');
-    setState('');
-    setPostalCode('');
-    setSelectedInsuranceCompanies([]);
-  };
-
-  const handleSubmit = async () => {
-    try {
-      console.log('Professional ID:', professionalId);
-      if (!professionalId) {
-        console.error('Professional ID is required');
-        Alert.alert("Error", "Professional ID is required");
-        return;
-      }
-      setUploading(true);
-      let imageUrl = '';
-      if (image) {
-        imageUrl = await uploadImageToCloudinary(image, 'medplus', 'image.jpg');
       }
 
       let certificateUrl = '';
@@ -355,7 +294,7 @@ const AddClinicForm: React.FC = () => {
     setClinicModalVisible(false);
   };
 
-  const toggleInsuranceSelection = (company) => {
+  const toggleInsuranceSelection = (company: string) => {
     setSelectedInsuranceCompanies((prevSelected) => {
       if (prevSelected.includes(company)) {
         return prevSelected.filter((item) => item !== company);
@@ -365,7 +304,7 @@ const AddClinicForm: React.FC = () => {
     });
   };
 
-  const removeExperience = (index) => {
+  const removeExperience = (index: number) => {
     setExperiences(experiences.filter((_, i) => i !== index));
   };
 
@@ -713,7 +652,7 @@ const AddClinicForm: React.FC = () => {
                     ))}
                   </Picker>
                 </View>
-                <TouchableOpacity style={styles.imagePicker} onPress={pickCertificateImage}>
+                <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
                   <Text style={styles.imagePickerText}>Upload Certificate</Text>
                 </TouchableOpacity>
                 {educationDetails.certificatePhoto && <Image source={{ uri: educationDetails.certificatePhoto }} style={styles.image} />}
