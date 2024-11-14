@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   SafeAreaView,
@@ -9,7 +9,9 @@ import {
   Image,
   TextInput,
   Button,
+  Switch,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import axios from 'axios';
@@ -33,6 +35,11 @@ const SettingsScreen: React.FC = () => {
   const [consultationFee, setConsultationFee] = useState<string>(user.consultationFee || '');
   const [permissions, setPermissions] = useState<string>(user.permissions || '');
   const [wallet, setWallet] = useState<string>(user.wallet || '');
+  const [form, setForm] = useState({
+    emailNotifications: true,
+    pushNotifications: false,
+  });
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   const resizeImage = async (uri: string) => {
     const result = await ImageManipulator.manipulateAsync(uri, [
@@ -120,177 +127,254 @@ const SettingsScreen: React.FC = () => {
       );
 
       console.log('Profile updated:', response.data);
-      
       setName('');
       setEmail('');
       setContactInfo('');
       setImage(null);
-      navigation.goBack();
+      setModalVisible(false);
     } catch (updateError) {
       console.error('Error updating profile:', updateError);
       setError('Failed to update profile');
     } finally {
       setUploading(false);
     }
-  }, [userId, name, email, contactInfo, image, consultationFee, permissions, wallet, navigation]);
+  }, [userId, name, email, contactInfo, image, consultationFee, permissions, wallet]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f8f8' }}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerAction}>
-          <FeatherIcon name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Update Profile</Text>
-        <TouchableOpacity onPress={() => { /* handle more options */ }} style={styles.headerAction}>
-          <FeatherIcon name="more-vertical" size={24} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.headerAction}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <FeatherIcon color="#000" name="arrow-left" size={24} />
+          </TouchableOpacity>
+        </View>
+
+        <Text numberOfLines={1} style={styles.headerTitle}>
+          Settings
+        </Text>
+
+        <View style={[styles.headerAction, { alignItems: 'flex-end' }]}>
+          <TouchableOpacity onPress={() => { /* handle onPress */ }}>
+            <FeatherIcon color="#000" name="more-vertical" size={24} />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
         {error && <Text style={styles.error}>{error}</Text>}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <TouchableOpacity style={styles.profile}>
-            <Image source={{ uri: image || 'default-avatar-uri' }} style={styles.profileAvatar} />
-            <View style={styles.profileBody}>
-              <Text style={styles.profileName}>{name || 'Full Name'}</Text>
-              <Text style={styles.profileHandle}>{email || 'email@example.com'}</Text>
-            </View>
-            <FeatherIcon name="chevron-right" size={22} color="#bcbcbc" />
-          </TouchableOpacity>
-        </View>
+        <View style={[styles.section, { paddingTop: 4 }]}>
+          <Text style={styles.sectionTitle}>Profile</Text>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Edit Information</Text>
           <View style={styles.sectionBody}>
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              value={name}
-              onChangeText={setName}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Contact Info"
-              value={contactInfo}
-              onChangeText={setContactInfo}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Consultation Fee"
-              value={consultationFee}
-              onChangeText={setConsultationFee}
-              keyboardType="numeric"
-            />
-            <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
-              <Text style={styles.uploadButtonText}>Pick an image from camera roll</Text>
+            <TouchableOpacity style={styles.profile} onPress={() => navigation.navigate('EditProfile')}>
+              <Image
+                alt=""
+                source={{ uri: image || 'default-avatar-uri' }}
+                style={styles.profileAvatar}
+              />
+              <View style={styles.profileBody}>
+                <Text style={styles.profileName}>{name || 'Full Name'}</Text>
+                <Text style={styles.profileHandle}>{email || 'email@example.com'}</Text>
+              </View>
+              <FeatherIcon color="#bcbcbc" name="chevron-right" size={22} />
             </TouchableOpacity>
-           
-            <Button title={uploading ? "Updating..." : "Update Profile"} onPress={handleSubmit} disabled={uploading} />
-            {uploading && <ActivityIndicator size="large" color="#0000ff" />}
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>System Settings</Text>
+          <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.sectionBody}>
-            <TextInput
-              style={styles.input}
-              placeholder="Permissions"
-              value={permissions}
-              onChangeText={setPermissions}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Wallet"
-              value={wallet}
-              onChangeText={setWallet}
-            />
+            <View style={[styles.rowWrapper, styles.rowFirst]}>
+              <TouchableOpacity style={styles.row}>
+                <Text style={styles.rowLabel}>Language</Text>
+                <View style={styles.rowSpacer} />
+                <Text style={styles.rowValue}>English</Text>
+                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.rowWrapper}>
+              <TouchableOpacity style={styles.row}>
+                <Text style={styles.rowLabel}>Location</Text>
+                <View style={styles.rowSpacer} />
+                <Text style={styles.rowValue}>Los Angeles, CA</Text>
+                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.rowWrapper}>
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Email Notifications</Text>
+                <View style={styles.rowSpacer} />
+                <Switch
+                  onValueChange={emailNotifications => setForm({ ...form, emailNotifications })}
+                  style={{ transform: [{ scaleX: 0.95 }, { scaleY: 0.95 }] }}
+                  value={form.emailNotifications}
+                />
+              </View>
+            </View>
+
+            <View style={[styles.rowWrapper, styles.rowLast]}>
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Push Notifications</Text>
+                <View style={styles.rowSpacer} />
+                <Switch
+                  onValueChange={pushNotifications => setForm({ ...form, pushNotifications })}
+                  style={{ transform: [{ scaleX: 0.95 }, { scaleY: 0.95 }] }}
+                  value={form.pushNotifications}
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={[styles.section, { paddingTop: 4 }]}>
+          <Text style={styles.sectionTitle}>Accounts</Text>
+
+          <View style={styles.sectionBody}>
+            <TouchableOpacity style={styles.profile} onPress={() => navigation.navigate('AccountSettings')}>
+              
+              <FeatherIcon color="#bcbcbc" name="chevron-right" size={22} />
+            </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.section}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
+          <View style={styles.sectionBody}>
+            <View style={[styles.rowWrapper, styles.rowFirst, styles.rowLast, { alignItems: 'center' }]}>
+              <TouchableOpacity onPress={() => { /* handle onPress */ }} style={styles.row}>
+                <Text style={[styles.rowLabel, styles.rowLabelLogout]}>Log Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
+
+        <Text style={styles.contentFooter}>App Version 2.24 #50491</Text>
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalView}>
+          <Text style={styles.modalTitle}>Edit Information</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Full Name"
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Contact Info"
+            value={contactInfo}
+            onChangeText={setContactInfo}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Consultation Fee"
+            value={consultationFee}
+            onChangeText={setConsultationFee}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
+            <Text style={styles.uploadButtonText}>Pick an image from camera roll</Text>
+          </TouchableOpacity>
+          <Button title={uploading ? "Updating..." : "Update Profile"} onPress={handleSubmit} disabled={uploading} />
+          {uploading && <ActivityIndicator size="large" color="#0000ff" />}
+          <Button title="Cancel" onPress={() => setModalVisible(false)} />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
+  /** Header */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderColor: '#f0f0f0',
+    width: '100%',
+    paddingHorizontal: 16,
   },
   headerAction: {
     width: 40,
     height: 40,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 19,
     fontWeight: '600',
     color: '#000',
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
     textAlign: 'center',
   },
-  container: {
-    padding: 16,
+  /** Content */
+  content: {
+    paddingHorizontal: 16,
   },
+  contentFooter: {
+    marginTop: 24,
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
+    color: '#a69f9f',
+  },
+  /** Section */
   section: {
-    marginVertical: 12,
+    paddingVertical: 12,
   },
   sectionTitle: {
+    margin: 8,
+    marginLeft: 12,
     fontSize: 13,
     letterSpacing: 0.33,
     fontWeight: '500',
     color: '#a69f9f',
     textTransform: 'uppercase',
-    marginBottom: 8,
   },
   sectionBody: {
-    backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
     elevation: 2,
   },
+  /** Profile */
   profile: {
+    padding: 12,
+    backgroundColor: '#fff',
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    justifyContent: 'flex-start',
   },
   profileAvatar: {
     width: 60,
     height: 60,
-    borderRadius: 30,
+    borderRadius: 9999,
     marginRight: 12,
   },
   profileBody: {
-    flex: 1,
+    marginRight: 'auto',
   },
   profileName: {
     fontSize: 18,
@@ -298,10 +382,55 @@ const styles = StyleSheet.create({
     color: '#292929',
   },
   profileHandle: {
+    marginTop: 2,
     fontSize: 16,
     fontWeight: '400',
     color: '#858585',
-    marginTop: 2,
+  },
+  /** Row */
+  row: {
+    height: 44,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingRight: 12,
+  },
+  rowWrapper: {
+    paddingLeft: 16,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  rowFirst: {
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  rowLabel: {
+    fontSize: 16,
+    letterSpacing: 0.24,
+    color: '#000',
+  },
+  rowSpacer: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+  },
+  rowValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#ababab',
+    marginRight: 4,
+  },
+  rowLast: {
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+  rowLabelLogout: {
+    width: '100%',
+    textAlign: 'center',
+    fontWeight: '600',
+    color: '#dc2626',
   },
   input: {
     height: 40,
@@ -321,26 +450,32 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
   },
-  image: {
-    width: 200,
-    height: 200,
-    marginBottom: 10,
-    alignSelf: 'center',
-  },
   error: {
     color: 'red',
     marginBottom: 10,
     textAlign: 'center',
   },
-  cancelButton: {
-    backgroundColor: '#dc2626',
-    padding: 12,
-    borderRadius: 8,
+  modalView: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 20,
+    margin: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  cancelButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
   },
 });
 
