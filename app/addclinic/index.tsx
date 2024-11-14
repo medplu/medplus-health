@@ -64,7 +64,7 @@ const AddClinicForm: React.FC = () => {
   const [name, setName] = useState('');
   const [contactInfo, setContactInfo] = useState('');
   const [address, setAddress] = useState('');
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState<ImageUri>(null);
   const [specialties, setSpecialties] = useState('');
   const [education, setEducation] = useState('');
   const [experience, setExperience] = useState('');
@@ -80,7 +80,19 @@ const AddClinicForm: React.FC = () => {
   const bioTextLimit = 200;
 
   const [educationModalVisible, setEducationModalVisible] = useState(false);
-  const [educationDetails, setEducationDetails] = useState({ country: '', degree: '', university: '', year: '', certificatePhoto: null });
+  const [educationDetails, setEducationDetails] = useState<{
+    country: string;
+    degree: string;
+    university: string;
+    year: string;
+    certificatePhoto: ImageUri;
+  }>({
+    country: '',
+    degree: '',
+    university: '',
+    year: '',
+    certificatePhoto: null,
+  });
 
   const [specialtiesModalVisible, setSpecialtiesModalVisible] = useState(false);
 
@@ -129,15 +141,18 @@ const AddClinicForm: React.FC = () => {
       aspect: [4, 3],
       quality: 1,
     });
-    if (!result.canceled && result.assets) {
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
       setImage(result.assets[0].uri);
+    } else {
+      console.error('Image selection was canceled or no assets found.');
     }
   };
 
   const pickCertificateImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert('Sorry, we need camera roll permissions to make this work!');
+      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
       return;
     }
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -146,12 +161,22 @@ const AddClinicForm: React.FC = () => {
       aspect: [4, 3],
       quality: 1,
     });
-    if (!result.canceled && result.assets) {
-      setEducationDetails({ ...educationDetails, certificatePhoto: result.assets[0].uri });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setEducationDetails({ 
+        ...educationDetails, 
+        certificatePhoto: result.assets[0].uri 
+      });
+    } else {
+      console.error('Certificate image selection was canceled or no assets found.');
     }
   };
 
-  const uploadImageToCloudinary = async (imageUri) => {
+  const uploadImageToCloudinary = async (imageUri: ImageUri): Promise<string> => {
+    if (!imageUri) {
+      throw new Error('No image URI provided');
+    }
+  
     const data = new FormData();
     try {
       const resizedImage = await ImageManipulator.manipulateAsync(
@@ -159,14 +184,21 @@ const AddClinicForm: React.FC = () => {
         [{ resize: { width: 1000 } }],
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
+  
       const response = await fetch(resizedImage.uri);
       const blob = await response.blob();
-      data.append('file', blob);
+      data.append('file', blob, 'image.jpg');
       data.append('upload_preset', 'medplus');
+  
       const responseUpload = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
         method: 'POST',
         body: data,
       });
+  
+      if (!responseUpload.ok) {
+        throw new Error('Image upload failed');
+      }
+  
       const result = await responseUpload.json();
       return result.secure_url;
     } catch (error) {
@@ -174,8 +206,12 @@ const AddClinicForm: React.FC = () => {
       throw error;
     }
   };
-
-  const uploadCertificateToCloudinary = async (imageUri) => {
+  
+  const uploadCertificateToCloudinary = async (imageUri: ImageUri): Promise<string> => {
+    if (!imageUri) {
+      throw new Error('No certificate image URI provided');
+    }
+  
     const data = new FormData();
     try {
       const resizedImage = await ImageManipulator.manipulateAsync(
@@ -183,14 +219,21 @@ const AddClinicForm: React.FC = () => {
         [{ resize: { width: 1000 } }],
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
+  
       const response = await fetch(resizedImage.uri);
       const blob = await response.blob();
-      data.append('file', blob);
+      data.append('file', blob, 'certificate.jpg');
       data.append('upload_preset', 'medplus');
+  
       const responseUpload = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
         method: 'POST',
         body: data,
       });
+  
+      if (!responseUpload.ok) {
+        throw new Error('Certificate upload failed');
+      }
+  
       const result = await responseUpload.json();
       return result.secure_url;
     } catch (error) {
@@ -198,6 +241,7 @@ const AddClinicForm: React.FC = () => {
       throw error;
     }
   };
+  
 
   const resetForm = () => {
     setName('');
@@ -248,7 +292,7 @@ const AddClinicForm: React.FC = () => {
         address: `${street}, ${city}, ${state}, ${postalCode}`,
         image: imageUrl,
         specialties, 
-        education: `${educationDetails.degree, educationDetails.university} (${educationDetails.year})`,
+        education: `${educationDetails.degree}, ${educationDetails.university} (${educationDetails.year})`,
         experiences,
         languages,
         assistantName,
@@ -909,8 +953,8 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   image: {
-    width: 100,
-    height: 100,
+    width: '100%',
+    height: 200,
     resizeMode: 'cover',
     marginTop: 10,
   },
