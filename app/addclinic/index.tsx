@@ -4,12 +4,9 @@ import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, updateAttachedToClinic } from '../store/userSlice';
-import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-
-import { Card, Title, Paragraph, Button as PaperButton, Divider, ProgressBar } from 'react-native-paper';
-
+import { Card, Title, Paragraph, Button as PaperButton, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 
 const degrees = [
@@ -149,75 +146,78 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
-  const pickCertificateImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
-      return;
-    }
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+  const uploadImage = async (imageUri: string): Promise<string> => {
+    const data = new FormData();
+    data.append('file', {
+      uri: imageUri,
+      type: 'image/jpeg',
+      name: 'image.jpg',
+    } as any);
+    data.append('upload_preset', 'medplus');
+
+    const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+      method: 'POST',
+      body: data,
     });
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setEducationDetails({ 
-        ...educationDetails, 
-        certificatePhoto: result.assets[0].uri 
-      });
-    } else {
-      console.error('Certificate image selection was canceled or no assets found.');
-    }
+    const result = await response.json();
+    return result.secure_url;
   };
 
-  const isValidUri = (uri: string): boolean => {
-    return typeof uri === 'string' && uri.startsWith('file://');
+  const resetForm = () => {
+    setName('');
+    setContactInfo('');
+    setAddress('');
+    setImage(null);
+    setSpecialties('');
+    setEducation('');
+    setExperience('');
+    setLanguages('');
+    setAssistantName('');
+    setAssistantPhone('');
+    setInsuranceCompanies('');
+    setSelectedSpecialties([]);
+    setBio('');
+    setShowBioInput(false);
+    setEducationDetails({ country: '', degree: '', university: '', year: '', certificatePhoto: null });
+    setExperienceDetails({ position: '', organization: '', startDate: '', endDate: '', currentlyWorking: false });
+    setStreet('');
+    setCity('');
+    setState('');
+    setPostalCode('');
+    setSelectedInsuranceCompanies([]);
   };
 
-  const uploadToCloudinary = async (imageUri: string, preset: string, fileName: string): Promise<string> => {
-    if (!isValidUri(imageUri)) {
-      throw new Error('Invalid image URI provided');
-    }
-  
-    const data = new FormData();
+  const handleSubmit = async () => {
     try {
-      const resizedImage = await ImageManipulator.manipulateAsync(
-        imageUri,
-        [{ resize: { width: 1000 } }],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-      );
-  
-      const response = await fetch(resizedImage.uri);
-      const blob = await response.blob();
-      const file = new File([blob], fileName, { type: blob.type });
-  
-      data.append('file', file);
-      data.append('upload_preset', preset);
-  
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload');
-        xhr.onload = () => {
-          if (xhr.status === 200) {
-            const result = JSON.parse(xhr.response);
-            resolve(result.secure_url);
-          } else {
-            console.error(`${fileName} upload failed with status:`, xhr.status);
-            reject(new Error(`${fileName} upload failed`));
-          }
-        };
-        xhr.onerror = (e) => {
-          console.error('Network request failed:', e);
-          reject(new Error('Network request failed'));
-        };
-        xhr.send(data);
-      });
-    } catch (error) {
-      console.error(`Error uploading ${fileName}:`, error);
-      throw error;
-    }
+      console.log('Professional ID:', professionalId);
+      if (!professionalId) {
+        console.error('Professional ID is required');
+        Alert.alert("Error", "Professional ID is required");
+        return;
+      }
+      setUploading(true);
+      let imageUrl = '';
+      if (image) {
+        imageUrl = await uploadImage(image);
+      }
+
+      const formData = {
+        name,
+        contactInfo,
+        address: `${street}, ${city}, ${state}, ${postalCode}`,
+        image: imageUrl,
+        specialties, 
+        education: `${educationDetails.degree, educationDetails.university} (${educationDetails.year})`,
+        experiences,
+        languages,
+        assistantName,
+        assistantPhone,
+        insuranceCompanies: selectedInsuranceCompanies,
+        bio,
+      };
+
+      await axios.post(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, formData, {
   };
   
   const uploadImageToCloudinary = (imageUri: string): Promise<string> => {
