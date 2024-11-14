@@ -64,7 +64,7 @@ const AddClinicForm: React.FC = () => {
   const [name, setName] = useState('');
   const [contactInfo, setContactInfo] = useState('');
   const [address, setAddress] = useState('');
-  const [image, setImage] = useState<ImageUri>(null);
+  const [image, setImage] = useState<string | null>(null);
   const [specialties, setSpecialties] = useState('');
   const [education, setEducation] = useState('');
   const [experience, setExperience] = useState('');
@@ -74,7 +74,7 @@ const AddClinicForm: React.FC = () => {
   const [insuranceCompanies, setInsuranceCompanies] = useState('');
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState<boolean>(false);
-  const [selectedSpecialties, setSelectedSpecialties] = useState([]);
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [bio, setBio] = useState('');
   const [showBioInput, setShowBioInput] = useState(false);
   const bioTextLimit = 200;
@@ -85,7 +85,7 @@ const AddClinicForm: React.FC = () => {
     degree: string;
     university: string;
     year: string;
-    certificatePhoto: ImageUri;
+    certificatePhoto: string | null;
   }>({
     country: '',
     degree: '',
@@ -112,7 +112,7 @@ const AddClinicForm: React.FC = () => {
   const [postalCode, setPostalCode] = useState('');
 
   const [selectedInsuranceCompanies, setSelectedInsuranceCompanies] = useState([]);
-  const [experiences, setExperiences] = useState([]);
+  const [experiences, setExperiences] = useState<{ position: string; organization: string; startDate: string; endDate: string; currentlyWorking: boolean; }[]>([]);
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -172,7 +172,7 @@ const AddClinicForm: React.FC = () => {
     }
   };
 
-  const uploadImageToCloudinary = async (imageUri: ImageUri): Promise<string> => {
+  const uploadImageToCloudinary = async (imageUri: string): Promise<string> => {
     if (!imageUri) {
       throw new Error('No image URI provided');
     }
@@ -207,7 +207,7 @@ const AddClinicForm: React.FC = () => {
     }
   };
   
-  const uploadCertificateToCloudinary = async (imageUri: ImageUri): Promise<string> => {
+  const uploadCertificateToCloudinary = async (imageUri: string): Promise<string> => {
     if (!imageUri) {
       throw new Error('No certificate image URI provided');
     }
@@ -343,7 +343,7 @@ const AddClinicForm: React.FC = () => {
     setSpecialtiesModalVisible(false);
   };
 
-  const toggleSpecialtySelection = (specialty) => {
+  const toggleSpecialtySelection = (specialty: string) => {
     setSelectedSpecialties((prevSelected) => {
       if (prevSelected.includes(specialty)) {
         return prevSelected.filter((item) => item !== specialty);
