@@ -28,10 +28,10 @@ const DashboardScreen: React.FC = () => {
   const [scheduleError, setScheduleError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user.professional?.attachedToClinic) {
-      router.push('/addclinic');
+    if (!user.isLoggedIn) {
+      router.push('/login');
     }
-  }, [user.professional?.attachedToClinic]);
+  }, [user.isLoggedIn]);
 
   useEffect(() => {
     const loadTasks = async () => {
