@@ -16,6 +16,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../store/userSlice';
+import Colors from '@/components/Shared/Colors';
 
 const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -124,12 +125,7 @@ const EditProfileScreen: React.FC = () => {
   }, [userId, name, email, contactInfo, image, consultationFee, navigation]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f8f8' }}>
-      <View style={styles.header}>
-       
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-        <View style={styles.headerAction} />
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.ligh_gray }}>
 
       <ScrollView contentContainerStyle={styles.container}>
         {error && <Text style={styles.error}>{error}</Text>}

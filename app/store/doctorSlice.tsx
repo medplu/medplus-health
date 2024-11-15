@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { RootState } from '../store/configureStore';
+import { createSelector } from 'reselect';
 
 export const fetchDoctors = createAsyncThunk(
   'doctors/fetchDoctors',
@@ -68,6 +69,9 @@ const doctorsSlice = createSlice({
   },
 });
 
-export const selectDoctors = (state: RootState) => state.doctors.doctorList;
+export const selectDoctors = createSelector(
+  (state: RootState) => state.doctors.doctorList,
+  (doctorList) => doctorList
+);
 
 export default doctorsSlice.reducer;

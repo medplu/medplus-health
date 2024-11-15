@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   SafeAreaView,
@@ -20,6 +20,9 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../store/userSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
+import Colors from '@/components/Shared/Colors';
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -40,6 +43,59 @@ const SettingsScreen: React.FC = () => {
     pushNotifications: false,
   });
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [language, setLanguage] = useState<string>('English');
+  const [location, setLocation] = useState<string>('Los Angeles, CA');
+  const [pushNotifications, setPushNotifications] = useState<boolean>(false);
+
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const storedLanguage = await AsyncStorage.getItem('language');
+        const storedLocation = await AsyncStorage.getItem('location');
+        const storedPushNotifications = await AsyncStorage.getItem('pushNotifications');
+
+        if (storedLanguage) setLanguage(storedLanguage);
+        if (storedLocation) setLocation(storedLocation);
+        if (storedPushNotifications) setPushNotifications(JSON.parse(storedPushNotifications));
+      } catch (error) {
+        console.error('Failed to load preferences:', error);
+      }
+    };
+
+    loadPreferences();
+  }, []);
+
+  const savePreference = async (key: string, value: string | boolean) => {
+    try {
+      await AsyncStorage.setItem(key, value.toString());
+    } catch (error) {
+      console.error(`Failed to save ${key}:`, error);
+    }
+  };
+
+  const handleLanguageChange = async () => {
+    const newLanguage = language === 'English' ? 'Spanish' : 'English';
+    setLanguage(newLanguage);
+    await savePreference('language', newLanguage);
+  };
+
+  const handleLocationAccess = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission to access location was denied');
+      return;
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    const newLocation = `${location.coords.latitude}, ${location.coords.longitude}`;
+    setLocation(newLocation);
+    await savePreference('location', newLocation);
+  };
+
+  const handlePushNotificationsChange = (newPushNotifications: boolean) => {
+    setPushNotifications(newPushNotifications);
+    savePreference('pushNotifications', newPushNotifications);
+  };
 
   const resizeImage = async (uri: string) => {
     const result = await ImageManipulator.manipulateAsync(uri, [
@@ -141,7 +197,7 @@ const SettingsScreen: React.FC = () => {
   }, [userId, name, email, contactInfo, image, consultationFee, permissions, wallet]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f8f8' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.ligh_gray }}>
       <View style={styles.header}>
         <View style={styles.headerAction}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -186,33 +242,21 @@ const SettingsScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.sectionBody}>
             <View style={[styles.rowWrapper, styles.rowFirst]}>
-              <TouchableOpacity style={styles.row}>
+              <TouchableOpacity style={styles.row} onPress={handleLanguageChange}>
                 <Text style={styles.rowLabel}>Language</Text>
                 <View style={styles.rowSpacer} />
-                <Text style={styles.rowValue}>English</Text>
+                <Text style={styles.rowValue}>{language}</Text>
                 <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.rowWrapper}>
-              <TouchableOpacity style={styles.row}>
+              <TouchableOpacity style={styles.row} onPress={handleLocationAccess}>
                 <Text style={styles.rowLabel}>Location</Text>
                 <View style={styles.rowSpacer} />
-                <Text style={styles.rowValue}>Los Angeles, CA</Text>
+                <Text style={styles.rowValue}>{location}</Text>
                 <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
               </TouchableOpacity>
-            </View>
-
-            <View style={styles.rowWrapper}>
-              <View style={styles.row}>
-                <Text style={styles.rowLabel}>Email Notifications</Text>
-                <View style={styles.rowSpacer} />
-                <Switch
-                  onValueChange={emailNotifications => setForm({ ...form, emailNotifications })}
-                  style={{ transform: [{ scaleX: 0.95 }, { scaleY: 0.95 }] }}
-                  value={form.emailNotifications}
-                />
-              </View>
             </View>
 
             <View style={[styles.rowWrapper, styles.rowLast]}>
@@ -220,9 +264,9 @@ const SettingsScreen: React.FC = () => {
                 <Text style={styles.rowLabel}>Push Notifications</Text>
                 <View style={styles.rowSpacer} />
                 <Switch
-                  onValueChange={pushNotifications => setForm({ ...form, pushNotifications })}
+                  onValueChange={handlePushNotificationsChange}
                   style={{ transform: [{ scaleX: 0.95 }, { scaleY: 0.95 }] }}
-                  value={form.pushNotifications}
+                  value={pushNotifications}
                 />
               </View>
             </View>
@@ -230,13 +274,42 @@ const SettingsScreen: React.FC = () => {
         </View>
 
         <View style={[styles.section, { paddingTop: 4 }]}>
-          <Text style={styles.sectionTitle}>Accounts</Text>
+          <Text style={styles.sectionTitle}>Clinic & Account</Text>
 
           <View style={styles.sectionBody}>
             <TouchableOpacity style={styles.profile} onPress={() => navigation.navigate('AccountSettings')}>
               
               <FeatherIcon color="#bcbcbc" name="chevron-right" size={22} />
             </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Resources</Text>
+          <View style={styles.sectionBody}>
+            <View style={[styles.rowWrapper, styles.rowFirst]}>
+              <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Contact')}>
+                <Text style={styles.rowLabel}>Contact</Text>
+                <View style={styles.rowSpacer} />
+                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.rowWrapper}>
+              <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Policy')}>
+                <Text style={styles.rowLabel}>Policy</Text>
+                <View style={styles.rowSpacer} />
+                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.rowWrapper, styles.rowLast]}>
+              <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Updates')}>
+                <Text style={styles.rowLabel}>Updates</Text>
+                <View style={styles.rowSpacer} />
+                <FeatherIcon color="#bcbcbc" name="chevron-right" size={19} />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 

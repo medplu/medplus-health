@@ -22,6 +22,13 @@ const AccountsScreen = () => {
   const [banks, setBanks] = useState<{ name: string, code: string }[]>([]);
   const [consultationFee, setConsultationFee] = useState<string>('');
   const [updatingFee, setUpdatingFee] = useState<boolean>(false);
+  const [clinicData, setClinicData] = useState({
+    name: '',
+    contactInfo: '',
+    address: '',
+    image: '',
+  });
+  const [updatingClinic, setUpdatingClinic] = useState<boolean>(false);
   
   const user = useSelector(selectUser);
   const professionalId = user?.professional?._id;
@@ -40,6 +47,17 @@ const AccountsScreen = () => {
 
     checkPaymentSetupStatus();
     fetchBanks();
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.clinic) {
+      setClinicData({
+        name: user.clinic.name || '',
+        contactInfo: user.clinic.contactInfo || '',
+        address: user.clinic.address || '',
+        image: user.clinic.image || '',
+      });
+    }
   }, [user]);
 
   const fetchBanks = async () => {
@@ -107,22 +125,59 @@ const AccountsScreen = () => {
     }
   };
 
+  const handleUpdateClinic = async () => {
+    setUpdatingClinic(true);
+    try {
+      const response = await axios.put(
+        `https://medplus-health.onrender.com/api/clinics/update/${user.clinic._id}`,
+        clinicData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      Alert.alert('Success', 'Clinic information updated successfully.');
+    } catch (error) {
+      console.error('Error updating clinic information:', error);
+      Alert.alert('Error', 'Failed to update clinic information.');
+    } finally {
+      setUpdatingClinic(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={[styles.card, !isPaymentSetupCompleted && styles.disabledCard]}
-        onPress={() => {
-          if (isPaymentSetupCompleted) {
-            setShowSubaccountModal(true);
-          } else {
-            setShowPaymentSetupModal(true);
-          }
-        }}
-      >
-        <View style={styles.iconContainer}>
-          <Text style={styles.details}>Update Payment</Text>
-        </View>
-      </TouchableOpacity>
+      <View style={styles.card}>
+        <Text style={styles.details}>Update Clinic Information</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Clinic Name"
+          value={clinicData.name}
+          onChangeText={(text) => setClinicData({ ...clinicData, name: text })}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Contact Info"
+          value={clinicData.contactInfo}
+          onChangeText={(text) => setClinicData({ ...clinicData, contactInfo: text })}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Address"
+          value={clinicData.address}
+          onChangeText={(text) => setClinicData({ ...clinicData, address: text })}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Image URL"
+          value={clinicData.image}
+          onChangeText={(text) => setClinicData({ ...clinicData, image: text })}
+        />
+        <TouchableOpacity style={styles.button} onPress={handleUpdateClinic} disabled={updatingClinic}>
+          <Text style={styles.buttonText}>{updatingClinic ? 'Updating...' : 'Update Clinic'}</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.card}>
         <Text style={styles.details}>Update Consultation Fee</Text>
@@ -137,6 +192,21 @@ const AccountsScreen = () => {
           <Text style={styles.buttonText}>{updatingFee ? 'Updating...' : 'Update Fee'}</Text>
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity
+        style={[styles.card, !isPaymentSetupCompleted && styles.disabledCard]}
+        onPress={() => {
+          if (isPaymentSetupCompleted) {
+            setShowSubaccountModal(true);
+          } else {
+            setShowPaymentSetupModal(true);
+          }
+        }}
+      >
+        <View style={styles.iconContainer}>
+          <Text style={styles.details}>Update Payment</Text>
+        </View>
+      </TouchableOpacity>
 
       <Modal
         visible={showPaymentSetupModal}
@@ -229,7 +299,9 @@ export default AccountsScreen;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 16,
+    backgroundColor: Colors.ligh_gray,
   },
   card: {
     backgroundColor: '#fff',
@@ -237,6 +309,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     elevation: 3,
     alignItems: 'center',
+    marginBottom: 20,
   },
   disabledCard: {
     backgroundColor: '#f0f0f0',
@@ -266,7 +339,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
   },
   input: {
     width: '100%',

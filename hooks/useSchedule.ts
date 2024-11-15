@@ -39,6 +39,12 @@ const useSchedule = (): UseScheduleHook => {
     fetchProfessionalId();
   }, []);
 
+  useEffect(() => {
+    if (professionalId) {
+      fetchSchedule(professionalId);
+    }
+  }, [professionalId]);
+
   const fetchSchedule = async (professionalId: string) => {
     try {
       const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);

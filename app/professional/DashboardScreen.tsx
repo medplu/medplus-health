@@ -1,36 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, ActivityIndicator, Image, TextInput, Modal, Button, FlatList } from 'react-native';
-import { PieChart, BarChart } from 'react-native-chart-kit';
+import { BarChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { selectUser } from '../store/userSlice';
-import { RootState } from '../store/configureStore';
 import { useNavigation, useRouter } from 'expo-router';
 import useAppointments from '../../hooks/useAppointments';
 import moment from 'moment';
 import Colors from '../../components/Shared/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import useSchedule from '../../hooks/useSchedule';
 
 const screenWidth = Dimensions.get('window').width;
-const screenHeight = Dimensions.get('window').height;
 
 const DashboardScreen: React.FC = () => {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
   const user = useSelector(selectUser);
-  const navigation = useNavigation();
   const { appointments, loading, error } = useAppointments();
-  const [tasks, setTasks] = useState<string[]>([]);
+  const professionalId = user.professional?._id;
+  const { schedule, fetchSchedule } = useSchedule();
+  const [tasks, setTasks] = useState<{ description: string, startTime: string, endTime: string }[]>([]);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [newTask, setNewTask] = useState<string>('');
+  const [startTime, setStartTime] = useState<string>('');
+  const [endTime, setEndTime] = useState<string>('');
+  const [scheduleLoading, setScheduleLoading] = useState<boolean>(true);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user.professional?.attachedToClinic) {
-      router.push('/addclinic'); // Use router.push instead of navigation.navigate
+      router.push('/addclinic');
     }
   }, [user.professional?.attachedToClinic]);
 
   useEffect(() => {
-   
     const loadTasks = async () => {
       try {
         const storedTasks = await AsyncStorage.getItem('@tasks');
@@ -45,7 +48,6 @@ const DashboardScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Save tasks to AsyncStorage
     const saveTasks = async () => {
       try {
         await AsyncStorage.setItem('@tasks', JSON.stringify(tasks));
@@ -56,8 +58,17 @@ const DashboardScreen: React.FC = () => {
     saveTasks();
   }, [tasks]);
 
-  const addTask = (task: string) => {
-    setTasks([...tasks, task]);
+  useEffect(() => {
+    if (professionalId) {
+      setScheduleLoading(true);
+      fetchSchedule(professionalId)
+        .catch((error) => setScheduleError(error.message))
+        .finally(() => setScheduleLoading(false));
+    }
+  }, [professionalId]);
+
+  const addTask = (description: string, startTime: string, endTime: string) => {
+    setTasks([...tasks, { description, startTime, endTime }]);
   };
 
   const handleViewPatient = (patientId: string, appointmentId: string) => {
@@ -75,12 +86,7 @@ const DashboardScreen: React.FC = () => {
   const requestedAppointments = appointments.filter(appointment => appointment.status === 'requested');
   const completedAppointments = appointments.filter(appointment => appointment.status === 'completed');
 
-  useEffect(() => {
-    console.log('All Appointments:', appointments);
-    console.log('Upcoming Appointments:', upcomingAppointments);
-  }, [appointments, upcomingAppointments]);
-
-  if (loading) {
+  if (loading || scheduleLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -88,51 +94,78 @@ const DashboardScreen: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error || scheduleError) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.errorText}>{error || scheduleError}</Text>
       </View>
     );
   }
 
-  const renderHeader = () => {
-    const now = moment();
-    const upcomingAppointment = upcomingAppointments.find(
-      (appointment) => appointment.status === 'confirmed' && moment(appointment.date).isAfter(now)
-    );
+  const renderOverviewCards = () => {
+    const cardData = [
+      { title: 'Total Appointments', count: totalAppointments, color: '#ff7f50' },
+      { title: 'Upcoming', count: upcomingAppointments.length, color: '#4CAF50' },
+      { title: 'Requested', count: requestedAppointments.length, color: '#2196F3' },
+      { title: 'Completed', count: completedAppointments.length, color: '#f44336' },
+    ];
 
     return (
-      <View style={styles.headerCard}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Today's Appointments</Text>
-          <Text style={styles.headerSubtitle}>{moment().format('DD MMM, YYYY')}</Text>
-        </View>
-        <View style={styles.body}>
-          {upcomingAppointment ? (
-            <>
-              <Image source={{ uri: 'https://bootdey.com/img/Content/avatar/avatar6.png' }} style={styles.avatar} />
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>{upcomingAppointment.patientName}</Text>
-                <Text style={styles.userRole}>{moment(upcomingAppointment.date).format('DD MMM, HH:mm')}</Text>
-                <Text style={[styles.cardStatus, { color: Colors.confirmed }]}>{upcomingAppointment.status}</Text>
-              </View>
-            </>
-          ) : (
-            <Text style={styles.noAppointments}>No upcoming appointments</Text>
-          )}
-        </View>
+      <View style={styles.cardsContainer}>
+        {cardData.map((card, index) => (
+          <View key={index} style={[styles.card, { backgroundColor: card.color }]}>
+            <Text style={styles.cardTitle}>{card.title}</Text>
+            <Text style={styles.cardCount}>{card.count}</Text>
+          </View>
+        ))}
       </View>
     );
   };
 
-  const renderTaskItem = ({ item, index }: { item: string; index: number }) => (
+  const renderOverviewChart = () => {
+    const today = moment().format('YYYY-MM-DD');
+    const todaySlots = schedule.filter(slot => moment(slot.date).format('YYYY-MM-DD') === today && slot.isBooked);
+    const slotTimes = todaySlots.map(slot => `${slot.startTime} - ${slot.endTime}`);
+    const uniqueTimes = Array.from(new Set(slotTimes));
+
+    return (
+      <BarChart
+        data={{
+          labels: uniqueTimes,
+          datasets: [
+            {
+              data: uniqueTimes.map(time => 
+                todaySlots.filter(slot => `${slot.startTime} - ${slot.endTime}` === time).length
+              ),
+            },
+          ],
+        }}
+        width={screenWidth - 32}
+        height={220}
+        chartConfig={{
+          backgroundGradientFrom: '#fff',
+          backgroundGradientTo: '#fff',
+          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+          labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+          barPercentage: 0.5,
+          useShadowColorFromDataset: false,
+        }}
+        style={styles.chart}
+        verticalLabelRotation={30}
+      />
+    );
+  };
+
+  const renderTaskItem = ({ item, index }: { item: { description: string, startTime: string, endTime: string }, index: number }) => (
     <View style={styles.taskItem}>
       <View style={styles.timeline}>
         <View style={styles.dot} />
         {index < tasks.length - 1 && <View style={styles.line} />}
       </View>
-      <Text style={styles.taskText}>{item}</Text>
+      <View style={styles.taskDetails}>
+        <Text style={styles.taskText}>{item.description}</Text>
+        <Text style={styles.taskTime}>{item.startTime} - {item.endTime}</Text>
+      </View>
     </View>
   );
 
@@ -154,7 +187,7 @@ const DashboardScreen: React.FC = () => {
             <View style={styles.overviewCard}>
               <TouchableOpacity
                 style={styles.overviewItem}
-                onPress={() => router.push('/tasks')} // Update navigation to use router
+                onPress={() => router.push('/tasks')}
               >
                 <Icon name="tasks" size={24} color="#ff7f50" style={styles.icon} />
                 <Text style={styles.overviewLabel}>Tasks ({tasks.length})</Text>
@@ -169,7 +202,7 @@ const DashboardScreen: React.FC = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.overviewItem}
-                onPress={() => router.push('/consultations')} // Navigate to Patients screen
+                onPress={() => router.push('/consultations')}
               >
                 <Icon name="users" size={24} color="#2196F3" style={styles.icon} />
                 <Text style={styles.overviewLabel}>Patients</Text>
@@ -178,26 +211,8 @@ const DashboardScreen: React.FC = () => {
           </View>
 
           <View style={styles.analyticsContainer}>
-            <Text style={styles.chartTitle}>Appointments Overview</Text>
-            <BarChart
-              data={{
-                labels: ['Total', 'Upcoming', 'Requested', 'Completed'],
-                datasets: [
-                  {
-                    data: [
-                      totalAppointments,
-                      upcomingAppointments.length,
-                      requestedAppointments.length,
-                      completedAppointments.length,
-                    ],
-                  },
-                ],
-              }}
-              width={screenWidth - 32}
-              height={220}
-              chartConfig={chartConfig}
-              style={styles.chart}
-            />
+            <Text style={styles.sectionTitle}>Appointments Overview</Text>
+            {renderOverviewChart()}
           </View>
 
           <View style={styles.upcomingContainer}>
@@ -232,10 +247,12 @@ const DashboardScreen: React.FC = () => {
             )}
           </View>
 
-          {/* Tasks Section */}
           <View style={styles.tasksContainer}>
             <View style={styles.tasksHeader}>
               <Text style={styles.sectionTitle}>Your Tasks</Text>
+              <TouchableOpacity onPress={() => setModalVisible(true)}>
+                <Icon name="plus" size={24} color="#4CAF50" />
+              </TouchableOpacity>
             </View>
             {tasks.length > 0 ? (
               <FlatList
@@ -248,7 +265,6 @@ const DashboardScreen: React.FC = () => {
             )}
           </View>
 
-          {/* Add Task Modal */}
           <Modal
             animationType="slide"
             transparent={true}
@@ -264,12 +280,26 @@ const DashboardScreen: React.FC = () => {
                   value={newTask}
                   onChangeText={setNewTask}
                 />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Start Time (HH:mm)"
+                  value={startTime}
+                  onChangeText={setStartTime}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="End Time (HH:mm)"
+                  value={endTime}
+                  onChangeText={setEndTime}
+                />
                 <Button
                   title="Add Task"
                   onPress={() => {
-                    if (newTask.trim()) {
-                      addTask(newTask.trim());
+                    if (newTask.trim() && startTime.trim() && endTime.trim()) {
+                      addTask(newTask.trim(), startTime.trim(), endTime.trim());
                       setNewTask('');
+                      setStartTime('');
+                      setEndTime('');
                       setModalVisible(false);
                     }
                   }}
@@ -278,7 +308,6 @@ const DashboardScreen: React.FC = () => {
               </View>
             </View>
           </Modal>
-
         </>
       ) : (
         <Text style={styles.loginPrompt}>Please log in to see your dashboard.</Text>
@@ -287,37 +316,25 @@ const DashboardScreen: React.FC = () => {
   );
 };
 
-const chartConfig = {
-  backgroundGradientFrom: '#fff',
-  backgroundGradientTo: '#fff',
-  color: (opacity = 1) => rgba(0, 0, 0, opacity),
-  labelColor: (opacity = 1) => rgba(0, 0, 0, opacity),
-  strokeWidth: 2,
-  barPercentage: 0.5,
-  useShadowColorFromDataset: false,
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#c5f0a4', // Match the background color of ScheduleScreen
+    backgroundColor: '#f0f0f0',
   },
-  card: {
-    backgroundColor: '#ff7f50',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 20,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  greetingText: {
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  iconRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 10,
+    color: 'red',
   },
   overviewContainer: {
     marginBottom: 20,
@@ -332,6 +349,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+  },
+  iconContainer: {
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 8,
+    height: 8,
+    backgroundColor: '#f44336',
+    borderRadius: 4,
   },
   overviewCard: {
     flexDirection: 'row',
@@ -352,47 +381,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-  overviewNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
   analyticsContainer: {
     marginBottom: 20,
   },
-  chartTitle: {
-    fontSize: 14,
-    color: '#666',
-    marginVertical: 8,
-  },
   chart: {
     borderRadius: 16,
-  },
-  customLegend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    marginTop: 8,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  legendColorBox: {
-    width: 12,
-    height: 12,
-    marginRight: 5,
-  },
-  legendLabel: {
-    fontSize: 12,
-    color: '#7F7F7F',
+    marginVertical: 8,
   },
   upcomingContainer: {
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 16,
     marginTop: 16,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
@@ -406,6 +407,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 10,
+    marginTop: 10,
   },
   appointmentDetails: {
     flex: 1,
@@ -428,92 +430,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
   },
-  loginPrompt: {
-    textAlign: 'center',
+  noAppointmentsText: {
     fontSize: 16,
     color: '#777',
-  },
-  iconContainer: {
-    position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    width: 8,
-    height: 8,
-    backgroundColor: '#f44336',
-    borderRadius: 4,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 18,
-    color: 'red',
-  },
-  headerCard: {
-    backgroundColor: '#f7f39a',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    marginHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 4,
-  },
-  header: {
-    marginBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 18,
-    color: '#333',
-    fontWeight: 'bold',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#333',
-  },
-  body: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    textAlign: 'center',
     marginTop: 10,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '600',
-  },
-  userRole: {
-    fontSize: 14,
-    color: '#333',
-  },
-  cardStatus: {
-    fontSize: 12,
-    color: '#333',
-  },
-  noAppointments: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '600',
   },
   tasksContainer: {
     marginBottom: 20,
@@ -524,6 +445,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
+    marginTop: 20,
   },
   tasksHeader: {
     flexDirection: 'row',
@@ -554,10 +476,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff7f50',
     marginTop: 2,
   },
+  taskDetails: {
+    flex: 1,
+  },
   taskText: {
     flex: 1,
     fontSize: 16,
     color: '#333',
+  },
+  taskTime: {
+    fontSize: 14,
+    color: '#555',
   },
   noTasksText: {
     fontSize: 16,
@@ -592,10 +521,27 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
   },
+  cardsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontSize: 14,
+    color: '#fff',
+    marginBottom: 8,
+  },
+  cardCount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  loginPrompt: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#777',
+  },
 });
 
 export default DashboardScreen;
-const rgba = (r: number, g: number, b: number, a: number) => {
-  return `rgba(${r},${b},${g},${a})`;
-};
 
