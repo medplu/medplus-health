@@ -28,17 +28,6 @@ const TransactionScreen: React.FC = () => {
   const user = useSelector(selectUser); 
 
   useEffect(() => {
-    const checkPaymentSetupStatus = async () => {
-      const status = await AsyncStorage.getItem('isPaymentSetupCompleted');
-      if (!status) {
-        setShowPaymentSetupModal(true);
-      } else {
-        setIsPaymentSetupCompleted(true);
-      }
-    };
-
-    checkPaymentSetupStatus();
-    fetchBanks();
     fetchSubaccountInfo();
   }, []);
 
