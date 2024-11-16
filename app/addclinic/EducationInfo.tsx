@@ -5,9 +5,23 @@ import { Picker } from '@react-native-picker/picker';
 import * as DocumentPicker from 'expo-document-picker';
 import FormData from 'form-data'; // Ensure this import is included
 
-const EducationInfo = ({ prevStep, nextStep, educationData, onEducationDataChange, universities = [] }) => {
+interface EducationInfoProps {
+  prevStep: () => void;
+  nextStep: () => void;
+  educationData: {
+    country?: string;
+    year?: string;
+    course?: string;
+    university?: string;
+    certificateUrl?: string;
+  };
+  onEducationDataChange: (data: any) => void;
+  universities?: string[];
+}
+
+const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educationData, onEducationDataChange, universities = [] }) => {
   const [countries, setCountries] = useState([]);
-  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState<{ id: number; name: string }[]>([]);
   const years = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
   const medicalCourses = [
     { id: 1, name: 'Bachelor of Medicine, Bachelor of Surgery (MBBS)' },
@@ -24,7 +38,7 @@ const EducationInfo = ({ prevStep, nextStep, educationData, onEducationDataChang
     fetch('https://restcountries.com/v3.1/all')
       .then(response => response.json())
       .then(data => {
-        const countryList = data.map(country => ({
+        const countryList = data.map((country: { name: { common: string }; cca2: string }) => ({
           label: country.name.common,
           value: country.cca2,
         }));
@@ -33,11 +47,11 @@ const EducationInfo = ({ prevStep, nextStep, educationData, onEducationDataChang
       .catch(error => console.error('Error fetching countries:', error));
   }, []);
 
-  const handleChange = (key, value) => {
+  const handleChange = (key: string, value: any) => {
     onEducationDataChange({ ...educationData, [key]: value });
   };
 
-  const handleCourseChange = (text) => {
+  const handleCourseChange = (text: string) => {
     handleChange('course', text);
     if (text.length > 0) {
       const filtered = medicalCourses.filter(course => course.name.toLowerCase().includes(text.toLowerCase()));
@@ -47,7 +61,7 @@ const EducationInfo = ({ prevStep, nextStep, educationData, onEducationDataChang
     }
   };
 
-  const handleCourseSelect = (course) => {
+  const handleCourseSelect = (course: { id: number; name: string }) => {
     handleChange('course', course.name);
     setFilteredCourses([]);
   };
