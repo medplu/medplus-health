@@ -65,42 +65,49 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
     handleChange('course', course.name);
     setFilteredCourses([]);
   };
-
   const handleFilePicker = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({});
-      console.log('Picker result:', result); // Log the result to inspect its contents
-
-      if (result.type === 'success') {
-        const formData = new FormData();
-        formData.append('file', {
-          uri: result.uri,
-          name: result.name,
-          type: result.mimeType,
-        });
-
-        const response = await fetch('https://medplus-health.onrender.com/api/files/upload', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-
-        const data = await response.json();
-        if (response.ok && data.fileUrl) {
-          handleChange('certificateUrl', data.fileUrl);
-          console.log('File uploaded successfully:', data.fileUrl);
+  
+      // Check if the file is selected
+      if (result.type === 'success' && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];  // Access the first file from the assets array
+  
+        // Ensure the file has necessary properties
+        if (file.uri && file.name && file.mimeType) {
+          const formData = new FormData();
+          formData.append('file', {
+            uri: file.uri,
+            name: file.name,
+            type: file.mimeType,
+          });
+  
+          const response = await fetch('https://medplus-health.onrender.com/api/files/upload', {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+  
+          const data = await response.json();
+          if (response.ok && data.fileUrl) {
+            handleChange('certificateUrl', data.fileUrl);
+            console.log('File uploaded successfully:', data.fileUrl);
+          } else {
+            console.error('Error uploading file:', data);
+          }
         } else {
-          console.error('Error uploading file:', data);
+          console.error('File missing necessary properties (uri, name, type)');
         }
       } else {
-        console.log('File selection was cancelled or file not found in assets');
+        console.log('File selection was cancelled or file not found');
       }
     } catch (error) {
       console.error('Error during file selection/upload:', error);
     }
   };
+  
 
   return (
     <View style={styles.container}>

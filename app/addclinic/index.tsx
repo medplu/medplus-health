@@ -37,9 +37,30 @@ const Index = () => {
     setEducationData(data)
   }
 
-  const submit = () => {
-    // Handle form submission
-    console.log({ personalData, clinicData, experienceData, educationData })
+  const submit = async () => {
+    try {
+      const response = await fetch('https://medplus-health.onrender.com/api/clinics/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          personalData,
+          clinicData,
+          experienceData,
+          educationData,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        console.log('Form submitted successfully:', data);
+      } else {
+        console.error('Error submitting form:', data);
+      }
+    } catch (error) {
+      console.error('Error during form submission:', error);
+    }
   }
 
   return (

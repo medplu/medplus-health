@@ -5,6 +5,9 @@ const clinicsController = require('../controllers/clinic.controller');
 // Route to register a new clinic
 router.post('/register/:professionalId', clinicsController.registerClinic);
 
+// Route to join a clinic
+router.post('/join/:professionalId', clinicsController.joinClinic);
+
 // Route to get all clinics
 router.get('/', clinicsController.fetchClinics);
 
@@ -14,7 +17,5 @@ router.get('/:id', clinicsController.fetchClinicById);
 // router.get('/clinics/category/:category', clinicsController.fetchClinicsByCategory); // Removed this line
 
 router.get('/specialties/:specialty', clinicsController.fetchClinicsBySpecialties);
-
-router.post('/join/:userId', clinicsController.joinClinic); // Add this line
 
 module.exports = router;

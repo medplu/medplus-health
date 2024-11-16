@@ -12,42 +12,37 @@ const registerClinic = async (req, res) => {
   const { name, contactInfo, address, image, insuranceCompanies, specialties, education, experiences, languages, assistantName, assistantPhone, bio, certificateUrl } = req.body;
 
   try {
-    // Validate if the professional exists before creating the clinic
     const professional = await Professional.findById(professionalId);
     if (!professional) {
       return res.status(404).send({ message: 'Professional not found' });
     }
 
-    // Generate a unique reference code for the clinic
     const referenceCode = generateReferenceCode();
 
-    // Create the clinic
     const clinic = new Clinic({
       name,
       contactInfo,
       address,
       image: image || null,
       referenceCode,
-      professionals: [], // Initialize with an empty array for professionals
-      insuranceCompanies, // Add insurance companies to the clinic
+      professionals: [],
+      insuranceCompanies,
       specialties,
       education,
-      experiences, // Ensure experiences array is added to the clinic
+      experiences,
       languages,
       assistantName,
       assistantPhone,
       bio,
-      certificateUrl, // Add the certificate URL to the clinic data
+      certificateUrl,
     });
 
     await clinic.save();
 
-    // Link the clinic to the professional and update fields directly
     professional.clinic = clinic._id;
     professional.attachedToClinic = true;
     await professional.save();
 
-    // Add the professional to the clinic's professionals array and save clinic again
     clinic.professionals.push(professional._id);
     await clinic.save();
 
@@ -68,37 +63,32 @@ const fetchClinics = async (req, res) => {
 };
 
 const joinClinic = async (req, res) => {
-  const { professionalId } = req.params; // Change from userId to professionalId
-  const { referenceCode } = req.body; // Expecting the referenceCode in the request body
+  const { professionalId } = req.params;
+  const { referenceCode } = req.body;
 
   try {
-    // Find the clinic with the provided reference code
     const clinic = await Clinic.findOne({ referenceCode });
     if (!clinic) {
       return res.status(404).json({ error: 'Clinic not found with the provided reference code' });
     }
 
-    // Find the professional associated with the professionalId
     const professional = await Professional.findById(professionalId);
     if (!professional) {
       return res.status(404).json({ error: 'Professional not found' });
     }
 
-    // Check if the professional is already attached to the clinic
     if (professional.attachedToClinic) {
       return res.status(400).json({ error: 'You are already attached to a clinic' });
     }
 
-    // Update the clinic to include this professional
-    clinic.professionals.push(professional._id); // Add professional ID to the clinic's professionals array
+    clinic.professionals.push(professional._id);
     await clinic.save();
 
-    // Update the professional document to reflect the clinic association
     await Professional.findByIdAndUpdate(
-      professionalId, // Use professionalId to find the professional
+      professionalId,
       {
         clinic: clinic._id,
-        attachedToClinic: true, // Set attachedToClinic to true
+        attachedToClinic: true,
       },
       { new: true }
     );
@@ -137,7 +127,7 @@ module.exports = {
   registerClinic,
   fetchClinics,
   fetchClinicById,
-  joinClinic, // Existing exported functions
-  fetchClinicsBySpecialties, // Added fetchClinicsBySpecialties
+  joinClinic,
+  fetchClinicsBySpecialties,
 };
 
