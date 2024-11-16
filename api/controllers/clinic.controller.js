@@ -9,7 +9,7 @@ const generateReferenceCode = () => {
 
 const registerClinic = async (req, res) => {
   const { professionalId } = req.params;
-  const { name, contactInfo, address, image, insuranceCompanies, specialties, education, experiences, languages, assistantName, assistantPhone, bio } = req.body;
+  const { name, contactInfo, address, image, insuranceCompanies, specialties, education, experiences, languages, assistantName, assistantPhone, bio, certificateUrl } = req.body;
 
   try {
     // Validate if the professional exists before creating the clinic
@@ -37,6 +37,7 @@ const registerClinic = async (req, res) => {
       assistantName,
       assistantPhone,
       bio,
+      certificateUrl, // Add the certificate URL to the clinic data
     });
 
     await clinic.save();

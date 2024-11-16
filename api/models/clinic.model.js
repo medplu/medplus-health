@@ -77,6 +77,10 @@ const clinicSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
+    certificateUrl: {
+        type: String,
+        required: false,
+    },
 }, {
     timestamps: true // Automatically creates `createdAt` and `updatedAt` fields
 });
