@@ -8,6 +8,7 @@ const paymentRoutes = require('./routes/payment.route'); // Renamed for clarity
 const subaccountRoutes = require('./routes/subaccount.routes'); // Import subaccount routes
 const { Server } = require("socket.io");
 const fileUpload = require("express-fileupload");
+const fileRoutes = require('./routes/fileRoutes');
 const cloudinary = require('cloudinary').v2;
 const path = require('path');
 dotenv.config();
@@ -88,6 +89,8 @@ app.use('/api', userRoutes);
 
 // Use the professional routes
 app.use('/api', professionalRoutes);
+
+app.use('/api/files', fileRoutes);
 
 // Use the category routes
 app.use('/api/categories', categoryRoutes);
