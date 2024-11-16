@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { Storage } = require('@google-cloud/storage');
-const File = require('../models/File');
+const File = require('../models/file.model');
 const router = express.Router();
 
 // Configure multer for file uploads
