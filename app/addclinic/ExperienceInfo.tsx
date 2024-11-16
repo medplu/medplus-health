@@ -17,8 +17,8 @@ const ExperienceInfo = ({ prevStep, nextStep, experienceData, onExperienceDataCh
       <TextInput
         mode="outlined"
         style={styles.input}
-        value={experience.title}
-        onChangeText={(text) => handleChange('title', text)}
+        value={experience.position}
+        onChangeText={(text) => handleChange('position', text)}
         placeholder="Enter your title"
       />
       <Text style={styles.label}>Organization</Text>
@@ -29,13 +29,21 @@ const ExperienceInfo = ({ prevStep, nextStep, experienceData, onExperienceDataCh
         onChangeText={(text) => handleChange('organization', text)}
         placeholder="Enter your organization"
       />
-      <Text style={styles.label}>Year</Text>
+      <Text style={styles.label}>Start Year</Text>
       <TextInput
         mode="outlined"
         style={styles.input}
-        value={experience.year}
-        onChangeText={(text) => handleChange('year', text)}
-        placeholder="Enter the year"
+        value={experience.startDate}
+        onChangeText={(text) => handleChange('startDate', text)}
+        placeholder="Enter the start year"
+      />
+      <Text style={styles.label}>End Year</Text>
+      <TextInput
+        mode="outlined"
+        style={styles.input}
+        value={experience.endDate}
+        onChangeText={(text) => handleChange('endDate', text)}
+        placeholder="Enter the end year (if applicable)"
       />
       <View style={styles.buttonContainer}>
         <Button mode="contained" onPress={prevStep} style={styles.button}>Previous</Button>

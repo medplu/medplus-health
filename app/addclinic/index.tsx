@@ -1,54 +1,79 @@
-import { StyleSheet, Text, View, Button } from 'react-native'
-import React, { useState } from 'react'
-import PersonalInfo from './PersonalInfo'
-import ClinicInfo from './ClinicInfo'
-import ExperienceInfo from './ExperienceInfo'
-import EducationInfo from './EducationInfo'
-import Review from './Review'
+import { StyleSheet, Text, View, Button } from 'react-native';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux'; // Import useSelector from react-redux
+import PersonalInfo from './PersonalInfo';
+import ClinicInfo from './ClinicInfo';
+import ExperienceInfo from './ExperienceInfo';
+import EducationInfo from './EducationInfo';
+import Review from './Review';
+import { selectUser } from '../store/userSlice'; // Import the selector
 
 const Index = () => {
-  const [step, setStep] = useState(1)
-  const [personalData, setPersonalData] = useState({})
-  const [clinicData, setClinicData] = useState({})
-  const [experienceData, setExperienceData] = useState({})
-  const [educationData, setEducationData] = useState({})
+  const [step, setStep] = useState(1);
+  const [personalData, setPersonalData] = useState({});
+  const [clinicData, setClinicData] = useState({});
+  const [experienceData, setExperienceData] = useState({});
+  const [educationData, setEducationData] = useState({});
+
+  const user = useSelector(selectUser); // Use the selector to get the user
+  const professionalId = user?.professional?._id; // Extract the professionalId
 
   const nextStep = () => {
-    setStep(step + 1)
-  }
+    setStep(step + 1);
+  };
 
   const prevStep = () => {
-    setStep(step - 1)
-  }
+    setStep(step - 1);
+  };
 
   const handlePersonalDataChange = (data) => {
-    setPersonalData(data)
-  }
+    setPersonalData(data);
+  };
 
   const handleClinicDataChange = (data) => {
-    setClinicData(data)
-  }
+    setClinicData(data);
+  };
 
   const handleExperienceDataChange = (data) => {
-    setExperienceData(data)
-  }
+    setExperienceData(data);
+  };
 
   const handleEducationDataChange = (data) => {
-    setEducationData(data)
-  }
+    setEducationData(data);
+  };
 
   const submit = async () => {
     try {
-      const response = await fetch('https://medplus-health.onrender.com/api/clinics/register', {
+      const response = await fetch(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          personalData,
-          clinicData,
-          experienceData,
-          educationData,
+          name: clinicData.name,
+          contactInfo: clinicData.contactInfo,
+          address: clinicData.address,
+          image: clinicData.image,
+          insuranceCompanies: clinicData.insuranceCompanies,
+          specialties: clinicData.specialties,
+          education: {
+            course: educationData.course,
+            university: educationData.university,
+            country: educationData.country,
+            year: educationData.year,
+          },
+          experiences: experienceData.map(exp => ({
+            position: exp.position,
+            organization: exp.organization,
+            startDate: exp.startDate,
+            endDate: exp.endDate,
+            currentlyWorking: exp.currentlyWorking,
+          })),
+          languages: clinicData.languages,
+          assistantName: clinicData.assistantName,
+          assistantPhone: clinicData.assistantPhone,
+          bio: clinicData.bio,
+          certificateUrl: educationData.certificateUrl,
         }),
       });
 
@@ -61,7 +86,7 @@ const Index = () => {
     } catch (error) {
       console.error('Error during form submission:', error);
     }
-  }
+  };
 
   return (
     <View style={styles.container}>
@@ -107,10 +132,10 @@ const Index = () => {
         />
       )}
     </View>
-  )
-}
+  );
+};
 
-export default Index
+export default Index;
 
 const styles = StyleSheet.create({
   container: {
@@ -118,4 +143,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-})
+});

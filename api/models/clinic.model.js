@@ -35,9 +35,15 @@ const clinicSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    education: {
-        type: String,
-        required: true,
+    education: { // Update to handle education as an object
+        course: {
+            type: String,
+            required: true,
+        },
+        university: {
+            type: String,
+            required: true,
+        },
     },
     experiences: [{ // Ensure experiences is an array of objects and required
         position: {
@@ -58,20 +64,20 @@ const clinicSchema = new mongoose.Schema({
         },
         currentlyWorking: {
             type: Boolean,
-            required: true,
+            required: false,
         },
     }],
     languages: {
         type: String,
-        required: true,
+        required: false,
     },
     assistantName: {
         type: String,
-        required: true,
+        required: false,
     },
     assistantPhone: {
         type: String,
-        required: true,
+        required: false,
     },
     bio: {
         type: String,

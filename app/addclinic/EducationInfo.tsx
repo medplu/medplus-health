@@ -69,11 +69,9 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
     try {
       const result = await DocumentPicker.getDocumentAsync({});
   
-      // Check if the file is selected
       if (result.type === 'success' && result.assets && result.assets.length > 0) {
-        const file = result.assets[0];  // Access the first file from the assets array
+        const file = result.assets[0];
   
-        // Ensure the file has necessary properties
         if (file.uri && file.name && file.mimeType) {
           const formData = new FormData();
           formData.append('file', {
