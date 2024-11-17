@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View, Button } from 'react-native'; 
+import { StyleSheet, Text, View, Button, Alert } from 'react-native'; 
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux'; 
+import { useNavigation } from '@react-navigation/native';
 import PersonalInfo from './PersonalInfo';
 import ClinicInfo from './ClinicInfo';
 import ExperienceInfo from './ExperienceInfo';
@@ -16,6 +17,7 @@ const Index = () => {
   const [clinicData, setClinicData] = useState({});
   const [experienceData, setExperienceData] = useState({});
   const [educationData, setEducationData] = useState({});
+  const navigation = useNavigation();
 
   const user = useSelector(selectUser); 
   const professionalId = user?.professional?._id; 
@@ -73,13 +75,22 @@ const Index = () => {
       const data = await response.json();
       if (response.ok) {
         console.log('Clinic registered successfully:', data);
-        
+        Alert.alert('Success', 'Clinic registered successfully', [
+          { text: 'OK', onPress: () => navigation.navigate('/professional') }
+        ]);
+        // Reset the form
+        setStep(1);
+        setPersonalData({});
+        setClinicData({});
+        setExperienceData({});
+        setEducationData({});
       } else {
         console.error('Error registering clinic:', data);
-       
+        Alert.alert('Error', 'Error registering clinic');
       }
     } catch (error) {
       console.error('Error:', error);
+      Alert.alert('Error', 'An error occurred');
     }
   };
 
