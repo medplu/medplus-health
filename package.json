@@ -46,6 +46,7 @@
     "expo-location": "~17.0.1",
     "expo-navigation-bar": "~3.0.7",
     "expo-notifications": "~0.28.19",
+    "expo-permissions": "^14.4.0",
     "expo-print": "~13.0.1",
     "expo-random": "~14.0.1",
     "expo-router": "~3.5.23",

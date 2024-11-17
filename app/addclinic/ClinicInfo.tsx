@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View, TextInput, ScrollView, FlatList, TouchableOpacity } from 'react-native'; 
+import { StyleSheet, Text, View, TextInput, ScrollView, FlatList, TouchableOpacity, Alert } from 'react-native'; 
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
+import * as Permissions from 'expo-permissions';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
 import PhoneInput from 'react-native-phone-input';
 import Colors from '@/components/Shared/Colors';
@@ -40,36 +41,78 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     onClinicDataChange(updatedData);
   };
 
-  const pickImage = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Sorry, we need camera roll permissions to make this work!');
-      return;
+  const pickFromGallery = async () => {
+    const { granted } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    if (granted) {
+      let data = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+        allowsMultipleSelection: true,
+      });
+      if (!data.canceled) {
+        const assetsArray = Array.isArray(data.assets) ? data.assets : [data.assets].filter(Boolean);
+        const uploadedImages = await Promise.all(
+          assetsArray.map(async (image) => {
+            const newFile = {
+              uri: image.uri,
+              type: `test/${image.uri.split('.').pop()}`,
+              name: `test.${image.uri.split('.').pop()}`,
+            };
+            const secureUrl = await handleUpload(newFile);
+            return { uri: secureUrl };
+          })
+        );
+        console.log('Uploaded Images:', uploadedImages);
+        handleChange('images', uploadedImages);
+      }
+    } else {
+      Alert.alert('You need to grant permission to access the gallery.');
     }
+  };
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      // Remove allowsEditing option
-      // allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-      allowsMultipleSelection: true,
-    });
-
-    if (!result.canceled && result.assets) {
-      const assetsArray = Array.isArray(result.assets) ? result.assets : [result.assets].filter(Boolean);
-      const uploadedImages = await Promise.all(
-        assetsArray.map(async (image) => {
-          const secureUrl = await uploadImageToCloudinary(image.uri);
-          return { uri: secureUrl };
-        })
-      );
-
-      console.log('Uploaded Images:', uploadedImages);
-      handleChange('images', uploadedImages);
+  const pickFromCamera = async () => {
+    const { granted } = await Permissions.askAsync(Permissions.CAMERA);
+    if (granted) {
+      let data = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+      if (!data.canceled) {
+        const newFile = {
+          uri: data.uri,
+          type: `test/${data.uri.split('.').pop()}`,
+          name: `test.${data.uri.split('.').pop()}`,
+        };
+        const secureUrl = await handleUpload(newFile);
+        handleChange('images', [{ uri: secureUrl }]);
+      }
+    } else {
+      Alert.alert('You need to grant permission to access the camera.');
     }
-    setIsUploading(false);
-  }, []);
+  };
+
+  const handleUpload = async (image) => {
+    const data = new FormData();
+    data.append('file', image);
+    data.append('upload_preset', 'medplus');
+    data.append('cloud_name', 'dws2bgxg4');
+    try {
+      const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+        method: 'POST',
+        body: data,
+      });
+      const result = await response.json();
+      console.log('Cloudinary Upload Response:', result);
+      return result.secure_url;
+    } catch (error) {
+      console.error('Error uploading image to Cloudinary:', error);
+      throw error;
+    }
+  };
 
   const renderCard = (item, selectedItems, onSelect, index) => (
     <TouchableOpacity
@@ -178,7 +221,10 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Images</Text>
-        <Button mode="contained" onPress={pickImage} style={styles.button}>Upload Images</Button>
+        <View style={styles.modalButtonWrapper}>
+          <Button mode="contained" onPress={pickFromCamera} style={styles.button}>Camera</Button>
+          <Button mode="contained" onPress={pickFromGallery} style={styles.button}>Gallery</Button>
+        </View>
       </View>
       <View style={styles.buttonContainer}>
         <Button mode="contained" onPress={prevStep} style={styles.button}>Back</Button>
@@ -256,6 +302,11 @@ const styles = StyleSheet.create({
   },
   flatListContainer: {
     paddingVertical: 10,
+  },
+  modalButtonWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 10,
   },
   buttonContainer: {
     flexDirection: 'row',
