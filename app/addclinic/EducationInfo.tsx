@@ -1,23 +1,11 @@
-import { StyleSheet, Text, View, TextInput, Button, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, FlatList, TouchableOpacity, TextInput } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import * as DocumentPicker from 'expo-document-picker';
-import FormData from 'form-data'; // Ensure this import is included
-
-interface EducationInfoProps {
-  prevStep: () => void;
-  nextStep: () => void;
-  educationData: {
-    country?: string;
-    year?: string;
-    course?: string;
-    university?: string;
-    certificateUrl?: string;
-  };
-  onEducationDataChange: (data: any) => void;
-  universities?: string[];
-}
+import FormData from 'form-data'; 
+import Colors from '@/components/Shared/Colors';
+import { Text, Button, ListItem } from 'react-native-elements';
 
 const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educationData, onEducationDataChange, universities = [] }) => {
   const [countries, setCountries] = useState([]);
@@ -65,152 +53,247 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
     handleChange('course', course.name);
     setFilteredCourses([]);
   };
+
+  const uploadFile = async (file: { uri: string; name: string; type: string }) => {
+    const formData = new FormData();
+    const fileObj = {
+      uri: file.uri,
+      name: file.name,
+      type: file.type,
+    };
+    formData.append('file', fileObj);
+  
+    // Log FormData before sending
+    formData.forEach((value, key) => {
+      console.log(`${key}: ${value}`);
+    });
+  
+    try {
+      const response = await fetch('https://medplus-health.onrender.com/api/files/upload', {
+        method: 'POST',
+        body: formData,
+        headers: {},
+      });
+  
+      const data = await response.json();
+      console.log('Upload Response:', data);
+  
+      if (response.ok && data.fileUrl) {
+        return data.fileUrl;
+      } else {
+        console.error('Error uploading file:', data);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error during file upload:', error);
+      return null;
+    }
+  };
   const handleFilePicker = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({});
   
-      if (result.type === 'success' && result.assets && result.assets.length > 0) {
-        const file = result.assets[0];
+      console.log('DocumentPicker result:', result);  // Log the result to inspect it
   
-        if (file.uri && file.name && file.mimeType) {
-          const formData = new FormData();
-          formData.append('file', {
-            uri: file.uri,
-            name: file.name,
-            type: file.mimeType,
-          });
+      if (result.canceled) {
+        console.log('File selection was cancelled');
+        return; // Return early if the selection was canceled
+      }
   
-          const response = await fetch('https://medplus-health.onrender.com/api/files/upload', {
-            method: 'POST',
-            body: formData,
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          });
+      // Extract the file from the assets array
+      const { uri, name, mimeType } = result.assets[0];
   
-          const data = await response.json();
-          if (response.ok && data.fileUrl) {
-            handleChange('certificateUrl', data.fileUrl);
-            console.log('File uploaded successfully:', data.fileUrl);
-          } else {
-            console.error('Error uploading file:', data);
-          }
+      console.log('File URI:', uri);  // Log the file URI
+      console.log('File name:', name);  // Log the file name
+      console.log('File MIME type:', mimeType);  // Log the file MIME type
+  
+      if (uri && name && mimeType) {
+        const fileUrl = await uploadFile({ uri, name, type: mimeType });
+        if (fileUrl) {
+          handleChange('certificateUrl', fileUrl);
+          console.log('File uploaded successfully:', fileUrl);
         } else {
-          console.error('File missing necessary properties (uri, name, type)');
+          console.error('Failed to upload file');
         }
       } else {
-        console.log('File selection was cancelled or file not found');
+        console.error('File missing necessary properties (uri, name, type)');
       }
     } catch (error) {
       console.error('Error during file selection/upload:', error);
     }
   };
   
+  
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Education</Text>
+      <Text style={styles.header}>Education Information</Text>
       
-      <Picker
-        selectedValue={educationData.country || ''}
-        onValueChange={(value) => handleChange('country', value)}
-        style={styles.input}
-      >
-        {countries.map((country) => (
-          <Picker.Item key={country.value} label={country.label} value={country.value} />
-        ))}
-      </Picker>
+      <View style={styles.section}>
+        <Text style={styles.label}>Country</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={educationData.country || ''}
+            onValueChange={(value) => handleChange('country', value)}
+            style={styles.picker}
+          >
+            {countries.map((country) => (
+              <Picker.Item key={country.value} label={country.label} value={country.value} />
+            ))}
+          </Picker>
+        </View>
 
-      <Picker
-        selectedValue={educationData.year || ''}
-        onValueChange={(value) => handleChange('year', value)}
-        style={styles.input}
-      >
-        {years.map((year) => (
-          <Picker.Item key={year} label={year.toString()} value={year.toString()} />
-        ))}
-      </Picker>
+        <Text style={styles.label}>Year</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={educationData.year || ''}
+            onValueChange={(value) => handleChange('year', value)}
+            style={styles.picker}
+          >
+            {years.map((year) => (
+              <Picker.Item key={year} label={year.toString()} value={year.toString()} />
+            ))}
+          </Picker>
+        </View>
 
-      <TextInput
-        style={styles.input}
-        value={educationData.course || ''}
-        onChangeText={handleCourseChange}
-        placeholder="Enter course"
-      />
-      {filteredCourses.length > 0 && (
-        <FlatList
-          data={filteredCourses}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handleCourseSelect(item)}>
-              <Text style={styles.suggestion}>{item.name}</Text>
-            </TouchableOpacity>
-          )}
+        <Text style={styles.label}>Course</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter course"
+          value={educationData.course || ''}
+          onChangeText={handleCourseChange}
         />
-      )}
+        {filteredCourses.length > 0 && (
+          <FlatList
+            data={filteredCourses}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => handleCourseSelect(item)} style={styles.suggestion}>
+                <Text style={styles.suggestionText}>{item.name}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        )}
 
-      <TextInput
-        style={styles.input}
-        value={educationData.university || ''}
-        onChangeText={(text) => handleChange('university', text)}
-        placeholder="Enter university"
-      />
+        <Text style={styles.label}>University</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter university"
+          value={educationData.university || ''}
+          onChangeText={(text) => handleChange('university', text)}
+        />
 
-      <TouchableOpacity style={styles.fileButton} onPress={handleFilePicker}>
-        <MaterialIcons name="attach-file" size={24} color="black" />
-        <Text style={styles.fileButtonText}>Add Certificate</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.fileButton} onPress={handleFilePicker}>
+          <MaterialIcons name="attach-file" size={24} color="black" />
+          <Text style={styles.fileButtonText}>Add Certificate</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.buttonContainer}>
-        <Button title="Previous" onPress={prevStep} />
-        <Button title="Next" onPress={nextStep} />
+        <TouchableOpacity style={styles.button} onPress={prevStep}>
+          <Text style={styles.buttonText}>Previous</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={nextStep}>
+          <Text style={styles.buttonText}>Next</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-export default EducationInfo;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    backgroundColor: Colors.ligh_gray,
   },
-  label: {
+  header: {
     fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#333',
+  },
+  section: {
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#555',
+    marginBottom: 8,
+  },
+  pickerContainer: {
+    borderColor: Colors.SECONDARY,
+    borderWidth: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
     marginBottom: 16,
+  },
+  picker: {
+    width: '100%',
+    height: 40,
   },
   input: {
-    height: 40,
-    borderColor: '#ccc',
+    borderColor: Colors.SECONDARY,
     borderWidth: 1,
-    borderRadius: 4,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    backgroundColor: '#fff',
     marginBottom: 16,
-    paddingHorizontal: 8,
-    width: '100%',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
   suggestion: {
-    padding: 10,
-    backgroundColor: '#f5f5f5',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    backgroundColor: '#f2f2f2',
+    padding: 12,
+    borderRadius: 6,
+    marginVertical: 4,
+  },
+  suggestionText: {
+    fontSize: 16,
+    color: '#333',
   },
   fileButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginVertical: 16,
   },
   fileButtonText: {
     marginLeft: 8,
     fontSize: 16,
+    color: '#1E90FF',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  button: {
+    flex: 1,
+    backgroundColor: '#1E90FF',
+    paddingVertical: 12,
+    marginHorizontal: 5,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
+
+export default EducationInfo;

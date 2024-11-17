@@ -3,6 +3,7 @@ import React from 'react'
 import { Card, Button } from 'react-native-paper'
 import PhoneInput from 'react-native-phone-input'
 import { useRef } from 'react'
+import Colors from '@/components/Shared/Colors'
 
 const PersonalInfo = ({ nextStep, personalData, onPersonalDataChange }) => {
   const phoneInput = useRef<PhoneInput>(null)
@@ -13,8 +14,9 @@ const PersonalInfo = ({ nextStep, personalData, onPersonalDataChange }) => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Personal Information</Text>
       <Card style={styles.card}>
-        <Text style={styles.title}>Personal Information</Text>
+        
         <TextInput
           style={styles.input}
           placeholder="Name"
@@ -61,7 +63,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.ligh_gray,
   },
   card: {
     width: '100%',

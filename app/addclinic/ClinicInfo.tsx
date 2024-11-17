@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TextInput, ScrollView } from 'react-native'; 
 import React, { useState, useRef } from 'react';
 import { Button } from 'react-native-paper';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
 import PhoneInput from 'react-native-phone-input';
+import Colors from '@/components/Shared/Colors';
 
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
@@ -59,7 +60,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Clinic Information</Text>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Name and Contact</Text>
@@ -83,31 +84,33 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           onChangeText={(text) => handleChange('address', text)}
         />
       </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Insurance</Text>
-        <Picker
-          selectedValue={clinicData.insuranceCompanies || ''}
-          onValueChange={(value) => handleChange('insuranceCompanies', value)}
-          style={styles.input}
-          mode="dropdown"
-        >
-          {insuranceCompanies.map((company) => (
-            <Picker.Item key={company.value} label={company.label} value={company.value} />
-          ))}
-        </Picker>
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Specialties</Text>
-        <Picker
-          selectedValue={clinicData.specialties || ''}
-          onValueChange={(value) => handleChange('specialties', value)}
-          style={styles.input}
-          mode="dropdown"
-        >
-          {specialties.map((specialty) => (
-            <Picker.Item key={specialty.value} label={specialty.label} value={specialty.value} />
-          ))}
-        </Picker>
+      <View style={styles.rowContainer}>
+        <View style={styles.rowItem}>
+          <Text style={styles.sectionTitle}>Insurance</Text>
+          <Picker
+            selectedValue={clinicData.insuranceCompanies || ''}
+            onValueChange={(value) => handleChange('insuranceCompanies', value)}
+            style={styles.input}
+            mode="dropdown"
+          >
+            {insuranceCompanies.map((company) => (
+              <Picker.Item key={company.value} label={company.label} value={company.value} />
+            ))}
+          </Picker>
+        </View>
+        <View style={styles.rowItem}>
+          <Text style={styles.sectionTitle}>Specialties</Text>
+          <Picker
+            selectedValue={clinicData.specialties || ''}
+            onValueChange={(value) => handleChange('specialties', value)}
+            style={styles.input}
+            mode="dropdown"
+          >
+            {specialties.map((specialty) => (
+              <Picker.Item key={specialty.value} label={specialty.label} value={specialty.value} />
+            ))}
+          </Picker>
+        </View>
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Assistant</Text>
@@ -157,7 +160,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           {isUploading ? 'Uploading...' : 'Next'}
         </Button>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -165,48 +168,60 @@ export default ClinicInfo;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.ligh_gray,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
+    color: '#333',
   },
   section: {
     marginBottom: 16,
     width: '100%',
   },
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  rowItem: {
+    flex: 1,
+    marginHorizontal: 5,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: '#555',
   },
   input: {
-    height: 40,
+    height: 50,
     borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius: 4,
-    marginBottom: 8,
-    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
     width: '100%',
   },
   phoneInput: {
     borderWidth: 1,
-    borderRadius: 4,
-    marginBottom: 8,
-    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
     width: '100%',
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
+    marginTop: 20,
   },
   button: {
-    marginHorizontal: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 20,
+    borderRadius: 50,
   },
 });

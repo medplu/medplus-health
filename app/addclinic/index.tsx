@@ -7,6 +7,8 @@ import ExperienceInfo from './ExperienceInfo';
 import EducationInfo from './EducationInfo';
 import Review from './Review';
 import { selectUser } from '../store/userSlice'; 
+import Colors from '@/components/Shared/Colors';
+
 
 const Index = () => {
   const [step, setStep] = useState(1);
@@ -135,5 +137,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.ligh_gray,
   },
 });
