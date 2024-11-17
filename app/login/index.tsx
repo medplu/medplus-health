@@ -40,7 +40,6 @@ const LoginScreen: React.FC = () => {
         doctorId,
         professional,
         profileImage,
-        // Add any other attributes here
       } = response.data;
 
       if (!firstName || !lastName) {
@@ -55,7 +54,6 @@ const LoginScreen: React.FC = () => {
           userType,
           professional,
           profileImage,
-          // Add any other attributes here
         })
       );
 

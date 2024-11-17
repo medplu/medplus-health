@@ -1,8 +1,12 @@
 import { StyleSheet, Text, View, TextInput } from 'react-native'
 import React from 'react'
 import { Card, Button } from 'react-native-paper'
+import PhoneInput from 'react-native-phone-input'
+import { useRef } from 'react'
 
 const PersonalInfo = ({ nextStep, personalData, onPersonalDataChange }) => {
+  const phoneInput = useRef<PhoneInput>(null)
+
   const handleChange = (key, value) => {
     onPersonalDataChange({ ...personalData, [key]: value })
   }
@@ -17,11 +21,13 @@ const PersonalInfo = ({ nextStep, personalData, onPersonalDataChange }) => {
           value={personalData.name || ''}
           onChangeText={(text) => handleChange('name', text)}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Contact Info"
+        <PhoneInput
+          ref={phoneInput}
+          style={styles.phoneInput}
           value={personalData.contactInfo || ''}
-          onChangeText={(text) => handleChange('contactInfo', text)}
+          initialCountry="ke"
+          onChangePhoneNumber={(number) => handleChange('contactInfo', number)}
+          autoFocus
         />
         <TextInput
           style={styles.input}
@@ -76,6 +82,12 @@ const styles = StyleSheet.create({
   input: {
     height: 40,
     borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 4,
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  phoneInput: {
     borderWidth: 1,
     borderRadius: 4,
     marginBottom: 16,
