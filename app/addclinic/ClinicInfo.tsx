@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View, TextInput } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from 'react-native-paper';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
+import PhoneInput from 'react-native-phone-input';
 
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
@@ -25,6 +26,8 @@ const languages = [
 
 const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const phoneInput = useRef<PhoneInput>(null);
+  const assistantPhoneInput = useRef<PhoneInput>(null);
 
   const handleChange = (key, value) => {
     const updatedData = { ...clinicData, [key]: value };
@@ -66,11 +69,12 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           value={clinicData.name || ''}
           onChangeText={(text) => handleChange('name', text)}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Contact Info"
+        <PhoneInput
+          ref={phoneInput}
+          style={styles.phoneInput}
           value={clinicData.contactInfo || ''}
-          onChangeText={(text) => handleChange('contactInfo', text)}
+          initialCountry="ke"
+          onChangePhoneNumber={(number) => handleChange('contactInfo', number)}
         />
         <TextInput
           style={styles.input}
@@ -113,11 +117,12 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           value={clinicData.assistantName || ''}
           onChangeText={(text) => handleChange('assistantName', text)}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Assistant Phone"
+        <PhoneInput
+          ref={assistantPhoneInput}
+          style={styles.phoneInput}
           value={clinicData.assistantPhone || ''}
-          onChangeText={(text) => handleChange('assistantPhone', text)}
+          initialCountry="ke"
+          onChangePhoneNumber={(number) => handleChange('assistantPhone', number)}
         />
       </View>
       <View style={styles.section}>
@@ -183,6 +188,13 @@ const styles = StyleSheet.create({
   input: {
     height: 40,
     borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 4,
+    marginBottom: 8,
+    paddingHorizontal: 8,
+    width: '100%',
+  },
+  phoneInput: {
     borderWidth: 1,
     borderRadius: 4,
     marginBottom: 8,
