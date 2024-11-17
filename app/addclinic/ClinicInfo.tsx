@@ -49,7 +49,8 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      // Remove allowsEditing option
+      // allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
       allowsMultipleSelection: true,
