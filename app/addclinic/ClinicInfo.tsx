@@ -1,22 +1,26 @@
-import { StyleSheet, Text, View, TextInput, ScrollView } from 'react-native'; 
+import { StyleSheet, Text, View, TextInput, ScrollView, FlatList, TouchableOpacity } from 'react-native'; 
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from 'react-native-paper';
-import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
 import PhoneInput from 'react-native-phone-input';
 import Colors from '@/components/Shared/Colors';
+import { Picker } from '@react-native-picker/picker';
 
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
   { label: 'Jubilee Insurance', value: 'jubilee' },
   { label: 'Britam', value: 'britam' },
+  { label: 'UAP Old Mutual', value: 'uap' },
+  { label: 'CIC Insurance', value: 'cic' },
 ];
 
 const specialties = [
   { label: 'Cardiology', value: 'cardiology' },
   { label: 'Dermatology', value: 'dermatology' },
   { label: 'Neurology', value: 'neurology' },
+  { label: 'Pediatrics', value: 'pediatrics' },
+  { label: 'Orthopedics', value: 'orthopedics' },
 ];
 
 const languages = [
@@ -48,6 +52,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
+      allowsMultipleSelection: true,
     });
 
     if (!result.canceled && result.assets) {
@@ -64,6 +69,24 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     }
     setIsUploading(false);
   }, []);
+
+  const renderCard = (item, selectedItems, onSelect, index) => (
+    <TouchableOpacity
+      style={[
+        styles.card,
+        { backgroundColor: index % 2 === 0 ? '#f0f8ff' : '#e6f7ff' },
+        selectedItems.includes(item.value) && styles.cardSelected,
+      ]}
+      onPress={() => {
+        const newSelectedItems = selectedItems.includes(item.value)
+          ? selectedItems.filter((i) => i !== item.value)
+          : [...selectedItems, item.value];
+        onSelect(newSelectedItems);
+      }}
+    >
+      <Text style={styles.cardText}>{item.label}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -90,33 +113,29 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           onChangeText={(text) => handleChange('address', text)}
         />
       </View>
-      <View style={styles.rowContainer}>
-        <View style={styles.rowItem}>
-          <Text style={styles.sectionTitle}>Insurance</Text>
-          <Picker
-            selectedValue={clinicData.insuranceCompanies || ''}
-            onValueChange={(value) => handleChange('insuranceCompanies', value)}
-            style={styles.input}
-            mode="dropdown"
-          >
-            {insuranceCompanies.map((company) => (
-              <Picker.Item key={company.value} label={company.label} value={company.value} />
-            ))}
-          </Picker>
-        </View>
-        <View style={styles.rowItem}>
-          <Text style={styles.sectionTitle}>Specialties</Text>
-          <Picker
-            selectedValue={clinicData.specialties || ''}
-            onValueChange={(value) => handleChange('specialties', value)}
-            style={styles.input}
-            mode="dropdown"
-          >
-            {specialties.map((specialty) => (
-              <Picker.Item key={specialty.value} label={specialty.label} value={specialty.value} />
-            ))}
-          </Picker>
-        </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Insurance</Text>
+        <FlatList
+          data={insuranceCompanies}
+          renderItem={({ item, index }) => renderCard(item, clinicData.insuranceCompanies || [], (selectedItems) => handleChange('insuranceCompanies', selectedItems), index)}
+          keyExtractor={(item) => item.value}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.flatListContainer}
+        />
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Specialties</Text>
+        <Picker
+          selectedValue={clinicData.specialties || ''}
+          onValueChange={(value) => handleChange('specialties', value)}
+          style={styles.input}
+          mode="dropdown"
+        >
+          {specialties.map((specialty) => (
+            <Picker.Item key={specialty.value} label={specialty.label} value={specialty.value} />
+          ))}
+        </Picker>
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Assistant</Text>
@@ -219,6 +238,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: '#fff',
     width: '100%',
+  },
+  card: {
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginHorizontal: 5,
+    backgroundColor: '#fff',
+    borderColor: '#ccc',
+  },
+  cardSelected: {
+    borderColor: Colors.primary,
+  },
+  cardText: {
+    color: '#333',
+  },
+  flatListContainer: {
+    paddingVertical: 10,
   },
   buttonContainer: {
     flexDirection: 'row',
