@@ -5,7 +5,6 @@ import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
 
-// Lists of available options for insurance, specialties, and languages
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
   { label: 'Jubilee Insurance', value: 'jubilee' },
@@ -24,20 +23,17 @@ const languages = [
   { label: 'French', value: 'french' },
 ];
 
-// ClinicInfo Component
 const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
-  const [isUploading, setIsUploading] = useState(false); // Add state for tracking upload status
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Helper function to update clinic data
   const handleChange = (key, value) => {
     const updatedData = { ...clinicData, [key]: value };
-    console.log('Updated Clinic Data:', updatedData); // Log updated clinicData
+    console.log('Updated Clinic Data:', updatedData);
     onClinicDataChange(updatedData);
   };
 
-  // Function to handle image upload
   const handleImageUpload = async () => {
-    setIsUploading(true); // Set uploading state to true
+    setIsUploading(true);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
@@ -45,7 +41,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     });
 
     if (!result.canceled && result.assets) {
-      const assetsArray = Array.isArray(result.assets) ? result.assets : [result.assets].filter(Boolean); // Ensure assets is an array and filter out undefined
+      const assetsArray = Array.isArray(result.assets) ? result.assets : [result.assets].filter(Boolean);
       const uploadedImages = await Promise.all(
         assetsArray.map(async (image) => {
           const secureUrl = await uploadImageToCloudinary(image.uri);
@@ -53,17 +49,15 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
         })
       );
 
-      console.log('Uploaded Images:', uploadedImages); // Debug log to check uploaded images
-      handleChange('images', uploadedImages); // Ensure images field is updated
+      console.log('Uploaded Images:', uploadedImages);
+      handleChange('images', uploadedImages);
     }
-    setIsUploading(false); // Set uploading state to false after upload
+    setIsUploading(false);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Clinic Information</Text>
-
-      
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Name and Contact</Text>
         <TextInput
@@ -85,8 +79,6 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           onChangeText={(text) => handleChange('address', text)}
         />
       </View>
-
-      {/* Insurance Picker */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Insurance</Text>
         <Picker
@@ -100,8 +92,6 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           ))}
         </Picker>
       </View>
-
-      {/* Specialties Picker */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Specialties</Text>
         <Picker
@@ -115,8 +105,6 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           ))}
         </Picker>
       </View>
-
-      {/* Assistant Info */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Assistant</Text>
         <TextInput
@@ -132,8 +120,6 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           onChangeText={(text) => handleChange('assistantPhone', text)}
         />
       </View>
-
-      {/* Languages Picker */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Languages</Text>
         <Picker
@@ -147,8 +133,6 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           ))}
         </Picker>
       </View>
-
-      {/* Bio TextInput */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Bio</Text>
         <TextInput
@@ -158,14 +142,10 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
           onChangeText={(text) => handleChange('bio', text)}
         />
       </View>
-
-      {/* Image Upload Button */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Images</Text>
         <Button mode="contained" onPress={handleImageUpload} style={styles.button}>Upload Images</Button>
       </View>
-
-      {/* Navigation Buttons */}
       <View style={styles.buttonContainer}>
         <Button mode="contained" onPress={prevStep} style={styles.button}>Back</Button>
         <Button mode="contained" onPress={nextStep} style={styles.button} disabled={isUploading}>
@@ -178,7 +158,6 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
 
 export default ClinicInfo;
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

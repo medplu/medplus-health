@@ -1,12 +1,12 @@
 import { StyleSheet, Text, View, Button } from 'react-native'; 
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux'; // Import useSelector from react-redux
+import { useSelector } from 'react-redux'; 
 import PersonalInfo from './PersonalInfo';
 import ClinicInfo from './ClinicInfo';
 import ExperienceInfo from './ExperienceInfo';
 import EducationInfo from './EducationInfo';
 import Review from './Review';
-import { selectUser } from '../store/userSlice'; // Import the selector
+import { selectUser } from '../store/userSlice'; 
 
 const Index = () => {
   const [step, setStep] = useState(1);
@@ -15,8 +15,8 @@ const Index = () => {
   const [experienceData, setExperienceData] = useState({});
   const [educationData, setEducationData] = useState({});
 
-  const user = useSelector(selectUser); // Use the selector to get the user
-  const professionalId = user?.professional?._id; // Extract the professionalId
+  const user = useSelector(selectUser); 
+  const professionalId = user?.professional?._id; 
 
   const nextStep = () => {
     setStep(step + 1);
@@ -45,7 +45,7 @@ const Index = () => {
 
   const submit = async (payload) => {
     try {
-      console.log('Clinic Data before submission:', payload.clinicData); // Log clinicData to verify its structure
+      console.log('Clinic Data before submission:', payload.clinicData); 
       const response = await fetch(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, {
         method: 'POST',
         headers: {
@@ -64,17 +64,17 @@ const Index = () => {
           assistantPhone: payload.clinicData.assistantPhone,
           bio: payload.clinicData.bio,
           certificateUrl: payload.educationData.certificateUrl,
-          images: payload.clinicData.images || [], // Use images directly
+          images: payload.clinicData.images || [], 
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
         console.log('Clinic registered successfully:', data);
-        // Additional success handling
+        
       } else {
         console.error('Error registering clinic:', data);
-        // Additional error handling
+       
       }
     } catch (error) {
       console.error('Error:', error);

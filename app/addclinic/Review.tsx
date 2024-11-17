@@ -4,7 +4,6 @@ import { Card, Title, Paragraph, Button, Divider } from 'react-native-paper'
 
 const Review = ({ personalData, clinicData, experienceData, educationData, prevStep, submit }) => {
   const handleSubmit = () => {
-    console.log('Clinic Data:', clinicData); // Log clinicData to inspect its structure
     const payload = {
       personalData,
       clinicData: {
