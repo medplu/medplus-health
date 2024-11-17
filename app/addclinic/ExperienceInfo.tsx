@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native'
 import React, { useState } from 'react'
 import { TextInput, Button, Text } from 'react-native-paper'
 import { Picker } from '@react-native-picker/picker'
+import Colors from '@/components/Shared/Colors'
 
 const ExperienceInfo = ({ prevStep, nextStep, experienceData, onExperienceDataChange }) => {
   const [experience, setExperience] = useState(experienceData)
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.ligh_gray,
   },
   title: {
     fontSize: 24,
