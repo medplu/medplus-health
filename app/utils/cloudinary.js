@@ -22,8 +22,8 @@ export const uploadImageToCloudinary = async (imageUri) => {
       body: data,
     });
     const result = await uploadResponse.json();
-    console.log('Cloudinary Upload Response:', result); // Debug log to check Cloudinary response
-    return result.secure_url; // Return secure_url instead of url
+    console.log('Cloudinary Upload Response:', result); 
+    return result.secure_url;
   } catch (uploadError) {
     console.error('Error uploading image to Cloudinary:', uploadError);
     throw uploadError;

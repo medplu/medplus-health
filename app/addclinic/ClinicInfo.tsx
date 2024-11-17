@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TextInput, ScrollView } from 'react-native'; 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Button } from 'react-native-paper';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -36,11 +36,17 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     onClinicDataChange(updatedData);
   };
 
-  const handleImageUpload = async () => {
-    setIsUploading(true);
+  const pickImage = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
+      allowsEditing: true,
+      aspect: [4, 3],
       quality: 1,
     });
 
@@ -57,7 +63,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       handleChange('images', uploadedImages);
     }
     setIsUploading(false);
-  };
+  }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -152,7 +158,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Images</Text>
-        <Button mode="contained" onPress={handleImageUpload} style={styles.button}>Upload Images</Button>
+        <Button mode="contained" onPress={pickImage} style={styles.button}>Upload Images</Button>
       </View>
       <View style={styles.buttonContainer}>
         <Button mode="contained" onPress={prevStep} style={styles.button}>Back</Button>
