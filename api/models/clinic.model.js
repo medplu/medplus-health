@@ -14,10 +14,10 @@ const clinicSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    image: {
+    images: [{ // Update to handle multiple images
         type: String,
-        required: false, // Change this to false to make the image optional
-    },
+        required: false,
+    }],
     referenceCode: { // New field for the reference code
         type: String,
         required: true,

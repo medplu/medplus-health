@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Button } from 'react-native';
+import { StyleSheet, Text, View, Button } from 'react-native'; 
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux'; // Import useSelector from react-redux
 import PersonalInfo from './PersonalInfo';
@@ -31,6 +31,7 @@ const Index = () => {
   };
 
   const handleClinicDataChange = (data) => {
+    console.log(data);
     setClinicData(data);
   };
 
@@ -42,49 +43,41 @@ const Index = () => {
     setEducationData(data);
   };
 
-  const submit = async () => {
+  const submit = async (payload) => {
     try {
+      console.log('Clinic Data before submission:', payload.clinicData); // Log clinicData to verify its structure
       const response = await fetch(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: clinicData.name,
-          contactInfo: clinicData.contactInfo,
-          address: clinicData.address,
-          image: clinicData.image,
-          insuranceCompanies: clinicData.insuranceCompanies,
-          specialties: clinicData.specialties,
-          education: {
-            course: educationData.course,
-            university: educationData.university,
-            country: educationData.country,
-            year: educationData.year,
-          },
-          experiences: experienceData.map(exp => ({
-            position: exp.position,
-            organization: exp.organization,
-            startDate: exp.startDate,
-            endDate: exp.endDate,
-            currentlyWorking: exp.currentlyWorking,
-          })),
-          languages: clinicData.languages,
-          assistantName: clinicData.assistantName,
-          assistantPhone: clinicData.assistantPhone,
-          bio: clinicData.bio,
-          certificateUrl: educationData.certificateUrl,
+          name: payload.clinicData.name,
+          contactInfo: payload.clinicData.contactInfo,
+          address: payload.clinicData.address,
+          insuranceCompanies: payload.clinicData.insuranceCompanies,
+          specialties: payload.clinicData.specialties,
+          education: payload.educationData,
+          experiences: payload.experienceData,
+          languages: payload.clinicData.languages,
+          assistantName: payload.clinicData.assistantName,
+          assistantPhone: payload.clinicData.assistantPhone,
+          bio: payload.clinicData.bio,
+          certificateUrl: payload.educationData.certificateUrl,
+          images: payload.clinicData.images || [], // Use images directly
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        console.log('Form submitted successfully:', data);
+        console.log('Clinic registered successfully:', data);
+        // Additional success handling
       } else {
-        console.error('Error submitting form:', data);
+        console.error('Error registering clinic:', data);
+        // Additional error handling
       }
     } catch (error) {
-      console.error('Error during form submission:', error);
+      console.error('Error:', error);
     }
   };
 

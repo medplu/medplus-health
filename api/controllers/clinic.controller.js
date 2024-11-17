@@ -9,21 +9,38 @@ const generateReferenceCode = () => {
 
 const registerClinic = async (req, res) => {
   const { professionalId } = req.params;
-  const { name, contactInfo, address, image, insuranceCompanies, specialties, education, experiences, languages, assistantName, assistantPhone, bio, certificateUrl } = req.body;
+  const {
+    name,
+    contactInfo,
+    address,
+    images, // Expect images as an array
+    insuranceCompanies,
+    specialties,
+    education,
+    experiences,
+    languages,
+    assistantName,
+    assistantPhone,
+    bio,
+    certificateUrl
+  } = req.body;
 
   try {
+    // Find the professional by ID
     const professional = await Professional.findById(professionalId);
     if (!professional) {
       return res.status(404).send({ message: 'Professional not found' });
     }
 
+    // Generate a unique reference code for the clinic
     const referenceCode = generateReferenceCode();
 
+    // Create a new clinic instance with the provided data
     const clinic = new Clinic({
       name,
       contactInfo,
       address,
-      image: image || null,
+      images: Array.isArray(images) ? images : [], // Ensure images is an array
       referenceCode,
       professionals: [],
       insuranceCompanies,
@@ -34,24 +51,29 @@ const registerClinic = async (req, res) => {
       assistantName,
       assistantPhone,
       bio,
-      certificateUrl,
+      certificateUrl
     });
 
+    // Save the clinic
     await clinic.save();
 
+    // Associate the professional with the new clinic
     professional.clinic = clinic._id;
     professional.attachedToClinic = true;
     await professional.save();
 
+    // Add the professional's ID to the clinic's professionals list
     clinic.professionals.push(professional._id);
     await clinic.save();
 
+    // Respond with the newly created clinic
     res.status(201).send(clinic);
   } catch (error) {
     console.error('Error creating clinic or updating professional:', error);
     res.status(500).send({ message: 'Error creating clinic', error });
   }
 };
+
 
 const fetchClinics = async (req, res) => {
   try {
