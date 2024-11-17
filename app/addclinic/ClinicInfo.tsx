@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, TextInput, ScrollView, FlatList, TouchableOpaci
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
-import * as Permissions from 'expo-permissions';
+import { Camera } from 'expo-camera';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
 import PhoneInput from 'react-native-phone-input';
 import Colors from '@/components/Shared/Colors';
@@ -42,8 +42,8 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
   };
 
   const pickFromGallery = async () => {
-    const { granted } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-    if (granted) {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status === 'granted') {
       let data = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -73,8 +73,8 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
   };
 
   const pickFromCamera = async () => {
-    const { granted } = await Permissions.askAsync(Permissions.CAMERA);
-    if (granted) {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    if (status === 'granted') {
       let data = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
