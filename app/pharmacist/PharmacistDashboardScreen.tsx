@@ -36,8 +36,6 @@ const PharmacistDashboardScreen = () => {
         <Text style={styles.welcomeText}>Welcome, {user.professional?.firstName || 'Pharmacist'}!</Text>
       </View>
       {pharmacy && <Text style={styles.pharmacyText}>Pharmacy: {pharmacy.name}</Text>}
-
-      {/* Catalogue Card */}
       <TouchableOpacity
         style={styles.card}
         onPress={() => navigation.navigate('DrugScreen', { pharmacyId: pharmacy?._id })}

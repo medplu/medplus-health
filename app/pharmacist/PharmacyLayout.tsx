@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PharmacyHeader from './PharmacistHeader'; 
 import PharmacyTabs from './tabs';
 import DrugScreen from './DrugScreen';
-// import AccountsScreen from './AccountsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -17,7 +16,7 @@ const PharmacyLayout = () => {
         <Stack.Navigator>
           <Stack.Screen name="Tabs" component={PharmacyTabs} options={{ headerShown: false }} />
           <Stack.Screen name="DrugScreen" component={DrugScreen} options={{ headerShown: true, title: 'Drugs' }} />
-          {/* <Stack.Screen name="AccountSettings" component={AccountsScreen} options={{ headerShown: true, title: 'Account Settings' }} /> */}
+         
         </Stack.Navigator>
       </View>
     </SafeAreaView>
