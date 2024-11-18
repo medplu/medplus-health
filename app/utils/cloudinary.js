@@ -1,6 +1,10 @@
 import { manipulateAsync } from 'expo-image-manipulator';
 
 export const uploadImageToCloudinary = async (imageUri) => {
+  if (typeof imageUri !== 'string') {
+    throw new TypeError('The "imageUri" argument must be a string');
+  }
+
   const resizeImage = async (uri) => {
     const result = await manipulateAsync(uri, [{ resize: { width: 800 } }]);
     return result.uri;

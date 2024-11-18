@@ -51,24 +51,51 @@ const PharmacyInfo = ({ prevStep, nextStep, pharmacyData, onPharmacyDataChange }
         quality: 1,
         allowsMultipleSelection: true,
       });
+  
       if (!data.canceled) {
         const assetsArray = Array.isArray(data.assets) ? data.assets : [data.assets].filter(Boolean);
         const uploadedImages = await Promise.all(
           assetsArray.map(async (image) => {
-            const newFile = {
-              uri: image.uri,
-              type: `test/${image.uri.split('.').pop()}`,
-              name: `test.${image.uri.split('.').pop()}`,
-            };
-            const secureUrl = await uploadImageToCloudinary(newFile);
-            return { uri: secureUrl };
+            if (image.uri) {  // Check if the uri is defined
+              const newFile = {
+                uri: image.uri,
+                type: `image/${image.uri.split('.').pop()}`, // dynamic image type
+                name: `image.${image.uri.split('.').pop()}`, // dynamic image name
+              };
+              const secureUrl = await handleUpload(newFile);
+              return { uri: secureUrl };
+            } else {
+              console.warn("Image uri is undefined", image);
+              return null;
+            }
           })
         );
-        console.log('Uploaded Images:', uploadedImages);
-        handleChange('images', uploadedImages);
+        // Filter out any null results
+        const validImages = uploadedImages.filter(Boolean);
+        handleChange('images', validImages);
+        console.log('Uploaded Images:', validImages);
       }
     } else {
       Alert.alert('You need to grant permission to access the gallery.');
+    }
+  };
+  
+  const handleUpload = async (image) => {
+    const data = new FormData();
+    data.append('file', image);
+    data.append('upload_preset', 'medplus');
+    data.append('cloud_name', 'dws2bgxg4');
+    try {
+      const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+        method: 'POST',
+        body: data,
+      });
+      const result = await response.json();
+      console.log('Cloudinary Upload Response:', result);
+      return result.secure_url;
+    } catch (error) {
+      console.error('Error uploading image to Cloudinary:', error);
+      throw error;
     }
   };
 
@@ -84,10 +111,10 @@ const PharmacyInfo = ({ prevStep, nextStep, pharmacyData, onPharmacyDataChange }
       if (!data.canceled) {
         const newFile = {
           uri: data.uri,
-          type: `test/${data.uri.split('.').pop()}`,
-          name: `test.${data.uri.split('.').pop()}`,
+          type: 'image/jpeg', // Assuming the image type is jpeg
+          name: 'upload.jpg', // A generic name for the uploaded image
         };
-        const secureUrl = await uploadImageToCloudinary(newFile);
+        const secureUrl = await handleUpload(newFile);
         handleChange('images', [{ uri: secureUrl }]);
       }
     } else {
@@ -124,18 +151,41 @@ const PharmacyInfo = ({ prevStep, nextStep, pharmacyData, onPharmacyDataChange }
           value={pharmacyData.name || ''}
           onChangeText={(text) => handleChange('name', text)}
         />
-        <PhoneInput
-          ref={phoneInput}
-          style={styles.phoneInput}
-          value={pharmacyData.contactInfo || ''}
-          initialCountry="ke"
-          onChangePhoneNumber={(number) => handleChange('contactInfo', number)}
+        <TextInput
+          style={styles.input}
+          placeholder="Contact Number"
+          value={pharmacyData.contactNumber || ''}
+          onChangeText={(text) => handleChange('contactNumber', text)}
         />
         <TextInput
           style={styles.input}
-          placeholder="Address"
-          value={pharmacyData.address || ''}
-          onChangeText={(text) => handleChange('address', text)}
+          placeholder="Email"
+          value={pharmacyData.email || ''}
+          onChangeText={(text) => handleChange('email', text)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Street"
+          value={pharmacyData.address?.street || ''}
+          onChangeText={(text) => handleChange('address', { ...pharmacyData.address, street: text })}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="City"
+          value={pharmacyData.address?.city || ''}
+          onChangeText={(text) => handleChange('address', { ...pharmacyData.address, city: text })}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="State"
+          value={pharmacyData.address?.state || ''}
+          onChangeText={(text) => handleChange('address', { ...pharmacyData.address, state: text })}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Zip Code"
+          value={pharmacyData.address?.zipCode || ''}
+          onChangeText={(text) => handleChange('address', { ...pharmacyData.address, zipCode: text })}
         />
       </View>
       <View style={styles.section}>
@@ -198,6 +248,30 @@ const PharmacyInfo = ({ prevStep, nextStep, pharmacyData, onPharmacyDataChange }
           placeholder="Bio"
           value={pharmacyData.bio || ''}
           onChangeText={(text) => handleChange('bio', text)}
+        />
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Operating Hours</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Opening Time (e.g., 08:00 AM)"
+          value={pharmacyData.operatingHours?.open || ''}
+          onChangeText={(text) => handleChange('operatingHours', { ...pharmacyData.operatingHours, open: text })}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Closing Time (e.g., 08:00 PM)"
+          value={pharmacyData.operatingHours?.close || ''}
+          onChangeText={(text) => handleChange('operatingHours', { ...pharmacyData.operatingHours, close: text })}
+        />
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>License Number</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="License Number"
+          value={pharmacyData.licenseNumber || ''}
+          onChangeText={(text) => handleChange('licenseNumber', text)}
         />
       </View>
       <View style={styles.section}>

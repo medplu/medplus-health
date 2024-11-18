@@ -57,8 +57,14 @@ const Index = () => {
         },
         body: JSON.stringify({
           name: payload.pharmacyData.name,
-          contactInfo: payload.pharmacyData.contactInfo,
-          address: payload.pharmacyData.address,
+          contactNumber: payload.pharmacyData.contactNumber, 
+          email: payload.pharmacyData.email, 
+          address: {
+            street: payload.pharmacyData.address.street, 
+            city: payload.pharmacyData.address.city, 
+            state: payload.pharmacyData.address.state, 
+            zipCode: payload.pharmacyData.address.zipCode, 
+          },
           insuranceCompanies: payload.pharmacyData.insuranceCompanies,
           specialties: payload.pharmacyData.specialties,
           education: payload.educationData,
@@ -69,6 +75,8 @@ const Index = () => {
           bio: payload.pharmacyData.bio,
           certificateUrl: payload.educationData.certificateUrl,
           images: payload.pharmacyData.images || [], 
+          operatingHours: payload.pharmacyData.operatingHours, 
+          licenseNumber: payload.pharmacyData.licenseNumber, 
         }),
       });
 

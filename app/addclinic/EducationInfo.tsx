@@ -23,16 +23,30 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
   ];
 
   useEffect(() => {
-    fetch('https://restcountries.com/v3.1/all')
-      .then(response => response.json())
-      .then(data => {
+    const fetchCountries = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+  
+      try {
+        const response = await fetch('https://restcountries.com/v3.1/all', { signal: controller.signal });
+        const data = await response.json();
         const countryList = data.map((country: { name: { common: string }; cca2: string }) => ({
           label: country.name.common,
           value: country.cca2,
         }));
         setCountries(countryList);
-      })
-      .catch(error => console.error('Error fetching countries:', error));
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          console.error('Fetch request timed out');
+        } else {
+          console.error('Error fetching countries:', error);
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+  
+    fetchCountries();
   }, []);
 
   const handleChange = (key: string, value: any) => {

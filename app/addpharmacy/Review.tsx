@@ -37,12 +37,13 @@ const Review = ({ personalData, pharmacyData, experienceData, educationData, pre
           <Card.Content>
             <Title>Pharmacy Information</Title>
             <Paragraph>Pharmacy Name: {pharmacyData.name}</Paragraph>
-            <Paragraph>Pharmacy Address: {pharmacyData.address}</Paragraph>
+            <Paragraph>Pharmacy Address: {pharmacyData.address?.street}, {pharmacyData.address?.city}, {pharmacyData.address?.state}, {pharmacyData.address?.zipCode}</Paragraph>
             <Paragraph>Insurance Companies: {Array.isArray(pharmacyData.insuranceCompanies) ? pharmacyData.insuranceCompanies.join(', ') : pharmacyData.insuranceCompanies}</Paragraph>
             <Paragraph>Specialties: {pharmacyData.specialties}</Paragraph>
             <Paragraph>Assistant Name: {pharmacyData.assistantName}</Paragraph>
             <Paragraph>Assistant Phone: {pharmacyData.assistantPhone}</Paragraph>
             <Paragraph>Languages: {pharmacyData.languages}</Paragraph>
+            <Paragraph>Operating Hours: {pharmacyData.operatingHours?.open} - {pharmacyData.operatingHours?.close}</Paragraph>
           </Card.Content>
         </Card>
 

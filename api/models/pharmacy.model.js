@@ -16,10 +16,10 @@ const pharmacySchema = new Schema({
         required: true
     },
     address: {
-        street: { type: String, required: true },
-        city: { type: String, required: true },
-        state: { type: String, required: true },
-        zipCode: { type: String, required: true }
+        street: { type: String, required: false },
+        city: { type: String, required: false },
+        state: { type: String, required: false },
+        zipCode: { type: String, required: false }
     },
     location: {
         latitude: { type: Number, required: false },
