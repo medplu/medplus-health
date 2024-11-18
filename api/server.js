@@ -38,12 +38,7 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.json());
 
 // File upload middleware
-app.use(fileUpload({
-  useTempFiles: true,
-  tempFileDir: '/tmp/',
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
-  abortOnLimit: true,
-}));
+app.use(express.urlencoded({ extended: true }));
 
 mongoose.connect(process.env.MONGO_URI).then(() => {
     console.log("MongoDB connected");
