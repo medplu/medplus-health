@@ -203,10 +203,19 @@ const getPharmacyByProfessionalId = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+const getAllPharmacies = async (req, res) => {
+    try {
+        const pharmacies = await Pharmacy.find();
+        res.status(200).json(pharmacies);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 module.exports = {
     createPharmacy,
     updatePharmacyLocation,
+    getAllPharmacies ,
     updatePharmacyInventory,
     getPharmacyById,
     getPharmacyByProfessionalId // Export the new controller
