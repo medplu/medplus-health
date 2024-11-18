@@ -54,25 +54,23 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
     setFilteredCourses([]);
   };
 
-  const uploadFile = async (file: { uri: string; name: string; type: string }) => {
+  const uploadFile = async (file) => {
     const formData = new FormData();
-    const fileObj = {
+    formData.append('file', {
       uri: file.uri,
       name: file.name,
       type: file.type,
-    };
-    formData.append('file', fileObj);
-  
-    // Log FormData before sending
-    formData.forEach((value, key) => {
-      console.log(`${key}: ${value}`);
     });
+  
+    // Logging FormData entries to debug
+    for (let pair of formData.entries()) {
+      console.log(`${pair[0]}: ${pair[1]}`);
+    }
   
     try {
       const response = await fetch('https://medplus-health.onrender.com/api/files/upload', {
         method: 'POST',
         body: formData,
-        headers: {},
       });
   
       const data = await response.json();
@@ -89,25 +87,19 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
       return null;
     }
   };
+  
   const handleFilePicker = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({});
   
-      console.log('DocumentPicker result:', result);  // Log the result to inspect it
+      console.log('DocumentPicker result:', result);
   
-      if (result.canceled) {
-        console.log('File selection was cancelled');
-        return; // Return early if the selection was canceled
-      }
+      if (!result.canceled && result.assets) {
+        const { uri, name, mimeType } = result.assets[0];
+        console.log('File URI:', uri);
+        console.log('File name:', name);
+        console.log('File MIME type:', mimeType);
   
-      // Extract the file from the assets array
-      const { uri, name, mimeType } = result.assets[0];
-  
-      console.log('File URI:', uri);  // Log the file URI
-      console.log('File name:', name);  // Log the file name
-      console.log('File MIME type:', mimeType);  // Log the file MIME type
-  
-      if (uri && name && mimeType) {
         const fileUrl = await uploadFile({ uri, name, type: mimeType });
         if (fileUrl) {
           handleChange('certificateUrl', fileUrl);
@@ -115,16 +107,12 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
         } else {
           console.error('Failed to upload file');
         }
-      } else {
-        console.error('File missing necessary properties (uri, name, type)');
       }
     } catch (error) {
       console.error('Error during file selection/upload:', error);
     }
   };
   
-  
-
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Education Information</Text>

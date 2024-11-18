@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchClinics, filterClinics, selectClinics } from '../../app/store/clinicSlice'; // Update the import path as needed
+import { fetchClinics, filterClinics, selectClinics, resetClinics } from '../../app/store/clinicSlice'; // Update the import path as needed
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
 import * as SplashScreen from 'expo-splash-screen';
@@ -59,6 +59,10 @@ const Clinics = ({ searchQuery, onViewAll }) => {
     });
   };
 
+  // const handleResetClinics = () => {
+  //   dispatch(resetClinics());
+  // };
+
   const renderClinicItem = ({ item }) => {
     const imageUrl = item.image || null;
     return (
@@ -88,6 +92,9 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   return (
     <Animated.View style={{ marginTop: 10, opacity: fadeAnim }}>
       <SubHeading subHeadingTitle={'Discover Clinics Near You'} onViewAll={onViewAll} />
+      {/* <TouchableOpacity onPress={handleResetClinics} style={styles.resetButton}>
+        <Text style={styles.resetButtonText}>Reset Clinics</Text>
+      </TouchableOpacity> */}
       <FlatList
         data={filteredClinicList}
         horizontal={true} // Ensure this orientation is different from parent lists
@@ -135,6 +142,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: Colors.primary,
     marginTop: 20,
+  },
+  resetButton: {
+    backgroundColor: Colors.primary,
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  resetButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 

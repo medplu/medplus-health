@@ -1,8 +1,7 @@
-// Import necessary models
 const Pharmacy = require('../models/pharmacy.model');
 const Professional = require('../models/professional.model');
 const cloudinary = require('cloudinary').v2;
-// Controller to create a pharmacy (only pharmacists can create pharmacies)
+
 const createPharmacy = async (req, res) => {
     try {
         const {
@@ -13,7 +12,7 @@ const createPharmacy = async (req, res) => {
             city,
             state,
             zipCode,
-            operatingHours: rawOperatingHours, // Accepting as a raw input, which might be a JSON string or object
+            operatingHours: rawOperatingHours, 
             services,
             licenseNumber,
             professionalId
@@ -175,8 +174,40 @@ const updatePharmacyInventory = async (req, res) => {
     }
 };
 
+const getPharmacyById = async (req, res) => {
+    try {
+        const pharmacy = await Pharmacy.findById(req.params.id);
+        if (!pharmacy) {
+            return res.status(404).json({ message: 'Pharmacy not found' });
+        }
+        res.status(200).json(pharmacy);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const getPharmacyByProfessionalId = async (req, res) => {
+    try {
+        const professional = await Professional.findById(req.params.professionalId);
+        if (!professional) {
+            return res.status(404).json({ message: 'Professional not found' });
+        }
+
+        const pharmacy = await Pharmacy.findOne({ pharmacists: professional._id });
+        if (!pharmacy) {
+            return res.status(404).json({ message: 'Pharmacy not found' });
+        }
+
+        res.status(200).json(pharmacy);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     createPharmacy,
     updatePharmacyLocation,
-    updatePharmacyInventory
+    updatePharmacyInventory,
+    getPharmacyById,
+    getPharmacyByProfessionalId // Export the new controller
 };

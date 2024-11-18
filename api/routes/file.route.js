@@ -17,6 +17,8 @@ const bucket = gc.bucket('medplus_supat');
 
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
+    console.log('Received file:', req.file); // Log the received file
+
     const { originalname, mimetype, buffer } = req.file;
 
     // Upload the file to Google Cloud Storage and get the URL
@@ -32,6 +34,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
     res.status(200).json({ fileUrl });
   } catch (error) {
+    console.error('Error uploading file:', error); // Log the error
     res.status(500).json({ error: 'Error uploading file' });
   }
 });

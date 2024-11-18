@@ -87,6 +87,12 @@ const clinicsSlice = createSlice({
     clearSelectedClinic: (state) => {
       state.selectedClinic = null;
     },
+    resetClinics: (state) => {
+      state.clinicList = [];
+      state.filteredClinicList = [];
+      state.selectedClinic = null;
+      AsyncStorage.removeItem('clinicList');
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -118,7 +124,7 @@ const clinicsSlice = createSlice({
   },
 });
 
-export const { filterClinics, clearSelectedClinic } = clinicsSlice.actions;
+export const { filterClinics, clearSelectedClinic, resetClinics } = clinicsSlice.actions;
 
 export const selectClinics = (state: RootState) => state.clinics.filteredClinicList;
 export const selectClinicDetails = (state: RootState) => state.clinics.selectedClinic;
