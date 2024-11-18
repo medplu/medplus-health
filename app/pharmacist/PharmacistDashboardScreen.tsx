@@ -1,9 +1,11 @@
-import { StyleSheet, Text, View, Image } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../store/userSlice';
+import { useNavigation } from '@react-navigation/native';
 
 const PharmacistDashboardScreen = () => {
+  const navigation = useNavigation();
   const user = useSelector(selectUser);
   const professionalId = user.professional?._id;
   const [pharmacy, setPharmacy] = useState(null);
@@ -34,7 +36,14 @@ const PharmacistDashboardScreen = () => {
         <Text style={styles.welcomeText}>Welcome, {user.professional?.firstName || 'Pharmacist'}!</Text>
       </View>
       {pharmacy && <Text style={styles.pharmacyText}>Pharmacy: {pharmacy.name}</Text>}
-      <Text>PharmacistDashboardScreen</Text>
+
+      {/* Catalogue Card */}
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigation.navigate('DrugScreen', { pharmacyId: pharmacy?._id })}
+      >
+        <Text style={styles.cardText}>Catalogue</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -64,5 +73,22 @@ const styles = StyleSheet.create({
   pharmacyText: {
     fontSize: 16,
     marginTop: 10,
+  },
+  card: {
+    backgroundColor: '#f8f9fa',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  cardText: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

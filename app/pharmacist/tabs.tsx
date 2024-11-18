@@ -5,14 +5,14 @@ import PharmacistDashboardScreen from './PharmacistDashboardScreen'; // Adjust p
 import Sales from './Sales'; // Correct the import path for the Sales component
 import InventoryScreen from './InventoryScreen'; // Import the Inventory screen
 import ReportsScreen from './ReportsScreen'; // Import the Reports screen
-import PharmacistHeader from './PharmacistHeader'; // Import the new header component
+
 
 const Tab = createBottomTabNavigator();
 
 const PharmacistTabs = () => {
     return (
         <>
-            <PharmacistHeader /> {/* Add the header component */}
+          
             <Tab.Navigator>
                 <Tab.Screen 
                     name="Dashboard" 
