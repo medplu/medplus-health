@@ -20,7 +20,6 @@ router.put('/:id/location', pharmacyController.updatePharmacyLocation);
 // Update the inventory of a pharmacy by ID
 router.put('/:id/inventory', pharmacyController.updatePharmacyInventory);
 
-// Delete a pharmacy by ID
-router.delete('/:id', pharmacyController.deletePharmacy);
+
 
 module.exports = router;
