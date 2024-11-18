@@ -42,6 +42,12 @@ const PharmacistDashboardScreen = () => {
       >
         <Text style={styles.cardText}>Catalogue</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigation.navigate('PrescriptionScreen', { pharmacyId: pharmacy?._id })}
+      >
+        <Text style={styles.cardText}>View Prescriptions</Text>
+      </TouchableOpacity>
     </View>
   );
 };

@@ -1,11 +1,12 @@
 import React from 'react';
 import { SafeAreaView, StyleSheet, View, StatusBar } from 'react-native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Stack } from 'expo-router';
 import PharmacyHeader from './PharmacistHeader'; 
 import PharmacyTabs from './tabs';
 import DrugScreen from './DrugScreen';
-
-const Stack = createNativeStackNavigator();
+import PrescriptionDetails from './PrescriptionDetails';
+import PrescriptionList from './PrescriptionList';
+import Cart from './Cart';
 
 const PharmacyLayout = () => {
   return (
@@ -13,11 +14,13 @@ const PharmacyLayout = () => {
       <StatusBar barStyle="dark-content" />
       <PharmacyHeader />
       <View style={styles.innerContainer}>
-        <Stack.Navigator>
-          <Stack.Screen name="Tabs" component={PharmacyTabs} options={{ headerShown: false }} />
-          <Stack.Screen name="DrugScreen" component={DrugScreen} options={{ headerShown: true, title: 'Drugs' }} />
-         
-        </Stack.Navigator>
+        <Stack>
+          <Stack.Screen name="Tabs" options={{ headerShown: false }} />
+          <Stack.Screen name="DrugScreen" options={{ headerShown: true, title: 'Drugs' }} />
+          <Stack.Screen name="PrescriptionList" options={{headerShown: true}} />
+          <Stack.Screen name="PrescriptionDetails" options={{headerShown: true}}/>
+          <Stack.Screen name="Cart" />
+        </Stack>
       </View>
     </SafeAreaView>
   );

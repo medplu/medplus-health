@@ -2,6 +2,10 @@ const Pharmacy = require('../models/pharmacy.model');
 const Professional = require('../models/professional.model');
 const cloudinary = require('cloudinary').v2;
 
+const generateReferenceCode = () => {
+    return 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+};
+
 const createPharmacy = async (req, res) => {
     try {
         const {
@@ -15,8 +19,17 @@ const createPharmacy = async (req, res) => {
             operatingHours: rawOperatingHours, 
             services,
             licenseNumber,
-            professionalId
+            insuranceCompanies,
+            education,
+            experiences,
+            languages,
+            assistantName,
+            assistantPhone,
+            bio,
+            certificateUrl
         } = req.body;
+
+        const professionalId = req.params.professionalId;
 
         // Log to verify received data
         console.log('Received payload:', req.body);
@@ -70,6 +83,9 @@ const createPharmacy = async (req, res) => {
             return res.status(400).json({ error: 'Professional is already attached to a pharmacy' });
         }
 
+        // Generate a unique reference code for the pharmacy
+        const referenceCode = generateReferenceCode();
+
         // Create a new pharmacy
         const pharmacy = new Pharmacy({
             name,
@@ -88,7 +104,16 @@ const createPharmacy = async (req, res) => {
             },
             services,
             licenseNumber,
-            image
+            image,
+            referenceCode,
+            insuranceCompanies,
+            education,
+            experiences,
+            languages,
+            assistantName,
+            assistantPhone,
+            bio,
+            certificateUrl
         });
 
         // Save the pharmacy to the database

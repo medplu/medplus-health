@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const pharmacyController = require('../controllers/pharmacy.controller');
 
-// Create a new pharmacy
-router.post('/', pharmacyController.createPharmacy);
+// Create a new pharmacy with professionalId in the URL
+router.post('/:professionalId', pharmacyController.createPharmacy);
 
 // Get all pharmacies
 router.get('/', pharmacyController.getAllPharmacies);
@@ -19,7 +19,5 @@ router.put('/:id/location', pharmacyController.updatePharmacyLocation);
 
 // Update the inventory of a pharmacy by ID
 router.put('/:id/inventory', pharmacyController.updatePharmacyInventory);
-
-
 
 module.exports = router;

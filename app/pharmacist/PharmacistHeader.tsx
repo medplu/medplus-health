@@ -1,12 +1,23 @@
-
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectUser, logout } from '../store/userSlice';
+import { useNavigation } from '@react-navigation/native';
+import { AntDesign } from '@expo/vector-icons';
 
 const PharmacistHeader: React.FC = () => {
+    const dispatch = useDispatch();
+    const navigation = useNavigation();
+
+    const handleLogout = useCallback(() => {
+        dispatch(logout());
+        navigation.navigate('login/index'); // Ensure this matches your login route
+    }, [dispatch, navigation]);
+
     return (
         <View style={styles.headerContainer}>
-            <TouchableOpacity style={styles.menuButton}>
-                <Text style={styles.menuText}>☰</Text>
+            <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
+                <AntDesign name="logout" size={28} color="#fff" />
             </TouchableOpacity>
             <Image source={require('../../assets/images/medical-symbol.png')} style={styles.logo} />
         </View>
@@ -21,12 +32,8 @@ const styles = StyleSheet.create({
         padding: 16,
         backgroundColor: '#ff7f50',
     },
-    menuButton: {
+    logoutIcon: {
         padding: 10,
-    },
-    menuText: {
-        fontSize: 24,
-        color: '#fff',
     },
     logo: {
         width: 100,

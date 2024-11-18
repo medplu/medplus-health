@@ -54,6 +54,67 @@ const pharmacySchema = new Schema({
     image: {
         type: String,
         required: false
+    },
+    referenceCode: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    insuranceCompanies: [{
+        type: String,
+        required: false
+    }],
+    education: {
+        course: {
+            type: String,
+            required: true
+        },
+        university: {
+            type: String,
+            required: true
+        }
+    },
+    experiences: [{
+        position: {
+            type: String,
+            required: true
+        },
+        organization: {
+            type: String,
+            required: true
+        },
+        startDate: {
+            type: String,
+            required: true
+        },
+        endDate: {
+            type: String,
+            required: false
+        },
+        currentlyWorking: {
+            type: Boolean,
+            required: false
+        }
+    }],
+    languages: {
+        type: String,
+        required: false
+    },
+    assistantName: {
+        type: String,
+        required: false
+    },
+    assistantPhone: {
+        type: String,
+        required: false
+    },
+    bio: {
+        type: String,
+        required: false
+    },
+    certificateUrl: {
+        type: String,
+        required: false
     }
 }, { timestamps: true });
 
