@@ -7,6 +7,7 @@ import { uploadImageToCloudinary } from '../utils/cloudinary';
 import PhoneInput from 'react-native-phone-input';
 import Colors from '@/components/Shared/Colors';
 import { Picker } from '@react-native-picker/picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
@@ -41,76 +42,75 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     onClinicDataChange(updatedData);
   };
 
-  const pickFromGallery = async () => {
+  const pickFromGallery = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status === 'granted') {
-      let data = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        aspect: [4, 3],
-        quality: 1,
-        allowsMultipleSelection: true,
-      });
-      if (!data.canceled) {
-        const assetsArray = Array.isArray(data.assets) ? data.assets : [data.assets].filter(Boolean);
-        const uploadedImages = await Promise.all(
-          assetsArray.map(async (image) => {
-            const newFile = {
-              uri: image.uri,
-              type: `test/${image.uri.split('.').pop()}`,
-              name: `test.${image.uri.split('.').pop()}`,
-            };
-            const secureUrl = await handleUpload(newFile);
-            return { uri: secureUrl };
-          })
-        );
-        console.log('Uploaded Images:', uploadedImages);
-        handleChange('images', uploadedImages);
-      }
-    } else {
-      Alert.alert('You need to grant permission to access the gallery.');
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
     }
-  };
 
-  const pickFromCamera = async () => {
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    if (status === 'granted') {
-      let data = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-      if (!data.canceled) {
-        const newFile = {
-          uri: data.uri,
-          type: `test/${data.uri.split('.').pop()}`,
-          name: `test.${data.uri.split('.').pop()}`,
-        };
-        const secureUrl = await handleUpload(newFile);
-        handleChange('images', [{ uri: secureUrl }]);
-      }
-    } else {
-      Alert.alert('You need to grant permission to access the camera.');
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets) {
+      const resizedUri = await resizeImage(result.assets[0].uri);
+      const secureUrl = await handleUpload({ uri: resizedUri });
+      handleChange('images', [{ uri: secureUrl }]);
     }
+  }, []);
+
+  const pickFromCamera = useCallback(async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera permissions to make this work!');
+      return;
+    }
+
+    let result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets) {
+      const resizedUri = await resizeImage(result.assets[0].uri);
+      const secureUrl = await handleUpload({ uri: resizedUri });
+      handleChange('images', [{ uri: secureUrl }]);
+    }
+  }, []);
+
+  const resizeImage = async (uri: string) => {
+    const result = await ImageManipulator.manipulateAsync(uri, [
+      { resize: { width: 800 } },
+    ]);
+    return result.uri;
   };
 
   const handleUpload = async (image) => {
     const data = new FormData();
-    data.append('file', image);
+    const response = await fetch(image.uri);
+    const blob = await response.blob();
+
+    data.append('file', blob);
     data.append('upload_preset', 'medplus');
-    data.append('cloud_name', 'dws2bgxg4');
+    data.append('quality', 'auto');
+    data.append('fetch_format', 'auto');
+
     try {
-      const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+      const uploadResponse = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
         method: 'POST',
         body: data,
       });
-      const result = await response.json();
-      console.log('Cloudinary Upload Response:', result);
+      const result = await uploadResponse.json();
       return result.secure_url;
-    } catch (error) {
-      console.error('Error uploading image to Cloudinary:', error);
-      throw error;
+    } catch (uploadError) {
+      console.error('Error uploading image to Cloudinary:', uploadError);
+      throw uploadError;
     }
   };
 
@@ -146,7 +146,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
         <PhoneInput
           ref={phoneInput}
           style={styles.phoneInput}
-          value={clinicData.contactInfo || ''}
+          value={clinicData.contactInfo || ''} // Ensure contactInfo is captured
           initialCountry="ke"
           onChangePhoneNumber={(number) => handleChange('contactInfo', number)}
         />

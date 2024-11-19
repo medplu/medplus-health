@@ -57,7 +57,7 @@ const Index = () => {
         },
         body: JSON.stringify({
           name: payload.clinicData.name,
-          contactInfo: payload.clinicData.contactInfo,
+          contactInfo: payload.clinicData.contactInfo, // Ensure contactInfo is included
           address: payload.clinicData.address,
           insuranceCompanies: payload.clinicData.insuranceCompanies,
           specialties: payload.clinicData.specialties,
