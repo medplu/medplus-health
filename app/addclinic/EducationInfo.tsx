@@ -2,10 +2,8 @@ import { StyleSheet, View, FlatList, TouchableOpacity, TextInput } from 'react-n
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Picker } from '@react-native-picker/picker';
-import * as DocumentPicker from 'expo-document-picker';
-import FormData from 'form-data'; 
 import Colors from '@/components/Shared/Colors';
-import { Text, Button, ListItem } from 'react-native-elements';
+import { Text, Button } from 'react-native-elements';
 
 const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educationData, onEducationDataChange, universities = [] }) => {
   const [countries, setCountries] = useState([]);
@@ -68,54 +66,6 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
     setFilteredCourses([]);
   };
 
-  const uploadFile = async (file) => {
-    const formData = new FormData();
-    formData.append('file', {
-      uri: file.uri,
-      name: file.name,
-      type: file.type,
-    });
-  
-    try {
-      const response = await fetch('https://medplus-health.onrender.com/api/upload', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-  
-      if (response.ok) {
-        const responseText = await response.text();
-        console.log(responseText); // Should log "File uploaded successfully"
-        return responseText;
-      } else {
-        console.error('File upload failed:', response.statusText);
-        return null;
-      }
-    } catch (error) {
-      console.error('Error during file upload:', error);
-      return null;
-    }
-  };
-  
-  const handleFilePicker = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({});
-  
-      if (result.type !== 'cancel') {
-        const { uri, name, mimeType } = result;
-        const uploadResult = await uploadFile({ uri, name, type: mimeType });
-        if (uploadResult) {
-          console.log('File uploaded successfully:', uploadResult);
-        } else {
-          console.error('File upload failed');
-        }
-      }
-    } catch (error) {
-      console.error('Error during file selection/upload:', error);
-    }
-  };
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Education Information</Text>
@@ -173,11 +123,6 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
           value={educationData.university || ''}
           onChangeText={(text) => handleChange('university', text)}
         />
-
-        <TouchableOpacity style={styles.fileButton} onPress={handleFilePicker}>
-          <MaterialIcons name="attach-file" size={24} color="black" />
-          <Text style={styles.fileButtonText}>Add Certificate</Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -256,16 +201,6 @@ const styles = StyleSheet.create({
   suggestionText: {
     fontSize: 16,
     color: '#333',
-  },
-  fileButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  fileButtonText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: '#1E90FF',
   },
   buttonContainer: {
     flexDirection: 'row',

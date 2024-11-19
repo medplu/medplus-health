@@ -30,7 +30,7 @@ const languages = [
   { label: 'French', value: 'french' },
 ];
 
-const PharmacyInfo = ({ prevStep, nextStep, pharmacyData, onPharmacyDataChange }) => {
+const PharmacyInfo = ({ nextStep, pharmacyData, onPharmacyDataChange }) => {
   const [isUploading, setIsUploading] = useState(false);
   const phoneInput = useRef<PhoneInput>(null);
   const assistantPhoneInput = useRef<PhoneInput>(null);
@@ -282,7 +282,6 @@ const PharmacyInfo = ({ prevStep, nextStep, pharmacyData, onPharmacyDataChange }
         </View>
       </View>
       <View style={styles.buttonContainer}>
-        <Button mode="contained" onPress={prevStep} style={styles.button}>Back</Button>
         <Button mode="contained" onPress={nextStep} style={styles.button} disabled={isUploading}>
           {isUploading ? 'Uploading...' : 'Next'}
         </Button>

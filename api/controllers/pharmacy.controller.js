@@ -17,16 +17,11 @@ const createPharmacy = async (req, res) => {
             state,
             zipCode,
             operatingHours: rawOperatingHours, 
-            services,
             licenseNumber,
             insuranceCompanies,
-            education,
-            experiences,
             languages,
             assistantName,
-            assistantPhone,
-            bio,
-            certificateUrl
+            assistantPhone
         } = req.body;
 
         const professionalId = req.params.professionalId;
@@ -102,18 +97,13 @@ const createPharmacy = async (req, res) => {
                 open: operatingHours.open,
                 close: operatingHours.close
             },
-            services,
             licenseNumber,
             image,
             referenceCode,
             insuranceCompanies,
-            education,
-            experiences,
             languages,
             assistantName,
-            assistantPhone,
-            bio,
-            certificateUrl
+            assistantPhone
         });
 
         // Save the pharmacy to the database
@@ -173,32 +163,6 @@ const updatePharmacyLocation = async (req, res) => {
     }
 };
 
-// Controller to update the inventory of a pharmacy
-const updatePharmacyInventory = async (req, res) => {
-    try {
-        const { inventory } = req.body;
-
-        // Validate required fields
-        if (!inventory) {
-            return res.status(400).json({ message: 'Missing required fields' });
-        }
-
-        const pharmacy = await Pharmacy.findByIdAndUpdate(
-            req.params.id,
-            { inventory },
-            { new: true, runValidators: true }
-        );
-
-        if (!pharmacy) {
-            return res.status(404).json({ message: 'Pharmacy not found' });
-        }
-
-        res.status(200).json(pharmacy);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-};
-
 const getPharmacyById = async (req, res) => {
     try {
         const pharmacy = await Pharmacy.findById(req.params.id);
@@ -241,7 +205,6 @@ module.exports = {
     createPharmacy,
     updatePharmacyLocation,
     getAllPharmacies ,
-    updatePharmacyInventory,
     getPharmacyById,
     getPharmacyByProfessionalId // Export the new controller
 };

@@ -43,10 +43,6 @@ const pharmacySchema = new Schema({
         open: { type: String, required: true },
         close: { type: String, required: true }
     },
-    services: {
-        type: [String],
-        required: false
-    },
     licenseNumber: {
         type: String,
         required: true
@@ -64,38 +60,6 @@ const pharmacySchema = new Schema({
         type: String,
         required: false
     }],
-    education: {
-        course: {
-            type: String,
-            required: true
-        },
-        university: {
-            type: String,
-            required: true
-        }
-    },
-    experiences: [{
-        position: {
-            type: String,
-            required: true
-        },
-        organization: {
-            type: String,
-            required: true
-        },
-        startDate: {
-            type: String,
-            required: true
-        },
-        endDate: {
-            type: String,
-            required: false
-        },
-        currentlyWorking: {
-            type: Boolean,
-            required: false
-        }
-    }],
     languages: {
         type: String,
         required: false
@@ -105,14 +69,6 @@ const pharmacySchema = new Schema({
         required: false
     },
     assistantPhone: {
-        type: String,
-        required: false
-    },
-    bio: {
-        type: String,
-        required: false
-    },
-    certificateUrl: {
         type: String,
         required: false
     }

@@ -44,6 +44,7 @@ const Review = ({ personalData, pharmacyData, experienceData, educationData, pre
             <Paragraph>Assistant Phone: {pharmacyData.assistantPhone}</Paragraph>
             <Paragraph>Languages: {pharmacyData.languages}</Paragraph>
             <Paragraph>Operating Hours: {pharmacyData.operatingHours?.open} - {pharmacyData.operatingHours?.close}</Paragraph>
+            <Paragraph>License Number: {pharmacyData.licenseNumber}</Paragraph>
           </Card.Content>
         </Card>
 

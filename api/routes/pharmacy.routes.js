@@ -18,6 +18,6 @@ router.get('/professional/:professionalId', pharmacyController.getPharmacyByProf
 router.put('/:id/location', pharmacyController.updatePharmacyLocation);
 
 // Update the inventory of a pharmacy by ID
-router.put('/:id/inventory', pharmacyController.updatePharmacyInventory);
+// router.put('/:id/inventory', pharmacyController.updatePharmacyInventory);
 
 module.exports = router;
