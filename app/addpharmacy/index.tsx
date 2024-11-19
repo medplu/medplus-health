@@ -174,7 +174,6 @@ const RegistrationForm = () => {
         Alert.alert('Success', 'Pharmacy registered successfully', [
           { text: 'OK', onPress: () => navigation.navigate('pharmacist/tabs') }
         ]);
-        // Reset the form
         setCurrentStep(1);
         setFormData({
           pharmacyName: '',
@@ -229,7 +228,6 @@ const RegistrationForm = () => {
         <Text>Step {currentStep} of 3</Text>
       </View>
 
-      {/* Pharmacy Information */}
       <Collapsible collapsed={currentStep !== 1}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Pharmacy Information</Text>
@@ -258,7 +256,6 @@ const RegistrationForm = () => {
         </View>
       </Collapsible>
 
-      {/* Address Information */}
       <Collapsible collapsed={currentStep !== 2}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Address Information</Text>
@@ -297,7 +294,6 @@ const RegistrationForm = () => {
         </View>
       </Collapsible>
 
-      {/* Owner Information */}
       <Collapsible collapsed={currentStep !== 3}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Owner Information</Text>
@@ -322,7 +318,6 @@ const RegistrationForm = () => {
         </View>
       </Collapsible>
 
-      {/* Additional Details */}
       <Collapsible collapsed={currentStep !== 4}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Additional Details</Text>
@@ -390,7 +385,6 @@ const RegistrationForm = () => {
         </View>
       </Collapsible>
 
-      {/* Navigation Buttons */}
       <View style={styles.buttonsContainer}>
         {currentStep > 1 && (
           <Button

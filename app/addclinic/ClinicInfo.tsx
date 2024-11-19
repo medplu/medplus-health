@@ -57,7 +57,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
-      allowsMultipleSelection: true, // Enable multiple selection
+      allowsMultipleSelection: true,
     });
 
     if (!result.canceled && result.assets) {
@@ -169,7 +169,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
         <PhoneInput
           ref={phoneInput}
           style={styles.phoneInput}
-          value={clinicData.contactInfo || ''} // Ensure contactInfo is captured
+          value={clinicData.contactInfo || ''}
           initialCountry="ke"
           onChangePhoneNumber={(number) => handleChange('contactInfo', number)}
         />

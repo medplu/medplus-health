@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, Button, Alert } from 'react-native'; 
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux'; 
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import PersonalInfo from './PersonalInfo';
 import ClinicInfo from './ClinicInfo';
 import ExperienceInfo from './ExperienceInfo';
@@ -9,7 +9,6 @@ import EducationInfo from './EducationInfo';
 import Review from './Review';
 import { selectUser } from '../store/userSlice'; 
 import Colors from '@/components/Shared/Colors';
-
 
 const Index = () => {
   const [step, setStep] = useState(1);
@@ -57,7 +56,7 @@ const Index = () => {
         },
         body: JSON.stringify({
           name: payload.clinicData.name,
-          contactInfo: payload.clinicData.contactInfo, // Ensure contactInfo is included
+          contactInfo: payload.clinicData.contactInfo,
           address: payload.clinicData.address,
           insuranceCompanies: payload.clinicData.insuranceCompanies,
           specialties: payload.clinicData.specialties,
@@ -76,9 +75,9 @@ const Index = () => {
       if (response.ok) {
         console.log('Clinic registered successfully:', data);
         Alert.alert('Success', 'Clinic registered successfully', [
-          { text: 'OK', onPress: () => navigation.navigate('/professional/tabs') }
+          { text: 'OK', onPress: () => navigation.navigate('Professional') }
         ]);
-        // Reset the form
+        
         setStep(1);
         setPersonalData({});
         setClinicData({});

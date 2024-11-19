@@ -23,7 +23,7 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
   useEffect(() => {
     const fetchCountries = async () => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
   
       try {
         const response = await fetch('https://restcountries.com/v3.1/all', { signal: controller.signal });

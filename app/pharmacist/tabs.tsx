@@ -1,11 +1,9 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import PharmacistDashboardScreen from './PharmacistDashboardScreen'; // Adjust path if necessary
-import Sales from './Sales'; // Correct the import path for the Sales component
-import InventoryScreen from './InventoryScreen'; // Import the Inventory screen
-import ReportsScreen from './ReportsScreen'; // Import the Reports screen
-
+import PharmacistDashboardScreen from './PharmacistDashboardScreen'; 
+import InventoryScreen from './InventoryScreen'; 
+import ReportsScreen from './ReportsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -50,7 +48,7 @@ const PharmacistTabs = () => {
                         ),
                     }}
                 />
-                {/* Add more tabs as needed */}
+                
             </Tab.Navigator>
         </>
     );
