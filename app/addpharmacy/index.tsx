@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { ScrollView, Text, View, Alert, FlatList, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { ScrollView, Text, View, Alert, FlatList, TouchableOpacity, Image } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Collapsible from 'react-native-collapsible';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../store/userSlice'; 
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
@@ -33,6 +35,8 @@ const RegistrationForm = () => {
   });
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [image, setImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<boolean>(false);
 
   const handleInputChange = (field, value) => {
     setFormData({
@@ -49,33 +53,90 @@ const RegistrationForm = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    const payload = {
-      pharmacyData: {
-        name: formData.pharmacyName,
-        contactNumber: formData.phone,
-        email: formData.ownerEmail,
-        address: {
-          street: formData.address,
-          city: '', // Add city field if available
-          state: '', // Add state field if available
-          zipCode: '', // Add zip code field if available
-        },
-        insuranceCompanies: formData.insuranceCompanies, // Already an array
-        specialties: [], // Add specialties if available
-        assistantName: formData.assistantName, // Add assistant name if available
-        assistantPhone: formData.assistantPhone, // Add assistant phone if available
-        images: [], // Add images if available
-        operatingHours: {
-          open: formData.openingTime,
-          close: formData.closingTime,
-        },
-        licenseNumber: formData.licenseNumber,
-        services: [] // Removed services field
-      }
-    };
+  const resizeImage = async (uri: string) => {
+    const result = await ImageManipulator.manipulateAsync(uri, [
+      { resize: { width: 800 } },
+    ]);
+    return result.uri;
+  };
+
+  const pickImage = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets) {
+      const resizedUri = await resizeImage(result.assets[0].uri);
+      setImage(resizedUri);
+    }
+  }, []);
+
+  const uploadImageToCloudinary = async (imageUri: string): Promise<string> => {
+    const data = new FormData();
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+
+    data.append('file', blob);
+    data.append('upload_preset', 'medplus');
+    data.append('quality', 'auto');
+    data.append('fetch_format', 'auto');
 
     try {
+      const uploadResponse = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+        method: 'POST',
+        body: data,
+      });
+      const result = await uploadResponse.json();
+      return result.secure_url;
+    } catch (uploadError) {
+      console.error('Error uploading image to Cloudinary:', uploadError);
+      throw uploadError;
+    }
+  };
+
+  const handleSubmit = async () => {
+    setUploading(true);
+    try {
+      let imageUrl = image;
+      if (image) {
+        imageUrl = await uploadImageToCloudinary(image);
+      }
+
+      const payload = {
+        pharmacyData: {
+          name: formData.pharmacyName,
+          contactNumber: formData.phone,
+          email: formData.ownerEmail,
+          address: {
+            street: formData.address,
+            city: '', // Add city field if available
+            state: '', // Add state field if available
+            zipCode: '', // Add zip code field if available
+          },
+          insuranceCompanies: formData.insuranceCompanies, // Already an array
+          specialties: [], // Add specialties if available
+          assistantName: formData.assistantName, // Add assistant name if available
+          assistantPhone: formData.assistantPhone, // Add assistant phone if available
+          images: [], // Add images if available
+          operatingHours: {
+            open: formData.openingTime,
+            close: formData.closingTime,
+          },
+          licenseNumber: formData.licenseNumber,
+          services: [], // Removed services field
+          image: imageUrl, // Add image URL to payload
+        }
+      };
+
       console.log('Pharmacy Data before submission:', payload.pharmacyData);
       const response = await fetch(`https://medplus-health.onrender.com/api/pharmacies/${professionalId}`, {
         method: 'POST',
@@ -99,7 +160,8 @@ const RegistrationForm = () => {
           images: payload.pharmacyData.images || [],
           operatingHours: payload.pharmacyData.operatingHours,
           licenseNumber: payload.pharmacyData.licenseNumber,
-          services: payload.pharmacyData.services
+          services: payload.pharmacyData.services,
+          image: payload.pharmacyData.image
         }),
       });
 
@@ -124,6 +186,7 @@ const RegistrationForm = () => {
           assistantName: '',
           assistantPhone: ''
         });
+        setImage(null);
       } else {
         console.error('Error registering pharmacy:', data);
         Alert.alert('Error', 'Error registering pharmacy');
@@ -131,6 +194,8 @@ const RegistrationForm = () => {
     } catch (error) {
       console.error('Error:', error);
       Alert.alert('Error', 'An error occurred');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -188,6 +253,10 @@ const RegistrationForm = () => {
             style={styles.input}
             left={<TextInput.Icon name={() => <Icon name="phone" size={20} />} />}
           />
+          <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
+            <Text style={styles.uploadButtonText}>Pick an image from camera roll</Text>
+          </TouchableOpacity>
+          {image && <Image source={{ uri: image }} style={styles.image} />}
         </View>
       </Collapsible>
 
@@ -308,8 +377,9 @@ const RegistrationForm = () => {
             mode="contained"
             onPress={handleSubmit}
             style={styles.submitButton}
+            disabled={uploading}
           >
-            Submit
+            {uploading ? "Submitting..." : "Submit"}
           </Button>
         )}
       </View>
@@ -355,6 +425,22 @@ const styles = {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
+  },
+  uploadButton: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  uploadButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+  image: {
+    width: 200,
+    height: 200,
+    marginBottom: 10,
+    alignSelf: 'center',
   },
 };
 

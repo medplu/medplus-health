@@ -21,7 +21,8 @@ const createPharmacy = async (req, res) => {
             insuranceCompanies,
             languages,
             assistantName,
-            assistantPhone
+            assistantPhone,
+            image // The image URL is expected here
         } = req.body;
 
         const professionalId = req.params.professionalId;
@@ -49,16 +50,6 @@ const createPharmacy = async (req, res) => {
         // Check if `operatingHours` has `open` and `close`
         if (!operatingHours?.open || !operatingHours?.close) {
             return res.status(400).json({ error: 'Both operatingHours.open and operatingHours.close are required' });
-        }
-
-        let image = null;
-
-        if (req.files && req.files.image) {
-            const file = req.files.image;
-            const uploadedResponse = await cloudinary.uploader.upload(file.tempFilePath, {
-                folder: 'pharmacies',
-            });
-            image = uploadedResponse.secure_url;
         }
 
         // Find the professional by ID
@@ -98,7 +89,7 @@ const createPharmacy = async (req, res) => {
                 close: operatingHours.close
             },
             licenseNumber,
-            image,
+            image, // The image URL is assigned here
             referenceCode,
             insuranceCompanies,
             languages,
