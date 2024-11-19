@@ -145,11 +145,29 @@ const fetchClinicsBySpecialties = async (req, res) => {
   }
 };
 
+const searchClinics = async (req, res) => {
+  const { query, specialty, filter } = req.query;
+  try {
+    const clinics = await Clinic.find({
+      $and: [
+        { name: new RegExp(query, 'i') },
+        specialty ? { specialties: specialty } : {},
+        filter ? { specialties: new RegExp(filter, 'i') } : {},
+      ],
+    });
+    res.status(200).json(clinics);
+  } catch (error) {
+    console.error('Error searching clinics:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
   registerClinic,
   fetchClinics,
   fetchClinicById,
   joinClinic,
   fetchClinicsBySpecialties,
+  searchClinics,
 };
 

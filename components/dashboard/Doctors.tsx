@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, FlatList, Text,  StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native'; 
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../../components/Shared/Colors';	

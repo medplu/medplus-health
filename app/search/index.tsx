@@ -1,226 +1,187 @@
-import * as React from 'react';
-import { View, StyleSheet, FlatList, Text, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
-import { Searchbar } from 'react-native-paper';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store/configureStore';
-import { fetchDoctors, selectDoctors, filterDoctors } from '../store/doctorSlice';
-import { fetchClinics, selectClinics, filterClinics } from '../store/clinicSlice';
-import { useNavigation } from '@react-navigation/native';
-import Colors from '@/components/Shared/Colors';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context'; // Import SafeAreaView
-import { Ionicons } from '@expo/vector-icons'; // Add Ionicons import
+import { StyleSheet, TextInput, SafeAreaView, Text, View, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import GlobalApi from '../../Services/GlobalApi';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const FullScreenSearch: React.FC = () => {
-    const router = useRouter();
-    const [searchQuery, setSearchQuery] = React.useState<string>('');
-    const dispatch = useDispatch();
-    const navigation = useNavigation();
+const index = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState([]);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [specialty, setSpecialty] = useState('');
+  const [filter, setFilter] = useState('');
+  const [categoryList, setCategoryList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const doctors = useSelector((state: RootState) => selectDoctors(state));
-    const clinics = useSelector((state: RootState) => selectClinics(state));
-    const loading = useSelector((state: RootState) => state.doctors.loading || state.clinics.loading);
+  useEffect(() => {
+    getCategories();
+  }, []);
 
-    React.useEffect(() => {
-        dispatch(fetchDoctors());
-        dispatch(fetchClinics());
-    }, [dispatch]);
+  const getCategories = async () => {
+    try {
+      const cachedCategories = await AsyncStorage.getItem('categories');
+      if (cachedCategories) {
+        setCategoryList(JSON.parse(cachedCategories));
+        setLoading(false);
+        return;
+      }
 
-    const handleSearch = (query: string) => {
-        setSearchQuery(query);
-        dispatch(filterDoctors({ searchQuery: query, selectedCategory: '' }));
-        dispatch(filterClinics({ searchQuery }));
-    };
+      const resp = await GlobalApi.getCategories();
+      const categories = resp.data || [];
+      setCategoryList(categories);
+      await AsyncStorage.setItem('categories', JSON.stringify(categories));
+    } catch (error) {
+      setCategoryList([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleConsult = (doctor: Doctor) => {
-        navigation.navigate('doctor/index', { doctor: JSON.stringify(doctor) });
-    };
+  const handleSearch = (query, selectedSpecialty = specialty) => {
+    setSearchQuery(query);
+    fetchData(query, selectedSpecialty, filter);
+  };
 
-    const handlePress = async (item) => {
-        router.push({
-            pathname: `/hospital/book-appointment/${item._id}`,
-            params: { clinicId: item._id },
-        });
-    };
+  const handleSpecialtyPress = (selectedSpecialty) => {
+    setSpecialty(selectedSpecialty);
+    fetchData(searchQuery, selectedSpecialty, filter);
+  };
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Search</Text>
-            </View>
-            <Searchbar
-                placeholder="Search Doctors or Clinics"
-                onChangeText={handleSearch}
-                value={searchQuery}
-                autoFocus
-                style={styles.searchBar}
-                inputStyle={styles.input} // Add custom input styles
-            />
-            {loading ? (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#6200ea" />
+  const fetchData = (query, specialty, filter) => {
+    setIsLoading(true);
+    fetch(`http://localhost:3000/api/search?query=${query}&specialty=${specialty}&filter=${filter}`)
+      .then((response) => response.json())
+      .then((json) => {
+        setData(json);
+      })
+      .catch((error) => setError(error))
+      .finally(() => setIsLoading(false));
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, marginHorizontal: 20 }}>
+      <TextInput
+        placeholder="Search"
+        clearButtonMode="always"
+        style={styles.searchBox}
+        autoCapitalize="none"
+        autoCorrect={false}
+        value={searchQuery}
+        onChangeText={(query) => handleSearch(query)}
+      />
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        <View>
+          <FlatList
+            data={categoryList}
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            style={styles.flatList}
+            contentContainerStyle={styles.contentContainer}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.categoryItem}
+                onPress={() => handleSpecialtyPress(item.name)}
+              >
+                <View style={specialty === item.name ? styles.categoryIconContainerActive : styles.categoryIconContainer}>
+                  <Image
+                    source={{ uri: item.icon }}
+                    style={styles.categoryIcon}
+                  />
                 </View>
-            ) : (
-                <FlatList
-                    data={[...doctors, ...clinics]}
-                    keyExtractor={(item) => item._id || item.id}
-                    renderItem={({ item }) => (
-                        <View style={styles.card}>
-                            {item.profession ? (
-                                <>
-                                    <Image source={{ uri: item.profileImage }} style={styles.image} />
-                                    <View style={styles.info}>
-                                        <Text style={styles.name}>{`${item.firstName} ${item.lastName}`}</Text>
-                                        <Text style={styles.profession}>{item.profession}</Text>
-                                        <Text style={styles.profession}>{item.email}</Text>
-                                        <TouchableOpacity onPress={() => handleConsult(item)}>
-                                            <Text style={styles.bookButton}>Book</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </>
-                            ) : (
-                                <>
-                                    {item.image && (
-                                        <Image source={{ uri: item.image }} style={styles.image} />
-                                    )}
-                                    <View style={styles.info}>
-                                        <Text style={styles.clinicName}>{item.name}</Text>
-                                        <Text style={styles.clinicLocation}>{item.location}</Text>
-                                        <TouchableOpacity
-                                            style={[styles.button, styles.scheduleButton]}
-                                            onPress={() => handlePress(item)}
-                                        >
-                                            <Text style={styles.buttonText}>Schedule Visit</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </>
-                            )}
-                        </View>
-                    )}
-                    ListEmptyComponent={() => (
-                        <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyText}>No results found</Text>
-                        </View>
-                    )}
-                    contentContainerStyle={styles.flatListContent} // Add padding to the FlatList content
-                />
+                <Text style={specialty === item.name ? styles.categoryBtnActive : styles.categoryBtnTxt}>{item.name}</Text>
+              </TouchableOpacity>
             )}
-        </SafeAreaView>
-    );
+            keyExtractor={(item) => item.name}
+          />
+          <TextInput
+            placeholder="Filter"
+            style={styles.filterBox}
+            value={filter}
+            onChangeText={setFilter}
+          />
+        </View>
+      )}
+      {isLoading ? (
+        <Text>Loading...</Text>
+      ) : error ? (
+        <Text>Error: {error.message}</Text>
+      ) : (
+        <FlatList
+          data={
+            data && data.professionals && data.clinics
+              ? data.professionals.concat(data.clinics)
+              : []
+          }
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => (
+            <View style={styles.item}>
+              <Text>{item.name}</Text>
+              {/* Add other fields as needed */}
+            </View>
+          )}
+        />
+      )}
+    </SafeAreaView>
+  );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f4f4f4',
-    },
-    searchBar: {
-        marginHorizontal: 16,
-        marginVertical: 12,
-        borderRadius: 8,
-        elevation: 3,
-        height: 50, // Set a fixed height for the search bar
-    },
-    input: {
-        height: 40, // Adjust input height
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    card: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 15,
-        borderRadius: 8,
-        backgroundColor: '#fff',
-        marginBottom: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    image: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        marginRight: 15,
-    },
-    info: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    name: {
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    profession: {
-        color: 'gray',
-        marginTop: 4,
-    },
-    clinicName: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    clinicLocation: {
-        color: 'gray',
-        marginTop: 4,
-    },
-    button: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 5,
-        marginTop: 10,
-        alignSelf: 'flex-start',
-    },
-    scheduleButton: {
-        backgroundColor: Colors.PRIMARY,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 20,
-    },
-    emptyText: {
-        fontSize: 16,
-        color: 'gray',
-    },
-    flatListContent: {
-        paddingHorizontal: 16,
-        paddingBottom: 20,
-    },
-    bookButton: {
-        color: Colors.GREEN,
-        fontWeight: 'bold',
-        marginTop: 8,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginLeft: 10,
-    },
-});
+export default index;
 
-export default FullScreenSearch;
+const styles = StyleSheet.create({
+  searchBox: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  flatList: {
+    marginTop: 5,
+  },
+  contentContainer: {
+    paddingHorizontal: 10,
+  },
+  categoryItem: {
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  categoryIconContainer: {
+    backgroundColor: '#ccc',
+    padding: 15,
+    borderRadius: 99,
+  },
+  categoryIconContainerActive: {
+    backgroundColor: '#000',
+    padding: 15,
+    borderRadius: 99,
+  },
+  categoryIcon: {
+    width: 30,
+    height: 30,
+  },
+  categoryBtnTxt: {
+    marginTop: 5,
+    textAlign: 'center',
+    color: '#000',
+  },
+  categoryBtnActive: {
+    marginTop: 5,
+    textAlign: 'center',
+    color: '#000',
+  },
+  filterBox: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    borderWidth: 1,
+    marginVertical: 10,
+  },
+  item: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+});

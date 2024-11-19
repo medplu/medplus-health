@@ -225,3 +225,20 @@ exports.getAvailableSlots = async (req, res) => {
         return res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+exports.searchProfessionals = async (req, res) => {
+    const { query, specialty, filter } = req.query;
+    try {
+        const professionals = await Professional.find({
+            $and: [
+                { $or: [{ firstName: new RegExp(query, 'i') }, { lastName: new RegExp(query, 'i') }] },
+                specialty ? { profession: specialty } : {},
+                filter ? { profession: new RegExp(filter, 'i') } : {},
+            ],
+        });
+        res.status(200).json(professionals);
+    } catch (error) {
+        console.error('Error searching professionals:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};

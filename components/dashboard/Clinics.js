@@ -1,6 +1,6 @@
 // Clinics.tsx
-import React, { useEffect } from 'react';
-import { View, FlatList, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, FlatList, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchClinics, filterClinics, selectClinics, resetClinics } from '../../app/store/clinicSlice'; // Update the import path as needed
 import SubHeading from '../dashboard/SubHeading';
@@ -18,7 +18,7 @@ const Clinics = ({ searchQuery, onViewAll }) => {
     'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
   });
 
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -33,12 +33,12 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   }));
 
   useEffect(() => {
-    dispatch(fetchClinics()); // Fetch clinics when component mounts
+    dispatch(fetchClinics());
   }, [dispatch]);
 
   useEffect(() => {
     if (searchQuery) {
-      dispatch(filterClinics({ searchQuery })); // Filter clinics when searchQuery changes
+      dispatch(filterClinics({ searchQuery })); 
     }
   }, [searchQuery, dispatch]);
 
@@ -59,16 +59,38 @@ const Clinics = ({ searchQuery, onViewAll }) => {
     });
   };
 
-  // const handleResetClinics = () => {
-  //   dispatch(resetClinics());
-  // };
+  const ClinicItem = ({ item }) => {
+    const [currentImage, setCurrentImage] = useState(item.images && item.images.length > 0 ? item.images[0] : null);
+    const imageFadeAnim = useRef(new Animated.Value(1)).current;
 
-  const renderClinicItem = ({ item }) => {
-    const imageUrl = item.image || null;
+    useEffect(() => {
+      if (item.images && item.images.length > 1) {
+        const interval = setInterval(() => {
+          const randomIndex = Math.floor(Math.random() * item.images.length);
+          const nextImage = item.images[randomIndex];
+
+          Animated.timing(imageFadeAnim, {
+            toValue: 0,
+            duration: 100,
+            useNativeDriver: true,
+          }).start(() => {
+            setCurrentImage(nextImage);
+            Animated.timing(imageFadeAnim, {
+              toValue: 1,
+              duration: 100,
+              useNativeDriver: true,
+            }).start();
+          });
+        }, 10000); // Change image every 3 seconds
+
+        return () => clearInterval(interval); // Cleanup interval on unmount
+      }
+    }, [item.images]);
+
     return (
       <TouchableOpacity style={styles.clinicItem} onPress={() => handlePress(item)}>
-        {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.clinicImage} />
+        {currentImage ? (
+          <Animated.Image source={{ uri: currentImage }} style={[styles.clinicImage, { opacity: imageFadeAnim }]} />
         ) : (
           <Text style={styles.noImageText}>No Image</Text>
         )}
@@ -76,6 +98,7 @@ const Clinics = ({ searchQuery, onViewAll }) => {
           <Text style={styles.clinicName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
           <Text style={styles.clinicCategory} numberOfLines={1} ellipsizeMode="tail">{item.category}</Text>
           <Text style={styles.clinicAddress} numberOfLines={1} ellipsizeMode="tail">{item.address}</Text>
+          <Text style={styles.clinicContact} numberOfLines={1} ellipsizeMode="tail">{item.contactInfo}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -92,13 +115,10 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   return (
     <Animated.View style={{ marginTop: 10, opacity: fadeAnim }}>
       <SubHeading subHeadingTitle={'Discover Clinics Near You'} onViewAll={onViewAll} />
-      {/* <TouchableOpacity onPress={handleResetClinics} style={styles.resetButton}>
-        <Text style={styles.resetButtonText}>Reset Clinics</Text>
-      </TouchableOpacity> */}
       <FlatList
         data={filteredClinicList}
-        horizontal={true} // Ensure this orientation is different from parent lists
-        renderItem={renderClinicItem}
+        horizontal={true} 
+        renderItem={({ item }) => <ClinicItem item={item} />}
         keyExtractor={item => item._id.toString()}
         showsHorizontalScrollIndicator={false}
       />
@@ -134,6 +154,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   clinicCategory: {
+    color: Colors.primary,
+    marginTop: 5,
+    width: '100%',
+  },
+  clinicContact: {
     color: Colors.primary,
     marginTop: 5,
     width: '100%',

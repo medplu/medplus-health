@@ -8,7 +8,7 @@ interface Clinic {
   name: string;
   address: string;
   category: string;
-  image?: string;
+  images?: string[]; // Updated to handle multiple images
 }
 
 interface ClinicsState {

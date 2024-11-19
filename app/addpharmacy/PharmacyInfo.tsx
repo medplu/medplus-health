@@ -2,11 +2,14 @@ import { StyleSheet, Text, View, TextInput, ScrollView, FlatList, TouchableOpaci
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Camera } from 'expo-camera';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
 import PhoneInput from 'react-native-phone-input';
 import Colors from '@/components/Shared/Colors';
 import { Picker } from '@react-native-picker/picker';
+import { useSelector } from 'react-redux';
+import { selectUser } from '../store/userSlice';
 
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
@@ -31,9 +34,42 @@ const languages = [
 ];
 
 const PharmacyInfo = ({ nextStep, pharmacyData, onPharmacyDataChange }) => {
+  const user = useSelector(selectUser);
+  const userId = user.userId;
+ 
   const [isUploading, setIsUploading] = useState(false);
   const phoneInput = useRef<PhoneInput>(null);
   const assistantPhoneInput = useRef<PhoneInput>(null);
+  const [image, setImage] = useState<string | null>(user.professional?.profileImage || null);
+ 
+
+  const resizeImage = async (uri: string) => {
+    const result = await ImageManipulator.manipulateAsync(uri, [
+      { resize: { width: 800 } },
+    ]);
+    return result.uri;
+  };
+
+  const pickImage = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets) {
+      const resizedUri = await resizeImage(result.assets[0].uri);
+      setImage(resizedUri);
+    }
+  }, []);
+
 
   const handleChange = (key, value) => {
     const updatedData = { ...pharmacyData, [key]: value };
@@ -41,61 +77,65 @@ const PharmacyInfo = ({ nextStep, pharmacyData, onPharmacyDataChange }) => {
     onPharmacyDataChange(updatedData);
   };
 
-  const pickFromGallery = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status === 'granted') {
-      let data = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        aspect: [4, 3],
-        quality: 1,
-        allowsMultipleSelection: true,
-      });
+  // const pickFromGallery = async () => {
+  //   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  //   if (status === 'granted') {
+  //     let data = await ImagePicker.launchImageLibraryAsync({
+  //       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //       allowsEditing: false,
+  //       aspect: [4, 3],
+  //       quality: 1,
+  //       allowsMultipleSelection: true,
+  //     });
   
-      if (!data.canceled) {
-        const assetsArray = Array.isArray(data.assets) ? data.assets : [data.assets].filter(Boolean);
-        const uploadedImages = await Promise.all(
-          assetsArray.map(async (image) => {
-            if (image.uri) {  // Check if the uri is defined
-              const newFile = {
-                uri: image.uri,
-                type: `image/${image.uri.split('.').pop()}`, // dynamic image type
-                name: `image.${image.uri.split('.').pop()}`, // dynamic image name
-              };
-              const secureUrl = await handleUpload(newFile);
-              return { uri: secureUrl };
-            } else {
-              console.warn("Image uri is undefined", image);
-              return null;
-            }
-          })
-        );
-        // Filter out any null results
-        const validImages = uploadedImages.filter(Boolean);
-        handleChange('images', validImages);
-        console.log('Uploaded Images:', validImages);
-      }
-    } else {
-      Alert.alert('You need to grant permission to access the gallery.');
-    }
-  };
+  //     if (!data.canceled) {
+  //       const assetsArray = Array.isArray(data.assets) ? data.assets : [data.assets].filter(Boolean);
+  //       const uploadedImages = await Promise.all(
+  //         assetsArray.map(async (image) => {
+  //           if (image.uri) {  // Check if the uri is defined
+  //             const newFile = {
+  //               uri: image.uri,
+  //               type: `image/${image.uri.split('.').pop()}`, // dynamic image type
+  //               name: `image.${image.uri.split('.').pop()}`, // dynamic image name
+  //             };
+  //             const secureUrl = await handleUpload(newFile);
+  //             return { uri: secureUrl };
+  //           } else {
+  //             console.warn("Image uri is undefined", image);
+  //             return null;
+  //           }
+  //         })
+  //       );
+  //       // Filter out any null results
+  //       const validImages = uploadedImages.filter(Boolean);
+  //       handleChange('images', validImages);
+  //       console.log('Uploaded Images:', validImages);
+  //     }
+  //   } else {
+  //     Alert.alert('You need to grant permission to access the gallery.');
+  //   }
+  // };
   
-  const handleUpload = async (image) => {
+  const uploadImageToCloudinary = async (imageUri: string): Promise<string> => {
     const data = new FormData();
-    data.append('file', image);
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+
+    data.append('file', blob);
     data.append('upload_preset', 'medplus');
-    data.append('cloud_name', 'dws2bgxg4');
+    data.append('quality', 'auto');
+    data.append('fetch_format', 'auto');
+
     try {
-      const response = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
+      const uploadResponse = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
         method: 'POST',
         body: data,
       });
-      const result = await response.json();
-      console.log('Cloudinary Upload Response:', result);
+      const result = await uploadResponse.json();
       return result.secure_url;
-    } catch (error) {
-      console.error('Error uploading image to Cloudinary:', error);
-      throw error;
+    } catch (uploadError) {
+      console.error('Error uploading image to Cloudinary:', uploadError);
+      throw uploadError;
     }
   };
 
@@ -114,7 +154,7 @@ const PharmacyInfo = ({ nextStep, pharmacyData, onPharmacyDataChange }) => {
           type: 'image/jpeg', // Assuming the image type is jpeg
           name: 'upload.jpg', // A generic name for the uploaded image
         };
-        const secureUrl = await handleUpload(newFile);
+        const secureUrl = await uploadImageToCloudinary(newFile);
         handleChange('images', [{ uri: secureUrl }]);
       }
     } else {
@@ -278,7 +318,7 @@ const PharmacyInfo = ({ nextStep, pharmacyData, onPharmacyDataChange }) => {
         <Text style={styles.sectionTitle}>Images</Text>
         <View style={styles.modalButtonWrapper}>
           <Button mode="contained" onPress={pickFromCamera} style={styles.button}>Camera</Button>
-          <Button mode="contained" onPress={pickFromGallery} style={styles.button}>Gallery</Button>
+          <Button mode="contained" onPress={pickImage} style={styles.button}>Gallery</Button>
         </View>
       </View>
       <View style={styles.buttonContainer}>
