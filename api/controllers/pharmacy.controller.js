@@ -15,7 +15,7 @@ const createPharmacy = async (req, res) => {
             street,
             city,
             state,
-            zipCode,
+            postalCode, // Updated field
             operatingHours: rawOperatingHours, 
             licenseNumber,
             insuranceCompanies,
@@ -81,7 +81,7 @@ const createPharmacy = async (req, res) => {
                 street,
                 city,
                 state,
-                zipCode
+                postalCode // Updated field
             },
             pharmacists: [professional._id],
             operatingHours: {

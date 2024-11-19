@@ -22,8 +22,11 @@ const RegistrationForm = () => {
 
   const [formData, setFormData] = useState({
     pharmacyName: '',
-    address: '',
     phone: '',
+    address: '',
+    city: '',
+    state: '',
+    postalCode: '',
     ownerName: '',
     ownerEmail: '',
     licenseNumber: '',
@@ -46,7 +49,7 @@ const RegistrationForm = () => {
   };
 
   const handleStepChange = (direction) => {
-    if (direction === 'next' && currentStep < 3) {
+    if (direction === 'next' && currentStep < 4) {
       setCurrentStep(currentStep + 1);
     } else if (direction === 'prev' && currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -118,22 +121,22 @@ const RegistrationForm = () => {
           email: formData.ownerEmail,
           address: {
             street: formData.address,
-            city: '', // Add city field if available
-            state: '', // Add state field if available
-            zipCode: '', // Add zip code field if available
+            city: formData.city,
+            state: formData.state,
+            postalCode: formData.postalCode,
           },
-          insuranceCompanies: formData.insuranceCompanies, // Already an array
-          specialties: [], // Add specialties if available
-          assistantName: formData.assistantName, // Add assistant name if available
-          assistantPhone: formData.assistantPhone, // Add assistant phone if available
-          images: [], // Add images if available
+          insuranceCompanies: formData.insuranceCompanies,
+          specialties: [],
+          assistantName: formData.assistantName,
+          assistantPhone: formData.assistantPhone,
+          images: [],
           operatingHours: {
             open: formData.openingTime,
             close: formData.closingTime,
           },
           licenseNumber: formData.licenseNumber,
-          services: [], // Removed services field
-          image: imageUrl, // Add image URL to payload
+          services: [],
+          image: imageUrl,
         }
       };
 
@@ -151,7 +154,7 @@ const RegistrationForm = () => {
             street: payload.pharmacyData.address.street,
             city: payload.pharmacyData.address.city,
             state: payload.pharmacyData.address.state,
-            zipCode: payload.pharmacyData.address.zipCode,
+            postalCode: payload.pharmacyData.address.postalCode,
           },
           insuranceCompanies: payload.pharmacyData.insuranceCompanies,
           specialties: payload.pharmacyData.specialties,
@@ -169,13 +172,16 @@ const RegistrationForm = () => {
       if (response.ok) {
         console.log('Pharmacy registered successfully:', data);
         Alert.alert('Success', 'Pharmacy registered successfully', [
-          { text: 'OK', onPress: () => navigation.navigate('/professional') }
+          { text: 'OK', onPress: () => navigation.navigate('pharmacist/tabs') }
         ]);
         // Reset the form
         setCurrentStep(1);
         setFormData({
           pharmacyName: '',
           address: '',
+          city: '',
+          state: '',
+          postalCode: '',
           phone: '',
           ownerName: '',
           ownerEmail: '',
@@ -237,14 +243,6 @@ const RegistrationForm = () => {
           />
           <TextInput
             mode="outlined"
-            label="Address"
-            placeholder="Enter address"
-            value={formData.address}
-            onChangeText={(text) => handleInputChange('address', text)}
-            style={styles.input}
-          />
-          <TextInput
-            mode="outlined"
             label="Phone Number"
             placeholder="e.g., 123-456-7890"
             keyboardType="phone-pad"
@@ -260,8 +258,47 @@ const RegistrationForm = () => {
         </View>
       </Collapsible>
 
-      {/* Owner Information */}
+      {/* Address Information */}
       <Collapsible collapsed={currentStep !== 2}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Address Information</Text>
+          <TextInput
+            mode="outlined"
+            label="Street Address"
+            placeholder="Enter street address"
+            value={formData.address}
+            onChangeText={(text) => handleInputChange('address', text)}
+            style={styles.input}
+          />
+          <TextInput
+            mode="outlined"
+            label="City"
+            placeholder="Enter city"
+            value={formData.city}
+            onChangeText={(text) => handleInputChange('city', text)}
+            style={styles.input}
+          />
+          <TextInput
+            mode="outlined"
+            label="State"
+            placeholder="Enter state"
+            value={formData.state}
+            onChangeText={(text) => handleInputChange('state', text)}
+            style={styles.input}
+          />
+          <TextInput
+            mode="outlined"
+            label="Postal Code"
+            placeholder="Enter postal code"
+            value={formData.postalCode}
+            onChangeText={(text) => handleInputChange('postalCode', text)}
+            style={styles.input}
+          />
+        </View>
+      </Collapsible>
+
+      {/* Owner Information */}
+      <Collapsible collapsed={currentStep !== 3}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Owner Information</Text>
           <TextInput
@@ -286,7 +323,7 @@ const RegistrationForm = () => {
       </Collapsible>
 
       {/* Additional Details */}
-      <Collapsible collapsed={currentStep !== 3}>
+      <Collapsible collapsed={currentStep !== 4}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Additional Details</Text>
           <TextInput
@@ -364,7 +401,7 @@ const RegistrationForm = () => {
             Previous
           </Button>
         )}
-        {currentStep < 3 ? (
+        {currentStep < 4 ? (
           <Button
             mode="contained"
             onPress={() => handleStepChange('next')}
