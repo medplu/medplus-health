@@ -23,16 +23,30 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
   ];
 
   useEffect(() => {
-    fetch('https://restcountries.com/v3.1/all')
-      .then(response => response.json())
-      .then(data => {
+    const fetchCountries = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+  
+      try {
+        const response = await fetch('https://restcountries.com/v3.1/all', { signal: controller.signal });
+        const data = await response.json();
         const countryList = data.map((country: { name: { common: string }; cca2: string }) => ({
           label: country.name.common,
           value: country.cca2,
         }));
         setCountries(countryList);
-      })
-      .catch(error => console.error('Error fetching countries:', error));
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          console.error('Fetch request timed out');
+        } else {
+          console.error('Error fetching countries:', error);
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+  
+    fetchCountries();
   }, []);
 
   const handleChange = (key: string, value: any) => {
@@ -62,13 +76,8 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
       type: file.type,
     });
   
-    // Logging FormData entries to debug
-    for (let pair of formData.entries()) {
-      console.log(`${pair[0]}: ${pair[1]}`);
-    }
-  
     try {
-      const response = await fetch('https://medplus-health.onrender.com/api/files/upload', {
+      const response = await fetch('https://medplus-health.onrender.com/api/upload', {
         method: 'POST',
         body: formData,
         headers: {
@@ -76,13 +85,12 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
         },
       });
   
-      const data = await response.json();
-      console.log('Upload Response:', data);
-  
-      if (response.ok && data.fileUrl) {
-        return data.fileUrl;
+      if (response.ok) {
+        const responseText = await response.text();
+        console.log(responseText); // Should log "File uploaded successfully"
+        return responseText;
       } else {
-        console.error('Error uploading file:', data);
+        console.error('File upload failed:', response.statusText);
         return null;
       }
     } catch (error) {
@@ -95,27 +103,19 @@ const EducationInfo: React.FC<EducationInfoProps> = ({ prevStep, nextStep, educa
     try {
       const result = await DocumentPicker.getDocumentAsync({});
   
-      console.log('DocumentPicker result:', result);
-  
-      if (!result.canceled && result.assets) {
-        const { uri, name, mimeType } = result.assets[0];
-        console.log('File URI:', uri);
-        console.log('File name:', name);
-        console.log('File MIME type:', mimeType);
-  
-        const fileUrl = await uploadFile({ uri, name, type: mimeType });
-        if (fileUrl) {
-          handleChange('certificateUrl', fileUrl);
-          console.log('File uploaded successfully:', fileUrl);
+      if (result.type !== 'cancel') {
+        const { uri, name, mimeType } = result;
+        const uploadResult = await uploadFile({ uri, name, type: mimeType });
+        if (uploadResult) {
+          console.log('File uploaded successfully:', uploadResult);
         } else {
-          console.error('Failed to upload file');
+          console.error('File upload failed');
         }
       }
     } catch (error) {
       console.error('Error during file selection/upload:', error);
     }
   };
-  
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Education Information</Text>

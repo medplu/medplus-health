@@ -4,20 +4,14 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const http = require("http");
-const paymentRoutes = require('./routes/payment.route'); // Renamed for clarity
-const subaccountRoutes = require('./routes/subaccount.routes'); // Import subaccount routes
 const { Server } = require("socket.io");
-const fileUpload = require("express-fileupload");
-const fileRoutes = require('./routes/file.route'); // Corrected file path
-const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+const fs = require('fs');
+const ejs = require('ejs');
 const path = require('path');
-dotenv.config();
+const cloudinary = require('cloudinary').v2;
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+dotenv.config();
 
 const app = express();
 const port = 3000;
@@ -32,98 +26,71 @@ const io = new Server(server, {
   },
 });
 
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Middleware setup
 app.use(cors());
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: false }));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(express.json());
-
-// File upload middleware
 app.use(express.urlencoded({ extended: true }));
 
-mongoose.connect(process.env.MONGO_URI).then(() => {
-    console.log("MongoDB connected");
-}).catch((error) => {
-    console.log("Error connecting to MongoDB", error);
+// Multer setup for file uploads
+const upload = multer({ dest: 'uploads/' });
+
+// File upload route using multer
+app.post('/api/upload', upload.single('file'), (req, res) => { // Ensured the field name 'file' is specified
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+  res.send("File uploaded successfully");
 });
 
-// Import the user routes
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI).then(() => {
+  console.log("MongoDB connected");
+}).catch((error) => {
+  console.log("Error connecting to MongoDB", error);
+});
+
+// Import routes
 const userRoutes = require('./routes/user.routes');
-
-// Import the professional routes
 const professionalRoutes = require('./routes/professional.routes');
-
-// Import the appointment routes
 const appointmentRoutes = require('./routes/appointment.routes');
-
-// Import the clinic routes
 const clinicRoutes = require('./routes/clinic.route');
-
-// Import the category routes
 const categoryRoutes = require('./routes/category.routes');
-
-// Import the clinic appointment routes
 const clinicAppointmentRoutes = require('./routes/clinic_appointment.routes');
-
-// Import the pharmacy routes
-const pharmacyRoutes = require('./routes/pharmacy.routes'); // Import the new pharmacy routes
-
-// Import the schedule routes
-const scheduleRoutes = require('./routes/schedule.route'); // Import the schedule routes
-
-// Import the patient routes
+const pharmacyRoutes = require('./routes/pharmacy.routes');
+const scheduleRoutes = require('./routes/schedule.route');
 const patientRoutes = require('./routes/patient.routes');
-
-// Import the catalogue routes
-const catalogueRoutes = require('./routes/catalogue.route'); // Import the catalogue routes
-
-// Import the prescription routes
-const prescriptionRoutes = require('./routes/prescription.routes'); // Import the prescription routes
-
-// Use the user routes
-app.use('/api', userRoutes);
-
-// Use the professional routes
-app.use('/api', professionalRoutes);
-
-app.use('/api/files', fileRoutes);
-
-// Use the category routes
-app.use('/api/categories', categoryRoutes);
-
-// Use the payment routes
-app.use('/api/payment', paymentRoutes); // Corrected route path
-
-// Use the subaccount routes
-app.use('/api', subaccountRoutes); // Added subaccount routes
-
-// Use the appointment routes
-app.use('/api', appointmentRoutes);
-
-// Use the clinic routes
-app.use('/api/clinics', clinicRoutes);
-
-// Use the clinic appointment routes
-app.use('/api/clinic', clinicAppointmentRoutes);
-
-// Use the pharmacy routes
-app.use('/api/pharmacies', pharmacyRoutes); // Added the new pharmacy routes
-
-// Use the schedule routes
-app.use('/api', scheduleRoutes); // Added the schedule routes
-
-// Use the patient routes
-app.use('/api', patientRoutes);
-
-// Use the catalogue routes
-app.use('/api', catalogueRoutes); // Use the catalogue routes
-
-// Use the prescription routes
-app.use('/api', prescriptionRoutes); // Use the prescription routes
-
-// Import the appointments route
+const catalogueRoutes = require('./routes/catalogue.route');
+const prescriptionRoutes = require('./routes/prescription.routes');
+const paymentRoutes = require('./routes/payment.route');
+const subaccountRoutes = require('./routes/subaccount.routes');
+const fileRoutes = require('./routes/file.route');
 const appointmentsRoute = require('./routes/appointments');
-app.use('/api/appointments', appointmentsRoute);
 
+// Use routes
+app.use('/api', userRoutes);
+app.use('/api', professionalRoutes);
+app.use('/api', appointmentRoutes);
+app.use('/api/clinics', clinicRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/clinic', clinicAppointmentRoutes);
+app.use('/api/pharmacies', pharmacyRoutes);
+app.use('/api', scheduleRoutes);
+app.use('/api', patientRoutes);
+app.use('/api', catalogueRoutes);
+app.use('/api', prescriptionRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api', subaccountRoutes);
+app.use('/api/files', fileRoutes);
+app.use('/api/appointments', appointmentsRoute);
 app.use('/prescriptions', prescriptionRoutes);
 
 // Define the route to fill the template with prescription data
@@ -157,6 +124,7 @@ io.on("connection", (socket) => {
 // Make io accessible to routes
 app.set("socketio", io);
 
+// Start the server
 server.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });
