@@ -76,7 +76,7 @@ const Index = () => {
       if (response.ok) {
         console.log('Clinic registered successfully:', data);
         Alert.alert('Success', 'Clinic registered successfully', [
-          { text: 'OK', onPress: () => navigation.navigate('/professional') }
+          { text: 'OK', onPress: () => navigation.navigate('/professional/tabs') }
         ]);
         // Reset the form
         setStep(1);

@@ -37,7 +37,10 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
   const assistantPhoneInput = useRef<PhoneInput>(null);
 
   const handleChange = (key, value) => {
-    const updatedData = { ...clinicData, [key]: value };
+    const updatedData = { 
+      ...clinicData, 
+      [key]: key === 'images' ? [...(clinicData.images || []), ...value] : value 
+    };
     console.log('Updated Clinic Data:', updatedData);
     onClinicDataChange(updatedData);
   };
@@ -54,12 +57,24 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
+      allowsMultipleSelection: true, // Enable multiple selection
     });
 
     if (!result.canceled && result.assets) {
-      const resizedUri = await resizeImage(result.assets[0].uri);
-      const secureUrl = await handleUpload({ uri: resizedUri });
-      handleChange('images', [{ uri: secureUrl }]);
+      setIsUploading(true);
+      try {
+        const imageUris = await Promise.all(result.assets.map(async (asset) => {
+          const resizedUri = await resizeImage(asset.uri);
+          const secureUrl = await handleUpload({ uri: resizedUri });
+          return { uri: secureUrl };
+        }));
+        handleChange('images', imageUris);
+      } catch (error) {
+        console.error('Error uploading images:', error);
+        Alert.alert('Error', 'An error occurred while uploading images');
+      } finally {
+        setIsUploading(false);
+      }
     }
   }, []);
 
@@ -78,9 +93,17 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     });
 
     if (!result.canceled && result.assets) {
-      const resizedUri = await resizeImage(result.assets[0].uri);
-      const secureUrl = await handleUpload({ uri: resizedUri });
-      handleChange('images', [{ uri: secureUrl }]);
+      setIsUploading(true);
+      try {
+        const resizedUri = await resizeImage(result.assets[0].uri);
+        const secureUrl = await handleUpload({ uri: resizedUri });
+        handleChange('images', [{ uri: secureUrl }]);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        Alert.alert('Error', 'An error occurred while uploading the image');
+      } finally {
+        setIsUploading(false);
+      }
     }
   }, []);
 
