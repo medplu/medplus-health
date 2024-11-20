@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Image, View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
@@ -32,10 +32,15 @@ export default function ImagePickerExample({ pharmacyId }) {
 
   const handleUpload = async (source) => {
     setUploading(true);
-    const cloudinaryUrl = await uploadImageToCloudinary(source.uri);
-    setImage(cloudinaryUrl);
-    await sendImageUrlToBackend(cloudinaryUrl);
-    setUploading(false);
+    try {
+      const cloudinaryUrl = await uploadImageToCloudinary(source.uri);
+      setImage(cloudinaryUrl);
+      await sendImageUrlToBackend(cloudinaryUrl);
+    } catch (error) {
+      console.error('Error uploading image to Cloudinary:', error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const pickImage = async () => {
@@ -60,6 +65,21 @@ export default function ImagePickerExample({ pharmacyId }) {
   const retakeImage = () => {
     setImage(null);
   };
+
+  const testNetworkRequest = async () => {
+    try {
+      const response = await fetch('https://jsonplaceholder.typicode.com/todos/1');
+      const data = await response.json();
+      console.log('Test network request response:', data);
+    } catch (error) {
+      console.error('Test network request error:', error);
+    }
+  };
+
+  // Call testNetworkRequest to ensure network requests are working
+  useEffect(() => {
+    testNetworkRequest();
+  }, []);
 
   return (
     <View style={styles.container}>
