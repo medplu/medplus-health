@@ -1,18 +1,6 @@
-import { manipulateAsync } from 'expo-image-manipulator';
-
 export const uploadImageToCloudinary = async (imageUri) => {
-  if (typeof imageUri !== 'string') {
-    throw new TypeError('The "imageUri" argument must be a string');
-  }
-
-  const resizeImage = async (uri) => {
-    const result = await manipulateAsync(uri, [{ resize: { width: 800 } }]);
-    return result.uri;
-  };
-
-  const resizedUri = await resizeImage(imageUri);
   const data = new FormData();
-  const response = await fetch(resizedUri);
+  const response = await fetch(imageUri);
   const blob = await response.blob();
 
   data.append('file', blob);
@@ -26,7 +14,6 @@ export const uploadImageToCloudinary = async (imageUri) => {
       body: data,
     });
     const result = await uploadResponse.json();
-    console.log('Cloudinary Upload Response:', result); 
     return result.secure_url;
   } catch (uploadError) {
     console.error('Error uploading image to Cloudinary:', uploadError);

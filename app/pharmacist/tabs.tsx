@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import PharmacistDashboardScreen from './PharmacistDashboardScreen'; 
 import InventoryScreen from './InventoryScreen'; 
 import ReportsScreen from './ReportsScreen';
+import Sales from './Sales';
 
 const Tab = createBottomTabNavigator();
 

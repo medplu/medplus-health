@@ -4,9 +4,9 @@ import { TextInput, Button } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Collapsible from 'react-native-collapsible';
 import { useSelector } from 'react-redux';
-import { selectUser } from '../store/userSlice'; 
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { selectUser } from '../store/userSlice';
+import Toast from 'react-native-toast-message';
+import PharmacyInfo from './PharmacyInfo';
 
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
@@ -39,7 +39,7 @@ const RegistrationForm = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [image, setImage] = useState<string | null>(null);
-  const [uploading, setUploading] = useState<boolean>(false);
+  const [pharmacyId, setPharmacyId] = useState<string | null>(null); // New state to store pharmacy ID
 
   const handleInputChange = (field, value) => {
     setFormData({
@@ -49,71 +49,15 @@ const RegistrationForm = () => {
   };
 
   const handleStepChange = (direction) => {
-    if (direction === 'next' && currentStep < 4) {
+    if (direction === 'next' && currentStep < 5) {
       setCurrentStep(currentStep + 1);
     } else if (direction === 'prev' && currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
 
-  const resizeImage = async (uri: string) => {
-    const result = await ImageManipulator.manipulateAsync(uri, [
-      { resize: { width: 800 } },
-    ]);
-    return result.uri;
-  };
-
-  const pickImage = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Sorry, we need camera roll permissions to make this work!');
-      return;
-    }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets) {
-      const resizedUri = await resizeImage(result.assets[0].uri);
-      setImage(resizedUri);
-    }
-  }, []);
-
-  const uploadImageToCloudinary = async (imageUri: string): Promise<string> => {
-    const data = new FormData();
-    const response = await fetch(imageUri);
-    const blob = await response.blob();
-
-    data.append('file', blob);
-    data.append('upload_preset', 'medplus');
-    data.append('quality', 'auto');
-    data.append('fetch_format', 'auto');
-
-    try {
-      const uploadResponse = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
-        method: 'POST',
-        body: data,
-      });
-      const result = await uploadResponse.json();
-      return result.secure_url;
-    } catch (uploadError) {
-      console.error('Error uploading image to Cloudinary:', uploadError);
-      throw uploadError;
-    }
-  };
-
   const handleSubmit = async () => {
-    setUploading(true);
     try {
-      let imageUrl = image;
-      if (image) {
-        imageUrl = await uploadImageToCloudinary(image);
-      }
-
       const payload = {
         pharmacyData: {
           name: formData.pharmacyName,
@@ -136,7 +80,6 @@ const RegistrationForm = () => {
           },
           licenseNumber: formData.licenseNumber,
           services: [],
-          image: imageUrl,
         }
       };
 
@@ -146,52 +89,25 @@ const RegistrationForm = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: payload.pharmacyData.name,
-          contactNumber: payload.pharmacyData.contactNumber,
-          email: payload.pharmacyData.email,
-          address: {
-            street: payload.pharmacyData.address.street,
-            city: payload.pharmacyData.address.city,
-            state: payload.pharmacyData.address.state,
-            postalCode: payload.pharmacyData.address.postalCode,
-          },
-          insuranceCompanies: payload.pharmacyData.insuranceCompanies,
-          specialties: payload.pharmacyData.specialties,
-          assistantName: payload.pharmacyData.assistantName,
-          assistantPhone: payload.pharmacyData.assistantPhone,
-          images: payload.pharmacyData.images || [],
-          operatingHours: payload.pharmacyData.operatingHours,
-          licenseNumber: payload.pharmacyData.licenseNumber,
-          services: payload.pharmacyData.services,
-          image: payload.pharmacyData.image
-        }),
+        body: JSON.stringify(payload.pharmacyData),
       });
 
       const data = await response.json();
       if (response.ok) {
         console.log('Pharmacy registered successfully:', data);
-        Alert.alert('Success', 'Pharmacy registered successfully', [
-          { text: 'OK', onPress: () => navigation.navigate('pharmacist/tabs') }
-        ]);
-        setCurrentStep(1);
-        setFormData({
-          pharmacyName: '',
-          address: '',
-          city: '',
-          state: '',
-          postalCode: '',
-          phone: '',
-          ownerName: '',
-          ownerEmail: '',
-          licenseNumber: '',
-          openingTime: '',
-          closingTime: '',
-          insuranceCompanies: [],
-          assistantName: '',
-          assistantPhone: ''
+        setPharmacyId(data.pharmacy._id); // Store the pharmacy ID
+        Toast.show({
+          type: 'success',
+          text1: 'Pharmacy registered successfully',
+          text2: 'Proceed to upload an image',
+          onPress: () => {
+            setCurrentStep(5); // Move to the image handling step
+            Toast.hide(); // Hide the toast message
+          },
+          position: 'bottom',
+          autoHide: false,
+          bottomOffset: 50,
         });
-        setImage(null);
       } else {
         console.error('Error registering pharmacy:', data);
         Alert.alert('Error', 'Error registering pharmacy');
@@ -199,8 +115,34 @@ const RegistrationForm = () => {
     } catch (error) {
       console.error('Error:', error);
       Alert.alert('Error', 'An error occurred');
-    } finally {
-      setUploading(false);
+    }
+  };
+
+  const handleImageSubmit = async (imageUrl: string) => {
+    if (!pharmacyId || !imageUrl) return;
+
+    try {
+      const response = await fetch(`https://medplus-health.onrender.com/api/pharmacies/${pharmacyId}/image`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageUrl }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        console.log('Image uploaded successfully:', data);
+        Alert.alert('Success', 'Image uploaded successfully', [
+          { text: 'OK', onPress: () => navigation.navigate('pharmacist/tabs') }
+        ]);
+      } else {
+        console.error('Error uploading image:', data);
+        Alert.alert('Error', 'Error uploading image');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      Alert.alert('Error', 'An error occurred');
     }
   };
 
@@ -225,7 +167,7 @@ const RegistrationForm = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.stepIndicator}>
-        <Text>Step {currentStep} of 3</Text>
+        <Text>Step {currentStep} of 4</Text>
       </View>
 
       <Collapsible collapsed={currentStep !== 1}>
@@ -249,10 +191,6 @@ const RegistrationForm = () => {
             style={styles.input}
             left={<TextInput.Icon name={() => <Icon name="phone" size={20} />} />}
           />
-          <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
-            <Text style={styles.uploadButtonText}>Pick an image from camera roll</Text>
-          </TouchableOpacity>
-          {image && <Image source={{ uri: image }} style={styles.image} />}
         </View>
       </Collapsible>
 
@@ -347,14 +285,6 @@ const RegistrationForm = () => {
             style={styles.input}
             left={<TextInput.Icon name={() => <Icon name="access-time" size={20} />} />}
           />
-          <TextInput
-            mode="outlined"
-            label="Insurance Companies"
-            placeholder="Enter insurance companies (comma separated)"
-            value={formData.insuranceCompanies}
-            onChangeText={(text) => handleInputChange('insuranceCompanies', text)}
-            style={styles.input}
-          />
           <FlatList
             data={insuranceCompanies}
             renderItem={({ item, index }) => renderCard(item, formData.insuranceCompanies || [], (selectedItems) => handleInputChange('insuranceCompanies', selectedItems), index)}
@@ -385,8 +315,12 @@ const RegistrationForm = () => {
         </View>
       </Collapsible>
 
+      {currentStep === 5 && (
+        <PharmacyInfo pharmacyId={pharmacyId} />
+      )}
+
       <View style={styles.buttonsContainer}>
-        {currentStep > 1 && (
+        {currentStep > 1 && currentStep < 5 && (
           <Button
             mode="contained-tonal"
             onPress={() => handleStepChange('prev')}
@@ -403,17 +337,17 @@ const RegistrationForm = () => {
           >
             Next
           </Button>
-        ) : (
+        ) : currentStep === 4 ? (
           <Button
             mode="contained"
             onPress={handleSubmit}
             style={styles.submitButton}
-            disabled={uploading}
           >
-            {uploading ? "Submitting..." : "Submit"}
+            Submit
           </Button>
-        )}
+        ) : null}
       </View>
+      <Toast ref={(ref) => Toast.setRef(ref)} />
     </ScrollView>
   );
 };

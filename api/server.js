@@ -75,6 +75,7 @@ const subaccountRoutes = require('./routes/subaccount.routes');
 const fileRoutes = require('./routes/file.route');
 const appointmentsRoute = require('./routes/appointments');
 const searchRoutes = require('./routes/search.routes'); 
+const imageRoutes = require('./routes/image.route');
 
 // Use routes
 app.use('/api', userRoutes);
@@ -94,6 +95,7 @@ app.use('/api/files', fileRoutes);
 app.use('/api/appointments', appointmentsRoute);
 app.use('/prescriptions', prescriptionRoutes);
 app.use('/api', searchRoutes);
+app.use('/api/images', imageRoutes);
 
 // Define the route to fill the template with prescription data
 app.post('/api/fill-template', (req, res) => {
