@@ -15,81 +15,61 @@ const createPharmacy = async (req, res) => {
             street,
             city,
             state,
-            postalCode, // Updated field
-            operatingHours: rawOperatingHours, 
+            postalCode, 
+            operatingHours: rawOperatingHours,
             licenseNumber,
             insuranceCompanies,
             languages,
             assistantName,
             assistantPhone,
-            image // The image URL is expected here
+            image 
         } = req.body;
 
         const professionalId = req.params.professionalId;
 
-        // Log to verify received data
-        console.log('Received payload:', req.body);
-
         if (!professionalId) {
-            return res.status(400).json({ error: 'professionalId is required' });
+            return res.status(400).json({ error: 'Professional ID is required.' });
         }
 
-        let operatingHours;
+        // Parse and validate operating hours
+        let operatingHours = typeof rawOperatingHours === 'string' 
+            ? JSON.parse(rawOperatingHours) 
+            : rawOperatingHours;
 
-        // Check if `operatingHours` is an object or string and parse if needed
-        if (typeof rawOperatingHours === 'string') {
-            try {
-                operatingHours = JSON.parse(rawOperatingHours);
-            } catch (error) {
-                return res.status(400).json({ error: 'Invalid format for operatingHours' });
-            }
-        } else {
-            operatingHours = rawOperatingHours;
-        }
-
-        // Check if `operatingHours` has `open` and `close`
         if (!operatingHours?.open || !operatingHours?.close) {
-            return res.status(400).json({ error: 'Both operatingHours.open and operatingHours.close are required' });
+            return res.status(400).json({ error: 'Both opening and closing hours are required.' });
         }
 
-        // Find the professional by ID
+        // Find and validate the professional
         const professional = await Professional.findById(professionalId);
-
-        // Check if the professional exists and if they are a pharmacist
         if (!professional) {
-            return res.status(404).json({ error: 'Professional not found' });
+            return res.status(404).json({ error: 'Professional not found.' });
         }
 
         if (professional.profession !== 'pharmacist') {
-            return res.status(403).json({ error: 'Only pharmacists can create a pharmacy' });
+            return res.status(403).json({ error: 'Only pharmacists can create a pharmacy.' });
         }
 
-        // Check if the professional is already attached to a pharmacy
         if (professional.attachedToPharmacy) {
-            return res.status(400).json({ error: 'Professional is already attached to a pharmacy' });
+            return res.status(400).json({ error: 'Professional is already attached to a pharmacy.' });
         }
 
         // Generate a unique reference code for the pharmacy
         const referenceCode = generateReferenceCode();
 
-        // Create a new pharmacy
+        // Create and save the pharmacy
         const pharmacy = new Pharmacy({
             name,
             contactNumber,
             email,
-            address: {
-                street,
-                city,
-                state,
-                postalCode // Updated field
-            },
+            address: { street, city, state, postalCode },
             pharmacists: [professional._id],
             operatingHours: {
                 open: operatingHours.open,
                 close: operatingHours.close
             },
             licenseNumber,
-            image, // The image URL is assigned here
+            image,
             referenceCode,
             insuranceCompanies,
             languages,
@@ -97,27 +77,25 @@ const createPharmacy = async (req, res) => {
             assistantPhone
         });
 
-        // Save the pharmacy to the database
         const savedPharmacy = await pharmacy.save();
 
+        // Update the professional
         professional.pharmacy = savedPharmacy._id;
         professional.attachedToPharmacy = true;
-        
-        const updatedProfessional = await professional.save();
-        console.log('Updated Professional:', updatedProfessional);
+        await professional.save();
 
-        // Send a success response
         return res.status(201).json({
-            message: 'Pharmacy created successfully',
+            message: 'Pharmacy created successfully.',
             pharmacy: savedPharmacy
         });
     } catch (error) {
         console.error(error);
         return res.status(500).json({
-            error: 'An error occurred while creating the pharmacy'
+            error: 'An error occurred while creating the pharmacy.'
         });
     }
 };
+
 
 
 // Controller to update the location of a pharmacy
