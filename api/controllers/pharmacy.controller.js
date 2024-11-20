@@ -101,20 +101,7 @@ const createPharmacy = async (req, res) => {
         const savedPharmacy = await pharmacy.save();
 
         // Update the professional to be attached to the new pharmacy
-        const updatedProfessional = await Professional.findOneAndUpdate(
-            { _id: professionalId },
-            {
-                pharmacy: savedPharmacy._id,
-                attachedToPharmacy: true
-            },
-            { new: true }
-        );
-
-        if (!updatedProfessional) {
-            console.warn(`No professional found for ID: ${professionalId}`);
-        }
-
-        // Ensure the professional's attachedToPharmacy attribute is updated
+        professional.pharmacy = savedPharmacy._id;
         professional.attachedToPharmacy = true;
         await professional.save();
 

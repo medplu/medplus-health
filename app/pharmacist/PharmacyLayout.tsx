@@ -15,7 +15,7 @@ const PharmacyLayout = () => {
       <PharmacyHeader />
       <View style={styles.innerContainer}>
         <Stack>
-          <Stack.Screen name="Tabs" options={{ headerShown: false }} />
+          <Stack.Screen name="Tabs" component={PharmacyTabs} options={{ headerShown: false }} />
           <Stack.Screen name="DrugScreen" options={{ headerShown: true, title: 'Drugs' }} />
           <Stack.Screen name="PrescriptionList" options={{headerShown: true}} />
           <Stack.Screen name="PrescriptionDetails" options={{headerShown: true}}/>

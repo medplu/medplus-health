@@ -11,8 +11,7 @@ const Tab = createBottomTabNavigator();
 const PharmacistTabs = () => {
     return (
         <>
-          
-            <Tab.Navigator>
+            <Tab.Navigator screenOptions={{ headerShown: false }}>
                 <Tab.Screen 
                     name="Dashboard" 
                     component={PharmacistDashboardScreen} 
