@@ -13,7 +13,7 @@ export default function ImagePickerExample({ pharmacyId }) {
 
   const sendImageUrlToBackend = async (imageUrl: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/images/upload`, {
+      const response = await fetch(`https://medplus-health.onrender.com/api/images/upload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
