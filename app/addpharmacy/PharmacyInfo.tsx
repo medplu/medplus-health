@@ -55,8 +55,8 @@ export default function ImagePickerExample({ pharmacyId }) {
 
     if (!result.canceled) {
       const uri = result.assets[0].uri;
-      const type = result.assets[0].type || 'image'; // Default to 'image' if type is not available
-      const name = uri.split('/').pop(); // Extract the file name from the URI
+      const type = result.assets[0].type || 'image';
+      const name = uri.split('/').pop(); 
       const source = { uri, type, name };
       handleUpload(source);
     }
