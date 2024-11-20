@@ -30,6 +30,14 @@ export default function ImagePickerExample({ pharmacyId }) {
     }
   };
 
+  const handleUpload = async (source) => {
+    setUploading(true);
+    const cloudinaryUrl = await uploadImageToCloudinary(source.uri);
+    setImage(cloudinaryUrl);
+    await sendImageUrlToBackend(cloudinaryUrl);
+    setUploading(false);
+  };
+
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -41,11 +49,11 @@ export default function ImagePickerExample({ pharmacyId }) {
     console.log(result);
 
     if (!result.canceled) {
-      setUploading(true);
-      const cloudinaryUrl = await uploadImageToCloudinary(result.assets[0].uri);
-      setImage(cloudinaryUrl);
-      await sendImageUrlToBackend(cloudinaryUrl);
-      setUploading(false);
+      const uri = result.assets[0].uri;
+      const type = result.assets[0].type || 'image'; // Default to 'image' if type is not available
+      const name = uri.split('/').pop(); // Extract the file name from the URI
+      const source = { uri, type, name };
+      handleUpload(source);
     }
   };
 
