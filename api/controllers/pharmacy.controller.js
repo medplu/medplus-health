@@ -114,6 +114,10 @@ const createPharmacy = async (req, res) => {
             console.warn(`No professional found for ID: ${professionalId}`);
         }
 
+        // Ensure the professional's attachedToPharmacy attribute is updated
+        professional.attachedToPharmacy = true;
+        await professional.save();
+
         // Send a success response
         return res.status(201).json({
             message: 'Pharmacy created successfully',
