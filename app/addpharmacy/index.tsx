@@ -39,7 +39,7 @@ const RegistrationForm = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [image, setImage] = useState<string | null>(null);
-  const [pharmacyId, setPharmacyId] = useState<string | null>(null); // New state to store pharmacy ID
+  const [pharmacyId, setPharmacyId] = useState<string | null>(null);
 
   const handleInputChange = (field, value) => {
     setFormData({
@@ -95,14 +95,14 @@ const RegistrationForm = () => {
       const data = await response.json();
       if (response.ok) {
         console.log('Pharmacy registered successfully:', data);
-        setPharmacyId(data.pharmacy._id); // Store the pharmacy ID
+        setPharmacyId(data.pharmacy._id);
         Toast.show({
           type: 'success',
           text1: 'Pharmacy registered successfully',
           text2: 'Proceed to upload an image',
           onPress: () => {
-            setCurrentStep(5); // Move to the image handling step
-            Toast.hide(); // Hide the toast message
+            setCurrentStep(5);
+            Toast.hide();
           },
           position: 'bottom',
           autoHide: false,
