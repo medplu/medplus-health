@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Image, View, StyleSheet, ActivityIndicator } from 'react-native';
+import { Button, Image, View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToCloudinary } from '../utils/cloudinary';
 import { useRouter } from 'expo-router';
@@ -49,11 +49,22 @@ export default function ImagePickerExample({ pharmacyId }) {
     }
   };
 
+  const retakeImage = () => {
+    setImage(null);
+  };
+
   return (
     <View style={styles.container}>
+      <Text style={styles.header}>Upload Pharmacy Image</Text>
+      <Text style={styles.description}>Please select an image to upload for the pharmacy.</Text>
       <Button title="Pick an image from camera roll" onPress={pickImage} disabled={uploading} />
       {uploading && <ActivityIndicator size="large" color="#0000ff" />}
-      {image && <Image source={{ uri: image }} style={styles.image} />}
+      {image && (
+        <>
+          <Image source={{ uri: image }} style={styles.image} />
+          <Button title="Retake Image" onPress={retakeImage} />
+        </>
+      )}
     </View>
   );
 }
@@ -68,5 +79,16 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     marginTop: 20,
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 16,
+    color: 'gray',
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
