@@ -100,10 +100,11 @@ const createPharmacy = async (req, res) => {
         // Save the pharmacy to the database
         const savedPharmacy = await pharmacy.save();
 
-        // Update the professional to be attached to the new pharmacy
         professional.pharmacy = savedPharmacy._id;
         professional.attachedToPharmacy = true;
-        await professional.save();
+        
+        const updatedProfessional = await professional.save();
+        console.log('Updated Professional:', updatedProfessional);
 
         // Send a success response
         return res.status(201).json({

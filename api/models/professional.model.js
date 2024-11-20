@@ -16,6 +16,7 @@ const ProfessionalSchema = new Schema({
     profileImage: { type: String },
     location: { type: String },
     attachedToClinic: { type: Boolean },
+    attachedToPharmacy: { type: Boolean, default: false }, // Add this field
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });

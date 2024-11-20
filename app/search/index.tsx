@@ -2,8 +2,11 @@ import { StyleSheet, TextInput, SafeAreaView, Text, View, FlatList, TouchableOpa
 import React, { useState, useEffect } from 'react';
 import GlobalApi from '../../Services/GlobalApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRoute } from '@react-navigation/native';
 
 const index = () => {
+  const route = useRoute();
+  const { categoryQuery } = route.params || {};
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -12,10 +15,17 @@ const index = () => {
   const [filter, setFilter] = useState('');
   const [categoryList, setCategoryList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategories, setSelectedCategories] = useState(categoryQuery ? [categoryQuery] : []);
 
   useEffect(() => {
     getCategories();
   }, []);
+
+  useEffect(() => {
+    if (categoryQuery) {
+      handleSearch(searchQuery, categoryQuery);
+    }
+  }, [categoryQuery]);
 
   const getCategories = async () => {
     try {
@@ -69,40 +79,19 @@ const index = () => {
         value={searchQuery}
         onChangeText={(query) => handleSearch(query)}
       />
-      {loading ? (
-        <Text>Loading...</Text>
-      ) : (
-        <View>
-          <FlatList
-            data={categoryList}
-            horizontal={true}
-            showsHorizontalScrollIndicator={false}
-            style={styles.flatList}
-            contentContainerStyle={styles.contentContainer}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.categoryItem}
-                onPress={() => handleSpecialtyPress(item.name)}
-              >
-                <View style={specialty === item.name ? styles.categoryIconContainerActive : styles.categoryIconContainer}>
-                  <Image
-                    source={{ uri: item.icon }}
-                    style={styles.categoryIcon}
-                  />
-                </View>
-                <Text style={specialty === item.name ? styles.categoryBtnActive : styles.categoryBtnTxt}>{item.name}</Text>
-              </TouchableOpacity>
-            )}
-            keyExtractor={(item) => item.name}
-          />
-          <TextInput
-            placeholder="Filter"
-            style={styles.filterBox}
-            value={filter}
-            onChangeText={setFilter}
-          />
-        </View>
-      )}
+      <TextInput
+        placeholder="Filter"
+        style={styles.filterBox}
+        value={filter}
+        onChangeText={setFilter}
+      />
+      <View style={styles.selectedCategoriesContainer}>
+        {selectedCategories.map((category) => (
+          <Text key={category} style={styles.selectedCategory}>
+            {category}
+          </Text>
+        ))}
+      </View>
       {isLoading ? (
         <Text>Loading...</Text>
       ) : error ? (
@@ -137,40 +126,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
   },
-  flatList: {
-    marginTop: 5,
-  },
-  contentContainer: {
-    paddingHorizontal: 10,
-  },
-  categoryItem: {
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  categoryIconContainer: {
-    backgroundColor: '#ccc',
-    padding: 15,
-    borderRadius: 99,
-  },
-  categoryIconContainerActive: {
-    backgroundColor: '#000',
-    padding: 15,
-    borderRadius: 99,
-  },
-  categoryIcon: {
-    width: 30,
-    height: 30,
-  },
-  categoryBtnTxt: {
-    marginTop: 5,
-    textAlign: 'center',
-    color: '#000',
-  },
-  categoryBtnActive: {
-    marginTop: 5,
-    textAlign: 'center',
-    color: '#000',
-  },
   filterBox: {
     paddingHorizontal: 20,
     paddingVertical: 10,
@@ -178,6 +133,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     marginVertical: 10,
+  },
+  selectedCategoriesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 10,
+  },
+  selectedCategory: {
+    backgroundColor: '#ddd',
+    padding: 5,
+    borderRadius: 5,
+    marginRight: 5,
+    marginBottom: 5,
   },
   item: {
     padding: 10,

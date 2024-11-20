@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { ScrollView, Text, View, Alert, FlatList, TouchableOpacity, Image } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Collapsible from 'react-native-collapsible';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../store/userSlice';
 import Toast from 'react-native-toast-message';
@@ -167,10 +166,10 @@ const RegistrationForm = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.stepIndicator}>
-        <Text>Step {currentStep} of 4</Text>
+        <Text>Step {currentStep} of 5</Text>
       </View>
 
-      <Collapsible collapsed={currentStep !== 1}>
+      {currentStep === 1 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Pharmacy Information</Text>
           <TextInput
@@ -192,9 +191,9 @@ const RegistrationForm = () => {
             left={<TextInput.Icon name={() => <Icon name="phone" size={20} />} />}
           />
         </View>
-      </Collapsible>
+      )}
 
-      <Collapsible collapsed={currentStep !== 2}>
+      {currentStep === 2 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Address Information</Text>
           <TextInput
@@ -230,9 +229,9 @@ const RegistrationForm = () => {
             style={styles.input}
           />
         </View>
-      </Collapsible>
+      )}
 
-      <Collapsible collapsed={currentStep !== 3}>
+      {currentStep === 3 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Owner Information</Text>
           <TextInput
@@ -254,9 +253,9 @@ const RegistrationForm = () => {
             left={<TextInput.Icon name={() => <Icon name="email" size={20} />} />}
           />
         </View>
-      </Collapsible>
+      )}
 
-      <Collapsible collapsed={currentStep !== 4}>
+      {currentStep === 4 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Additional Details</Text>
           <TextInput
@@ -313,7 +312,7 @@ const RegistrationForm = () => {
             />
           </View>
         </View>
-      </Collapsible>
+      )}
 
       {currentStep === 5 && (
         <PharmacyInfo pharmacyId={pharmacyId} />
