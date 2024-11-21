@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TextInput, ScrollView, FlatList, TouchableOpacity, Alert } from 'react-native'; 
+import { StyleSheet, Text, View, TextInput, ScrollView, FlatList, TouchableOpacity, Alert, ToastAndroid } from 'react-native'; 
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
@@ -35,6 +35,7 @@ const languages = [
 
 const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isGalleryDisabled, setIsGalleryDisabled] = useState(false);
   const phoneInput = useRef<PhoneInput>(null);
   const assistantPhoneInput = useRef<PhoneInput>(null);
 
@@ -69,6 +70,8 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       setIsUploading(true);
       try {
         await uploadImagesToBackend(result.assets);
+        setIsGalleryDisabled(true); // Disable the Gallery button after upload
+        ToastAndroid.show('Images uploaded successfully!', ToastAndroid.SHORT);
       } catch (error) {
         console.error('Error uploading images:', error);
         Alert.alert('Error', 'An error occurred while uploading images');
@@ -105,7 +108,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     }
   }, []);
 
- 
+
 const uploadImagesToBackend = async (assets) => {
   const formData = new FormData();
   formData.append('professionalId', professionalId);
@@ -266,7 +269,7 @@ const uploadImagesToBackend = async (assets) => {
         <Text style={styles.sectionTitle}>Images</Text>
         <View style={styles.modalButtonWrapper}>
           <Button mode="contained" onPress={pickFromCamera} style={styles.button}>Camera</Button>
-          <Button mode="contained" onPress={pickFromGallery} style={styles.button}>Gallery</Button>
+          <Button mode="contained" onPress={pickFromGallery} style={styles.button} disabled={isGalleryDisabled}>Gallery</Button>
         </View>
       </View>
       <View style={styles.buttonContainer}>
@@ -322,6 +325,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   phoneInput: {
+    height: 50,
+    borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 8,
     marginBottom: 12,
