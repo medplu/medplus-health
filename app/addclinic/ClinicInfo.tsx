@@ -9,7 +9,7 @@ import PhoneInput from 'react-native-phone-input';
 import Colors from '@/components/Shared/Colors';
 import { Picker } from '@react-native-picker/picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import axios from 'axios';
+import * as FileSystem from 'expo-file-system';
 
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
@@ -105,56 +105,50 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     }
   }, []);
 
-  const uploadImagesToBackend = async (assets) => {
-    const formData = new FormData();
-    formData.append('professionalId', professionalId); 
-    for (const asset of assets) {
-      let imageUri = asset.uri;
+ 
+const uploadImagesToBackend = async (assets) => {
+  const formData = new FormData();
+  formData.append('professionalId', professionalId);
 
-      if (imageUri.startsWith('data:image')) {
-        const base64Data = imageUri.split(',')[1];
-        const blob = await fetch(`data:image/jpeg;base64,${base64Data}`).then(res => res.blob());
-        imageUri = URL.createObjectURL(blob);
-      }
+  for (const asset of assets) {
+    let imageUri = asset.uri;
 
-      const image = {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: `myImage-${Date.now()}.jpg`,
-      };
-
-      const response = await fetch(image.uri);
-      const blob = await response.blob();
-      formData.append('files', blob, image.name);
+    // If the image URI is base64, convert it to a file
+    if (imageUri.startsWith('data:image')) {
+      const base64Data = imageUri.split(',')[1];
+      const path = `${FileSystem.cacheDirectory}myImage-${Date.now()}.jpg`;
+      await FileSystem.writeAsStringAsync(path, base64Data, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      imageUri = path;
     }
 
-    Array.from(formData.entries()).forEach(([key, value]) => {
-      console.log(`${key}: ${value}`);
+    // Append file to FormData
+    const image = {
+      uri: imageUri,
+      type: 'image/jpeg',
+      name: `myImage-${Date.now()}.jpg`,
+    };
+    formData.append('files', image);
+  }
+
+  // Make the request
+  try {
+    const response = await fetch('https://medplus-health.onrender.com/api/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
 
-    try {
-      const res = await fetch('https://medplus-health.onrender.com/api/upload', { 
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-        },
-        body: formData,
-      });
+    const result = await response.json();
+    console.log(result);
+  } catch (error) {
+    console.error('Error uploading images:', error);
+  }
+};
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Error response from server:', errorText);
-        throw new Error(errorText);
-      }
-
-      const result = await res.json();
-      return result.urls; 
-    } catch (error) {
-      console.error('Error uploading images:', error);
-      Alert.alert('Error', 'An error occurred while uploading the images. Please try again later.');
-      throw error;
-    }
-  };
 
   const resizeImage = async (uri: string) => {
     const result = await ImageManipulator.manipulateAsync(uri, [
