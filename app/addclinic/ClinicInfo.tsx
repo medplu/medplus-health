@@ -138,7 +138,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     });
 
     try {
-      const res = await fetch('http://localhost:3000/api/upload', { // Update the URL to match your backend
+      const res = await fetch('https://medplus-health.onrender.com/api/upload', { // Update the URL to match your backend
         method: 'POST',
         headers: {
           'Accept': 'application/json',

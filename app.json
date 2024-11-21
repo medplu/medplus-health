@@ -22,7 +22,10 @@
               "medplusapp"
             ]
           }
-        ]  
+        ],
+        "NSCameraUsageDescription": "This app uses the camera to upload images.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload images.",
+        "NSPhotoLibraryAddUsageDescription": "This app needs access to add photos to your library."
       }
     },
     "android": {
@@ -51,6 +54,11 @@
             "DEFAULT"
           ]
         }
+      ],
+      "permissions": [
+        "INTERNET",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
