@@ -34,7 +34,7 @@ const Index = () => {
   };
 
   const handleClinicDataChange = (data) => {
-    console.log('Updated Clinic Data in Index:', data); // Verify clinicData
+    console.log('Updated Clinic Data in Index:', data);
     setClinicData(data);
   };
 
@@ -48,8 +48,8 @@ const Index = () => {
 
   const submit = async (payload) => {
     try {
-      const { images, ...clinicDataWithoutImages } = payload.clinicData; // Exclude images field
-      console.log('Clinic Data before submission:', clinicDataWithoutImages); // Verify payload
+      const { images, ...clinicDataWithoutImages } = payload.clinicData;
+      console.log('Clinic Data before submission:', clinicDataWithoutImages);
       const response = await fetch(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, {
         method: 'POST',
         headers: {
@@ -68,7 +68,6 @@ const Index = () => {
           assistantPhone: clinicDataWithoutImages.assistantPhone,
           bio: clinicDataWithoutImages.bio,
           certificateUrl: payload.educationData.certificateUrl,
-          // Remove images field
         }),
       });
 
@@ -125,7 +124,7 @@ const Index = () => {
           nextStep={nextStep}
           clinicData={clinicData}
           onClinicDataChange={handleClinicDataChange}
-          professionalId={professionalId} // Pass professionalId to ClinicInfo
+          professionalId={professionalId}
         />
       )}
       {step === 5 && (

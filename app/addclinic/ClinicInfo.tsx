@@ -5,13 +5,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../store/userSlice';
-
 import PhoneInput from 'react-native-phone-input';
 import Colors from '@/components/Shared/Colors';
 import { Picker } from '@react-native-picker/picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-
-
 import axios from 'axios';
 
 const insuranceCompanies = [
@@ -110,11 +107,10 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
 
   const uploadImagesToBackend = async (assets) => {
     const formData = new FormData();
-    formData.append('professionalId', professionalId); // Attach professionalId
+    formData.append('professionalId', professionalId); 
     for (const asset of assets) {
       let imageUri = asset.uri;
 
-      // Check if the URI is base64 encoded
       if (imageUri.startsWith('data:image')) {
         const base64Data = imageUri.split(',')[1];
         const blob = await fetch(`data:image/jpeg;base64,${base64Data}`).then(res => res.blob());
@@ -132,17 +128,15 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       formData.append('files', blob, image.name);
     }
 
-    // Log the FormData content
     formData.forEach((value, key) => {
       console.log(`${key}: ${value}`);
     });
 
     try {
-      const res = await fetch('https://medplus-health.onrender.com/api/upload', { // Update the URL to match your backend
+      const res = await fetch('https://medplus-health.onrender.com/api/upload', { 
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          // Remove 'Content-Type': 'multipart/form-data' header
         },
         body: formData,
       });
@@ -154,7 +148,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       }
 
       const result = await res.json();
-      return result.urls; // Ensure this matches the response structure from the backend
+      return result.urls; 
     } catch (error) {
       console.error('Error uploading images:', error);
       Alert.alert('Error', 'An error occurred while uploading the images. Please try again later.');
