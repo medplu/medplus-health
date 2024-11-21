@@ -18,6 +18,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../store/userSlice';
+import * as FileSystem from 'expo-file-system';
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -58,29 +59,6 @@ const ProfileScreen: React.FC = () => {
     }
   }, []);
 
-  const uploadImageToCloudinary = async (imageUri: string): Promise<string> => {
-    const data = new FormData();
-    const response = await fetch(imageUri);
-    const blob = await response.blob();
-
-    data.append('file', blob);
-    data.append('upload_preset', 'medplus');
-    data.append('quality', 'auto');
-    data.append('fetch_format', 'auto');
-
-    try {
-      const uploadResponse = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
-        method: 'POST',
-        body: data,
-      });
-      const result = await uploadResponse.json();
-      return result.secure_url;
-    } catch (uploadError) {
-      console.error('Error uploading image to Cloudinary:', uploadError);
-      throw uploadError;
-    }
-  };
-
   const handleSubmit = useCallback(async () => {
     if (!userId) {
       setError('User ID is required');
@@ -91,24 +69,37 @@ const ProfileScreen: React.FC = () => {
     setError(null);
 
     try {
-      let imageUrl = image;
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('contactInfo', contactInfo);
       if (image) {
-        imageUrl = await uploadImageToCloudinary(image);
+        let imageUri = image;
+
+        // If the image URI is base64, convert it to a file
+        if (imageUri.startsWith('data:image')) {
+          const base64Data = imageUri.split(',')[1];
+          const path = `${FileSystem.cacheDirectory}profileImage-${Date.now()}.jpg`;
+          await FileSystem.writeAsStringAsync(path, base64Data, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          imageUri = path;
+        }
+
+        const fileType = imageUri.split('.').pop();
+        formData.append('profileImage', {
+          uri: imageUri,
+          type: `image/${fileType}`,
+          name: `profileImage.${fileType}`,
+        });
       }
 
-      const profileData = {
-        name,
-        email,
-        contactInfo,
-        profileImage: imageUrl,
-      };
-
       const response = await axios.put(
-        `https://medplus-app.onrender.com/api/users/update-profile/${userId}`,
-        profileData,
+        `http://localhost:3000/api/users/update-profile/${userId}`,
+        formData,
         {
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data',
           },
         }
       );

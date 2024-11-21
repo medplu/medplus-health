@@ -59,9 +59,9 @@ const Clinics = ({ searchQuery, onViewAll }) => {
     });
   };
 
-  const handleResetClinics = () => {
-    dispatch(clearClinics());
-  };
+  // const handleResetClinics = () => {
+  //   dispatch(clearClinics());
+  // };
 
   const ClinicItem = ({ item }) => {
     const [currentImage, setCurrentImage] = useState(item.images && item.images.length > 0 ? item.images[0] : null);
@@ -119,9 +119,7 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   return (
     <Animated.View style={{ marginTop: 10, opacity: fadeAnim }}>
       <SubHeading subHeadingTitle={'Discover Clinics Near You'} onViewAll={onViewAll} />
-      <TouchableOpacity style={styles.resetButton} onPress={handleResetClinics}>
-        <Text style={styles.resetButtonText}>Reset Clinics</Text>
-      </TouchableOpacity>
+     
       <FlatList
         data={filteredClinicList}
         horizontal={true} 

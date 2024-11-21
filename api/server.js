@@ -74,6 +74,38 @@ app.post('/api/upload', upload.array('files'), (req, res, next) => {
   }
 });
 
+// New route for updating user profile with image upload
+app.put('/api/users/update-profile/:userId', upload.single('profileImage'), ImageUpload.uploadToCloudinary, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const { name, email, contactInfo } = req.body;
+    const profileImage = req.file ? req.file.cloudStoragePublicUrl : null;
+
+    // Find the user to update
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update user details
+    user.name = name || user.name;
+    user.email = email || user.email;
+    user.contactInfo = contactInfo || user.contactInfo;
+    user.profileImage = profileImage || user.profileImage;
+
+    await user.save();
+
+    res.status(200).json({ 
+      message: 'Profile updated successfully',
+      user: user // Include the updated user object in the response
+    });
+  } catch (error) {
+    console.log("Error updating user profile:", error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI).then(() => {
   console.log("MongoDB connected");
