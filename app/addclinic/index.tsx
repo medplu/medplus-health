@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import PersonalInfo from './PersonalInfo';
 import ClinicInfo from './ClinicInfo';
-import ExperienceInfo from './ExperienceInfo';
 import EducationInfo from './EducationInfo';
 import Review from './Review';
 import { selectUser } from '../store/userSlice'; 
@@ -14,7 +13,6 @@ const Index = () => {
   const [step, setStep] = useState(1);
   const [personalData, setPersonalData] = useState({});
   const [clinicData, setClinicData] = useState({});
-  const [experienceData, setExperienceData] = useState({});
   const [educationData, setEducationData] = useState({});
   const navigation = useNavigation();
 
@@ -38,10 +36,6 @@ const Index = () => {
     setClinicData(data);
   };
 
-  const handleExperienceDataChange = (data) => {
-    setExperienceData(data);
-  };
-
   const handleEducationDataChange = (data) => {
     setEducationData(data);
   };
@@ -62,7 +56,6 @@ const Index = () => {
           insuranceCompanies: clinicDataWithoutImages.insuranceCompanies,
           specialties: clinicDataWithoutImages.specialties,
           education: payload.educationData,
-          experiences: payload.experienceData,
           languages: clinicDataWithoutImages.languages,
           assistantName: clinicDataWithoutImages.assistantName,
           assistantPhone: clinicDataWithoutImages.assistantPhone,
@@ -81,7 +74,6 @@ const Index = () => {
         setStep(1);
         setPersonalData({});
         setClinicData({});
-        setExperienceData({});
         setEducationData({});
       } else {
         console.error('Error registering clinic:', data);
@@ -111,14 +103,6 @@ const Index = () => {
         />
       )}
       {step === 3 && (
-        <ExperienceInfo
-          prevStep={prevStep}
-          nextStep={nextStep}
-          experienceData={experienceData}
-          onExperienceDataChange={handleExperienceDataChange}
-        />
-      )}
-      {step === 4 && (
         <ClinicInfo
           prevStep={prevStep}
           nextStep={nextStep}
@@ -127,12 +111,11 @@ const Index = () => {
           professionalId={professionalId}
         />
       )}
-      {step === 5 && (
+      {step === 4 && (
         <Review
           prevStep={prevStep}
           personalData={personalData}
           clinicData={clinicData}
-          experienceData={experienceData}
           educationData={educationData}
           submit={submit}
         />

@@ -3,12 +3,11 @@ import React from 'react';
 import { Card, Title, Paragraph, Button, Divider } from 'react-native-paper';
 import Colors from '@/components/Shared/Colors';
 
-const Review = ({ personalData, clinicData, experienceData, educationData, prevStep, submit }) => {
+const Review = ({ personalData, clinicData, educationData, prevStep, submit }) => {
   const handleSubmit = () => {
     const payload = {
       personalData,
       clinicData,
-      experienceData,
       educationData,
     };
     submit(payload);
@@ -49,15 +48,6 @@ const Review = ({ personalData, clinicData, experienceData, educationData, prevS
           <Card.Content>
             <Title>Education</Title>
             <Paragraph>{educationData.course} at {educationData.university}, {educationData.year}</Paragraph>
-          </Card.Content>
-        </Card>
-
-        <Divider style={styles.divider} />
-
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Experience</Title>
-            <Paragraph>{Array.isArray(experienceData) ? experienceData.map(exp => `${exp.position} at ${exp.organization}, ${exp.startDate} - ${exp.endDate}`).join('; ') : ''}</Paragraph>
           </Card.Content>
         </Card>
       </View>
