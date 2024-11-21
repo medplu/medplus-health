@@ -10,6 +10,8 @@ const fs = require('fs');
 const ejs = require('ejs');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
+const ImageUpload = require('./middleware/ImageUpload');
+const ClinicImage = require('./models/clinic_image.model'); // Update import
 
 dotenv.config();
 
@@ -41,14 +43,35 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Multer setup for file uploads
-const upload = multer({ dest: 'uploads/' });
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-// File upload route using multer
-app.post('/api/upload', upload.single('file'), (req, res) => { // Ensured the field name 'file' is specified
-  if (!req.file) {
-    return res.status(400).send('No file uploaded.');
+// File upload route using multer and ImageUpload middleware
+app.post('/api/upload', upload.array('files'), (req, res, next) => {
+  console.log('Received file upload request');
+  next();
+}, ImageUpload.uploadToCloudinary, async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    console.error('No files uploaded');
+    return res.status(400).send('No files uploaded.');
   }
-  res.send("File uploaded successfully");
+  const urls = req.files.map(file => file.cloudStoragePublicUrl);
+
+  try {
+    const imageDoc = new ClinicImage({
+      urls: urls,
+      professionalId: req.body.professionalId
+    });
+    await imageDoc.save();
+
+    res.send({
+      message: "Files uploaded successfully",
+      urls: urls
+    });
+  } catch (error) {
+    console.error('Error saving image URLs to the database:', error);
+    res.status(500).send('Error saving image URLs to the database.');
+  }
 });
 
 // MongoDB connection
@@ -75,7 +98,7 @@ const subaccountRoutes = require('./routes/subaccount.routes');
 const fileRoutes = require('./routes/file.route');
 const appointmentsRoute = require('./routes/appointments');
 const searchRoutes = require('./routes/search.routes'); 
-const imageRoutes = require('./routes/image.route');
+
 
 // Use routes
 app.use('/api', userRoutes);
@@ -95,7 +118,7 @@ app.use('/api/files', fileRoutes);
 app.use('/api/appointments', appointmentsRoute);
 app.use('/prescriptions', prescriptionRoutes);
 app.use('/api', searchRoutes);
-app.use('/api/images', imageRoutes);
+
 
 // Define the route to fill the template with prescription data
 app.post('/api/fill-template', (req, res) => {

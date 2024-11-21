@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, FlatList, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchClinics, filterClinics, selectClinics, resetClinics } from '../../app/store/clinicSlice'; // Update the import path as needed
+import { fetchClinics, filterClinics, selectClinics, resetClinics, clearClinics } from '../../app/store/clinicSlice'; // Update the import path as needed
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
 import * as SplashScreen from 'expo-splash-screen';
@@ -57,6 +57,10 @@ const Clinics = ({ searchQuery, onViewAll }) => {
       pathname: `/hospital/book-appointment/${item._id}`,
       params: { clinicId: item._id },
     });
+  };
+
+  const handleResetClinics = () => {
+    dispatch(clearClinics());
   };
 
   const ClinicItem = ({ item }) => {
@@ -115,6 +119,9 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   return (
     <Animated.View style={{ marginTop: 10, opacity: fadeAnim }}>
       <SubHeading subHeadingTitle={'Discover Clinics Near You'} onViewAll={onViewAll} />
+      <TouchableOpacity style={styles.resetButton} onPress={handleResetClinics}>
+        <Text style={styles.resetButtonText}>Reset Clinics</Text>
+      </TouchableOpacity>
       <FlatList
         data={filteredClinicList}
         horizontal={true} 

@@ -34,7 +34,7 @@ const Index = () => {
   };
 
   const handleClinicDataChange = (data) => {
-    console.log(data);
+    console.log('Updated Clinic Data in Index:', data); // Verify clinicData
     setClinicData(data);
   };
 
@@ -48,26 +48,27 @@ const Index = () => {
 
   const submit = async (payload) => {
     try {
-      console.log('Clinic Data before submission:', payload.clinicData); 
+      const { images, ...clinicDataWithoutImages } = payload.clinicData; // Exclude images field
+      console.log('Clinic Data before submission:', clinicDataWithoutImages); // Verify payload
       const response = await fetch(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: payload.clinicData.name,
-          contactInfo: payload.clinicData.contactInfo,
-          address: payload.clinicData.address,
-          insuranceCompanies: payload.clinicData.insuranceCompanies,
-          specialties: payload.clinicData.specialties,
+          name: clinicDataWithoutImages.name,
+          contactInfo: clinicDataWithoutImages.contactInfo,
+          address: clinicDataWithoutImages.address,
+          insuranceCompanies: clinicDataWithoutImages.insuranceCompanies,
+          specialties: clinicDataWithoutImages.specialties,
           education: payload.educationData,
           experiences: payload.experienceData,
-          languages: payload.clinicData.languages,
-          assistantName: payload.clinicData.assistantName,
-          assistantPhone: payload.clinicData.assistantPhone,
-          bio: payload.clinicData.bio,
+          languages: clinicDataWithoutImages.languages,
+          assistantName: clinicDataWithoutImages.assistantName,
+          assistantPhone: clinicDataWithoutImages.assistantPhone,
+          bio: clinicDataWithoutImages.bio,
           certificateUrl: payload.educationData.certificateUrl,
-          images: payload.clinicData.images || [], 
+          // Remove images field
         }),
       });
 
@@ -124,6 +125,7 @@ const Index = () => {
           nextStep={nextStep}
           clinicData={clinicData}
           onClinicDataChange={handleClinicDataChange}
+          professionalId={professionalId} // Pass professionalId to ClinicInfo
         />
       )}
       {step === 5 && (

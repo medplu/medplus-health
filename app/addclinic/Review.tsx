@@ -1,4 +1,4 @@
-import { StyleSheet, ScrollView, View, Image } from 'react-native';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import React from 'react';
 import { Card, Title, Paragraph, Button, Divider } from 'react-native-paper';
 import Colors from '@/components/Shared/Colors';
@@ -7,10 +7,7 @@ const Review = ({ personalData, clinicData, experienceData, educationData, prevS
   const handleSubmit = () => {
     const payload = {
       personalData,
-      clinicData: {
-        ...clinicData,
-        images: Array.isArray(clinicData.images) ? clinicData.images.map(image => image.uri || image.url || image.secure_url) : [],
-      },
+      clinicData,
       experienceData,
       educationData,
     };
@@ -63,19 +60,6 @@ const Review = ({ personalData, clinicData, experienceData, educationData, prevS
             <Paragraph>{Array.isArray(experienceData) ? experienceData.map(exp => `${exp.position} at ${exp.organization}, ${exp.startDate} - ${exp.endDate}`).join('; ') : ''}</Paragraph>
           </Card.Content>
         </Card>
-
-        <Divider style={styles.divider} />
-
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Images</Title>
-            <View style={styles.imageContainer}>
-              {clinicData.images && clinicData.images.map((image, index) => (
-                <Image key={index} source={{ uri: image.uri || image.url || image.secure_url }} style={styles.image} />
-              ))}
-            </View>
-          </Card.Content>
-        </Card>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -118,15 +102,5 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     flex: 1,
     justifyContent: 'center',
-  },
-  imageContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  image: {
-    width: 100,
-    height: 100,
-    margin: 4,
-    borderRadius: 8,
   },
 });

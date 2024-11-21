@@ -151,9 +151,6 @@ const BookAppointment = () => {
         contentContainerStyle={styles.specialtyList}
       />
 
-      <View ref={bookingSectionRef}>
-        <BookingSection clinic={clinic} navigation={undefined} />
-      </View>
       <StaticDoctors doctors={doctorsData} loading={loading} />
       <ActionButton />
       <HorizontalLine />

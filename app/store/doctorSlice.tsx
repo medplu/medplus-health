@@ -13,7 +13,7 @@ export const fetchDoctors = createAsyncThunk(
       fetchFreshDoctors();
       return parsedDoctors;
     }
-    const response = await axios.get('https://medplus-health.onrender.com/api/professionals');
+    const response = await axios.get('http://localhost:3000/api/professionals');
     await AsyncStorage.setItem('doctorList', JSON.stringify(response.data));
     return response.data;
   }
@@ -21,7 +21,7 @@ export const fetchDoctors = createAsyncThunk(
 
 const fetchFreshDoctors = async () => {
   try {
-    const response = await axios.get('https://medplus-health.onrender.com/api/professionals');
+    const response = await axios.get('http://localhost:3000/api/professionals');
     await AsyncStorage.setItem('doctorList', JSON.stringify(response.data));
   } catch (error) {
     console.error('Failed to fetch fresh doctors', error);

@@ -3,11 +3,16 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Button } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
-import { uploadImageToCloudinary } from '../utils/cloudinary';
+import { useSelector } from 'react-redux';
+import { selectUser } from '../store/userSlice';
+
 import PhoneInput from 'react-native-phone-input';
 import Colors from '@/components/Shared/Colors';
 import { Picker } from '@react-native-picker/picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+
+
+import axios from 'axios';
 
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
@@ -36,10 +41,13 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
   const phoneInput = useRef<PhoneInput>(null);
   const assistantPhoneInput = useRef<PhoneInput>(null);
 
+  const user = useSelector(selectUser);
+  const professionalId = user?.professional?._id;
+
   const handleChange = (key, value) => {
     const updatedData = { 
       ...clinicData, 
-      [key]: key === 'images' ? [...(clinicData.images || []), ...value] : value 
+      [key]: value 
     };
     console.log('Updated Clinic Data:', updatedData);
     onClinicDataChange(updatedData);
@@ -63,12 +71,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     if (!result.canceled && result.assets) {
       setIsUploading(true);
       try {
-        const imageUris = await Promise.all(result.assets.map(async (asset) => {
-          const resizedUri = await resizeImage(asset.uri);
-          const secureUrl = await handleUpload({ uri: resizedUri });
-          return { uri: secureUrl };
-        }));
-        handleChange('images', imageUris);
+        await uploadImagesToBackend(result.assets);
       } catch (error) {
         console.error('Error uploading images:', error);
         Alert.alert('Error', 'An error occurred while uploading images');
@@ -95,9 +98,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     if (!result.canceled && result.assets) {
       setIsUploading(true);
       try {
-        const resizedUri = await resizeImage(result.assets[0].uri);
-        const secureUrl = await handleUpload({ uri: resizedUri });
-        handleChange('images', [{ uri: secureUrl }]);
+        await uploadImagesToBackend(result.assets);
       } catch (error) {
         console.error('Error uploading image:', error);
         Alert.alert('Error', 'An error occurred while uploading the image');
@@ -107,34 +108,65 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     }
   }, []);
 
+  const uploadImagesToBackend = async (assets) => {
+    const formData = new FormData();
+    formData.append('professionalId', professionalId); // Attach professionalId
+    for (const asset of assets) {
+      let imageUri = asset.uri;
+
+      // Check if the URI is base64 encoded
+      if (imageUri.startsWith('data:image')) {
+        const base64Data = imageUri.split(',')[1];
+        const blob = await fetch(`data:image/jpeg;base64,${base64Data}`).then(res => res.blob());
+        imageUri = URL.createObjectURL(blob);
+      }
+
+      const image = {
+        uri: imageUri,
+        type: 'image/jpeg',
+        name: `myImage-${Date.now()}.jpg`,
+      };
+
+      const response = await fetch(image.uri);
+      const blob = await response.blob();
+      formData.append('files', blob, image.name);
+    }
+
+    // Log the FormData content
+    formData.forEach((value, key) => {
+      console.log(`${key}: ${value}`);
+    });
+
+    try {
+      const res = await fetch('http://localhost:3000/api/upload', { // Update the URL to match your backend
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          // Remove 'Content-Type': 'multipart/form-data' header
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Error response from server:', errorText);
+        throw new Error(errorText);
+      }
+
+      const result = await res.json();
+      return result.urls; // Ensure this matches the response structure from the backend
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      Alert.alert('Error', 'An error occurred while uploading the images. Please try again later.');
+      throw error;
+    }
+  };
+
   const resizeImage = async (uri: string) => {
     const result = await ImageManipulator.manipulateAsync(uri, [
       { resize: { width: 800 } },
     ]);
     return result.uri;
-  };
-
-  const handleUpload = async (image) => {
-    const data = new FormData();
-    const response = await fetch(image.uri);
-    const blob = await response.blob();
-
-    data.append('file', blob);
-    data.append('upload_preset', 'medplus');
-    data.append('quality', 'auto');
-    data.append('fetch_format', 'auto');
-
-    try {
-      const uploadResponse = await fetch('https://api.cloudinary.com/v1_1/dws2bgxg4/image/upload', {
-        method: 'POST',
-        body: data,
-      });
-      const result = await uploadResponse.json();
-      return result.secure_url;
-    } catch (uploadError) {
-      console.error('Error uploading image to Cloudinary:', uploadError);
-      throw uploadError;
-    }
   };
 
   const renderCard = (item, selectedItems, onSelect, index) => (

@@ -74,10 +74,12 @@ const registerClinic = async (req, res) => {
   }
 };
 
-
 const fetchClinics = async (req, res) => {
   try {
-    const clinics = await Clinic.find().populate('professionals'); // Populate professionals
+    const clinics = await Clinic.find().populate({
+      path: 'professionals',
+      populate: { path: 'user' }
+    });
     res.status(200).send(clinics);
   } catch (error) {
     res.status(500).send(error);
@@ -94,7 +96,7 @@ const joinClinic = async (req, res) => {
       return res.status(404).json({ error: 'Clinic not found with the provided reference code' });
     }
 
-    const professional = await Professional.findById(professionalId);
+    const professional = await Professional.findById(professionalId).populate('user');
     if (!professional) {
       return res.status(404).json({ error: 'Professional not found' });
     }
@@ -124,7 +126,10 @@ const joinClinic = async (req, res) => {
 
 const fetchClinicById = async (req, res) => {
   try {
-    const clinic = await Clinic.findById(req.params.id).populate('professionals'); // Populate professionals
+    const clinic = await Clinic.findById(req.params.id).populate({
+      path: 'professionals',
+      populate: { path: 'user' }
+    });
     if (!clinic) {
       return res.status(404).send();
     }
@@ -137,7 +142,10 @@ const fetchClinicById = async (req, res) => {
 const fetchClinicsBySpecialties = async (req, res) => {
   const { specialty } = req.params;
   try {
-    const clinics = await Clinic.find({ specialties: specialty }).populate('professionals');
+    const clinics = await Clinic.find({ specialties: specialty }).populate({
+      path: 'professionals',
+      populate: { path: 'user' }
+    });
     res.status(200).json(clinics);
   } catch (error) {
     console.error('Error fetching clinics by specialties:', error);

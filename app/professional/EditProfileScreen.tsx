@@ -14,14 +14,15 @@ import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
-import { selectUser } from '../store/userSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectUser, updateUserProfile } from '../store/userSlice';
 import Colors from '@/components/Shared/Colors';
 
 const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const user = useSelector(selectUser);
   const userId = user.userId;
+  const dispatch = useDispatch();
 
   const [name, setName] = useState<string>(user.name || '');
   const [email, setEmail] = useState<string>(user.email || '');
@@ -115,6 +116,7 @@ const EditProfileScreen: React.FC = () => {
       );
 
       console.log('Profile updated:', response.data);
+      dispatch(updateUserProfile(profileData)); // Dispatch the action to update Redux state
       navigation.goBack();
     } catch (updateError) {
       console.error('Error updating profile:', updateError);
@@ -122,7 +124,7 @@ const EditProfileScreen: React.FC = () => {
     } finally {
       setUploading(false);
     }
-  }, [userId, name, email, contactInfo, image, consultationFee, navigation]);
+  }, [userId, name, email, contactInfo, image, consultationFee, navigation, dispatch]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.ligh_gray }}>

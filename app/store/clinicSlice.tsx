@@ -3,12 +3,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { RootState } from '../store/configureStore';
 
+interface Professional {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  user: string;
+  profession: string;
+  title: string;
+  consultationFee: number;
+  certifications: string[];
+  createdAt: string;
+  updatedAt: string;
+  attachedToClinic: boolean;
+  attachedToPharmacy: boolean;
+}
+
 interface Clinic {
   _id: string;
   name: string;
   address: string;
   category: string;
   images?: string[]; // Updated to handle multiple images
+  professionals: Professional[];
 }
 
 interface ClinicsState {
@@ -29,7 +46,7 @@ const initialState: ClinicsState = {
 
 const fetchFreshClinics = async () => {
   try {
-    const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
+    const response = await axios.get('http://localhost:3000/api/clinics');
     await AsyncStorage.setItem('clinicList', JSON.stringify(response.data));
   } catch (error) {
     console.error('Failed to fetch fresh clinics', error);
@@ -45,7 +62,7 @@ export const fetchClinics = createAsyncThunk(
       fetchFreshClinics();
       return parsedClinics;
     }
-    const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
+    const response = await axios.get('http://localhost:3000/api/clinics');
     await AsyncStorage.setItem('clinicList', JSON.stringify(response.data));
     return response.data;
   }
@@ -62,8 +79,16 @@ export const fetchClinicById = createAsyncThunk(
       return cachedClinic;
     }
 
-    const response = await axios.get(`https://medplus-health.onrender.com/api/clinics/${clinicId}`);
+    const response = await axios.get(`http://localhost:3000/api/clinics/${clinicId}`);
     return response.data;
+  }
+);
+
+export const clearClinics = createAsyncThunk(
+  'clinics/clearClinics',
+  async (_, { dispatch }) => {
+    await AsyncStorage.removeItem('clinicList');
+    dispatch(fetchClinics());
   }
 );
 
@@ -120,6 +145,19 @@ const clinicsSlice = createSlice({
       .addCase(fetchClinicById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to load clinic details';
+      })
+      .addCase(clearClinics.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(clearClinics.fulfilled, (state) => {
+        state.clinicList = [];
+        state.filteredClinicList = [];
+        state.loading = false;
+      })
+      .addCase(clearClinics.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to clear clinics';
       });
   },
 });

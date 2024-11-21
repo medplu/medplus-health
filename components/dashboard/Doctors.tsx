@@ -4,7 +4,9 @@ import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native'; 
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../../components/Shared/Colors';	
-import useDoctors from '../../hooks/useDoctors';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchClinics, selectClinics } from '../../app/store/clinicSlice';
+import { useRouter } from 'expo-router';
 
 interface Doctor {
   _id: string;
@@ -13,6 +15,7 @@ interface Doctor {
   category: string;
   profileImage?: string;
   consultationFee: number;
+  clinicId: string; // Add this line
 }
 
 interface DoctorsProps {
@@ -23,24 +26,40 @@ interface DoctorsProps {
 }
 
 const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onViewAll, excludeDoctorId }) => {
-  const { doctorList, loading, error } = useDoctors();
+  const dispatch = useDispatch();
+  const clinics = useSelector(selectClinics);
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const navigation = useNavigation();
+  const router = useRouter();
 
   useEffect(() => {
-    console.log('Received doctorList:', doctorList); // Add this line
+    dispatch(fetchClinics());
+  }, [dispatch]);
+
+  useEffect(() => {
     filterDoctors();
-  }, [searchQuery, selectedCategory, doctorList]);
+  }, [searchQuery, selectedCategory, clinics]);
 
   const filterDoctors = () => {
-    let filtered = doctorList;
+    let doctors = clinics.flatMap(clinic => 
+      clinic.professionals.map(professional => ({
+        ...professional,
+        clinicId: clinic._id,
+        profileImage: professional.user.profileImage // Use profileImage from user information
+      }))
+    );
 
-    if (excludeDoctorId) { // Add this block
-      filtered = filtered.filter((doctor) => doctor._id !== excludeDoctorId);
+    clinics.forEach(clinic => {
+      console.log('Clinic ID:', clinic._id); // Log the clinic _id
+      console.log('Professionals:', clinic.professionals); // Log the professionals (doctors) data
+    });
+
+    if (excludeDoctorId) {
+      doctors = doctors.filter((doctor) => doctor._id !== excludeDoctorId);
     }
 
     if (searchQuery) {
-      filtered = filtered.filter((doctor) =>
+      doctors = doctors.filter((doctor) =>
         doctor.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doctor.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doctor.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -48,28 +67,23 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
     }
 
     if (selectedCategory) {
-      filtered = filtered.filter((doctor) => doctor.category === selectedCategory);
+      doctors = doctors.filter((doctor) => doctor.category === selectedCategory);
     }
 
-    setFilteredDoctors(filtered);
+    setFilteredDoctors(doctors);
   };
 
   const handleConsult = (doctor: Doctor) => {
-    navigation.navigate('doctor/index', { doctor: JSON.stringify(doctor) });
+    router.push({
+      pathname: `/hospital/book-appointment/${doctor.clinicId}`,
+      params: { clinicId: doctor.clinicId, doctorId: doctor._id },
+    });
   };
 
-  if (loading) {
+  if (!clinics.length) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.PRIMARY} />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Error fetching doctors: {error}</Text>
       </View>
     );
   }
@@ -80,7 +94,7 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
       <FlatList
         data={filteredDoctors}
         horizontal
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={styles.doctorItem}>
             <Image
               source={{ uri: item.profileImage || 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }}
@@ -98,7 +112,7 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
             </TouchableOpacity>
           </View>
         )}
-        keyExtractor={(item) => item._id.toString()}
+        keyExtractor={(item, index) => `${item._id}-${index}`}
         showsHorizontalScrollIndicator={false}
         nestedScrollEnabled={true} // Add this line
       />

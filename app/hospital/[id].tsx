@@ -11,7 +11,9 @@ interface Doctor {
   _id: string;
   name: string;
   specialties: string[];
-  experience: string;
+  experience?: string;
+  profileImage?: string;
+  consultationFee: number; // Add consultationFee field
 }
 
 interface Clinic {
@@ -27,15 +29,23 @@ interface Clinic {
 
 export default function HospitalDetails() {
   const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [doctor, setDoctor] = useState<Doctor | null>(null); // Add state for doctor
   const router = useRouter();
-  const { clinicId } = useLocalSearchParams();
+  const { id, clinicId, doctorId } = useLocalSearchParams();
 
   useEffect(() => {
+    console.log('Received params:', { id, clinicId, doctorId }); // Log the received parameters
+
     const fetchClinicData = async () => {
       try {
         const storedClinicData = await AsyncStorage.getItem(`clinic_${clinicId}`);
         if (storedClinicData) {
-          setClinic(JSON.parse(storedClinicData));
+          const clinicData = JSON.parse(storedClinicData);
+          console.log('Clinic data:', clinicData); // Log the clinic data
+          setClinic(clinicData);
+          const selectedDoctor = clinicData.doctors.find((doc: Doctor) => doc._id === doctorId);
+          console.log('Selected doctor:', selectedDoctor); // Log the selected doctor
+          setDoctor(selectedDoctor); // Set the selected doctor
         }
       } catch (error) {
         console.error('Failed to fetch clinic data', error);
@@ -45,9 +55,9 @@ export default function HospitalDetails() {
     if (clinicId) {
       fetchClinicData();
     }
-  }, [clinicId]);
+  }, [clinicId, doctorId]);
 
-  if (!clinic) {
+  if (!clinic || !doctor) {
     return (
       <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: '50%' }}>
         <Text style={{ fontSize: 45 }}>Loading...</Text>
@@ -73,6 +83,21 @@ export default function HospitalDetails() {
 
         <View style={{ marginTop: -20, backgroundColor: Colors.white, borderTopRightRadius: 20, borderTopLeftRadius: 20, padding: 20 }}>
           <HospitalInfo clinic={clinic} />
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Selected Doctor</Text>
+            {doctor?.profileImage && (
+              <Image 
+                source={{ uri: doctor.profileImage }}
+                style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 10 }}
+              />
+            )}
+            <Text style={{ fontSize: 18 }}>{doctor?.name}</Text>
+            <Text style={{ fontSize: 16, color: Colors.GRAY }}>{doctor?.specialties.join(', ')}</Text>
+            {doctor?.experience && (
+              <Text style={{ fontSize: 16, color: Colors.GRAY }}>{doctor.experience}</Text>
+            )}
+            <Text style={{ fontSize: 16, color: Colors.GRAY }}>{`Consultation Fee: ${doctor.consultationFee} KES`}</Text>
+          </View>
         </View>
       </View>
 
