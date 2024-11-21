@@ -7,14 +7,14 @@ import { Ionicons } from '@expo/vector-icons';
 import HorizontalLine from '../../../components/common/HorizontalLine';
 import BookingSection from '../../../components/BookAppointement/BookingSection';
 import ActionButton from '../../../components/common/ActionButton';
-import StaticDoctors from '@/components/clinics/StaticDoctors';
 import Colors from '../../../components/Shared/Colors';
 import { fetchClinicById, selectClinicDetails, selectClinicLoading, selectClinicError } from '../../store/clinicSlice';
 import ClinicSubHeading from '../../../components/clinics/ClinicSubHeading';
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 
 const BookAppointment = () => {
-  const { id: clinicId } = useLocalSearchParams();
+  const { id: clinicId, professional: professionalParam } = useLocalSearchParams();
+  const selectedProfessional = professionalParam ? JSON.parse(professionalParam) : null;
   const scrollViewRef = useRef<ScrollView>(null);
   const bookingSectionRef = useRef<View>(null);
   const navigation = useNavigation();
@@ -32,6 +32,20 @@ const BookAppointment = () => {
     }
   }, [clinicId, dispatch]);
 
+  const getAllClinicImages = (clinic) => {
+    const allImages = new Set(clinic.images || []);
+    clinic.professionals?.forEach(professional => {
+      professional.clinic_images?.forEach(image => {
+        if (image.urls?.[0]) {
+          allImages.add(image.urls[0]);
+        }
+      });
+    });
+    return Array.from(allImages);
+  };
+
+  const clinicImages = getAllClinicImages(clinic);
+
   console.log('Clinic Data:', clinic);
   console.log('Loading:', loading);
   console.log('Error:', error);
@@ -43,6 +57,10 @@ const BookAppointment = () => {
         animated: true,
       });
     }
+  };
+
+  const handleConsult = (doctor) => {
+    navigation.navigate('doctor/index', { doctor: JSON.stringify(doctor) });
   };
 
   if (loading) {
@@ -87,7 +105,7 @@ const BookAppointment = () => {
       profileImage: doctor.profileImage,
       consultationFee: doctor.consultationFee || 0,
     }))
-  ];
+  ].filter(doctor => !selectedProfessional || doctor._id !== selectedProfessional._id);
 
   console.log('Doctors Data:', doctorsData);
 
@@ -102,8 +120,8 @@ const BookAppointment = () => {
       </TouchableOpacity>
 
       <View style={styles.profileSection}>
-        {clinic.images && clinic.images.length > 0 && (
-          <Image source={{ uri: clinic.images[0] }} style={styles.profileImage} />
+        {clinicImages.length > 0 && (
+          <Image source={{ uri: clinicImages[0] }} style={styles.profileImage} />
         )}
         <View style={styles.profileInfo}>
           <Text style={styles.profileName}>{clinic.name}</Text>
@@ -115,6 +133,7 @@ const BookAppointment = () => {
         </View>
       </View>
 
+
       <ClinicSubHeading subHeadingTitle={'About'} />
       <Text style={styles.description}>{truncatedDesc}</Text>
       <TouchableOpacity onPress={() => setShowFullDesc(prev => !prev)}>
@@ -122,6 +141,19 @@ const BookAppointment = () => {
           {showFullDesc ? 'Hide' : 'See More'}
         </Text>
       </TouchableOpacity>
+      <ClinicSubHeading subHeadingTitle={'Specialties'} />
+      <FlatList
+        data={clinic.specialties.split(',')}
+        horizontal={true}
+        renderItem={({ item }) => (
+          <View style={styles.specialtyCard}>
+            <Text style={styles.specialty}>{item}</Text>
+          </View>
+        )}
+        keyExtractor={(item, index) => index.toString()}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.specialtyList}
+      />
 
       <ClinicSubHeading subHeadingTitle={'Insurance Companies'} />
       <FlatList
@@ -137,23 +169,66 @@ const BookAppointment = () => {
         contentContainerStyle={styles.insuranceList}
       />
 
-      <ClinicSubHeading subHeadingTitle={'Specialties'} />
-      <FlatList
-        data={clinic.specialties.split(',')}
-        horizontal={true}
-        renderItem={({ item }) => (
-          <View style={styles.specialtyCard}>
-            <Text style={styles.specialty}>{item}</Text>
-          </View>
-        )}
-        keyExtractor={(item, index) => index.toString()}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.specialtyList}
-      />
+      
 
-      <StaticDoctors doctors={doctorsData} loading={loading} />
-      <ActionButton />
-      <HorizontalLine />
+{selectedProfessional && (
+        <View style={styles.selectedProfessionalContainer}>
+          <Image 
+            source={{ uri: selectedProfessional.user.profileImage }} 
+            style={styles.selectedProfessionalImage} 
+          />
+          <View style={styles.selectedProfessionalInfo}>
+            <Text style={styles.selectedProfessionalName}>
+              {selectedProfessional.firstName} {selectedProfessional.lastName}
+            </Text>
+            <Text style={styles.selectedProfessionalTitle}>
+              {selectedProfessional.title}
+            </Text>
+            <Text style={styles.selectedProfessionalSpecialty}>
+              Specialty: {selectedProfessional.profession}
+            </Text>
+            <Text style={styles.selectedProfessionalFee}>
+              Consultation Fee: {selectedProfessional.consultationFee} KES
+            </Text>
+          </View>
+        </View>
+      )}
+
+      <ClinicSubHeading subHeadingTitle={'Doctors'} />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.PRIMARY} />
+        </View>
+      ) : (
+        <FlatList
+          data={doctorsData}
+          horizontal={true}
+          renderItem={({ item }) => (
+            <View style={styles.doctorItem}>
+              <Image 
+                source={{ 
+                  uri: item.profileImage ? item.profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' 
+                }} 
+                style={styles.doctorImage} 
+              />
+              <View style={styles.nameCategoryContainer}>
+                <Text style={styles.doctorName}>{item.name}</Text> 
+                <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text> 
+              </View>
+              <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
+              <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
+                <Text style={styles.buttonText}>View</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          keyExtractor={(item) => item._id.toString()}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.flatListContent}
+        />
+      )}
+
+    
+      
     </ScrollView>
   );
 }
@@ -232,6 +307,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 5,
   },
+  selectedProfessionalContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: Colors.LIGHT_GRAY,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  selectedProfessionalImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 10,
+  },
+  selectedProfessionalInfo: {
+    flex: 1,
+  },
+  selectedProfessionalName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.PRIMARY,
+  },
+  selectedProfessionalTitle: {
+    fontSize: 14,
+    color: Colors.gray,
+  },
+  selectedProfessionalSpecialty: {
+    fontSize: 14,
+    color: Colors.gray,
+  },
+  selectedProfessionalFee: {
+    fontSize: 14,
+    color: Colors.PRIMARY,
+  },
   description: {
     fontSize: 14,
     color: '#555',
@@ -248,7 +357,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-     borderColor: Colors.PRIMARY,
+    borderColor: Colors.PRIMARY,
     borderRadius: 20,
     marginRight: 10,
   },
@@ -275,6 +384,59 @@ const styles = StyleSheet.create({
   },
   specialtyList: {
     marginBottom: 20,
+  },
+  doctorItem: {
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: Colors.LIGHT_GRAY,
+    borderRadius: 10,
+    padding: 10,
+    width: 200,
+  },
+  doctorImage: {
+    width: '100%',
+    height: 120,
+    borderRadius: 10,
+  },
+  nameCategoryContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  doctorName: {
+    fontFamily: 'SourceSans3-Bold',
+    fontSize: 14,
+    textAlign: 'left',
+    flex: 1,
+  },
+  doctorSpecialty: {
+    color: Colors.PRIMARY,
+    fontSize: 12,
+    textAlign: 'right',
+    flex: 1,
+  },
+  consultationFee: {
+    fontSize: 14,
+    color: Colors.primary,
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  consultButton: {
+    backgroundColor: Colors.LIGHT_GRAY,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    marginTop: 10,
+    alignSelf: 'center',
+  },
+  buttonText: {
+    color: Colors.PRIMARY,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  flatListContent: {
+    paddingVertical: 10,
   },
 });
 

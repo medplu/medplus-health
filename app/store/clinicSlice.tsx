@@ -24,8 +24,23 @@ interface Clinic {
   name: string;
   address: string;
   category: string;
-  images?: string[]; // Updated to handle multiple images
+  images?: string[]; 
+  contactInfo: string;
+  referenceCode: string;
   professionals: Professional[];
+  insuranceCompanies: string[];
+  specialties: string;
+  experiences: string[];
+  languages: string;
+  assistantName: string;
+  assistantPhone: string;
+  bio: string;
+  education: {
+    course: string;
+    university: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ClinicsState {
@@ -46,7 +61,7 @@ const initialState: ClinicsState = {
 
 const fetchFreshClinics = async () => {
   try {
-    const response = await axios.get('http://localhost:3000/api/clinics');
+    const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
     await AsyncStorage.setItem('clinicList', JSON.stringify(response.data));
   } catch (error) {
     console.error('Failed to fetch fresh clinics', error);
@@ -62,7 +77,7 @@ export const fetchClinics = createAsyncThunk(
       fetchFreshClinics();
       return parsedClinics;
     }
-    const response = await axios.get('http://localhost:3000/api/clinics');
+    const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
     await AsyncStorage.setItem('clinicList', JSON.stringify(response.data));
     return response.data;
   }
@@ -79,7 +94,7 @@ export const fetchClinicById = createAsyncThunk(
       return cachedClinic;
     }
 
-    const response = await axios.get(`http://localhost:3000/api/clinics/${clinicId}`);
+    const response = await axios.get(`https://medplus-health.onrender.com/api/clinics/${clinicId}`);
     return response.data;
   }
 );

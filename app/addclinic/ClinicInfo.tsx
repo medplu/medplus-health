@@ -70,7 +70,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       setIsUploading(true);
       try {
         await uploadImagesToBackend(result.assets);
-        setIsGalleryDisabled(true); // Disable the Gallery button after upload
+        setIsGalleryDisabled(true); 
         ToastAndroid.show('Images uploaded successfully!', ToastAndroid.SHORT);
       } catch (error) {
         console.error('Error uploading images:', error);
@@ -108,7 +108,6 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
     }
   }, []);
 
-
 const uploadImagesToBackend = async (assets) => {
   const formData = new FormData();
   formData.append('professionalId', professionalId);
@@ -116,7 +115,6 @@ const uploadImagesToBackend = async (assets) => {
   for (const asset of assets) {
     let imageUri = asset.uri;
 
-    // If the image URI is base64, convert it to a file
     if (imageUri.startsWith('data:image')) {
       const base64Data = imageUri.split(',')[1];
       const path = `${FileSystem.cacheDirectory}myImage-${Date.now()}.jpg`;
@@ -126,7 +124,6 @@ const uploadImagesToBackend = async (assets) => {
       imageUri = path;
     }
 
-    // Append file to FormData
     const image = {
       uri: imageUri,
       type: 'image/jpeg',
@@ -135,7 +132,6 @@ const uploadImagesToBackend = async (assets) => {
     formData.append('files', image);
   }
 
-  // Make the request
   try {
     const response = await fetch('https://medplus-health.onrender.com/api/upload', {
       method: 'POST',
@@ -151,7 +147,6 @@ const uploadImagesToBackend = async (assets) => {
     console.error('Error uploading images:', error);
   }
 };
-
 
   const resizeImage = async (uri: string) => {
     const result = await ImageManipulator.manipulateAsync(uri, [

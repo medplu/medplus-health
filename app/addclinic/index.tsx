@@ -44,7 +44,7 @@ const Index = () => {
     try {
       const { images, ...clinicDataWithoutImages } = payload.clinicData;
       console.log('Clinic Data before submission:', clinicDataWithoutImages);
-      const response = await fetch(`https://medplus-health.onrender.com/api/clinics/register/${professionalId}`, {
+      const response = await fetch(`http://localhost:3000/api/clinics/register/${professionalId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

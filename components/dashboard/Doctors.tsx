@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, Text,  StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, FlatList, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native'; 
 import SubHeading from '../dashboard/SubHeading';
@@ -15,7 +15,7 @@ interface Doctor {
   category: string;
   profileImage?: string;
   consultationFee: number;
-  clinicId: string; // Add this line
+  clinicId: string;
 }
 
 interface DoctorsProps {
@@ -45,13 +45,13 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
       clinic.professionals.map(professional => ({
         ...professional,
         clinicId: clinic._id,
-        profileImage: professional.user.profileImage // Use profileImage from user information
+        profileImage: professional.user.profileImage
       }))
     );
 
     clinics.forEach(clinic => {
-      console.log('Clinic ID:', clinic._id); // Log the clinic _id
-      console.log('Professionals:', clinic.professionals); // Log the professionals (doctors) data
+      console.log('Clinic ID:', clinic._id);
+      console.log('Professionals:', clinic.professionals);
     });
 
     if (excludeDoctorId) {
@@ -76,7 +76,7 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
   const handleConsult = (doctor: Doctor) => {
     router.push({
       pathname: `/hospital/book-appointment/${doctor.clinicId}`,
-      params: { clinicId: doctor.clinicId, doctorId: doctor._id },
+      params: { clinicId: doctor.clinicId, doctorId: doctor._id, professional: JSON.stringify(doctor) },
     });
   };
 
@@ -102,11 +102,9 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
             />
             <View style={styles.nameCategoryContainer}>
               <Text style={styles.doctorName}>{`${item.firstName} ${item.lastName}`}</Text>
-              <Text style={styles.consultationFee}>
-                {item.consultationFee ? `${item.consultationFee} KES` : 'Not available'}
-              </Text>
+              <Text style={styles.doctorName}>{item.profession}</Text>
             </View>
-            <Text >{item.category}</Text>
+            <Text>{item.category}</Text>
             <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
               <Text style={styles.buttonText}>View</Text>
             </TouchableOpacity>
@@ -114,7 +112,7 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
         )}
         keyExtractor={(item, index) => `${item._id}-${index}`}
         showsHorizontalScrollIndicator={false}
-        nestedScrollEnabled={true} // Add this line
+        nestedScrollEnabled={true}
       />
     </View>
   );

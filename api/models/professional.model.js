@@ -20,10 +20,19 @@ const ProfessionalSchema = new Schema({
     clinicId: {
         type: Schema.Types.ObjectId,
         ref: 'Clinic',
-        required: true
+        required: false // Make clinicId optional
     },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });
+
+ProfessionalSchema.virtual('clinic_images', {
+  ref: 'ClinicImage',
+  localField: '_id',
+  foreignField: 'professionalId'
+});
+
+ProfessionalSchema.set('toObject', { virtuals: true });
+ProfessionalSchema.set('toJSON', { virtuals: true });
 
 module.exports = mongoose.model('Professional', ProfessionalSchema);

@@ -1,6 +1,7 @@
 const Clinic = require('../models/clinic.model');
 const Professional = require('../models/professional.model'); 
 const cloudinary = require('cloudinary').v2; // Use require for cloudinary
+const ClinicImage = require('../models/clinic_image.model');
 
 const generateReferenceCode = () => {
   // Simple example: generating a unique reference code
@@ -58,7 +59,7 @@ const registerClinic = async (req, res) => {
     await clinic.save();
 
     // Associate the professional with the new clinic
-    professional.clinic = clinic._id;
+    professional.clinicId = clinic._id; // Set clinicId here
     professional.attachedToClinic = true;
     await professional.save();
 
@@ -78,7 +79,10 @@ const fetchClinics = async (req, res) => {
   try {
     const clinics = await Clinic.find().populate({
       path: 'professionals',
-      populate: { path: 'user' }
+      populate: [
+        { path: 'user' },
+        { path: 'clinic_images' } // Populate clinic images for each professional
+      ]
     });
     res.status(200).send(clinics);
   } catch (error) {
@@ -128,7 +132,10 @@ const fetchClinicById = async (req, res) => {
   try {
     const clinic = await Clinic.findById(req.params.id).populate({
       path: 'professionals',
-      populate: { path: 'user' }
+      populate: [
+        { path: 'user' },
+        { path: 'clinic_images' } // Populate clinic images for each professional
+      ]
     });
     if (!clinic) {
       return res.status(404).send();

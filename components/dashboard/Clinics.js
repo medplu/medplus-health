@@ -1,8 +1,20 @@
-// Clinics.tsx
 import React, { useEffect, useState, useRef } from 'react';
-import { View, FlatList, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
+import {
+  View,
+  FlatList,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchClinics, filterClinics, selectClinics, resetClinics, clearClinics } from '../../app/store/clinicSlice'; // Update the import path as needed
+import {
+  fetchClinics,
+  filterClinics,
+  selectClinics,
+  clearClinics,
+} from '../../app/store/clinicSlice';
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
 import * as SplashScreen from 'expo-splash-screen';
@@ -14,17 +26,12 @@ SplashScreen.preventAutoHideAsync();
 const Clinics = ({ searchQuery, onViewAll }) => {
   const router = useRouter();
   const dispatch = useDispatch();
+
   const [fontsLoaded] = useFonts({
     'SourceSans3-Bold': require('../../assets/fonts/SourceSansPro/SourceSans3-Bold.ttf'),
   });
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
 
   const { filteredClinicList, loading, error } = useSelector(state => ({
     filteredClinicList: selectClinics(state),
@@ -33,12 +40,18 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   }));
 
   useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
     dispatch(fetchClinics());
   }, [dispatch]);
 
   useEffect(() => {
     if (searchQuery) {
-      dispatch(filterClinics({ searchQuery })); 
+      dispatch(filterClinics({ searchQuery }));
     }
   }, [searchQuery, dispatch]);
 
@@ -52,57 +65,80 @@ const Clinics = ({ searchQuery, onViewAll }) => {
     }
   }, [loading, filteredClinicList]);
 
-  const handlePress = async (item) => {
+  const handlePress = item => {
     router.push({
       pathname: `/hospital/book-appointment/${item._id}`,
       params: { clinicId: item._id },
     });
   };
 
-  // const handleResetClinics = () => {
-  //   dispatch(clearClinics());
-  // };
+  const handleResetClinics = () => {
+    dispatch(clearClinics());
+  };
 
   const ClinicItem = ({ item }) => {
-    const [currentImage, setCurrentImage] = useState(item.images && item.images.length > 0 ? item.images[0] : null);
+    const [currentImage, setCurrentImage] = useState(null);
     const imageFadeAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-      if (item.images && item.images.length > 1) {
-        const interval = setInterval(() => {
-          const randomIndex = Math.floor(Math.random() * item.images.length);
-          const nextImage = item.images[randomIndex];
+      const allImages = new Set(item.images || []);
+      item.professionals?.forEach(professional => {
+        professional.clinic_images?.forEach(image => {
+          if (image.urls?.[0]) {
+            allImages.add(image.urls[0]);
+          }
+        });
+      });
 
-          Animated.timing(imageFadeAnim, {
-            toValue: 0,
-            duration: 100,
-            useNativeDriver: true,
-          }).start(() => {
-            setCurrentImage(nextImage);
+      const imageArray = Array.from(allImages);
+      if (imageArray.length > 0) {
+        setCurrentImage(imageArray[0]); 
+
+        if (imageArray.length > 1) {
+          let imageIndex = 0;
+          const interval = setInterval(() => {
+            imageIndex = (imageIndex + 1) % imageArray.length;
+
             Animated.timing(imageFadeAnim, {
-              toValue: 1,
-              duration: 100,
+              toValue: 0,
+              duration: 300,
               useNativeDriver: true,
-            }).start();
-          });
-        }, 10000); // Change image every 3 seconds
+            }).start(() => {
+              setCurrentImage(imageArray[imageIndex]);
+              Animated.timing(imageFadeAnim, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+              }).start();
+            });
+          }, 10000);
 
-        return () => clearInterval(interval); // Cleanup interval on unmount
+          return () => clearInterval(interval); 
+        }
+      } else {
+        setCurrentImage(null);
       }
-    }, [item.images]);
+    }, [item.images, item.professionals]);
 
     return (
       <TouchableOpacity style={styles.clinicItem} onPress={() => handlePress(item)}>
         {currentImage ? (
-          <Animated.Image source={{ uri: currentImage }} style={[styles.clinicImage, { opacity: imageFadeAnim }]} />
+          <Animated.Image
+            source={{ uri: currentImage }}
+            style={[styles.clinicImage, { opacity: imageFadeAnim }]}
+          />
         ) : (
-          <Text style={styles.noImageText}>No Image</Text>
+          <Animated.Image
+            source={{ uri: 'https://via.placeholder.com/200x100?text=No+Image' }}
+            style={styles.clinicImage}
+          />
         )}
         <View style={styles.textContainer}>
-          <Text style={styles.clinicName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
-          <Text style={styles.clinicCategory} numberOfLines={1} ellipsizeMode="tail">{item.category}</Text>
-          <Text style={styles.clinicAddress} numberOfLines={1} ellipsizeMode="tail">{item.address}</Text>
-          <Text style={styles.clinicContact} numberOfLines={1} ellipsizeMode="tail">{item.contactInfo}</Text>
+          <Text style={styles.clinicName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.clinicCategory} numberOfLines={1}>{item.category}</Text>
+          <Text style={styles.clinicAddress} numberOfLines={1}>{item.address}</Text>
+          
+          
         </View>
       </TouchableOpacity>
     );
@@ -119,10 +155,12 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   return (
     <Animated.View style={{ marginTop: 10, opacity: fadeAnim }}>
       <SubHeading subHeadingTitle={'Discover Clinics Near You'} onViewAll={onViewAll} />
-     
+      <TouchableOpacity style={styles.resetButton} onPress={handleResetClinics}>
+        <Text style={styles.resetButtonText}>Reset Clinics</Text>
+      </TouchableOpacity>
       <FlatList
         data={filteredClinicList}
-        horizontal={true} 
+        horizontal={true}
         renderItem={({ item }) => <ClinicItem item={item} />}
         keyExtractor={item => item._id.toString()}
         showsHorizontalScrollIndicator={false}
@@ -147,31 +185,29 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     marginTop: 5,
-    width: '100%',
   },
   clinicName: {
     fontWeight: 'bold',
     color: Colors.primary,
-    width: '100%',
   },
   clinicAddress: {
     color: Colors.primary,
-    width: '100%',
   },
   clinicCategory: {
     color: Colors.primary,
     marginTop: 5,
-    width: '100%',
   },
   clinicContact: {
     color: Colors.primary,
     marginTop: 5,
-    width: '100%',
   },
-  noImageText: {
-    textAlign: 'center',
+  clinicSpecialties: {
     color: Colors.primary,
-    marginTop: 20,
+    marginTop: 5,
+  },
+  clinicLanguages: {
+    color: Colors.primary,
+    marginTop: 5,
   },
   resetButton: {
     backgroundColor: Colors.primary,
