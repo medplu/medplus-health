@@ -128,7 +128,7 @@ const ClinicInfo = ({ prevStep, nextStep, clinicData, onClinicDataChange }) => {
       formData.append('files', blob, image.name);
     }
 
-    formData.forEach((value, key) => {
+    Array.from(formData.entries()).forEach(([key, value]) => {
       console.log(`${key}: ${value}`);
     });
 
