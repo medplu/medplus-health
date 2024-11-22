@@ -12,6 +12,7 @@ const path = require('path');
 const cloudinary = require('cloudinary').v2;
 const ImageUpload = require('./middleware/ImageUpload');
 const ClinicImage = require('./models/clinic_image.model'); // Update import
+const User = require('./models/user.model'); // Add this line
 
 dotenv.config();
 
