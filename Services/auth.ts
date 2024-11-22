@@ -1,7 +1,7 @@
 // api/auth.ts
 import axios from 'axios';
 
-const API_URL = 'https://medplus-health.onrender.com/api';
+const API_URL = 'http://medplus-health.onrender.com/api';
 
 export const registerUser = async (userData: {
   firstName: string;

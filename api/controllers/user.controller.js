@@ -2,6 +2,7 @@ const Client = require('../models/client.model');
 const Professional = require('../models/professional.model');
 const Student = require('../models/student.model');
 const User = require('../models/user.model'); 
+const Clinic = require('../models/clinic.model'); // Add this line
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken'); 
@@ -43,7 +44,7 @@ exports.register = async (req, res) => {
             userType, profession, title, consultationFee = 5000, category,
             yearsOfExperience, certifications, bio, profileImage,
             emailNotifications, pushNotifications, location,
-            attachedToClinic, ...userData
+            attachedToClinic, clinicReferenceCode, ...userData // Add clinicReferenceCode
         } = req.body;
 
         // Generate a verification code
@@ -73,7 +74,7 @@ exports.register = async (req, res) => {
                 return res.status(400).json({ error: 'Title is required for doctors.' });
             }
 
-            await new Professional({
+            const professional = await new Professional({
                 firstName: newUser.firstName,
                 lastName: newUser.lastName,
                 email: newUser.email,
@@ -87,8 +88,23 @@ exports.register = async (req, res) => {
                 bio,
                 profileImage,
                 location,
-                attachedToClinic
+                attachedToClinic,
+                clinicReferenceCode // Save the clinic reference code
             }).save();
+
+            // If clinicReferenceCode is provided, attempt to join the clinic
+            if (clinicReferenceCode) {
+                const clinic = await Clinic.findOne({ referenceCode: clinicReferenceCode });
+                if (clinic) {
+                    clinic.professionals.push(professional._id);
+                    await clinic.save();
+                    professional.clinicId = clinic._id;
+                    professional.attachedToClinic = true;
+                    await professional.save();
+                } else {
+                    return res.status(400).json({ error: 'Invalid clinic reference code' });
+                }
+            }
         } else if (userType === 'student') {
             await new Student({
                 firstName: newUser.firstName,
