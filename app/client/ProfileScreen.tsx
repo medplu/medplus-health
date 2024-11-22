@@ -42,22 +42,22 @@ const ProfileScreen: React.FC = () => {
   const uploadImage = async (uri: string) => {
     setUploading(true);
     setError(null);
-  
+
     try {
       const formData = new FormData();
       const fileName = uri.split('/').pop() || 'profileImage.jpg'; // Fallback to a default name
       const fileType = fileName.split('.').pop() || 'jpeg';
-  
+
       formData.append('profileImage', {
         uri, // Ensure this is the correct URI
         type: `image/${fileType}`,
         name: fileName,
       });
-  
+
       console.log('FormData payload:', formData);
-  
-      const response = await axios.post(
-        `https://medplus-health.onrender.com/api/users/upload-image/${userId}`,
+
+      const response = await axios.put(
+        `https://medplus-health.onrender.com/api/users/update-profile/${userId}`,
         formData,
         {
           headers: {
@@ -65,9 +65,9 @@ const ProfileScreen: React.FC = () => {
           },
         }
       );
-  
+
       console.log('Image uploaded successfully:', response.data);
-      dispatch(updateUserProfile({ profileImage: response.data.profileImage })); // Update Redux store
+      dispatch(updateUserProfile({ profileImage: response.data.user.profileImage })); // Update Redux store
     } catch (uploadError) {
       console.error('Error uploading image:', uploadError.response || uploadError);
       setError('Failed to upload image');
@@ -75,7 +75,7 @@ const ProfileScreen: React.FC = () => {
       setUploading(false);
     }
   };
-  
+
   const pickImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
