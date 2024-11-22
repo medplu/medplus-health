@@ -33,6 +33,7 @@ const BookAppointment = () => {
   }, [clinicId, dispatch]);
 
   const getAllClinicImages = (clinic) => {
+    if (!clinic) return [];
     const allImages = new Set(clinic.images || []);
     clinic.professionals?.forEach(professional => {
       professional.clinic_images?.forEach(image => {
@@ -62,6 +63,10 @@ const BookAppointment = () => {
   const handleConsult = (doctor) => {
     navigation.navigate('doctor/index', { doctor: JSON.stringify(doctor) });
   };
+
+  // const handleProfessionalPress = (professional) => {
+  //   navigation.navigate('doctor/index', { doctor: JSON.stringify(professional) });
+  // };
 
   if (loading) {
     return (
@@ -172,27 +177,30 @@ const BookAppointment = () => {
       
 
 {selectedProfessional && (
-        <View style={styles.selectedProfessionalContainer}>
-          <Image 
-            source={{ uri: selectedProfessional.user.profileImage }} 
-            style={styles.selectedProfessionalImage} 
-          />
-          <View style={styles.selectedProfessionalInfo}>
-            <Text style={styles.selectedProfessionalName}>
-              {selectedProfessional.firstName} {selectedProfessional.lastName}
-            </Text>
-            <Text style={styles.selectedProfessionalTitle}>
-              {selectedProfessional.title}
-            </Text>
-            <Text style={styles.selectedProfessionalSpecialty}>
-              Specialty: {selectedProfessional.profession}
-            </Text>
-            <Text style={styles.selectedProfessionalFee}>
-              Consultation Fee: {selectedProfessional.consultationFee} KES
-            </Text>
-          </View>
-        </View>
-      )}
+  <TouchableOpacity 
+    style={styles.selectedProfessionalContainer} 
+    onPress={() => handleConsult(selectedProfessional)}
+  >
+    <Image 
+      source={{ uri: selectedProfessional.user.profileImage }} 
+      style={styles.selectedProfessionalImage} 
+    />
+    <View style={styles.selectedProfessionalInfo}>
+      <Text style={styles.selectedProfessionalName}>
+        {selectedProfessional.firstName} {selectedProfessional.lastName}
+      </Text>
+      <Text style={styles.selectedProfessionalTitle}>
+        {selectedProfessional.title}
+      </Text>
+      <Text style={styles.selectedProfessionalSpecialty}>
+        Specialty: {selectedProfessional.profession}
+      </Text>
+      <Text style={styles.selectedProfessionalFee}>
+        Consultation Fee: {selectedProfessional.consultationFee} KES
+      </Text>
+    </View>
+  </TouchableOpacity>
+)}
 
       <ClinicSubHeading subHeadingTitle={'Doctors'} />
       {loading ? (

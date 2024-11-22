@@ -11,7 +11,6 @@ import Doctors from '../../components/dashboard/Doctors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AirbnbRating } from 'react-native-ratings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DoctorCardItem from '../../components/common/DoctorCardItem';
 import { useSelector } from 'react-redux';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -27,7 +26,9 @@ type Doctor = {
   email: string;
   bio: string;
   image?: { url: string };
-  user: string;
+  user: {
+    profileImage: string;
+  };
   consultationFee: number;
 };
 
@@ -113,7 +114,22 @@ const DoctorProfile: React.FC = () => {
         <Ionicons name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <DoctorCardItem doctor={doctor} />
+        <View style={styles.profileContainer}>
+          <Avatar
+            rounded
+            size="large"
+            source={{
+              uri: doctor.user.profileImage
+                ? doctor.user.profileImage
+                : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg',
+            }}
+            containerStyle={styles.avatar}
+          />
+          <View style={styles.profileInfo}>
+            <Text style={styles.doctorName}>{`${doctor.firstName} ${doctor.lastName}`}</Text>
+            <Text style={styles.categoryName}>{doctor.profession}</Text>
+          </View>
+        </View>
         <View style={styles.infoContainer}>
           <View style={styles.infoItem}>
             <MaterialIcons name="work" size={20} color={Colors.primary} />
@@ -255,6 +271,30 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 16,
     color: '#333',
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    backgroundColor: Colors.light_gray,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  avatar: {
+    marginRight: 15,
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  doctorName: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+  },
+  categoryName: {
+    fontSize: 16,
+    color: Colors.gray,
+    marginVertical: 4,
   },
 });
 
