@@ -180,8 +180,19 @@ const clinicsSlice = createSlice({
 export const { filterClinics, clearSelectedClinic, resetClinics } = clinicsSlice.actions;
 
 export const selectClinics = (state: RootState) => state.clinics.filteredClinicList;
+export const selectAllClinics = (state: RootState) => state.clinics.clinicList;
 export const selectClinicDetails = (state: RootState) => state.clinics.selectedClinic;
 export const selectClinicLoading = (state: RootState) => state.clinics.loading;
 export const selectClinicError = (state: RootState) => state.clinics.error;
+
+export const selectSpecialties = (state: RootState) => {
+  const specialtiesSet = new Set<string>();
+  state.clinics.clinicList.forEach(clinic => {
+    if (clinic.specialties) {
+      clinic.specialties.split(',').forEach(specialty => specialtiesSet.add(specialty.trim()));
+    }
+  });
+  return Array.from(specialtiesSet);
+};
 
 export default clinicsSlice.reducer;
