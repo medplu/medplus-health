@@ -14,6 +14,11 @@ const ImageSchema = new mongoose.Schema({
     ref: 'Professional',
     required: false,
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false,
+  },
 });
 
 module.exports = mongoose.model('ClinicImage', ImageSchema);

@@ -61,7 +61,8 @@ app.post('/api/upload', upload.array('files'), (req, res, next) => {
   try {
     const imageDoc = new ClinicImage({
       urls: urls,
-      professionalId: req.body.professionalId
+      professionalId: req.body.professionalId,
+      userId: req.body.userId, // Add userId to the document
     });
     await imageDoc.save();
 
