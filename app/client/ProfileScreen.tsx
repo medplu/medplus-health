@@ -134,9 +134,9 @@ const ProfileScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Account</Text>
           <TouchableOpacity style={styles.profile}>
             <Image source={{ uri: image || 'default-avatar-uri' }} style={styles.profileAvatar} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
-            <Text style={styles.uploadButtonText}>Pick an Image</Text>
+            <TouchableOpacity onPress={pickImage} style={styles.iconButton}>
+              <FeatherIcon name="camera" size={24} color="#007bff" />
+            </TouchableOpacity>
           </TouchableOpacity>
           {uploading && <ActivityIndicator size="large" color="#007bff" />}
         </View>
@@ -186,9 +186,8 @@ const styles = StyleSheet.create({
   section: { marginVertical: 10 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8 },
   profile: { alignItems: 'center', marginBottom: 16 },
-  profileAvatar: { width: 100, height: 100, borderRadius: 50 },
-  uploadButton: { backgroundColor: '#007bff', padding: 10, borderRadius: 8, marginTop: 8 },
-  uploadButtonText: { color: '#fff', textAlign: 'center' },
+  profileAvatar: { width: 80, height: 80, borderRadius: 40 },
+  iconButton: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#fff', borderRadius: 20, padding: 5 },
   input: { borderColor: '#ccc', borderWidth: 1, borderRadius: 8, padding: 8, marginBottom: 10 },
   error: { color: 'red', textAlign: 'center', marginBottom: 10 },
 });
