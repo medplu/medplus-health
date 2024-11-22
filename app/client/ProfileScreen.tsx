@@ -95,7 +95,7 @@ const ProfileScreen: React.FC = () => {
       }
 
       const response = await axios.put(
-        `http://localhost:3000/api/users/update-profile/${userId}`,
+        `https://medplus-health.onrender.com/api/users/update-profile/${userId}`,
         formData,
         {
           headers: {
