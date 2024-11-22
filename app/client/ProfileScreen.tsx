@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   SafeAreaView,
@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  Button,
   ActivityIndicator,
+  Button,
 } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import axios from 'axios';
@@ -18,7 +18,6 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, updateUserProfile } from '../store/userSlice';
-import * as FileSystem from 'expo-file-system';
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -40,10 +39,47 @@ const ProfileScreen: React.FC = () => {
     return result.uri;
   };
 
+  const uploadImage = async (uri: string) => {
+    setUploading(true);
+    setError(null);
+  
+    try {
+      const formData = new FormData();
+      const fileName = uri.split('/').pop() || 'profileImage.jpg'; // Fallback to a default name
+      const fileType = fileName.split('.').pop() || 'jpeg';
+  
+      formData.append('profileImage', {
+        uri, // Ensure this is the correct URI
+        type: `image/${fileType}`,
+        name: fileName,
+      });
+  
+      console.log('FormData payload:', formData);
+  
+      const response = await axios.post(
+        `https://medplus-health.onrender.com/api/users/upload-image/${userId}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+  
+      console.log('Image uploaded successfully:', response.data);
+      dispatch(updateUserProfile({ profileImage: response.data.profileImage })); // Update Redux store
+    } catch (uploadError) {
+      console.error('Error uploading image:', uploadError.response || uploadError);
+      setError('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+  
   const pickImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert('Sorry, we need camera roll permissions to make this work!');
+      alert('Camera roll permissions are required!');
       return;
     }
 
@@ -56,68 +92,23 @@ const ProfileScreen: React.FC = () => {
 
     if (!result.canceled && result.assets) {
       const resizedUri = await resizeImage(result.assets[0].uri);
-      setImage(resizedUri);
+      setImage(resizedUri); // Optimistic update
+      uploadImage(resizedUri); // Upload immediately
     }
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (!userId) {
-      setError('User ID is required');
-      return;
-    }
-
     setUploading(true);
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('email', email);
-      formData.append('contactInfo', contactInfo);
-      if (image) {
-        let imageUri = image;
-
-        // If the image URI is base64, convert it to a file
-        if (imageUri.startsWith('data:image')) {
-          const base64Data = imageUri.split(',')[1];
-          const path = `${FileSystem.cacheDirectory}profileImage-${Date.now()}.jpg`;
-          await FileSystem.writeAsStringAsync(path, base64Data, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-          imageUri = path;
-        }
-
-        const fileType = imageUri.split('.').pop();
-        formData.append('profileImage', {
-          uri: imageUri,
-          type: `image/${fileType}`,
-          name: `profileImage.${fileType}`,
-        });
-      }
-
       const response = await axios.put(
         `https://medplus-health.onrender.com/api/users/update-profile/${userId}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        { name, email, contactInfo },
+        { headers: { 'Content-Type': 'application/json' } }
       );
 
-      console.log('Profile updated:', response.data);
-      // Update Redux store with new profile data
-      dispatch(updateUserProfile({
-        name: response.data.user.name,
-        email: response.data.user.email,
-        contactInfo: response.data.user.contactInfo,
-        profileImage: response.data.user.profileImage,
-      }));
-      // Reset form fields
-      setName('');
-      setEmail('');
-      setContactInfo('');
-      setImage(null);
+      dispatch(updateUserProfile(response.data.user));
       navigation.goBack();
     } catch (updateError) {
       console.error('Error updating profile:', updateError);
@@ -125,7 +116,7 @@ const ProfileScreen: React.FC = () => {
     } finally {
       setUploading(false);
     }
-  }, [userId, name, email, contactInfo, image, navigation, dispatch]);
+  }, [name, email, contactInfo, userId, dispatch, navigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -134,9 +125,6 @@ const ProfileScreen: React.FC = () => {
           <FeatherIcon name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Update Profile</Text>
-        <TouchableOpacity onPress={() => { /* handle more options */ }} style={styles.headerAction}>
-          <FeatherIcon name="more-vertical" size={24} color="#000" />
-        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.container}>
@@ -146,49 +134,38 @@ const ProfileScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Account</Text>
           <TouchableOpacity style={styles.profile}>
             <Image source={{ uri: image || 'default-avatar-uri' }} style={styles.profileAvatar} />
-            <View style={styles.profileBody}>
-              <Text style={styles.profileName}>{name || 'Full Name'}</Text>
-              <Text style={styles.profileHandle}>{email || 'email@example.com'}</Text>
-            </View>
-            <FeatherIcon name="chevron-right" size={22} color="#bcbcbc" />
           </TouchableOpacity>
+          <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
+            <Text style={styles.uploadButtonText}>Pick an Image</Text>
+          </TouchableOpacity>
+          {uploading && <ActivityIndicator size="large" color="#007bff" />}
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Edit Information</Text>
-          <View style={styles.sectionBody}>
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              value={name}
-              onChangeText={setName}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Contact Info"
-              value={contactInfo}
-              onChangeText={setContactInfo}
-            />
-            <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
-              <Text style={styles.uploadButtonText}>Pick an image from camera roll</Text>
-            </TouchableOpacity>
-           
-            <Button title={uploading ? "Updating..." : "Update Profile"} onPress={handleSubmit} disabled={uploading} />
-            {uploading && <ActivityIndicator size="large" color="#0000ff" />}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="Full Name"
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Contact Info"
+            value={contactInfo}
+            onChangeText={setContactInfo}
+          />
+          <Button
+            title={uploading ? 'Updating...' : 'Update Profile'}
+            onPress={handleSubmit}
+            disabled={uploading}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -196,120 +173,24 @@ const ProfileScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
+  safeArea: { flex: 1, backgroundColor: '#f8f8f8' },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderColor: '#f0f0f0',
   },
-  headerAction: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 19,
-    fontWeight: '600',
-    color: '#000',
-    flex: 1,
-    textAlign: 'center',
-  },
-  container: {
-    padding: 16,
-  },
-  section: {
-    marginVertical: 12,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    letterSpacing: 0.33,
-    fontWeight: '500',
-    color: '#a69f9f',
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-  sectionBody: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
-  },
-  profile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-  },
-  profileAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 12,
-  },
-  profileBody: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#292929',
-  },
-  profileHandle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#858585',
-    marginTop: 2,
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 10,
-    paddingLeft: 8,
-  },
-  uploadButton: {
-    backgroundColor: '#007bff',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  uploadButtonText: {
-    color: '#fff',
-    textAlign: 'center',
-  },
-  image: {
-    width: 200,
-    height: 200,
-    marginBottom: 10,
-    alignSelf: 'center',
-  },
-  error: {
-    color: 'red',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#dc2626',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
+  headerAction: { padding: 8 },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', textAlign: 'center' },
+  container: { padding: 16 },
+  section: { marginVertical: 10 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8 },
+  profile: { alignItems: 'center', marginBottom: 16 },
+  profileAvatar: { width: 100, height: 100, borderRadius: 50 },
+  uploadButton: { backgroundColor: '#007bff', padding: 10, borderRadius: 8, marginTop: 8 },
+  uploadButtonText: { color: '#fff', textAlign: 'center' },
+  input: { borderColor: '#ccc', borderWidth: 1, borderRadius: 8, padding: 8, marginBottom: 10 },
+  error: { color: 'red', textAlign: 'center', marginBottom: 10 },
 });
 
 export default ProfileScreen;
