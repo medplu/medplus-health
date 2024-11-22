@@ -82,6 +82,9 @@ app.put('/api/users/update-profile/:userId', upload.single('profileImage'), Imag
     const { name, email, contactInfo } = req.body;
     const profileImage = req.file ? req.file.cloudStoragePublicUrl : null;
 
+    // Log the received data
+    console.log('Received data:', { userId, name, email, contactInfo, profileImage });
+
     // Find the user to update
     const user = await User.findById(userId);
 
