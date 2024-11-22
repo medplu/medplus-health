@@ -12,7 +12,7 @@ const ImageSchema = new mongoose.Schema({
   professionalId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Professional',
-    required: true,
+    required: false,
   },
 });
 
