@@ -1,17 +1,17 @@
 // api/auth.ts
 import axios from 'axios';
 
-const API_URL = 'http://medplus-health.onrender.com/api';
+const API_URL = 'https://medplus-health.onrender.com/api';
 
 export const registerUser = async (userData: {
   firstName: string;
   lastName: string;
   email: string;
-  password?: string; // Password is optional for Google login
-  gender?: 'Male' | 'Female' | 'Other'; // Gender is optional for Google login
-  userType?: 'client' | 'professional' | 'student'; // UserType is optional for Google login
+  password?: string;
+  gender?: 'Male' | 'Female' | 'Other'; 
+  userType?: 'client' | 'professional' | 'student'; 
   profession?: string;
-  profileImage?: string; // Profile image for Google login
+  profileImage?: string; 
 }) => {
   try {
     const response = await axios.post(`${API_URL}/register`, userData);

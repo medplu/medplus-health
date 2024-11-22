@@ -104,7 +104,7 @@ const SignupScreen: React.FC = () => {
         ...(userType === 'professional' ? { 
           profession,
           ...(profession === 'doctor' ? { title } : {}),
-          clinicReferenceCode // Include clinic reference code if professional
+          clinicReferenceCode, // Include clinic reference code
         } : {}),
       };
 
@@ -324,11 +324,11 @@ const SignupScreen: React.FC = () => {
                     <View style={styles.inputContainer}>
                       <Image
                         style={[styles.icon, styles.inputIcon]}
-                        source={{ uri: 'https://img.icons8.com/ios/50/000000/key.png' }}
+                        source={{ uri: 'https://img.icons8.com/ios/50/000000/clinic.png' }}
                       />
                       <TextInput
                         style={styles.inputs}
-                        placeholder="Clinic Reference Code (optional)"
+                        placeholder="Clinic Authorization Code"
                         value={clinicReferenceCode}
                         onChangeText={setClinicReferenceCode}
                         placeholderTextColor="#888"
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   formContainer: {
-    width: '100%', // Changed from fixed width to percentage
+    width: '100%',
     alignItems: 'center',
   },
   heading: {
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 30,
     borderBottomWidth: 1,
-    width: '90%', // Changed from fixed width to percentage
+    width: '90%',
     height: 45,
     marginBottom: 15,
     flexDirection: 'row',
