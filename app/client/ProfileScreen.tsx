@@ -45,6 +45,7 @@ const ProfileScreen: React.FC = () => {
 
   const uploadImagesToBackend = async (assets) => {
     const formData = new FormData();
+    formData.append('userId', userId); // Add userId to formData
    
   
     for (const asset of assets) {
@@ -75,6 +76,11 @@ const ProfileScreen: React.FC = () => {
           'Content-Type': 'multipart/form-data',
         },
       });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
   
       const result = await response.json();
       console.log(result);
