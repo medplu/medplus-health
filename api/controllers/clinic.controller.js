@@ -172,7 +172,7 @@ const searchClinics = async (req, res) => {
     }).populate({
       path: 'professionals',
       populate: { path: 'user' }
-    });
+    }).populate('professionals'); // Populate professionals with complete objects
     res.status(200).json(clinics);
   } catch (error) {
     console.error('Error searching clinics:', error);
