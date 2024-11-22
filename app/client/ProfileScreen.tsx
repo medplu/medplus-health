@@ -18,6 +18,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUser, updateUserProfile } from '../store/userSlice';
+import * as FileSystem from 'expo-file-system';
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -45,11 +46,22 @@ const ProfileScreen: React.FC = () => {
 
     try {
       const formData = new FormData();
-      const fileName = uri.split('/').pop() || 'profileImage.jpg'; // Fallback to a default name
+      let imageUri = uri;
+
+      if (imageUri.startsWith('data:image')) {
+        const base64Data = imageUri.split(',')[1];
+        const path = `${FileSystem.cacheDirectory}profileImage-${Date.now()}.jpg`;
+        await FileSystem.writeAsStringAsync(path, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        imageUri = path;
+      }
+
+      const fileName = imageUri.split('/').pop() || 'profileImage.jpg';
       const fileType = fileName.split('.').pop() || 'jpeg';
 
       formData.append('profileImage', {
-        uri, // Ensure this is the correct URI
+        uri: imageUri,
         type: `image/${fileType}`,
         name: fileName,
       });
