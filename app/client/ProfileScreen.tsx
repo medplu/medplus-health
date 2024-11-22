@@ -10,6 +10,7 @@ import {
   TextInput,
   ActivityIndicator,
   Button,
+  Alert,
 } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import axios from 'axios';
@@ -25,7 +26,8 @@ const ProfileScreen: React.FC = () => {
   const user = useSelector(selectUser);
   const userId = user.userId;
   const dispatch = useDispatch();
-
+  const [isUploading, setIsUploading] = useState(false);
+  const [isGalleryDisabled, setIsGalleryDisabled] = useState(false);
   const [name, setName] = useState<string>(user.name || '');
   const [email, setEmail] = useState<string>(user.email || '');
   const [contactInfo, setContactInfo] = useState<string>(user.contactInfo || '');
@@ -40,58 +42,50 @@ const ProfileScreen: React.FC = () => {
     return result.uri;
   };
 
-  const uploadImage = async (uri: string) => {
-    setUploading(true);
-    setError(null);
-
-    try {
-      const formData = new FormData();
-      let imageUri = uri;
-
+  const uploadImagesToBackend = async (assets) => {
+    const formData = new FormData();
+   
+  
+    for (const asset of assets) {
+      let imageUri = asset.uri;
+  
       if (imageUri.startsWith('data:image')) {
         const base64Data = imageUri.split(',')[1];
-        const path = `${FileSystem.cacheDirectory}profileImage-${Date.now()}.jpg`;
+        const path = `${FileSystem.cacheDirectory}myImage-${Date.now()}.jpg`;
         await FileSystem.writeAsStringAsync(path, base64Data, {
           encoding: FileSystem.EncodingType.Base64,
         });
         imageUri = path;
       }
-
-      const fileName = imageUri.split('/').pop() || 'profileImage.jpg';
-      const fileType = fileName.split('.').pop() || 'jpeg';
-
-      formData.append('profileImage', {
+  
+      const image = {
         uri: imageUri,
-        type: `image/${fileType}`,
-        name: fileName,
+        type: 'image/jpeg',
+        name: `myImage-${Date.now()}.jpg`,
+      };
+      formData.append('files', image);
+    }
+  
+    try {
+      const response = await fetch('https://medplus-health.onrender.com/api/upload', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
-
-      console.log('FormData payload:', formData);
-
-      const response = await axios.put(
-        `https://medplus-health.onrender.com/api/users/update-profile/${userId}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
-      console.log('Image uploaded successfully:', response.data);
-      dispatch(updateUserProfile({ profileImage: response.data.user.profileImage })); // Update Redux store
-    } catch (uploadError) {
-      console.error('Error uploading image:', uploadError.response || uploadError);
-      setError('Failed to upload image');
-    } finally {
-      setUploading(false);
+  
+      const result = await response.json();
+      console.log(result);
+    } catch (error) {
+      console.error('Error uploading images:', error);
     }
   };
 
   const pickImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert('Camera roll permissions are required!');
+      Alert('Sorry, we need camera roll permissions to make this work!');
       return;
     }
 
@@ -100,14 +94,24 @@ const ProfileScreen: React.FC = () => {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
+      allowsMultipleSelection: true,
     });
 
     if (!result.canceled && result.assets) {
-      const resizedUri = await resizeImage(result.assets[0].uri);
-      setImage(resizedUri); // Optimistic update
-      uploadImage(resizedUri); // Upload immediately
+      setIsUploading(true);
+      try {
+        await uploadImagesToBackend(result.assets);
+        setIsGalleryDisabled(true); 
+        ToastAndroid.show('Images uploaded successfully!', ToastAndroid.SHORT);
+      } catch (error) {
+        console.error('Error uploading images:', error);
+        Alert.alert('Error', 'An error occurred while uploading images');
+      } finally {
+        setIsUploading(false);
+      }
     }
   }, []);
+
 
   const handleSubmit = useCallback(async () => {
     setUploading(true);
@@ -146,8 +150,8 @@ const ProfileScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Account</Text>
           <TouchableOpacity style={styles.profile}>
             <Image source={{ uri: image || 'default-avatar-uri' }} style={styles.profileAvatar} />
-            <TouchableOpacity onPress={pickImage} style={styles.iconButton}>
-              <FeatherIcon name="camera" size={24} color="#007bff" />
+            <TouchableOpacity onPress={pickImage} style={styles.iconButton} disabled={isGalleryDisabled}>
+              <FeatherIcon name="camera" size={24} color={isGalleryDisabled ? "#ccc" : "#007bff"} />
             </TouchableOpacity>
           </TouchableOpacity>
           {uploading && <ActivityIndicator size="large" color="#007bff" />}
