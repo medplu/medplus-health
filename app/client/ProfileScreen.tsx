@@ -16,14 +16,15 @@ import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
-import { selectUser } from '../store/userSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectUser, updateUserProfile } from '../store/userSlice';
 import * as FileSystem from 'expo-file-system';
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const user = useSelector(selectUser);
   const userId = user.userId;
+  const dispatch = useDispatch();
 
   const [name, setName] = useState<string>(user.name || '');
   const [email, setEmail] = useState<string>(user.email || '');
@@ -105,6 +106,13 @@ const ProfileScreen: React.FC = () => {
       );
 
       console.log('Profile updated:', response.data);
+      // Update Redux store with new profile data
+      dispatch(updateUserProfile({
+        name: response.data.user.name,
+        email: response.data.user.email,
+        contactInfo: response.data.user.contactInfo,
+        profileImage: response.data.user.profileImage,
+      }));
       // Reset form fields
       setName('');
       setEmail('');
@@ -117,7 +125,7 @@ const ProfileScreen: React.FC = () => {
     } finally {
       setUploading(false);
     }
-  }, [userId, name, email, contactInfo, image, navigation]);
+  }, [userId, name, email, contactInfo, image, navigation, dispatch]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
