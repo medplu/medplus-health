@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Alert, ScrollView, TouchableOpacity, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
-import { useSelector } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons'; // Import the eye icon
 import Colors from '../../components/Shared/Colors';
 import HorizontalLine from '../../components/common/HorizontalLine';
-import { fetchTransactions } from '../../Services/paystackService';
-import { selectUser } from '../../app/store/userSlice'; // Import the user selector
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const TransactionScreen: React.FC = () => {
   const PAYSTACK_SECRET_KEY = process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
@@ -19,23 +18,28 @@ const TransactionScreen: React.FC = () => {
     business_name: '',
     settlement_bank: '',
     account_number: '',
-    subaccount_code: '',
+    percentage_charge: '',
   });
   const [banks, setBanks] = useState<{ name: string, code: string }[]>([]);
-  const [isAccountInfoVisible, setIsAccountInfoVisible] = useState<boolean>(false);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  
-  const user = useSelector(selectUser); 
+  const [isAccountInfoVisible, setIsAccountInfoVisible] = useState<boolean>(false); // Add state for toggling visibility
+  const [transactions, setTransactions] = useState<any[]>([]); // Add state for transactions
 
   useEffect(() => {
+    console.log('useEffect triggered'); // Debug log to check if useEffect is firing
+    const checkPaymentSetupStatus = async () => {
+      const status = await AsyncStorage.getItem('isPaymentSetupCompleted');
+      if (!status) {
+        setShowPaymentSetupModal(true);
+      } else {
+        setIsPaymentSetupCompleted(true);
+      }
+    };
+
+    checkPaymentSetupStatus();
+    fetchBanks();
     fetchSubaccountInfo();
+    fetchTransactions(); // Fetch transactions
   }, []);
-
-  useEffect(() => {
-    if (subaccountData.subaccount_code) {
-      fetchTransactionsData(subaccountData.subaccount_code);
-    }
-  }, [subaccountData]);
 
   const fetchBanks = async () => {
     try {
@@ -54,32 +58,37 @@ const TransactionScreen: React.FC = () => {
 
   const fetchSubaccountInfo = async () => {
     try {
-      const professionalId = user?.professional?._id; 
-      if (!professionalId) {
-        Alert.alert('Error', 'Professional ID not found. Please log in again.');
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        Alert.alert('Error', 'User ID not found. Please log in again.');
         return;
       }
-      console.log('Fetching subaccount info for professionalId:', professionalId);
 
-      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${professionalId}`);
-      if (response.data.status === 'Success') {
-        setSubaccountData(response.data.data);
-        console.log('Fetched subaccount data:', response.data.data);
-      } else {
-        Alert.alert('Error', 'Failed to fetch subaccount info.');
-      }
+      const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
+      setSubaccountData(response.data);
     } catch (error) {
       console.error('Error fetching subaccount info:', error);
       Alert.alert('Error', 'Failed to fetch subaccount info.');
     }
   };
 
-  const fetchTransactionsData = async (subaccountCode: string) => {
+  const fetchTransactions = async () => {
+    console.log('fetchTransactions called'); // Debug log
     try {
-      const transactions = await fetchTransactions(subaccountCode);
-      const successfulTransactions = transactions.filter(transaction => transaction.status === 'success');
-      setTransactions(successfulTransactions);
-      console.log('Fetched transactions:', successfulTransactions);
+      const reference = await AsyncStorage.getItem('transactionReference');
+      console.log(reference)
+      if (!reference) {
+        Alert.alert('Error', 'Transaction reference not found. Please try again.');
+        return;
+      }
+  
+      const response = await axios.get(`https://api.paystack.co/transaction/${reference}`, {
+        headers: {
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        },
+      });
+      console.log('Transactions fetched:', response.data); // Debug log
+      setTransactions(response.data);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       Alert.alert('Error', 'Failed to fetch transactions.');
@@ -95,16 +104,15 @@ const TransactionScreen: React.FC = () => {
 
   const handleCreateSubaccount = async () => {
     try {
-      const professionalId = user?.professional?._id; 
-      if (!professionalId) {
-        Alert.alert('Error', 'Professional ID not found. Please log in again.');
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        Alert.alert('Error', 'User ID not found. Please log in again.');
         return;
       }
 
       const subaccountPayload = {
         ...subaccountData,
-        professionalId,
-        percentage_charge: '10', 
+        userId,
       };
 
       const response = await axios.post('https://medplus-health.onrender.com/api/payment/create-subaccount', subaccountPayload);
@@ -116,11 +124,10 @@ const TransactionScreen: React.FC = () => {
     }
   };
 
-
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-      
+        {/* Account Info Section */}
         <View style={styles.section}>
           <View style={styles.infoHeader}>
             <Text style={styles.sectionTitle}>Account Information</Text>
@@ -145,7 +152,7 @@ const TransactionScreen: React.FC = () => {
           </View>
         </View>
 
-        
+        {/* Example Button to create a subaccount (will be enabled after payment setup) */}
         <TouchableOpacity
           style={[styles.card, !isPaymentSetupCompleted && styles.disabledCard]}
           onPress={() => {
@@ -171,15 +178,14 @@ const TransactionScreen: React.FC = () => {
         <Text style={styles.sectionTitle}>Transaction History</Text>
         {transactions.map((transaction, index) => (
           <View key={index} style={styles.transactionCard}>
-            <Text style={styles.transactionText}>Reference: {transaction.reference}</Text>
-            <Text style={styles.transactionText}>Amount: {transaction.amount / 100} KES</Text>
-            <Text style={styles.transactionText}>Status: {transaction.status}</Text>
-            <Text style={styles.transactionDate}>Date: {new Date(transaction.paid_at).toLocaleDateString()}</Text>
+            <Text style={styles.transactionText}>{transaction.description}</Text>
+            <Text style={styles.transactionText}>Amount: {transaction.amount}</Text>
+            <Text style={styles.transactionDate}>Date: {new Date(transaction.date).toLocaleDateString()}</Text>
           </View>
         ))}
       </View>
 
-     
+      {/* Payment Setup Prompt Modal */}
       <Modal
         visible={showPaymentSetupModal}
         transparent
@@ -212,6 +218,12 @@ const TransactionScreen: React.FC = () => {
                   placeholder="Account Number"
                   value={subaccountData.account_number}
                   onChangeText={(text) => setSubaccountData({ ...subaccountData, account_number: text })}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Percentage Charge"
+                  value={subaccountData.percentage_charge}
+                  onChangeText={(text) => setSubaccountData({ ...subaccountData, percentage_charge: text })}
                 />
                 <TouchableOpacity style={styles.button} onPress={handleCreateSubaccount}>
                   <Text style={styles.buttonText}>Confirm Updates</Text>
@@ -255,6 +267,12 @@ const TransactionScreen: React.FC = () => {
                   placeholder="Account Number"
                   value={subaccountData.account_number}
                   onChangeText={(text) => setSubaccountData({ ...subaccountData, account_number: text })}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Percentage Charge"
+                  value={subaccountData.percentage_charge}
+                  onChangeText={(text) => setSubaccountData({ ...subaccountData, percentage_charge: text })}
                 />
                 <TouchableOpacity style={styles.button} onPress={handleCreateSubaccount}>
                   <Text style={styles.buttonText}>Confirm Updates</Text>

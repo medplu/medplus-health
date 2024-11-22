@@ -2,13 +2,14 @@ import { StyleSheet, TextInput, SafeAreaView, Text, View, FlatList, Image, Touch
 import React, { useState, useEffect } from 'react';
 import GlobalApi from '../../Services/GlobalApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { selectAllClinics, selectSpecialties } from '../store/clinicSlice';
 import { Ionicons } from '@expo/vector-icons';
 
 const index = () => {
   const route = useRoute();
+  const navigation = useNavigation();
   const { categoryQuery } = route.params || {};
   const [searchQuery, setSearchQuery] = useState('');
   const [specialty, setSpecialty] = useState('all');
@@ -63,19 +64,24 @@ const index = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <View style={styles.searchContainer}>
-        <TextInput
-          placeholder="Search"
-          clearButtonMode="always"
-          style={styles.searchBox}
-          autoCapitalize="none"
-          autoCorrect={false}
-          value={searchQuery}
-          onChangeText={(query) => handleSearch(query)}
-        />
-        <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)}>
-          <Ionicons name="filter" size={24} color="black" style={styles.filterIcon} />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
+        <View style={styles.searchContainer}>
+          <TextInput
+            placeholder="Search"
+            clearButtonMode="always"
+            style={styles.searchBox}
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={searchQuery}
+            onChangeText={(query) => handleSearch(query)}
+          />
+          <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)}>
+            <Ionicons name="filter" size={24} color="black" style={styles.filterIcon} />
+          </TouchableOpacity>
+        </View>
       </View>
       {showDropdown && (
         <Picker
@@ -142,17 +148,19 @@ const styles = StyleSheet.create({
     paddingTop: StatusBar.currentHeight,
     backgroundColor: '#f8f8f8',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderColor: '#ccc',
     borderRadius: 8,
     borderWidth: 1,
-    margin: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  searchBox: {
+    marginLeft: 10,
     flex: 1,
     paddingHorizontal: 10,
     paddingVertical: 5,
