@@ -161,14 +161,17 @@ const fetchClinicsBySpecialties = async (req, res) => {
 };
 
 const searchClinics = async (req, res) => {
-  const { query, specialty, filter } = req.query;
+  const { query, specialty, address } = req.query;
   try {
     const clinics = await Clinic.find({
       $and: [
         { name: new RegExp(query, 'i') },
-        specialty ? { specialties: specialty } : {},
-        filter ? { specialties: new RegExp(filter, 'i') } : {},
+        specialty ? { specialties: new RegExp(specialty, 'i') } : {},
+        address ? { address: new RegExp(address, 'i') } : {},
       ],
+    }).populate({
+      path: 'professionals',
+      populate: { path: 'user' }
     });
     res.status(200).json(clinics);
   } catch (error) {

@@ -5,6 +5,7 @@ const cloudinary = require('cloudinary').v2; // Make sure cloudinary is properly
 exports.getProfessionals = async (req, res) => {
     try {
         const professionals = await Professional.find().populate('clinicId'); // Populate clinicId
+        console.log("Fetched professionals:", professionals); // Add logging
         res.status(200).json(professionals);
     } catch (error) {
         console.log("Error fetching professionals", error);
@@ -227,15 +228,14 @@ exports.getAvailableSlots = async (req, res) => {
 };
 
 exports.searchProfessionals = async (req, res) => {
-    const { query, specialty, filter } = req.query;
+    const { query, specialty } = req.query;
     try {
         const professionals = await Professional.find({
             $and: [
                 { $or: [{ firstName: new RegExp(query, 'i') }, { lastName: new RegExp(query, 'i') }] },
-                specialty ? { profession: specialty } : {},
-                filter ? { profession: new RegExp(filter, 'i') } : {},
+                specialty ? { specialty: new RegExp(specialty, 'i') } : {},
             ],
-        });
+        }).populate('clinicId'); // Populate clinicId if needed
         res.status(200).json(professionals);
     } catch (error) {
         console.error('Error searching professionals:', error);

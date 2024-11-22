@@ -59,7 +59,7 @@ const index = () => {
 
   const fetchData = (query, specialty, filter) => {
     setIsLoading(true);
-    fetch(`http://localhost:3000/api/search?query=${query}&specialty=${specialty}&filter=${filter}`)
+    fetch(`https://medplus-health.onrender.com/api/search?query=${query}&specialty=${specialty}&filter=${filter}`)
       .then((response) => response.json())
       .then((json) => {
         setData(json);

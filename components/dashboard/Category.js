@@ -62,7 +62,7 @@ export default function Category() {
             <TouchableOpacity 
               style={styles.categoryItem} 
               onPress={() => {
-                router.push(`/search?category=${item.name}`);
+                router.push(`/search?specialty=${item.name}`);
               }}
             >
               <View style={activeIndex == index ? styles.categoryIconContainerActive : styles.categoryIconContainer}>
