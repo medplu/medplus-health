@@ -6,6 +6,7 @@ import Colors from '../Shared/Colors';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { selectUser, logout } from '../../app/store/userSlice';
 import { io } from 'socket.io-client';
+import axios from 'axios';
 
 export default function Header() {
   const navigation = useNavigation();
@@ -13,7 +14,10 @@ export default function Header() {
 
   // Obtain user data from Redux state
   const user = useSelector(selectUser);
+  const userId = user.id; // Ensure userId is correctly assigned
   console.log('User:', user);
+
+  const [profileImage, setProfileImage] = useState(user.profileImage);
 
   const handleLogout = async () => {
     try {
@@ -34,12 +38,29 @@ export default function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      try {
+        const response = await axios.get(`https://medplus-health.onrender.com/clinic-images/user/${userId}`);
+        if (response.data.length > 0) {
+          setProfileImage(response.data[0].url);
+        }
+      } catch (error) {
+        console.error('Error fetching profile image:', error);
+      }
+    };
+
+    if (userId) {
+      fetchProfileImage();
+    }
+  }, [userId]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={{ marginLeft: 20 }}>
           <Image
-            source={{ uri: user.profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
+            source={{ uri: profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
             style={styles.profileImage}
           />
         </TouchableOpacity>
