@@ -22,6 +22,7 @@ const ProfessionalSchema = new Schema({
         ref: 'Clinic',
         required: false // Make clinicId optional
     },
+    clinicReferenceCode: { type: String }, // Add this field
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });

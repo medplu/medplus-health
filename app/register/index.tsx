@@ -53,6 +53,7 @@ const SignupScreen: React.FC = () => {
   const [countdown, setCountdown] = useState(60);
   const [timerActive, setTimerActive] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [clinicReferenceCode, setClinicReferenceCode] = useState(''); // New state for clinic reference code
 
   const animateButton = () => {
     Animated.sequence([
@@ -103,6 +104,7 @@ const SignupScreen: React.FC = () => {
         ...(userType === 'professional' ? { 
           profession,
           ...(profession === 'doctor' ? { title } : {}),
+          clinicReferenceCode // Include clinic reference code if professional
         } : {}),
       };
 
@@ -318,6 +320,20 @@ const SignupScreen: React.FC = () => {
                         ))}
                       </Picker>
                     )}
+
+                    <View style={styles.inputContainer}>
+                      <Image
+                        style={[styles.icon, styles.inputIcon]}
+                        source={{ uri: 'https://img.icons8.com/ios/50/000000/key.png' }}
+                      />
+                      <TextInput
+                        style={styles.inputs}
+                        placeholder="Clinic Reference Code (optional)"
+                        value={clinicReferenceCode}
+                        onChangeText={setClinicReferenceCode}
+                        placeholderTextColor="#888"
+                      />
+                    </View>
                   </>
                 )}
 

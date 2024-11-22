@@ -1,9 +1,9 @@
-import { View, Image, TouchableOpacity, StyleSheet, SafeAreaView, Text } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import Colors from '../Shared/Colors';
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 import { selectUser, logout } from '../../app/store/userSlice';
 import { io } from 'socket.io-client';
 import axios from 'axios';
@@ -12,14 +12,39 @@ export default function Header() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
-  // Obtain user data from Redux state
+  
   const user = useSelector(selectUser);
-  const userId = user.id; // Ensure userId is correctly assigned
-  console.log('User:', user);
+  const userId = user?.id; 
 
-  const [profileImage, setProfileImage] = useState(user.profileImage);
+  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
 
-  const handleLogout = async () => {
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      if (!userId) {
+        console.log('No user ID available, skipping fetch.');
+        return;
+      }
+      console.log('Fetching profile image for userId:', userId); // Log userId
+      try {
+        const response = await axios.get(
+          `https://medplus-health.onrender.com/clinic-images/user/${userId}`
+        );
+        if (response.data.length > 0) {
+          console.log('Fetched profile image URL:', response.data[0].url); // Log fetched image URL
+          setProfileImage(response.data[0].url);
+        } else {
+          console.log('No profile image found for userId:', userId); // Log if no image found
+        }
+      } catch (error) {
+        console.error('Error fetching profile image:', error);
+      }
+    };
+
+    fetchProfileImage();
+  }, [userId]); 
+
+  // Handle logout
+  const handleLogout = () => {
     try {
       dispatch(logout()); // Dispatch logout action
       navigation.navigate('login/index'); // Navigate to the login route
@@ -31,36 +56,26 @@ export default function Header() {
   // Setting up Socket.IO for real-time updates
   useEffect(() => {
     const socket = io('https://medplus-health.onrender.com');
+    console.log('Socket connected.');
 
     // Cleanup function to disconnect the socket
     return () => {
       socket.disconnect();
+      console.log('Socket disconnected.');
     };
   }, []);
-
-  useEffect(() => {
-    const fetchProfileImage = async () => {
-      try {
-        const response = await axios.get(`https://medplus-health.onrender.com/clinic-images/user/${userId}`);
-        if (response.data.length > 0) {
-          setProfileImage(response.data[0].url);
-        }
-      } catch (error) {
-        console.error('Error fetching profile image:', error);
-      }
-    };
-
-    if (userId) {
-      fetchProfileImage();
-    }
-  }, [userId]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={{ marginLeft: 20 }}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Profile')}
+          style={{ marginLeft: 20 }}
+        >
           <Image
-            source={{ uri: profileImage || 'https://randomuser.me/api/portraits/women/46.jpg' }}
+            source={{
+              uri: profileImage || 'https://randomuser.me/api/portraits/women/46.jpg',
+            }}
             style={styles.profileImage}
           />
         </TouchableOpacity>
