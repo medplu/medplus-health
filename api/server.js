@@ -93,7 +93,9 @@ app.put('/api/users/update-profile/:userId', upload.single('profileImage'), Imag
     user.name = name || user.name;
     user.email = email || user.email;
     user.contactInfo = contactInfo || user.contactInfo;
-    user.profileImage = profileImage || user.profileImage;
+    if (profileImage) {
+      user.profileImage = profileImage;
+    }
 
     await user.save();
 
