@@ -14,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSelector } from 'react-redux';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Avatar } from 'react-native-elements';
 
 type RouteParams = {
   doctor: string;
