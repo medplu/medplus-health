@@ -1,4 +1,5 @@
-import { StyleSheet, TextInput, SafeAreaView, Text, View, FlatList, Image, TouchableOpacity, StatusBar, Picker } from 'react-native';
+import { StyleSheet, TextInput, SafeAreaView, Text, View, FlatList, Image, TouchableOpacity, StatusBar} from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import React, { useState, useEffect } from 'react';
 import GlobalApi from '../../Services/GlobalApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';

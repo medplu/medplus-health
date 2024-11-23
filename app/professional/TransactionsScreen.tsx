@@ -18,7 +18,7 @@ const TransactionScreen: React.FC = () => {
     business_name: '',
     settlement_bank: '',
     account_number: '',
-    percentage_charge: '',
+    subaccount_code: '',
   });
   const [banks, setBanks] = useState<{ name: string, code: string }[]>([]);
   const [isAccountInfoVisible, setIsAccountInfoVisible] = useState<boolean>(false); // Add state for toggling visibility
@@ -113,6 +113,7 @@ const TransactionScreen: React.FC = () => {
       const subaccountPayload = {
         ...subaccountData,
         userId,
+        percentage_charge: '10', // Set default percentage charge
       };
 
       const response = await axios.post('https://medplus-health.onrender.com/api/payment/create-subaccount', subaccountPayload);
@@ -187,12 +188,18 @@ const TransactionScreen: React.FC = () => {
 
       {/* Payment Setup Prompt Modal */}
       <Modal
-        visible={showPaymentSetupModal}
+        visible={showPaymentSetupModal || showSubaccountModal} // Combine modal visibility
         transparent
         animationType="slide"
-        onRequestClose={() => setShowPaymentSetupModal(false)}
+        onRequestClose={() => {
+          setShowPaymentSetupModal(false);
+          setShowSubaccountModal(false);
+        }}
       >
-        <TouchableWithoutFeedback onPress={() => setShowPaymentSetupModal(false)}>
+        <TouchableWithoutFeedback onPress={() => {
+          setShowPaymentSetupModal(false);
+          setShowSubaccountModal(false);
+        }}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.modalContainer}>
@@ -218,61 +225,6 @@ const TransactionScreen: React.FC = () => {
                   placeholder="Account Number"
                   value={subaccountData.account_number}
                   onChangeText={(text) => setSubaccountData({ ...subaccountData, account_number: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Percentage Charge"
-                  value={subaccountData.percentage_charge}
-                  onChangeText={(text) => setSubaccountData({ ...subaccountData, percentage_charge: text })}
-                />
-                <TouchableOpacity style={styles.button} onPress={handleCreateSubaccount}>
-                  <Text style={styles.buttonText}>Confirm Updates</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* Subaccount Creation Modal */}
-      <Modal
-        visible={showSubaccountModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowSubaccountModal(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setShowSubaccountModal(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalContainer}>
-                <MaterialIcons name="payment" size={40} color="#6200ee" />
-                <Text style={styles.modalTitle}>Set Payment</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Business Name"
-                  value={subaccountData.business_name}
-                  onChangeText={(text) => setSubaccountData({ ...subaccountData, business_name: text })}
-                />
-                <Picker
-                  selectedValue={subaccountData.settlement_bank}
-                  style={styles.input}
-                  onValueChange={(itemValue) => setSubaccountData({ ...subaccountData, settlement_bank: itemValue })}
-                >
-                  {banks.map((bank, index) => (
-                    <Picker.Item key={`${bank.code}-${index}`} label={bank.name} value={bank.code} />
-                  ))}
-                </Picker>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Account Number"
-                  value={subaccountData.account_number}
-                  onChangeText={(text) => setSubaccountData({ ...subaccountData, account_number: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Percentage Charge"
-                  value={subaccountData.percentage_charge}
-                  onChangeText={(text) => setSubaccountData({ ...subaccountData, percentage_charge: text })}
                 />
                 <TouchableOpacity style={styles.button} onPress={handleCreateSubaccount}>
                   <Text style={styles.buttonText}>Confirm Updates</Text>

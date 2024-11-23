@@ -122,37 +122,22 @@ const DashboardScreen: React.FC = () => {
     );
   };
 
-  const renderOverviewChart = () => {
+  const renderOverviewList = () => {
     const today = moment().format('YYYY-MM-DD');
     const todaySlots = schedule.filter(slot => moment(slot.date).format('YYYY-MM-DD') === today && slot.isBooked);
-    const slotTimes = todaySlots.map(slot => `${slot.startTime} - ${slot.endTime}`);
-    const uniqueTimes = Array.from(new Set(slotTimes));
 
     return (
-      <BarChart
-        data={{
-          labels: uniqueTimes,
-          datasets: [
-            {
-              data: uniqueTimes.map(time => 
-                todaySlots.filter(slot => `${slot.startTime} - ${slot.endTime}` === time).length
-              ),
-            },
-          ],
-        }}
-        width={screenWidth - 32}
-        height={220}
-        chartConfig={{
-          backgroundGradientFrom: '#fff',
-          backgroundGradientTo: '#fff',
-          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          barPercentage: 0.5,
-          useShadowColorFromDataset: false,
-        }}
-        style={styles.chart}
-        verticalLabelRotation={30}
-      />
+      <View style={styles.listContainer}>
+        {todaySlots.length > 0 ? (
+          todaySlots.map((slot, index) => (
+            <View key={index} style={styles.listItem}>
+              <Text style={styles.listItemText}>{`${slot.startTime} - ${slot.endTime}`}</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.noSlotsText}>No booked slots for today.</Text>
+        )}
+      </View>
     );
   };
 
@@ -212,7 +197,7 @@ const DashboardScreen: React.FC = () => {
 
           <View style={styles.analyticsContainer}>
             <Text style={styles.sectionTitle}>Appointments Overview</Text>
-            {renderOverviewChart()}
+            {renderOverviewList()}
           </View>
 
           <View style={styles.upcomingContainer}>
@@ -384,9 +369,29 @@ const styles = StyleSheet.create({
   analyticsContainer: {
     marginBottom: 20,
   },
-  chart: {
-    borderRadius: 16,
-    marginVertical: 8,
+  listContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+  listItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  listItemText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  noSlotsText: {
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+    marginTop: 10,
   },
   upcomingContainer: {
     backgroundColor: '#fff',
