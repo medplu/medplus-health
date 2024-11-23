@@ -7,9 +7,7 @@ import Clinics from '../../components/dashboard/Clinics';
 import Colors from '../../components/Shared/Colors';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import DoctorsSkeleton from '../../components/dashboard/DoctorsSkeleton'; // Import Doctors Skeleton
-import ClinicsSkeleton from '../../components/dashboard/ClinicsSkeleton'; // Import Clinics Skeleton
-import SearchBarSkeleton from '../../components/dashboard/SearchBarSkeleton'; // Import SearchBar Skeleton
+import AppLoading from 'expo-app-loading'; // Import AppLoading from expo
 
 const { width, height } = Dimensions.get('window');
 
@@ -57,9 +55,7 @@ export default function Home() {
   const renderItem = ({ item }) => {
     switch (item.key) {
       case 'searchBar':
-        return loading ? (
-          <SearchBarSkeleton />  // Show SearchBar skeleton while loading
-        ) : (
+        return (
           <AppSearchBar
             value={searchQuery}
             onChangeText={(query) => setSearchQuery(query)}
@@ -73,9 +69,7 @@ export default function Home() {
           />
         );
       case 'doctors':
-        return loading ? (
-          <DoctorsSkeleton />  // Show Doctors skeleton while loading
-        ) : (
+        return (
           <Doctors
             searchQuery={searchQuery}
             selectedCategory={selectedCategory}
@@ -83,9 +77,7 @@ export default function Home() {
           />
         );
       case 'clinics':
-        return loading ? (
-          <ClinicsSkeleton />  // Show Clinics skeleton while loading
-        ) : (
+        return (
           <Clinics
             searchQuery={searchQuery}
             onViewAll={() => handleViewAll('Clinics')}
@@ -95,6 +87,10 @@ export default function Home() {
         return null;
     }
   };
+
+  if (loading) {
+    return <AppLoading />;
+  }
 
   if (error) {
     return (
