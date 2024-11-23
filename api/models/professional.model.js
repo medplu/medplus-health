@@ -4,8 +4,8 @@ const Schema = mongoose.Schema;
 const ProfessionalSchema = new Schema({
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
-  specialty: { type: String, required: true },
-  contactInfo: { type: String, required: true },
+  specialty: { type: String, required: false },
+  contactInfo: { type: String, required: false },
   bio: { type: String },
   clinicId: { type: Schema.Types.ObjectId, ref: 'Clinic' },
   user: { type: Schema.Types.ObjectId, ref: 'User' },

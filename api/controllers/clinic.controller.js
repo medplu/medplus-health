@@ -66,7 +66,7 @@ const registerClinic = async (req, res) => {
     address,
     images,
     insuranceCompanies,
-    specialties, // The specialties from frontend
+    specialties, // The specialty from frontend (single string)
     education,
     experiences,
     languages,
@@ -77,8 +77,8 @@ const registerClinic = async (req, res) => {
   } = req.body;
 
   try {
-    // Map the specialty values to their user-friendly terminology
-    const mappedSpecialties = specialties.map(specialty => specialtyMapping[specialty] || specialty); // Default to original if no mapping exists
+    // Map the single specialty value to its user-friendly term
+    const mappedSpecialty = specialtyMapping[specialties] || specialties; // Default to original if no mapping exists
 
     // Find the professional by ID
     const professional = await Professional.findById(professionalId);
@@ -86,10 +86,15 @@ const registerClinic = async (req, res) => {
       return res.status(404).send({ message: 'Professional not found' });
     }
 
+    // Update the professional's specialty and contactInfo
+    professional.specialty = mappedSpecialty;
+    professional.contactInfo = contactInfo;
+    await professional.save();
+
     // Generate a unique reference code for the clinic
     const referenceCode = generateReferenceCode();
 
-    // Create a new clinic instance with the mapped specialties
+    // Create a new clinic instance with the mapped specialty
     const clinic = new Clinic({
       name,
       contactInfo,
@@ -98,7 +103,7 @@ const registerClinic = async (req, res) => {
       referenceCode,
       professionals: [],
       insuranceCompanies,
-      specialties: mappedSpecialties, // Store the mapped specialties
+      specialties: mappedSpecialty, // Store the mapped specialty (single string)
       education,
       experiences,
       languages,
@@ -127,7 +132,6 @@ const registerClinic = async (req, res) => {
     res.status(500).send({ message: 'Error creating clinic', error });
   }
 };
-
 
 const fetchClinics = async (req, res) => {
   try {

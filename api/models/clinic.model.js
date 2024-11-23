@@ -8,7 +8,7 @@ const clinicSchema = new Schema({
   },
   contactInfo: {
     type: String,
-    required: true,
+    required: false,
   },
   address: {
     type: String,
@@ -33,7 +33,7 @@ const clinicSchema = new Schema({
   }],
   specialties: {
     type: String,
-    required: true,
+    required: false,
   },
   education: { // Update to handle education as an object
     course: {
