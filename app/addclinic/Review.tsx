@@ -3,10 +3,9 @@ import React from 'react';
 import { Card, Title, Paragraph, Button, Divider } from 'react-native-paper';
 import Colors from '@/components/Shared/Colors';
 
-const Review = ({ personalData, clinicData, educationData, prevStep, submit }) => {
+const Review = ({ clinicData, educationData, prevStep, submit }) => {
   const handleSubmit = () => {
     const payload = {
-      personalData,
       clinicData,
       educationData,
     };
@@ -16,17 +15,6 @@ const Review = ({ personalData, clinicData, educationData, prevStep, submit }) =
   return (
     <ScrollView style={styles.scrollContainer}>
       <View style={styles.contentContainer}>
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title>Personal Information</Title>
-            <Paragraph>Name: {personalData.name}</Paragraph>
-            <Paragraph>Contact Info: {personalData.contactInfo}</Paragraph>
-            <Paragraph>Address: {personalData.address}</Paragraph>
-            <Paragraph>Email: {personalData.email}</Paragraph>
-            <Paragraph>Bio: {personalData.bio}</Paragraph>
-          </Card.Content>
-        </Card>
-
         <Divider style={styles.divider} />
 
         <Card style={styles.card}>
@@ -35,7 +23,7 @@ const Review = ({ personalData, clinicData, educationData, prevStep, submit }) =
             <Paragraph>Clinic Name: {clinicData.name}</Paragraph>
             <Paragraph>Clinic Address: {clinicData.address}</Paragraph>
             <Paragraph>Insurance Companies: {Array.isArray(clinicData.insuranceCompanies) ? clinicData.insuranceCompanies.join(', ') : clinicData.insuranceCompanies}</Paragraph>
-            <Paragraph>Specialties: {clinicData.specialties}</Paragraph>
+            <Paragraph>Specialties: {Array.isArray(clinicData.specialties) ? clinicData.specialties.join(', ') : clinicData.specialties}</Paragraph> {/* Ensure specialties is displayed correctly */}
             <Paragraph>Assistant Name: {clinicData.assistantName}</Paragraph>
             <Paragraph>Assistant Phone: {clinicData.assistantPhone}</Paragraph>
             <Paragraph>Languages: {clinicData.languages}</Paragraph>

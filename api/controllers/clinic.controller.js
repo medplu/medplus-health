@@ -66,7 +66,7 @@ const registerClinic = async (req, res) => {
     address,
     images,
     insuranceCompanies,
-    specialties, // The specialty from frontend (single string)
+    specialties, 
     education,
     experiences,
     languages,
@@ -77,24 +77,17 @@ const registerClinic = async (req, res) => {
   } = req.body;
 
   try {
-    // Map the single specialty value to its user-friendly term
-    const mappedSpecialty = specialtyMapping[specialties] || specialties; // Default to original if no mapping exists
-
-    // Find the professional by ID
+    const mappedSpecialty = specialtyMapping[specialties] || specialties;
     const professional = await Professional.findById(professionalId);
     if (!professional) {
       return res.status(404).send({ message: 'Professional not found' });
     }
 
-    // Update the professional's specialty and contactInfo
     professional.specialty = mappedSpecialty;
     professional.contactInfo = contactInfo;
     await professional.save();
 
-    // Generate a unique reference code for the clinic
     const referenceCode = generateReferenceCode();
-
-    // Create a new clinic instance with the mapped specialty
     const clinic = new Clinic({
       name,
       contactInfo,
@@ -103,7 +96,7 @@ const registerClinic = async (req, res) => {
       referenceCode,
       professionals: [],
       insuranceCompanies,
-      specialties: mappedSpecialty, // Store the mapped specialty (single string)
+      specialties: mappedSpecialty, 
       education,
       experiences,
       languages,
@@ -113,19 +106,13 @@ const registerClinic = async (req, res) => {
       certificateUrl
     });
 
-    // Save the clinic
     await clinic.save();
-
-    // Associate the professional with the new clinic
     professional.clinicId = clinic._id;
     professional.attachedToClinic = true;
     await professional.save();
-
-    // Add the professional's ID to the clinic's professionals list
     clinic.professionals.push(professional._id);
     await clinic.save();
 
-    // Respond with the newly created clinic
     res.status(201).send(clinic);
   } catch (error) {
     console.error('Error creating clinic or updating professional:', error);
