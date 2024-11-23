@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Animated,
+  Button,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -20,6 +21,7 @@ import Colors from '../Shared/Colors';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
+import axios from 'axios';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -72,52 +74,59 @@ const Clinics = ({ searchQuery, onViewAll }) => {
     });
   };
 
-  // const handleResetClinics = () => {
-  //   dispatch(clearClinics());
-  // };
+  const handleResetClinics = () => {
+    dispatch(clearClinics());
+  };
 
   const ClinicItem = ({ item }) => {
     const [currentImage, setCurrentImage] = useState(null);
     const imageFadeAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-      const allImages = new Set(item.images || []);
-      item.professionals?.forEach(professional => {
-        professional.clinic_images?.forEach(image => {
-          if (image.urls?.[0]) {
-            allImages.add(image.urls[0]);
+      const fetchImages = async () => {
+        try {
+          const professionalImages = await Promise.all(
+            item.professionals.map(async (professional) => {
+              const response = await axios.get(`https://medplus-health.onrender.com/api/images/professional/${professional._id}`);
+              return response.data.map(image => image.urls[0]);
+            })
+          );
+          const allImages = new Set(item.images || []);
+          professionalImages.flat().forEach(url => allImages.add(url));
+          const imageArray = Array.from(allImages);
+          if (imageArray.length > 0) {
+            setCurrentImage(imageArray[0]);
+
+            if (imageArray.length > 1) {
+              let imageIndex = 0;
+              const interval = setInterval(() => {
+                imageIndex = (imageIndex + 1) % imageArray.length;
+
+                Animated.timing(imageFadeAnim, {
+                  toValue: 0,
+                  duration: 300,
+                  useNativeDriver: true,
+                }).start(() => {
+                  setCurrentImage(imageArray[imageIndex]);
+                  Animated.timing(imageFadeAnim, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                  }).start();
+                });
+              }, 10000);
+
+              return () => clearInterval(interval);
+            }
+          } else {
+            setCurrentImage(null);
           }
-        });
-      });
-
-      const imageArray = Array.from(allImages);
-      if (imageArray.length > 0) {
-        setCurrentImage(imageArray[0]); 
-
-        if (imageArray.length > 1) {
-          let imageIndex = 0;
-          const interval = setInterval(() => {
-            imageIndex = (imageIndex + 1) % imageArray.length;
-
-            Animated.timing(imageFadeAnim, {
-              toValue: 0,
-              duration: 300,
-              useNativeDriver: true,
-            }).start(() => {
-              setCurrentImage(imageArray[imageIndex]);
-              Animated.timing(imageFadeAnim, {
-                toValue: 1,
-                duration: 300,
-                useNativeDriver: true,
-              }).start();
-            });
-          }, 10000);
-
-          return () => clearInterval(interval); 
+        } catch (error) {
+          console.error('Error fetching images:', error);
         }
-      } else {
-        setCurrentImage(null);
-      }
+      };
+
+      fetchImages();
     }, [item.images, item.professionals]);
 
     return (
@@ -155,7 +164,7 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   return (
     <Animated.View style={{ marginTop: 10, opacity: fadeAnim }}>
       <SubHeading subHeadingTitle={'Discover Clinics Near You'} onViewAll={onViewAll} />
-     
+      <Button title="Reset Clinics" onPress={handleResetClinics} />
       <FlatList
         data={filteredClinicList}
         horizontal={true}

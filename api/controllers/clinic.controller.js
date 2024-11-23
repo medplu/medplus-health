@@ -126,12 +126,13 @@ const fetchClinics = async (req, res) => {
       path: 'professionals',
       populate: [
         { path: 'user' },
-        { path: 'clinic_images' } // Populate clinic images for each professional
+        { path: 'clinic_images', model: 'ClinicImage' } // Ensure the model is specified
       ]
     });
     res.status(200).send(clinics);
   } catch (error) {
-    res.status(500).send(error);
+    console.error('Error fetching clinics:', error);
+    res.status(500).send({ message: 'Error fetching clinics', error });
   }
 };
 
@@ -179,15 +180,16 @@ const fetchClinicById = async (req, res) => {
       path: 'professionals',
       populate: [
         { path: 'user' },
-        { path: 'clinic_images' } // Populate clinic images for each professional
+        { path: 'clinic_images', model: 'ClinicImage' } // Ensure the model is specified
       ]
     });
     if (!clinic) {
-      return res.status(404).send();
+      return res.status(404).send({ message: 'Clinic not found' });
     }
     res.status(200).send(clinic);
   } catch (error) {
-    res.status(500).send(error);
+    console.error('Error fetching clinic by ID:', error);
+    res.status(500).send({ message: 'Error fetching clinic by ID', error });
   }
 };
 

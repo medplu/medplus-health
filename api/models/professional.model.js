@@ -18,7 +18,8 @@ const ProfessionalSchema = new Schema({
     endTime: { type: String },
     isBooked: { type: Boolean, default: false }
   }],
-  attachedToClinic: { type: Boolean, default: false } // Ensure this field exists
+  attachedToClinic: { type: Boolean, default: false }, // Ensure this field exists
+  clinic_images: [{ type: Schema.Types.ObjectId, ref: 'ClinicImage' }] // Add this line
 }, { timestamps: true });
 
 module.exports = mongoose.model('Professional', ProfessionalSchema);

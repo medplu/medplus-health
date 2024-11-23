@@ -65,6 +65,7 @@ const fetchFreshClinics = async () => {
     const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
     const clinics = response.data.map((clinic: Clinic) => ({
       ...clinic,
+      images: clinic.images || [],
       professionals: clinic.professionals.map((professional: Professional) => ({
         ...professional,
         clinic_images: professional.clinic_images || [],
@@ -86,8 +87,16 @@ export const fetchClinics = createAsyncThunk(
       return parsedClinics;
     }
     const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
-    await AsyncStorage.setItem('clinicList', JSON.stringify(response.data));
-    return response.data;
+    const clinics = response.data.map((clinic: Clinic) => ({
+      ...clinic,
+      images: clinic.images || [],
+      professionals: clinic.professionals.map((professional: Professional) => ({
+        ...professional,
+        clinic_images: professional.clinic_images || [],
+      })),
+    }));
+    await AsyncStorage.setItem('clinicList', JSON.stringify(clinics));
+    return clinics;
   }
 );
 
