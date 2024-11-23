@@ -109,6 +109,8 @@ const DoctorProfile: React.FC = () => {
     ? doctor.profileImage
     : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg';
 
+  const specialties = doctor.specialties ? doctor.specialties.join(', ') : 'No specialties available';
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -124,7 +126,7 @@ const DoctorProfile: React.FC = () => {
           />
           <View style={styles.profileInfo}>
             <Text style={styles.doctorName}>{doctor.name}</Text>
-            <Text style={styles.categoryName}>{doctor.specialties.join(', ')}</Text>
+            <Text style={styles.categoryName}>{specialties}</Text>
           </View>
         </View>
         <View style={styles.infoContainer}>
