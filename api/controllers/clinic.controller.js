@@ -7,6 +7,56 @@ const generateReferenceCode = () => {
   // Simple example: generating a unique reference code
   return 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 };
+const specialtyMapping = {
+  cardiology: 'Heart',                // Cardiology → Heart
+  dermatology: 'Skin',                // Dermatology → Skin
+  endocrinology: 'Hormones',          // Endocrinology → Hormones
+  gastroenterology: 'Digestive System', // Gastroenterology → Digestive System
+  hematology: 'Blood',                // Hematology → Blood
+  nephrology: 'Kidneys',              // Nephrology → Kidneys
+  neurology: 'Brain & Nerves',        // Neurology → Brain & Nerves
+  oncology: 'Cancer',                 // Oncology → Cancer
+  orthopedics: 'Bones & Joints',      // Orthopedics → Bones & Joints
+  pediatrics: 'Children’s Health',    // Pediatrics → Children’s Health
+  psychiatry: 'Mental Health',        // Psychiatry → Mental Health
+  radiology: 'Imaging & X-rays',      // Radiology → Imaging & X-rays
+  rheumatology: 'Joint & Muscle Disorders', // Rheumatology → Joint & Muscle Disorders
+  urology: 'Urinary System',          // Urology → Urinary System
+  anesthesiology: 'Anesthesia',       // Anesthesiology → Anesthesia
+  emergency_medicine: 'Emergency Care', // Emergency Medicine → Emergency Care
+  obstetrics_gynecology: 'Women’s Health', // Obstetrics & Gynecology → Women’s Health
+  ophthalmology: 'Eyes',              // Ophthalmology → Eyes
+  otolaryngology: 'Ear, Nose & Throat', // Otolaryngology → Ear, Nose & Throat
+  pathology: 'Disease Diagnosis',     // Pathology → Disease Diagnosis
+  plastic_surgery: 'Cosmetic Surgery', // Plastic Surgery → Cosmetic Surgery
+  public_health: 'Public Health',     // Public Health → Public Health
+  surgery: 'General Surgery',         // Surgery → General Surgery
+  thoracic_surgery: 'Chest Surgery',  // Thoracic Surgery → Chest Surgery
+  vascular_surgery: 'Blood Vessel Surgery', // Vascular Surgery → Blood Vessel Surgery
+  geriatrics: 'Elderly Care',         // Geriatrics → Elderly Care
+  family_medicine: 'Family Care',     // Family Medicine → Family Care
+  internal_medicine: 'Internal Medicine', // Internal Medicine → Internal Medicine
+  sports_medicine: 'Sports Injury Care', // Sports Medicine → Sports Injury Care
+  chiropractic: 'Spinal Care',        // Chiropractic → Spinal Care
+  podiatry: 'Foot Care',              // Podiatry → Foot Care
+  dentistry: 'Teeth',                 // Dentistry → Teeth
+  pharmacology: 'Medication',         // Pharmacology → Medication
+  immunology: 'Immune System',        // Immunology → Immune System
+  infectious_diseases: 'Infections',  // Infectious Diseases → Infections
+  pain_management: 'Pain Relief',     // Pain Management → Pain Relief
+  addiction_medicine: 'Addiction',    // Addiction Medicine → Addiction
+  sleep_medicine: 'Sleep Disorders',  // Sleep Medicine → Sleep Disorders
+  genetics: 'Genetics',               // Genetics → Genetics
+  clinical_nutrition: 'Nutrition',    // Clinical Nutrition → Nutrition
+  microbiology: 'Microorganisms',     // Microbiology → Microorganisms
+  bariatrics: 'Weight Management',    // Bariatrics → Weight Management
+  fertility: 'Fertility',             // Fertility → Fertility
+  neurosurgery: 'Brain Surgery',      // Neurosurgery → Brain Surgery
+  palliative_care: 'End-of-Life Care', // Palliative Care → End-of-Life Care
+  critical_care: 'Intensive Care',    // Critical Care → Intensive Care
+  transplant_surgery: 'Organ Transplant', // Transplant Surgery → Organ Transplant
+  forensic_medicine: 'Forensic Medicine' // Forensic Medicine → Forensic Medicine
+};
 
 const registerClinic = async (req, res) => {
   const { professionalId } = req.params;
@@ -14,9 +64,9 @@ const registerClinic = async (req, res) => {
     name,
     contactInfo,
     address,
-    images, // Expect images as an array
+    images,
     insuranceCompanies,
-    specialties,
+    specialties, // The specialties from frontend
     education,
     experiences,
     languages,
@@ -27,6 +77,9 @@ const registerClinic = async (req, res) => {
   } = req.body;
 
   try {
+    // Map the specialty values to their user-friendly terminology
+    const mappedSpecialties = specialties.map(specialty => specialtyMapping[specialty] || specialty); // Default to original if no mapping exists
+
     // Find the professional by ID
     const professional = await Professional.findById(professionalId);
     if (!professional) {
@@ -36,16 +89,16 @@ const registerClinic = async (req, res) => {
     // Generate a unique reference code for the clinic
     const referenceCode = generateReferenceCode();
 
-    // Create a new clinic instance with the provided data
+    // Create a new clinic instance with the mapped specialties
     const clinic = new Clinic({
       name,
       contactInfo,
       address,
-      images: Array.isArray(images) ? images : [], // Ensure images is an array
+      images: Array.isArray(images) ? images : [],
       referenceCode,
       professionals: [],
       insuranceCompanies,
-      specialties,
+      specialties: mappedSpecialties, // Store the mapped specialties
       education,
       experiences,
       languages,
@@ -59,7 +112,7 @@ const registerClinic = async (req, res) => {
     await clinic.save();
 
     // Associate the professional with the new clinic
-    professional.clinicId = clinic._id; // Set clinicId here
+    professional.clinicId = clinic._id;
     professional.attachedToClinic = true;
     await professional.save();
 
@@ -74,6 +127,7 @@ const registerClinic = async (req, res) => {
     res.status(500).send({ message: 'Error creating clinic', error });
   }
 };
+
 
 const fetchClinics = async (req, res) => {
   try {

@@ -1,66 +1,121 @@
-import { StyleSheet, TextInput, SafeAreaView, Text, View, FlatList, Image, TouchableOpacity, StatusBar} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import React, { useState, useEffect } from 'react';
-import GlobalApi from '../../Services/GlobalApi';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import {
+  StyleSheet,
+  TextInput,
+  SafeAreaView,
+  View,
+  TouchableOpacity,
+  StatusBar,
+  FlatList,
+  Text,
+  Image
+} from 'react-native';
+
+import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import { selectAllClinics, selectSpecialties } from '../store/clinicSlice';
 import { Ionicons } from '@expo/vector-icons';
+import { selectAllClinics } from '../store/clinicSlice';
+import { Picker } from '@react-native-picker/picker';
 
-const index = () => {
-  const route = useRoute();
+const ClinicSearch = () => {
   const navigation = useNavigation();
-  const { categoryQuery } = route.params || {};
-  const [searchQuery, setSearchQuery] = useState('');
-  const [specialty, setSpecialty] = useState('all');
-  const [filter, setFilter] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState(categoryQuery ? [categoryQuery] : []);
-  const clinics = useSelector((state) => selectAllClinics(state));
-  const specialties = useSelector((state) => selectSpecialties(state));
-  const [filteredProfessionals, setFilteredProfessionals] = useState([]);
   const [filteredClinics, setFilteredClinics] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [filteredProfessionals, setFilteredProfessionals] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedSpecialty, setSelectedSpecialty] = useState('');
+  const [selectedInsurance, setSelectedInsurance] = useState('');
+  const [showLocationPicker, setShowLocationPicker] = useState(true);
+  const [showSpecialtyPicker, setShowSpecialtyPicker] = useState(false);
+  const [showInsurancePicker, setShowInsurancePicker] = useState(false);
+
+  const clinics = useSelector(selectAllClinics);
 
   useEffect(() => {
-    handleSearch(searchQuery, specialty);
-  }, [categoryQuery, clinics, specialty]);
-
-  useEffect(() => {
-    console.log('Clinics data:', clinics);
     if (clinics.length > 0) {
-      console.log('Sample clinic data:', clinics[0]);
+      setFilteredClinics(clinics);
+      const allProfessionals = clinics.flatMap((clinic) =>
+        clinic.professionals?.map((professional) => ({
+          ...professional,
+          clinicName: clinic.name,
+          clinicAddress: clinic.address,
+        })) || []
+      );
+      setFilteredProfessionals(allProfessionals);
     }
   }, [clinics]);
 
-  const handleSearch = (query, selectedSpecialty = specialty) => {
-    setSearchQuery(query);
-    const filtered = clinics.filter((clinic) =>
-      (clinic.name && clinic.name.toLowerCase().includes(query.toLowerCase())) ||
-      (clinic.address && clinic.address.toLowerCase().includes(query.toLowerCase())) ||
-      (clinic.category && clinic.category.toLowerCase().includes(query.toLowerCase())) ||
-      (selectedSpecialty !== 'all' && clinic.specialties && clinic.specialties.toLowerCase().includes(selectedSpecialty.toLowerCase()))
-    );
+  const handleLocationChange = (location) => {
+    setSelectedLocation(location);
+    setSelectedSpecialty('');
+    setSelectedInsurance('');
+    setShowLocationPicker(false);
+    setShowSpecialtyPicker(true);
+    setShowInsurancePicker(false);
 
-    const professionals = filtered.flatMap(clinic => clinic.professionals).filter(professional =>
-      (professional.firstName && professional.firstName.toLowerCase().includes(query.toLowerCase())) ||
-      (professional.lastName && professional.lastName.toLowerCase().includes(query.toLowerCase())) ||
-      (professional.profession && professional.profession.toLowerCase().includes(query.toLowerCase())) ||
-      (professional.title && professional.title.toLowerCase().includes(query.toLowerCase())) ||
-      (professional.consultationFee && professional.consultationFee <= parseInt(filter)) ||
-      (selectedSpecialty !== 'all' && professional.profession && professional.profession.toLowerCase().includes(selectedSpecialty.toLowerCase()))
+    const locationFilteredClinics = clinics.filter((clinic) =>
+      clinic.address?.toLowerCase().includes(location.toLowerCase())
     );
-
-    setFilteredProfessionals(professionals);
-    setFilteredClinics(filtered);
-    console.log('Filtered Professionals:', professionals);
-    console.log('Filtered Clinics:', filtered);
+    const locationFilteredProfessionals = locationFilteredClinics.flatMap(
+      (clinic) =>
+        clinic.professionals?.map((professional) => ({
+          ...professional,
+          clinicName: clinic.name,
+          clinicAddress: clinic.address,
+        })) || []
+    );
+    setFilteredClinics(locationFilteredClinics);
+    setFilteredProfessionals(locationFilteredProfessionals);
   };
 
-  const extractClinicImages = (clinic) => {
-    const images = clinic.professionals.flatMap(professional => professional.clinic_images.flatMap(image => image.urls));
-    return images.length > 0 ? images[0] : null;
+  const handleSpecialtyChange = (specialty) => {
+    setSelectedSpecialty(specialty);
+    setSelectedInsurance('');
+    setShowSpecialtyPicker(false);
+    setShowInsurancePicker(true);
+
+    const specialtyFilteredProfessionals = filteredProfessionals.filter(
+      (professional) =>
+        professional.title?.toLowerCase().includes(specialty.toLowerCase())
+    );
+    setFilteredProfessionals(specialtyFilteredProfessionals);
   };
+
+  const handleInsuranceChange = (insurance) => {
+    setSelectedInsurance(insurance);
+    setShowInsurancePicker(false);
+
+    const insuranceFilteredProfessionals = filteredClinics
+      .filter((clinic) =>
+        clinic.insuranceProviders?.some((provider) =>
+          provider?.toLowerCase().includes(insurance.toLowerCase())
+        )
+      )
+      .flatMap((clinic) =>
+        clinic.professionals?.map((professional) => ({
+          ...professional,
+          clinicName: clinic.name,
+          clinicAddress: clinic.address,
+        })) || []
+      );
+    setFilteredProfessionals(insuranceFilteredProfessionals);
+  };
+
+  // Extract unique values for dropdowns
+  const uniqueLocations = [
+    ...new Set(clinics.map((clinic) => clinic.address?.split(',')[0] || '')),
+  ];
+  const uniqueSpecialties = [
+    ...new Set(
+      clinics.flatMap((clinic) =>
+        clinic.professionals?.map((professional) => professional.title) || []
+      )
+    ),
+  ];
+  const uniqueInsurances = [
+    ...new Set(
+      clinics.flatMap((clinic) => clinic.insuranceProviders || [])
+    ),
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -69,168 +124,147 @@ const index = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
-        <View style={styles.searchContainer}>
-          <TextInput
-            placeholder="Search"
-            clearButtonMode="always"
-            style={styles.searchBox}
-            autoCapitalize="none"
-            autoCorrect={false}
-            value={searchQuery}
-            onChangeText={(query) => handleSearch(query)}
-          />
-          <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)}>
-            <Ionicons name="filter" size={24} color="black" style={styles.filterIcon} />
+        <TextInput
+          placeholder="Search"
+          style={styles.searchBox}
+          editable={false}
+        />
+      </View>
+
+      {/* Location Filter */}
+      {showLocationPicker && (
+        <View style={styles.filterContainer}>
+          <TouchableOpacity onPress={() => setShowLocationPicker(true)}>
+            <Text>Select Location</Text>
           </TouchableOpacity>
+          <Picker
+            selectedValue={selectedLocation}
+            onValueChange={(value) => handleLocationChange(value)}
+          >
+            <Picker.Item label="Select a location" value="" />
+            {uniqueLocations.map((location, index) => (
+              <Picker.Item key={index} label={location} value={location} />
+            ))}
+          </Picker>
         </View>
-      </View>
-      {showDropdown && (
-        <Picker
-          selectedValue={specialty}
-          style={styles.picker}
-          onValueChange={(itemValue) => {
-            setSpecialty(itemValue);
-            setShowDropdown(false);
-          }}
-        >
-          {specialties.map((spec) => (
-            <Picker.Item key={spec} label={spec} value={spec} />
-          ))}
-        </Picker>
       )}
-      <View style={styles.selectedCategoriesContainer}>
-        {selectedCategories.map((category) => (
-          <Text key={category} style={styles.selectedCategory}>
-            {category}
-          </Text>
-        ))}
-      </View>
-      <>
-        <Text style={styles.sectionTitle}>Professionals</Text>
-        <FlatList
-          data={filteredProfessionals}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Image source={{ uri: item.user.profileImage }} style={styles.profileImage} />
-              <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{item.firstName} {item.lastName}</Text>
-                <Text style={styles.cardSubtitle}>{item.title}</Text>
-                <Text style={styles.cardSubtitle}>Fee: {item.consultationFee}</Text>
-              </View>
+
+      {/* Specialty Filter */}
+      {showSpecialtyPicker && selectedLocation && (
+        <View style={styles.filterContainer}>
+          <TouchableOpacity onPress={() => setShowSpecialtyPicker(true)}>
+            <Text>Select Specialty</Text>
+          </TouchableOpacity>
+          <Picker
+            selectedValue={selectedSpecialty}
+            onValueChange={(value) => handleSpecialtyChange(value)}
+          >
+            <Picker.Item label="Select a specialty" value="" />
+            {uniqueSpecialties.map((specialty, index) => (
+              <Picker.Item key={index} label={specialty} value={specialty} />
+            ))}
+          </Picker>
+        </View>
+      )}
+
+      {/* Insurance Provider Filter */}
+      {showInsurancePicker && selectedSpecialty && (
+        <View style={styles.filterContainer}>
+          <TouchableOpacity onPress={() => setShowInsurancePicker(true)}>
+            <Text>Select Insurance Provider</Text>
+          </TouchableOpacity>
+          <Picker
+            selectedValue={selectedInsurance}
+            onValueChange={(value) => handleInsuranceChange(value)}
+          >
+            <Picker.Item label="Select an insurance provider" value="" />
+            {uniqueInsurances.length > 0 ? (
+              uniqueInsurances.map((insurance, index) => (
+                <Picker.Item key={index} label={insurance} value={insurance} />
+              ))
+            ) : (
+              <Picker.Item label="No insurance available" value="" />
+            )}
+          </Picker>
+        </View>
+      )}
+
+      {/* Render Professionals */}
+      <FlatList
+        data={filteredProfessionals}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.professionalCard}>
+            {item.profileImage ? (
+              <Image
+                source={{ uri: item.profileImage }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <Ionicons name="person-circle" size={40} color="#ccc" />
+            )}
+            <View>
+              <Text style={styles.professionalInfo}>
+                {`${item.title} ${item.firstName} ${item.lastName}`}
+              </Text>
+              <Text style={styles.clinicInfo}>
+                {item.clinicName}, {item.clinicAddress}
+              </Text>
             </View>
-          )}
-        />
-        <Text style={styles.sectionTitle}>Clinics</Text>
-        <FlatList
-          data={filteredClinics}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Image source={{ uri: extractClinicImages(item) }} style={styles.clinicImage} />
-              <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{item.name}</Text>
-                <Text style={styles.cardSubtitle}>{item.address}</Text>
-                <Text style={styles.cardSubtitle}>Contact: {item.contactInfo}</Text>
-              </View>
-            </View>
-          )}
-        />
-      </>
+          </View>
+        )}
+      />
     </SafeAreaView>
   );
 };
 
-export default index;
+export default ClinicSearch;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: StatusBar.currentHeight,
     backgroundColor: '#f8f8f8',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    padding: 10,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  searchBox: {
+    flex: 1,
+    marginLeft: 10,
+    borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
-    borderWidth: 1,
-    marginLeft: 10,
-    flex: 1,
     paddingHorizontal: 10,
-    paddingVertical: 5,
   },
-  filterIcon: {
-    marginLeft: 10,
-  },
-  picker: {
-    marginHorizontal: 10,
+  filterContainer: {
     marginVertical: 10,
+    paddingHorizontal: 20,
   },
-  selectedCategoriesContainer: {
+  professionalCard: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginVertical: 10,
-    marginHorizontal: 10,
-  },
-  selectedCategory: {
-    backgroundColor: '#ddd',
-    padding: 5,
-    borderRadius: 5,
-    marginRight: 5,
-    marginBottom: 5,
-  },
-  item: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
-    marginHorizontal: 10,
-  },
-  card: {
-    flexDirection: 'row',
+    alignItems: 'center',
     padding: 10,
     marginVertical: 5,
     marginHorizontal: 10,
-    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 3,
+    backgroundColor: '#fff',
   },
   profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 10,
   },
-  clinicImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: 10,
-  },
-  cardContent: {
-    justifyContent: 'center',
-  },
-  cardTitle: {
+  professionalInfo: {
     fontSize: 16,
     fontWeight: 'bold',
   },
-  cardSubtitle: {
+  clinicInfo: {
     fontSize: 14,
-    color: '#666',
+    color: '#777',
   },
 });

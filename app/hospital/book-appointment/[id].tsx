@@ -120,24 +120,33 @@ const BookAppointment = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.header}>
         <Ionicons name="arrow-back" size={24} color={Colors.WHITE} />
+        <Text style={styles.profileName}>{clinic.name}</Text>
       </TouchableOpacity>
 
-      <View style={styles.profileSection}>
-        {clinicImages.length > 0 && (
-          <Image source={{ uri: clinicImages[0] }} style={styles.profileImage} />
-        )}
-        <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{clinic.name}</Text>
-          <View style={styles.infoRow}>
-            <EvilIcons name="location" size={16} color={Colors.gray} />
-            <Text style={styles.profileAddress}>{clinic.address}</Text>
+      {selectedProfessional && selectedProfessional.user && (
+        <View style={styles.selectedProfessionalContainer}>
+          <Image 
+            source={{ uri: selectedProfessional.user.profileImage }} 
+            style={styles.selectedProfessionalImage} 
+          />
+          <View style={styles.selectedProfessionalInfo}>
+            <Text style={styles.selectedProfessionalName}>
+              {selectedProfessional.firstName} {selectedProfessional.lastName}
+            </Text>
+            <Text style={styles.selectedProfessionalTitle}>
+              {selectedProfessional.title}
+            </Text>
+            <Text style={styles.selectedProfessionalSpecialty}>
+              Specialty: {selectedProfessional.profession}
+            </Text>
+            <Text style={styles.selectedProfessionalFee}>
+              Consultation Fee: {selectedProfessional.consultationFee} KES
+            </Text>
           </View>
-          <Text style={styles.profileContact}>{clinic.contactInfo}</Text>
         </View>
-      </View>
-
+      )}
 
       <ClinicSubHeading subHeadingTitle={'About'} />
       <Text style={styles.description}>{truncatedDesc}</Text>
@@ -173,34 +182,6 @@ const BookAppointment = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.insuranceList}
       />
-
-      
-
-{selectedProfessional && (
-  <TouchableOpacity 
-    style={styles.selectedProfessionalContainer} 
-    onPress={() => handleConsult(selectedProfessional)}
-  >
-    <Image 
-      source={{ uri: selectedProfessional.user.profileImage }} 
-      style={styles.selectedProfessionalImage} 
-    />
-    <View style={styles.selectedProfessionalInfo}>
-      <Text style={styles.selectedProfessionalName}>
-        {selectedProfessional.firstName} {selectedProfessional.lastName}
-      </Text>
-      <Text style={styles.selectedProfessionalTitle}>
-        {selectedProfessional.title}
-      </Text>
-      <Text style={styles.selectedProfessionalSpecialty}>
-        Specialty: {selectedProfessional.profession}
-      </Text>
-      <Text style={styles.selectedProfessionalFee}>
-        Consultation Fee: {selectedProfessional.consultationFee} KES
-      </Text>
-    </View>
-  </TouchableOpacity>
-)}
 
       <ClinicSubHeading subHeadingTitle={'Doctors'} />
       {loading ? (
@@ -274,79 +255,46 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignSelf: 'flex-start',
   },
-  profileSection: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginRight: 15,
-  },
-  profileInfo: {
-    flex: 1,
   },
   profileName: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  profileAddress: {
-    fontSize: 14,
-    color: Colors.gray,
-    marginBottom: 5,
-  },
-  profileContact: {
-    fontSize: 14,
-    color: Colors.gray,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
+    textAlign: 'center',
+    flex: 1,
   },
   selectedProfessionalContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    backgroundColor: Colors.LIGHT_GRAY,
-    borderRadius: 5,
-    marginBottom: 10,
+    marginBottom: 20,
   },
   selectedProfessionalImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 10,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 15,
   },
   selectedProfessionalInfo: {
     flex: 1,
   },
   selectedProfessionalName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: Colors.PRIMARY,
   },
   selectedProfessionalTitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: Colors.gray,
   },
   selectedProfessionalSpecialty: {
-    fontSize: 14,
+    fontSize: 16,
     color: Colors.gray,
   },
   selectedProfessionalFee: {
-    fontSize: 14,
+    fontSize: 16,
     color: Colors.PRIMARY,
   },
   description: {
