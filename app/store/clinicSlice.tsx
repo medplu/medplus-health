@@ -17,6 +17,7 @@ interface Professional {
   updatedAt: string;
   attachedToClinic: boolean;
   attachedToPharmacy: boolean;
+  clinic_images?: string[];
 }
 
 interface Clinic {
@@ -62,7 +63,14 @@ const initialState: ClinicsState = {
 const fetchFreshClinics = async () => {
   try {
     const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
-    await AsyncStorage.setItem('clinicList', JSON.stringify(response.data));
+    const clinics = response.data.map((clinic: Clinic) => ({
+      ...clinic,
+      professionals: clinic.professionals.map((professional: Professional) => ({
+        ...professional,
+        clinic_images: professional.clinic_images || [],
+      })),
+    }));
+    await AsyncStorage.setItem('clinicList', JSON.stringify(clinics));
   } catch (error) {
     console.error('Failed to fetch fresh clinics', error);
   }

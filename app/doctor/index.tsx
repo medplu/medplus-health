@@ -22,14 +22,9 @@ type RouteParams = {
 
 type Doctor = {
   _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  bio: string;
-  image?: { url: string };
-  user: {
-    profileImage: string;
-  };
+  name: string;
+  specialties: string[];
+  profileImage: string;
   consultationFee: number;
 };
 
@@ -44,6 +39,7 @@ const DoctorProfile: React.FC = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
   const doctor: Doctor = JSON.parse(route.params.doctor);
+  console.log('Doctor:', doctor);
 
   const userId = useSelector((state: any) => state.user.id);
 
@@ -109,6 +105,10 @@ const DoctorProfile: React.FC = () => {
     );
   }
 
+  const profileImageUri = doctor.profileImage
+    ? doctor.profileImage
+    : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg';
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -119,16 +119,12 @@ const DoctorProfile: React.FC = () => {
           <Avatar
             rounded
             size="large"
-            source={{
-              uri: doctor.user.profileImage
-                ? doctor.user.profileImage
-                : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg',
-            }}
+            source={{ uri: profileImageUri }}
             containerStyle={styles.avatar}
           />
           <View style={styles.profileInfo}>
-            <Text style={styles.doctorName}>{`${doctor.firstName} ${doctor.lastName}`}</Text>
-            <Text style={styles.categoryName}>{doctor.profession}</Text>
+            <Text style={styles.doctorName}>{doctor.name}</Text>
+            <Text style={styles.categoryName}>{doctor.specialties.join(', ')}</Text>
           </View>
         </View>
         <View style={styles.infoContainer}>
