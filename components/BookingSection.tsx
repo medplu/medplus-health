@@ -8,6 +8,7 @@ import axios from 'axios';
 import Colors from './Shared/Colors';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser, updateUserProfile } from '../app/store/userSlice';
+import { fetchSchedule, updateSchedule } from '../app/store/scheduleSlice';
 
 const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insurances: string[]; selectedInsurance: string }> = ({
   doctorId,
@@ -20,7 +21,6 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   const [showAlert, setShowAlert] = useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<string>('');
   const [alertType, setAlertType] = useState<'success' | 'error'>('success');
-  const [schedule, setSchedule] = useState<{ date: string; startTime: string; endTime: string; isBooked: boolean; _id: string }[]>([]);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const paystackWebViewRef = useRef<PayStackRef>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -31,19 +31,8 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   const professionalId = user?.professional?._id;
   const userEmail = useSelector((state) => state.user.email);
   const patientName = useSelector((state) => state.user.name);
-
-  const fetchSchedule = async () => {
-    try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${doctorId}`);
-      if (response.status === 200 && response.data.slots) {
-        setSchedule(response.data.slots);
-      } else {
-        console.error('Failed to fetch schedule:', response.data.message);
-      }
-    } catch (error) {
-      console.error('Error fetching schedule:', error.message);
-    }
-  };
+  const dispatch = useDispatch();
+  const schedule = useSelector((state) => state.schedule.items);
 
   // Replace the existing dateOptions with state
   const [dateOptions, setDateOptions] = useState<Array<Date>>(
@@ -51,7 +40,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   );
 
   useEffect(() => {
-    fetchSchedule();
+    dispatch(fetchSchedule(doctorId));
     
     // Prevent selecting past dates
     const today = new Date();
@@ -122,6 +111,9 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
       }
       console.log('New appointment ID:', newAppointmentId);
       setAppointmentId(newAppointmentId);
+
+      // Update the slot to booked in the local state
+      dispatch(updateSchedule({ date: moment(selectedDate).format('YYYY-MM-DD'), slots: { ...selectedTimeSlot, isBooked: true } }));
 
       if (selectedInsurance) {
         setAlertMessage('Appointment booked successfully with insurance.');

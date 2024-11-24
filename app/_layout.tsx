@@ -116,9 +116,7 @@ const MainLayout: React.FC = () => {
 const LayoutWithProviders: React.FC = () => (
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
-      <ScheduleProvider>
-        <MainLayout />
-      </ScheduleProvider>
+      <MainLayout />
     </PersistGate>
   </Provider>
 );

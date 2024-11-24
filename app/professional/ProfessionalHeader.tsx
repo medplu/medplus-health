@@ -24,7 +24,7 @@ const ProfessionalHeader: React.FC = () => {
           style={styles.profileImage}
         />
       </TouchableOpacity>
-      <Text style={styles.headerTitle}>Professional Header</Text>
+      <Text style={styles.headerTitle}>Welcome </Text>
       <View style={styles.iconContainer}>
         <TouchableOpacity style={styles.logoutIcon} onPress={handleLogout}>
           <AntDesign name="logout" size={28} color="#fff" />

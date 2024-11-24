@@ -224,3 +224,40 @@ exports.updateSchedule = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+exports.bookAppointment = async (req, res) => {
+  const { doctorId, userId, patientName, status, timeSlotId, time, date } = req.body;
+
+  try {
+    const schedule = await Schedule.findOne({ 'slots._id': timeSlotId, doctorId });
+    if (!schedule) {
+      return res.status(404).json({ error: 'Time slot not found for this doctor' });
+    }
+
+    const slot = schedule.slots.id(timeSlotId);
+    if (slot.isBooked) {
+      return res.status(400).json({ error: 'Time slot is already booked' });
+    }
+
+    const newAppointment = new Appointment({
+      doctorId,
+      userId,
+      patientName,
+      status,
+      timeSlotId,
+      time,
+      date,
+    });
+
+    await newAppointment.save();
+
+    slot.isBooked = true;
+    slot.appointmentId = newAppointment._id;
+    await schedule.save();
+
+    res.status(201).json({ appointment: newAppointment });
+  } catch (error) {
+    console.error('Error booking appointment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

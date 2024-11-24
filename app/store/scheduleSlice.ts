@@ -1,5 +1,5 @@
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const fetchSchedule = createAsyncThunk('schedule/fetchSchedule', async (professionalId: string) => {
   const response = await fetch(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);
@@ -21,6 +21,18 @@ const scheduleSlice = createSlice({
       }
       state.items[date].push(slots);
     },
+    toggleSlotAvailability: (state, action) => {
+      const { slotId } = action.payload;
+      for (const date in state.items) {
+        state.items[date] = state.items[date].map(slot => {
+          if (slot._id === slotId) {
+            slot.isBooked = !slot.isBooked;
+            AsyncStorage.setItem(slotId, JSON.stringify(slot.isBooked));
+          }
+          return slot;
+        });
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -38,5 +50,5 @@ const scheduleSlice = createSlice({
   },
 });
 
-export const { updateSchedule } = scheduleSlice.actions;
+export const { updateSchedule, toggleSlotAvailability } = scheduleSlice.actions;
 export default scheduleSlice.reducer;

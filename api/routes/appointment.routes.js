@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const appointmentController = require('../controllers/appointment.controller');
-
+const appointmentController = require('../controllers/appointment.controller'); // Ensure this import is correct
 
 router.post('/appointments', appointmentController.bookAppointment);
 

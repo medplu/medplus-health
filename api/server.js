@@ -13,7 +13,8 @@ const cloudinary = require('cloudinary').v2;
 const ImageUpload = require('./middleware/ImageUpload');
 const ClinicImage = require('./models/clinic_image.model'); // Update import
 const User = require('./models/user.model'); // Add this line
-
+const Prescription = require('./models/prescription.model'); // Add this line
+const socketIo = require('socket.io');
 dotenv.config();
 
 const app = express();
@@ -25,7 +26,10 @@ const server = http.createServer(app);
 // Set up socket.io
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:8081", // Update this line to allow requests from the specified origin
+    methods: ["GET", "POST"], // Add allowed methods
+    allowedHeaders: ["Content-Type"], // Add allowed headers
+    credentials: true // Allow credentials
   },
 });
 
@@ -73,6 +77,34 @@ app.post('/api/upload', upload.array('files'), (req, res, next) => {
   } catch (error) {
     console.error('Error saving image URLs to the database:', error);
     res.status(500).send('Error saving image URLs to the database.');
+  }
+});
+
+// New endpoint for uploading prescription images
+app.post('/api/upload-prescription', upload.array('files'), (req, res, next) => {
+  console.log('Received prescription upload request');
+  next();
+}, ImageUpload.uploadToCloudinary, async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    console.error('No files uploaded');
+    return res.status(400).send('No files uploaded.');
+  }
+  const urls = req.files.map(file => file.cloudStoragePublicUrl);
+
+  try {
+    const prescriptionDoc = new Prescription({
+      urls: urls,
+      userId: req.body.userId, // Add userId to the document
+    });
+    await prescriptionDoc.save();
+
+    res.send({
+      message: "Prescription images uploaded successfully",
+      urls: urls
+    });
+  } catch (error) {
+    console.error('Error saving prescription image URLs to the database:', error);
+    res.status(500).send('Error saving prescription image URLs to the database.');
   }
 });
 
@@ -135,7 +167,7 @@ const prescriptionRoutes = require('./routes/prescription.routes');
 const paymentRoutes = require('./routes/payment.route');
 const subaccountRoutes = require('./routes/subaccount.routes');
 const fileRoutes = require('./routes/file.route');
-const appointmentsRoute = require('./routes/appointments');
+
 const searchRoutes = require('./routes/search.routes'); 
 const clinicImageRoutes = require('./routes/clinicImage.routes');
 
@@ -154,7 +186,7 @@ app.use('/api', prescriptionRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api', subaccountRoutes);
 app.use('/api/files', fileRoutes);
-app.use('/api/appointments', appointmentsRoute);
+
 app.use('/prescriptions', prescriptionRoutes);
 app.use('/api', searchRoutes);
 app.use('/api', clinicImageRoutes);

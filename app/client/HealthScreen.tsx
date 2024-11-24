@@ -1,13 +1,16 @@
-import { StyleSheet, Text, View, ScrollView } from 'react-native'
+import { StyleSheet, Text, View, ScrollView, Button } from 'react-native'
 import React from 'react'
 
 const HealthScreen = () => {
+  const handleUploadPrescription = () => {
+    // Logic to handle prescription upload
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Prescriptions</Text>
-        <Text style={styles.item}>Prescription 1: Take 1 tablet daily</Text>
-        <Text style={styles.item}>Prescription 2: Apply ointment twice a day</Text>
+        <Button title="Upload Prescription" onPress={handleUploadPrescription} />
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Diagnosis</Text>

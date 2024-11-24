@@ -10,11 +10,13 @@ import moment from 'moment';
 import Colors from '../../components/Shared/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import useSchedule from '../../hooks/useSchedule';
+import { useRoute } from '@react-navigation/native';
 
 const screenWidth = Dimensions.get('window').width;
 
 const DashboardScreen: React.FC = () => {
   const router = useRouter();
+  const route = useRoute();
   const user = useSelector(selectUser);
   const { appointments, loading, error } = useAppointments();
   const professionalId = user.professional?._id;
@@ -66,6 +68,12 @@ const DashboardScreen: React.FC = () => {
         .finally(() => setScheduleLoading(false));
     }
   }, [professionalId]);
+
+  useEffect(() => {
+    if (route.params?.showTaskModal) {
+      setModalVisible(true);
+    }
+  }, [route.params]);
 
   const addTask = (description: string, startTime: string, endTime: string) => {
     setTasks([...tasks, { description, startTime, endTime }]);
