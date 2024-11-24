@@ -32,15 +32,18 @@ const ClinicSearch = () => {
 
   useEffect(() => {
     if (clinics.length > 0) {
+      console.log('Clinics Data:', clinics); // Log clinics data
       setFilteredClinics(clinics);
       const allProfessionals = clinics.flatMap((clinic) =>
         clinic.professionals?.map((professional) => ({
           ...professional,
           clinicName: clinic.name,
           clinicAddress: clinic.address,
+          clinicInsurances: clinic.insuranceCompanies, // Attach insurances to professionals
         })) || []
       );
       setFilteredProfessionals(allProfessionals);
+      console.log('All Professionals:', allProfessionals); // Log all professionals
     }
   }, [clinics]);
 
@@ -61,10 +64,13 @@ const ClinicSearch = () => {
           ...professional,
           clinicName: clinic.name,
           clinicAddress: clinic.address,
+          clinicInsurances: clinic.insuranceCompanies, // Attach insurances to professionals
         })) || []
     );
     setFilteredClinics(locationFilteredClinics);
     setFilteredProfessionals(locationFilteredProfessionals);
+    console.log('Filtered Clinics by Location:', locationFilteredClinics); // Log filtered clinics by location
+    console.log('Filtered Professionals by Location:', locationFilteredProfessionals); // Log filtered professionals by location
   };
 
   const handleSpecialtyChange = (specialty) => {
@@ -78,6 +84,7 @@ const ClinicSearch = () => {
         professional.title?.toLowerCase().includes(specialty.toLowerCase())
     );
     setFilteredProfessionals(specialtyFilteredProfessionals);
+    console.log('Filtered Professionals by Specialty:', specialtyFilteredProfessionals); // Log filtered professionals by specialty
   };
 
   const handleInsuranceChange = (insurance) => {
@@ -86,7 +93,7 @@ const ClinicSearch = () => {
 
     const insuranceFilteredProfessionals = filteredClinics
       .filter((clinic) =>
-        clinic.insuranceProviders?.some((provider) =>
+        clinic.insuranceCompanies?.some((provider) =>
           provider?.toLowerCase().includes(insurance.toLowerCase())
         )
       )
@@ -95,9 +102,11 @@ const ClinicSearch = () => {
           ...professional,
           clinicName: clinic.name,
           clinicAddress: clinic.address,
+          clinicInsurances: clinic.insuranceCompanies, // Attach insurances to professionals
         })) || []
       );
     setFilteredProfessionals(insuranceFilteredProfessionals);
+    console.log('Filtered Professionals by Insurance:', insuranceFilteredProfessionals); // Log filtered professionals by insurance
   };
 
   // Extract unique values for dropdowns
@@ -107,13 +116,13 @@ const ClinicSearch = () => {
   const uniqueSpecialties = [
     ...new Set(
       clinics.flatMap((clinic) =>
-        clinic.professionals?.map((professional) => professional.title) || []
+        clinic.professionals?.map((professional) => professional.specialty) || []
       )
     ),
   ];
   const uniqueInsurances = [
     ...new Set(
-      clinics.flatMap((clinic) => clinic.insuranceProviders || [])
+      filteredProfessionals.flatMap((professional) => professional.clinicInsurances || [])
     ),
   ];
 
@@ -131,7 +140,7 @@ const ClinicSearch = () => {
         />
       </View>
 
-      {/* Location Filter */}
+     
       {showLocationPicker && (
         <View style={styles.filterContainer}>
           <TouchableOpacity onPress={() => setShowLocationPicker(true)}>
@@ -167,7 +176,7 @@ const ClinicSearch = () => {
         </View>
       )}
 
-      {/* Insurance Provider Filter */}
+     
       {showInsurancePicker && selectedSpecialty && (
         <View style={styles.filterContainer}>
           <TouchableOpacity onPress={() => setShowInsurancePicker(true)}>
@@ -189,7 +198,7 @@ const ClinicSearch = () => {
         </View>
       )}
 
-      {/* Render Professionals */}
+    
       <FlatList
         data={filteredProfessionals}
         keyExtractor={(item, index) => index.toString()}
@@ -205,7 +214,7 @@ const ClinicSearch = () => {
             )}
             <View>
               <Text style={styles.professionalInfo}>
-                {`${item.title} ${item.firstName} ${item.lastName}`}
+                {`${item.firstName} ${item.lastName}`}
               </Text>
               <Text style={styles.clinicInfo}>
                 {item.clinicName}, {item.clinicAddress}
