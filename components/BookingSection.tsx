@@ -9,9 +9,11 @@ import Colors from './Shared/Colors';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser, updateUserProfile } from '../app/store/userSlice';
 
-const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = ({
+const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insurances: string[]; selectedInsurance: string }> = ({
   doctorId,
   consultationFee,
+  insurances,
+  selectedInsurance,
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ id: string; time: string } | null>(null);
@@ -277,6 +279,24 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
           );
         }}
       />
+      <Text style={styles.insuranceTitle}>Accepted Insurances</Text>
+      <FlatList
+        horizontal
+        data={insurances}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={[
+            styles.insuranceCard,
+            item === selectedInsurance ? styles.selectedInsuranceCard : null
+          ]}>
+            <Text style={[
+              styles.insuranceText,
+              item === selectedInsurance ? styles.selectedInsuranceText : null
+            ]}>{item}</Text>
+          </View>
+        )}
+        showsHorizontalScrollIndicator={false}
+      />
       <TouchableOpacity style={styles.bookButton} onPress={handleBookPress} disabled={isSubmitting}>
         <Text style={styles.bookButtonText}>Book Appointment</Text>
       </TouchableOpacity>
@@ -296,14 +316,14 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number }> = 
         }}
       />
 
-<Paystack
-      paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-      billingEmail={userEmail}
-      amount={consultationFee}
-      currency='KES'
-      onCancel={handlePaymentCancel}
-      onSuccess={handlePaymentSuccess}
-      ref={paystackWebViewRef}
+      <Paystack
+        paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+        billingEmail={userEmail}
+        amount={consultationFee}
+        currency='KES'
+        onCancel={handlePaymentCancel}
+        onSuccess={handlePaymentSuccess}
+        ref={paystackWebViewRef}
       />
     </View>
   );
@@ -364,6 +384,34 @@ const styles = StyleSheet.create({
   },
   bookedText: {
     color: 'white',
+    fontWeight: 'bold',
+  },
+  insuranceTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 20,
+  },
+  insuranceCard: {
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 8,
+    marginRight: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  insuranceText: {
+    fontSize: 16,
+    color: Colors.primary,
+  },
+  selectedInsuranceCard: {
+    borderColor: Colors.primary,
+    borderWidth: 2,
+  },
+  selectedInsuranceText: {
+    color: Colors.primary,
     fontWeight: 'bold',
   },
 });

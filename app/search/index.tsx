@@ -11,7 +11,7 @@ import {
   Image
 } from 'react-native';
 
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { selectAllClinics } from '../store/clinicSlice';
@@ -19,6 +19,9 @@ import { Picker } from '@react-native-picker/picker';
 
 const ClinicSearch = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const initialSpecialty = route.params?.specialty || '';
+  
   const [filteredClinics, setFilteredClinics] = useState([]);
   interface Professional {
     clinicName: string;
@@ -39,7 +42,7 @@ const ClinicSearch = () => {
   
   const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>([]);
   const [selectedLocation, setSelectedLocation] = useState('');
-  const [selectedSpecialty, setSelectedSpecialty] = useState('');
+  const [selectedSpecialty, setSelectedSpecialty] = useState(initialSpecialty);
   const [selectedInsurance, setSelectedInsurance] = useState('');
   const [showLocationPicker, setShowLocationPicker] = useState(true);
   const [showSpecialtyPicker, setShowSpecialtyPicker] = useState(false);
@@ -64,6 +67,21 @@ const ClinicSearch = () => {
         );
         setFilteredProfessionals(allProfessionals);
         console.log('All Professionals:', allProfessionals); // Log all professionals
+
+        // Filter by initial specialty if provided
+        if (initialSpecialty) {
+          const specialtyFilteredProfessionals = allProfessionals.filter(
+            (professional) =>
+              professional.specialty?.toLowerCase() === initialSpecialty.toLowerCase()
+          );
+          setFilteredProfessionals(specialtyFilteredProfessionals);
+          console.log('Filtered Professionals by Initial Specialty:', specialtyFilteredProfessionals); // Log filtered professionals by initial specialty
+          if (specialtyFilteredProfessionals.length === 0) {
+            setError('No professionals found for the selected specialty.');
+          }
+          setShowSpecialtyPicker(false); // Skip specialty filter step
+          setShowInsurancePicker(true); // Show insurance filter step
+        }
       }
     } catch (err) {
       setError('Failed to load data');
@@ -77,8 +95,8 @@ const ClinicSearch = () => {
     setSelectedSpecialty('');
     setSelectedInsurance('');
     setShowLocationPicker(false);
-    setShowSpecialtyPicker(true);
-    setShowInsurancePicker(false);
+    setShowSpecialtyPicker(!initialSpecialty); // Show specialty picker only if no initial specialty
+    setShowInsurancePicker(!!initialSpecialty); // Show insurance picker if initial specialty is provided
 
     const locationFilteredClinics = clinics.filter((clinic) =>
       clinic.address?.toLowerCase().includes(location.toLowerCase())
@@ -143,6 +161,10 @@ const ClinicSearch = () => {
     }
   };
 
+  const handleConsult = (doctor) => {
+    navigation.navigate('doctor/index', { doctor: JSON.stringify(doctor), selectedInsurance });
+  };
+
   const resetFilters = () => {
     setSelectedLocation('');
     setSelectedSpecialty('');
@@ -162,7 +184,7 @@ const ClinicSearch = () => {
     setError('');
   };
 
-  // Extract unique values for dropdowns
+ 
   const uniqueLocations = [
     ...new Set(clinics.map((clinic) => clinic.address?.split(',')[0] || '')),
   ];
@@ -184,7 +206,14 @@ const ClinicSearch = () => {
   }
 
   if (error) {
-    return <Text>{error}</Text>;
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text>{error}</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.goBackButton}>
+          <Text style={styles.goBackButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -203,8 +232,6 @@ const ClinicSearch = () => {
           <Ionicons name="refresh" size={24} color="black" />
         </TouchableOpacity>
       </View>
-
-     
 
       {showLocationPicker && (
         <View style={styles.filterContainer}>
@@ -241,8 +268,7 @@ const ClinicSearch = () => {
         </View>
       )}
 
-     
-      {showInsurancePicker && selectedSpecialty && (
+      {showInsurancePicker && (selectedSpecialty || initialSpecialty) && (
         <View style={styles.filterContainer}>
           <TouchableOpacity onPress={() => setShowInsurancePicker(true)}>
             <Text>Select Insurance Provider</Text>
@@ -263,16 +289,22 @@ const ClinicSearch = () => {
         </View>
       )}
 
-    
       <FlatList
         data={filteredProfessionals}
         keyExtractor={(item, index) => index.toString()}
-        ListEmptyComponent={<Text style={styles.noResultsText}>No professionals found.</Text>}
+        ListEmptyComponent={
+          <View style={styles.noResultsContainer}>
+            <Text style={styles.noResultsText}>No professionals found.</Text>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.goBackButton}>
+              <Text style={styles.goBackButtonText}>Go Back</Text>
+            </TouchableOpacity>
+          </View>
+        }
         renderItem={({ item }) => (
           <View style={styles.professionalCard}>
             {item.profileImage ? (
               <Image
-                source={{ uri: item.profileImage }}
+                source={{ uri: item.user.profileImage }}
                 style={styles.profileImage}
               />
             ) : (
@@ -286,6 +318,9 @@ const ClinicSearch = () => {
                 {item.clinicName}, {item.clinicAddress}
               </Text>
             </View>
+            <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
+              <Text style={styles.buttonText}>View</Text>
+            </TouchableOpacity>
           </View>
         )}
       />
@@ -347,5 +382,19 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#777',
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  goBackButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#007BFF',
+    borderRadius: 5,
+  },
+  goBackButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });

@@ -18,6 +18,7 @@ import { Avatar } from 'react-native-elements';
 
 type RouteParams = {
   doctor: string;
+  selectedInsurance: string;
 };
 
 type Doctor = {
@@ -31,6 +32,7 @@ type Doctor = {
     profileImage: string;
   };
   consultationFee: number;
+  clinicInsurances: string[];
 };
 
 type Review = {
@@ -44,6 +46,7 @@ const DoctorProfile: React.FC = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
   const doctor: Doctor = JSON.parse(route.params.doctor);
+  const selectedInsurance = route.params.selectedInsurance;
 
   const userId = useSelector((state: any) => state.user.id);
 
@@ -58,6 +61,7 @@ const DoctorProfile: React.FC = () => {
   useEffect(() => {
     fetchReviews();
     setIsLoading(false);
+    console.log('Doctor Insurances:', doctor.clinicInsurances); // Log the insurances
   }, []);
 
   const fetchReviews = async () => {
@@ -145,7 +149,12 @@ const DoctorProfile: React.FC = () => {
             <Text style={styles.infoText}>{reviews.length} Reviews</Text>
           </View>
         </View>
-        <BookingSection doctorId={doctor._id} consultationFee={doctor.consultationFee} />
+        <BookingSection 
+          doctorId={doctor._id} 
+          consultationFee={doctor.consultationFee} 
+          insurances={doctor.clinicInsurances} 
+          selectedInsurance={selectedInsurance} 
+        />
         <HorizontalLine />
         <Text style={styles.sectionTitle}>View More Professionals</Text>
         <Doctors searchQuery="" selectedCategory="" onViewAll={handleViewAll} excludeDoctorId={doctor._id} />
