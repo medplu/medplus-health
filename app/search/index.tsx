@@ -122,7 +122,7 @@ const ClinicSearch = () => {
   ];
   const uniqueInsurances = [
     ...new Set(
-      filteredProfessionals.flatMap((professional) => professional.clinicInsurances || [])
+      clinics.flatMap((clinic) => clinic.insuranceCompanies || [])
     ),
   ];
 
