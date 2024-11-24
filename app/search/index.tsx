@@ -71,6 +71,9 @@ const ClinicSearch = () => {
     setFilteredProfessionals(locationFilteredProfessionals);
     console.log('Filtered Clinics by Location:', locationFilteredClinics); // Log filtered clinics by location
     console.log('Filtered Professionals by Location:', locationFilteredProfessionals); // Log filtered professionals by location
+    if (locationFilteredClinics.length === 0) {
+      alert('No clinics found for the selected location.');
+    }
   };
 
   const handleSpecialtyChange = (specialty) => {
@@ -81,10 +84,13 @@ const ClinicSearch = () => {
 
     const specialtyFilteredProfessionals = filteredProfessionals.filter(
       (professional) =>
-        professional.title?.toLowerCase().includes(specialty.toLowerCase())
+        professional.specialty?.toLowerCase().includes(specialty.toLowerCase())
     );
     setFilteredProfessionals(specialtyFilteredProfessionals);
     console.log('Filtered Professionals by Specialty:', specialtyFilteredProfessionals); // Log filtered professionals by specialty
+    if (specialtyFilteredProfessionals.length === 0) {
+      alert('No professionals found for the selected specialty.');
+    }
   };
 
   const handleInsuranceChange = (insurance) => {
@@ -107,6 +113,9 @@ const ClinicSearch = () => {
       );
     setFilteredProfessionals(insuranceFilteredProfessionals);
     console.log('Filtered Professionals by Insurance:', insuranceFilteredProfessionals); // Log filtered professionals by insurance
+    if (insuranceFilteredProfessionals.length === 0) {
+      alert('No professionals found for the selected insurance provider.');
+    }
   };
 
   // Extract unique values for dropdowns
@@ -202,6 +211,7 @@ const ClinicSearch = () => {
       <FlatList
         data={filteredProfessionals}
         keyExtractor={(item, index) => index.toString()}
+        ListEmptyComponent={<Text style={styles.noResultsText}>No professionals found.</Text>}
         renderItem={({ item }) => (
           <View style={styles.professionalCard}>
             {item.profileImage ? (
@@ -274,6 +284,12 @@ const styles = StyleSheet.create({
   },
   clinicInfo: {
     fontSize: 14,
+    color: '#777',
+  },
+  noResultsText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
     color: '#777',
   },
 });
