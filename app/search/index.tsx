@@ -20,30 +20,55 @@ import { Picker } from '@react-native-picker/picker';
 const ClinicSearch = () => {
   const navigation = useNavigation();
   const [filteredClinics, setFilteredClinics] = useState([]);
-  const [filteredProfessionals, setFilteredProfessionals] = useState([]);
+  interface Professional {
+    clinicName: string;
+    clinicAddress: string;
+    clinicInsurances: string[];
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    user: string;
+    profession: string;
+    title: string;
+    consultationFee: number;
+    specialty?: string;
+    profileImage?: string;
+    clinic_images?: string[];
+  }
+  
+  const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>([]);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('');
   const [selectedInsurance, setSelectedInsurance] = useState('');
   const [showLocationPicker, setShowLocationPicker] = useState(true);
   const [showSpecialtyPicker, setShowSpecialtyPicker] = useState(false);
   const [showInsurancePicker, setShowInsurancePicker] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const clinics = useSelector(selectAllClinics);
 
   useEffect(() => {
-    if (clinics.length > 0) {
-      console.log('Clinics Data:', clinics); // Log clinics data
-      setFilteredClinics(clinics);
-      const allProfessionals = clinics.flatMap((clinic) =>
-        clinic.professionals?.map((professional) => ({
-          ...professional,
-          clinicName: clinic.name,
-          clinicAddress: clinic.address,
-          clinicInsurances: clinic.insuranceCompanies, // Attach insurances to professionals
-        })) || []
-      );
-      setFilteredProfessionals(allProfessionals);
-      console.log('All Professionals:', allProfessionals); // Log all professionals
+    try {
+      if (clinics.length > 0) {
+        console.log('Clinics Data:', clinics); // Log clinics data
+        setFilteredClinics(clinics);
+        const allProfessionals = clinics.flatMap((clinic) =>
+          clinic.professionals?.map((professional) => ({
+            ...professional,
+            clinicName: clinic.name,
+            clinicAddress: clinic.address,
+            clinicInsurances: clinic.insuranceCompanies, // Attach insurances to professionals
+          })) || []
+        );
+        setFilteredProfessionals(allProfessionals);
+        console.log('All Professionals:', allProfessionals); // Log all professionals
+      }
+    } catch (err) {
+      setError('Failed to load data');
+    } finally {
+      setLoading(false);
     }
   }, [clinics]);
 
@@ -72,7 +97,7 @@ const ClinicSearch = () => {
     console.log('Filtered Clinics by Location:', locationFilteredClinics); // Log filtered clinics by location
     console.log('Filtered Professionals by Location:', locationFilteredProfessionals); // Log filtered professionals by location
     if (locationFilteredClinics.length === 0) {
-      alert('No clinics found for the selected location.');
+      setError('No clinics found for the selected location.');
     }
   };
 
@@ -89,7 +114,7 @@ const ClinicSearch = () => {
     setFilteredProfessionals(specialtyFilteredProfessionals);
     console.log('Filtered Professionals by Specialty:', specialtyFilteredProfessionals); // Log filtered professionals by specialty
     if (specialtyFilteredProfessionals.length === 0) {
-      alert('No professionals found for the selected specialty.');
+      setError('No professionals found for the selected specialty.');
     }
   };
 
@@ -114,8 +139,27 @@ const ClinicSearch = () => {
     setFilteredProfessionals(insuranceFilteredProfessionals);
     console.log('Filtered Professionals by Insurance:', insuranceFilteredProfessionals); // Log filtered professionals by insurance
     if (insuranceFilteredProfessionals.length === 0) {
-      alert('No professionals found for the selected insurance provider.');
+      setError('No professionals found for the selected insurance provider.');
     }
+  };
+
+  const resetFilters = () => {
+    setSelectedLocation('');
+    setSelectedSpecialty('');
+    setSelectedInsurance('');
+    setFilteredClinics(clinics);
+    setFilteredProfessionals(clinics.flatMap((clinic) =>
+      clinic.professionals?.map((professional) => ({
+        ...professional,
+        clinicName: clinic.name,
+        clinicAddress: clinic.address,
+        clinicInsurances: clinic.insuranceCompanies,
+      })) || []
+    ));
+    setShowLocationPicker(true);
+    setShowSpecialtyPicker(false);
+    setShowInsurancePicker(false);
+    setError('');
   };
 
   // Extract unique values for dropdowns
@@ -135,6 +179,14 @@ const ClinicSearch = () => {
     ),
   ];
 
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
+
+  if (error) {
+    return <Text>{error}</Text>;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -147,9 +199,13 @@ const ClinicSearch = () => {
           style={styles.searchBox}
           editable={false}
         />
+        <TouchableOpacity onPress={resetFilters}>
+          <Ionicons name="refresh" size={24} color="black" />
+        </TouchableOpacity>
       </View>
 
      
+
       {showLocationPicker && (
         <View style={styles.filterContainer}>
           <TouchableOpacity onPress={() => setShowLocationPicker(true)}>
