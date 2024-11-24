@@ -89,6 +89,10 @@ const DoctorProfile: React.FC = () => {
     console.log(`View all professionals in category: ${category}`);
   };
 
+  const handleBackPress = () => {
+    navigation.navigate('tabs');
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -119,16 +123,15 @@ const DoctorProfile: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
         <Ionicons name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.profileContainer}>
           <Avatar
-            rounded
-            size="large"
             source={{ uri: profileImageUri }}
             containerStyle={styles.avatar}
+            imageProps={{ style: { borderRadius: 50 } }}
           />
           <View style={styles.profileInfo}>
             <Text style={styles.doctorName}>{`${doctor.firstName} ${doctor.lastName}`}</Text>
@@ -291,7 +294,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   avatar: {
-    marginRight: 15,
+    width: 100,
+    height: 100,
+    
   },
   profileInfo: {
     flex: 1,

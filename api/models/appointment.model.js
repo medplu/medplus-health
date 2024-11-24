@@ -38,6 +38,10 @@ const appointmentSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  insurance: {
+    type: String,
+    required: false,
+  },
 }, {
   timestamps: true,
 });

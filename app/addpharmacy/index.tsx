@@ -1,11 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { ScrollView, Text, View, Alert, FlatList, TouchableOpacity, Image } from 'react-native';
+import { ScrollView, Text, View, FlatList, TouchableOpacity, Image } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../store/userSlice';
 import Toast from 'react-native-toast-message';
 import PharmacyInfo from './PharmacyInfo';
+import { useNavigation } from '@react-navigation/native';
 
 const insuranceCompanies = [
   { label: 'AAR Insurance', value: 'aar' },
@@ -18,6 +19,7 @@ const insuranceCompanies = [
 const RegistrationForm = () => {
   const user = useSelector(selectUser);
   const professionalId = user?.professional?._id;
+  const navigation = useNavigation();
 
   const [formData, setFormData] = useState({
     pharmacyName: '',
@@ -132,16 +134,22 @@ const RegistrationForm = () => {
       const data = await response.json();
       if (response.ok) {
         console.log('Image uploaded successfully:', data);
-        Alert.alert('Success', 'Image uploaded successfully', [
-          { text: 'OK', onPress: () => navigation.navigate('pharmacist/tabs') }
-        ]);
+        navigation.navigate('pharmacist/tabs');
       } else {
         console.error('Error uploading image:', data);
-        Alert.alert('Error', 'Error uploading image');
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Error uploading image',
+        });
       }
     } catch (error) {
       console.error('Error:', error);
-      Alert.alert('Error', 'An error occurred');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'An error occurred',
+      });
     }
   };
 

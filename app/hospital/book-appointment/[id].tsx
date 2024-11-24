@@ -61,12 +61,22 @@ const BookAppointment = () => {
   };
 
   const handleConsult = (doctor) => {
-    navigation.navigate('doctor/index', { doctor: JSON.stringify(doctor) });
+    const formattedDoctor = {
+      _id: doctor._id,
+      firstName: doctor.firstName || doctor.name.split(' ')[0],
+      lastName: doctor.lastName || doctor.name.split(' ')[1] || '',
+      category: doctor.category || doctor.specialties[0],
+      profileImage: doctor.profileImage,
+      consultationFee: doctor.consultationFee,
+      clinicInsurances: doctor.clinicInsurances || []
+    };
+  
+    console.table(formattedDoctor); // Log the formatted doctor in a table format
+    navigation.navigate('doctor/index', { 
+      doctor: JSON.stringify(formattedDoctor), 
+      selectedInsurance: doctor.clinicInsurances || [] // Ensure insurance data is passed
+    });
   };
-
-  // const handleProfessionalPress = (professional) => {
-  //   navigation.navigate('doctor/index', { doctor: JSON.stringify(professional) });
-  // };
 
   if (loading) {
     return (

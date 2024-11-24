@@ -74,9 +74,9 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
   };
 
   const handleConsult = (doctor: Doctor) => {
-    router.push({
-      pathname: `/hospital/book-appointment/${doctor.clinicId}`,
-      params: { clinicId: doctor.clinicId, doctorId: doctor._id, professional: JSON.stringify(doctor) },
+    navigation.navigate('doctor/index', { 
+      doctor: JSON.stringify(doctor), 
+      selectedInsurance: doctor.clinicInsurances || [] // Ensure insurance data is passed
     });
   };
 

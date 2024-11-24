@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Dimensions, Text } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, FlatList, StyleSheet, Dimensions, Text, ActivityIndicator } from 'react-native';
 import AppSearchBar from '../../components/dashboard/SearchBar';
 import Category from '../../components/dashboard/Category';
 import Doctors from '../../components/dashboard/Doctors';
@@ -7,7 +7,6 @@ import Clinics from '../../components/dashboard/Clinics';
 import Colors from '../../components/Shared/Colors';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import AppLoading from 'expo-app-loading'; // Import AppLoading from expo
 
 const { width, height } = Dimensions.get('window');
 
@@ -16,32 +15,40 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [doctorList, setDoctorList] = useState([]);
   const [clinicList, setClinicList] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState({ doctors: true, clinics: true });
   const [error, setError] = useState(null);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    fetchData();
+  const fetchDoctors = useCallback(async () => {
+    try {
+      const response = await axios.get('https://medplus-app.onrender.com/api/professionals');
+      setDoctorList(response.data);
+    } catch (err) {
+      console.error('Error fetching doctors:', err);
+      setError((prev) => ({ ...prev, doctors: 'Failed to load doctors' }));
+    } finally {
+      setLoading((prev) => ({ ...prev, doctors: false }));
+    }
   }, []);
 
-  const fetchData = async () => {
+  const fetchClinics = useCallback(async () => {
     try {
-      const [doctorsResponse, clinicsResponse] = await Promise.all([
-        axios.get('https://medplus-app.onrender.com/api/professionals'),
-        axios.get('https://medplus-app.onrender.com/api/clinics'),
-      ]);
-      setDoctorList(doctorsResponse.data);
-      setClinicList(clinicsResponse.data);
+      const response = await axios.get('https://medplus-app.onrender.com/api/clinics');
+      setClinicList(response.data);
     } catch (err) {
-      setError('Failed to fetch data');
-      console.error('Error fetching data:', err);
+      console.error('Error fetching clinics:', err);
+      setError((prev) => ({ ...prev, clinics: 'Failed to load clinics' }));
     } finally {
-      setLoading(false);
+      setLoading((prev) => ({ ...prev, clinics: false }));
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDoctors();
+    fetchClinics();
+  }, [fetchDoctors, fetchClinics]);
 
   const handleViewAll = (type) => {
-    console.log('Navigating to ClinicDoctorsList with type:', type); // Debugging log
     navigation.navigate('ClinicDoctorsList', { type, doctorList, clinicList });
   };
 
@@ -69,18 +76,24 @@ export default function Home() {
           />
         );
       case 'doctors':
-        return (
+        return loading.doctors ? (
+          <ActivityIndicator size="large" color={Colors.primary} />
+        ) : (
           <Doctors
             searchQuery={searchQuery}
             selectedCategory={selectedCategory}
             onViewAll={() => handleViewAll('Doctors')}
+            doctors={doctorList}
           />
         );
       case 'clinics':
-        return (
+        return loading.clinics ? (
+          <ActivityIndicator size="large" color={Colors.primary} />
+        ) : (
           <Clinics
             searchQuery={searchQuery}
             onViewAll={() => handleViewAll('Clinics')}
+            clinics={clinicList}
           />
         );
       default:
@@ -88,26 +101,20 @@ export default function Home() {
     }
   };
 
-  if (loading) {
-    return <AppLoading />;
-  }
-
-  if (error) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>{error}</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error.doctors || error.clinics}</Text>
+        </View>
+      )}
       <FlatList
         data={data}
         renderItem={renderItem}
         keyExtractor={(item) => item.key}
         contentContainerStyle={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        initialNumToRender={3}
       />
     </View>
   );
@@ -121,11 +128,15 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     paddingVertical: 20,
-    backgroundColor: Colors.light_gray,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  errorContainer: {
+    backgroundColor: Colors.errorBackground,
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  errorText: {
+    color: Colors.errorText,
+    textAlign: 'center',
   },
 });

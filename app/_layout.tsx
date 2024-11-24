@@ -101,6 +101,7 @@ const Layout: React.FC = () => {
         <Stack.Screen name="tasks" options={{ title: 'Tasks', headerShown: true }} />
         <Stack.Screen name="consultations/index" options={{ title: 'Patients', headerShown: true }} />
         <Stack.Screen name="addpharmacy/index" options={{ title: 'Add Pharmacy' }} />
+        <Stack.Screen name="client/tabs" options={{ headerShown: false }} />
       </Stack.Navigator>
     </SafeAreaView>
   );

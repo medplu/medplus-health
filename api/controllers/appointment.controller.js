@@ -181,3 +181,29 @@ exports.confirmAppointment = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+const createAppointment = async (req, res) => {
+  try {
+    const { doctorId, userId, patientName, date, timeSlotId, time, insurance } = req.body;
+
+    const newAppointment = new Appointment({
+      doctorId,
+      userId,
+      patientName,
+      date,
+      timeSlotId,
+      time,
+      status: insurance ? 'pending' : 'pending', // Set status to pending if insurance is provided
+      insurance,
+    });
+
+    const savedAppointment = await newAppointment.save();
+    res.status(201).json({ appointment: savedAppointment });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to create appointment', error: error.message });
+  }
+};
+
+module.exports = {
+  createAppointment,
+};

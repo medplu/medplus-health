@@ -7,12 +7,14 @@ import EducationInfo from './EducationInfo';
 import Review from './Review';
 import { selectUser } from '../store/userSlice'; 
 import Colors from '@/components/Shared/Colors';
+import { useRouter } from 'expo-router';
 
 const Index = () => {
   const [step, setStep] = useState(1);
   const [clinicData, setClinicData] = useState({});
   const [educationData, setEducationData] = useState({});
   const navigation = useNavigation();
+  const router = useRouter();
 
   const user = useSelector(selectUser); 
   const professionalId = user?.professional?._id; 
@@ -61,10 +63,7 @@ const Index = () => {
       const data = await response.json();
       if (response.ok) {
         console.log('Clinic registered successfully:', data);
-        Alert.alert('Success', 'Clinic registered successfully', [
-          { text: 'OK', onPress: () => navigation.navigate('Professional') }
-        ]);
-        
+        router.push('/professional');
         setStep(1);
         setClinicData({});
         setEducationData({});

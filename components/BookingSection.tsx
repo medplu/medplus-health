@@ -13,7 +13,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   doctorId,
   consultationFee,
   insurances,
-  selectedInsurance,
+  selectedInsurance: initialSelectedInsurance,
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ id: string; time: string } | null>(null);
@@ -24,10 +24,11 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const paystackWebViewRef = useRef<PayStackRef>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [selectedInsurance, setSelectedInsurance] = useState<string>(initialSelectedInsurance);
 
- const user = useSelector(selectUser);
- const { name, email, profileImage, userId } = user;
- const professionalId = user?.professional?._id;
+  const user = useSelector(selectUser);
+  const { name, email, profileImage, userId } = user;
+  const professionalId = user?.professional?._id;
   const userEmail = useSelector((state) => state.user.email);
   const patientName = useSelector((state) => state.user.name);
 
@@ -111,7 +112,8 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
         date: moment(selectedDate).format('YYYY-MM-DD'), // Ensure date is included
         timeSlotId: selectedTimeSlot.id, // Ensure timeSlotId is included
         time: selectedTimeSlot.time,
-        status: 'pending',
+        status: selectedInsurance ? 'pending' : 'pending', // Set status to pending if insurance is provided
+        insurance: selectedInsurance, // Include insurance in the appointment data
       });
 
       const newAppointmentId = appointmentResponse.data.appointment._id;
@@ -120,6 +122,14 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
       }
       console.log('New appointment ID:', newAppointmentId);
       setAppointmentId(newAppointmentId);
+
+      if (selectedInsurance) {
+        setAlertMessage('Appointment booked successfully with insurance.');
+        setAlertType('success');
+        setShowAlert(true);
+        setIsSubmitting(false);
+        return;
+      }
 
       const paymentResponse = await axios.post(
         'https://api.paystack.co/transaction/initialize',
@@ -285,15 +295,18 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
         data={insurances}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item }) => (
-          <View style={[
-            styles.insuranceCard,
-            item === selectedInsurance ? styles.selectedInsuranceCard : null
-          ]}>
+          <TouchableOpacity
+            onPress={() => setSelectedInsurance(item)}
+            style={[
+              styles.insuranceCard,
+              item === selectedInsurance ? styles.selectedInsuranceCard : null
+            ]}
+          >
             <Text style={[
               styles.insuranceText,
               item === selectedInsurance ? styles.selectedInsuranceText : null
             ]}>{item}</Text>
-          </View>
+          </TouchableOpacity>
         )}
         showsHorizontalScrollIndicator={false}
       />
