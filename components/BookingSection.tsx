@@ -10,11 +10,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectUser, updateUserProfile } from '../app/store/userSlice';
 import { fetchSchedule, updateSchedule } from '../app/store/scheduleSlice';
 
-const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insurances: string[]; selectedInsurance: string }> = ({
+const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insurances?: string[]; selectedInsurance?: string }> = ({
   doctorId,
   consultationFee,
-  insurances,
-  selectedInsurance: initialSelectedInsurance,
+  insurances = [], // Default to an empty array if insurances is not provided
+  selectedInsurance: initialSelectedInsurance = '', // Default to an empty string if selectedInsurance is not provided
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ id: string; time: string } | null>(null);
@@ -32,7 +32,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   const userEmail = useSelector((state) => state.user.email);
   const patientName = useSelector((state) => state.user.name);
   const dispatch = useDispatch();
-  const schedule = useSelector((state) => state.schedule.items);
+  const schedule = useSelector((state) => state.schedule?.items || []);
 
   // Replace the existing dateOptions with state
   const [dateOptions, setDateOptions] = useState<Array<Date>>(
@@ -282,26 +282,30 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
         }}
       />
       <Text style={styles.insuranceTitle}>Accepted Insurances</Text>
-      <FlatList
-        horizontal
-        data={insurances}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => setSelectedInsurance(item)}
-            style={[
-              styles.insuranceCard,
-              item === selectedInsurance ? styles.selectedInsuranceCard : null
-            ]}
-          >
-            <Text style={[
-              styles.insuranceText,
-              item === selectedInsurance ? styles.selectedInsuranceText : null
-            ]}>{item}</Text>
-          </TouchableOpacity>
-        )}
-        showsHorizontalScrollIndicator={false}
-      />
+      {insurances.length > 0 ? (
+        <FlatList
+          horizontal
+          data={insurances}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => setSelectedInsurance(item)}
+              style={[
+                styles.insuranceCard,
+                item === selectedInsurance ? styles.selectedInsuranceCard : null
+              ]}
+            >
+              <Text style={[
+                styles.insuranceText,
+                item === selectedInsurance ? styles.selectedInsuranceText : null
+              ]}>{item}</Text>
+            </TouchableOpacity>
+          )}
+          showsHorizontalScrollIndicator={false}
+        />
+      ) : (
+        <Text style={styles.noInsuranceText}>No insurances available</Text>
+      )}
       <TouchableOpacity style={styles.bookButton} onPress={handleBookPress} disabled={isSubmitting}>
         <Text style={styles.bookButtonText}>Book Appointment</Text>
       </TouchableOpacity>
@@ -418,6 +422,11 @@ const styles = StyleSheet.create({
   selectedInsuranceText: {
     color: Colors.primary,
     fontWeight: 'bold',
+  },
+  noInsuranceText: {
+    fontSize: 16,
+    color: Colors.gray,
+    marginVertical: 10,
   },
 });
 

@@ -7,7 +7,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons'; // Import the eye icon
 import Colors from '../../components/Shared/Colors';
 import HorizontalLine from '../../components/common/HorizontalLine';
-
+import { useSelector } from 'react-redux';
+import { selectUser } from '../store/userSlice';
 
 const TransactionScreen: React.FC = () => {
   const PAYSTACK_SECRET_KEY = process.env.EXPO_PUBLIC_PAYSTACK_SECRET_KEY;
@@ -23,6 +24,7 @@ const TransactionScreen: React.FC = () => {
   const [banks, setBanks] = useState<{ name: string, code: string }[]>([]);
   const [isAccountInfoVisible, setIsAccountInfoVisible] = useState<boolean>(false); // Add state for toggling visibility
   const [transactions, setTransactions] = useState<any[]>([]); // Add state for transactions
+  const user = useSelector(selectUser);
 
   useEffect(() => {
     console.log('useEffect triggered'); // Debug log to check if useEffect is firing
@@ -58,7 +60,7 @@ const TransactionScreen: React.FC = () => {
 
   const fetchSubaccountInfo = async () => {
     try {
-      const userId = await AsyncStorage.getItem('userId');
+      const userId = user.userId
       if (!userId) {
         Alert.alert('Error', 'User ID not found. Please log in again.');
         return;
@@ -104,14 +106,22 @@ const TransactionScreen: React.FC = () => {
 
   const handleCreateSubaccount = async () => {
     try {
-      const userId = await AsyncStorage.getItem('userId');
+      const userId = user.userId;
       if (!userId) {
         Alert.alert('Error', 'User ID not found. Please log in again.');
         return;
       }
 
+      const { business_name, settlement_bank, account_number } = subaccountData;
+      if (!business_name || !settlement_bank || !account_number) {
+        Alert.alert('Error', 'All fields are required.');
+        return;
+      }
+
       const subaccountPayload = {
-        ...subaccountData,
+        business_name,
+        settlement_bank,
+        account_number,
         userId,
         percentage_charge: '10', // Set default percentage charge
       };

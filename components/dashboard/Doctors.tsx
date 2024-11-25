@@ -74,10 +74,11 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
   };
 
   const handleConsult = (doctor: Doctor) => {
-    navigation.navigate('doctor/index', { 
-      doctor: JSON.stringify(doctor), 
-      selectedInsurance: doctor.clinicInsurances || [] // Ensure insurance data is passed
-    });
+    const params: any = { doctor: JSON.stringify(doctor) };
+    if (doctor.clinicInsurances && doctor.clinicInsurances.length > 0) {
+      params.selectedInsurance = doctor.clinicInsurances;
+    }
+    navigation.navigate('doctor/index', params);
   };
 
   if (!clinics.length) {

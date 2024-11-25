@@ -46,7 +46,10 @@ const DoctorProfile: React.FC = () => {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const navigation = useNavigation();
   const doctor: Doctor = JSON.parse(route.params.doctor);
-  const selectedInsurance = route.params.selectedInsurance;
+  const selectedInsurance = route.params.selectedInsurance || '';
+
+  console.log('Doctor:', doctor); // Log doctor data
+  console.log('Selected Insurance:', selectedInsurance); // Log selected insurance
 
   const userId = useSelector((state: any) => state.user.id);
 

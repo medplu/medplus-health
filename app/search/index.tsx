@@ -162,7 +162,10 @@ const ClinicSearch = () => {
   };
 
   const handleConsult = (doctor) => {
-    navigation.navigate('doctor/index', { doctor: JSON.stringify(doctor), selectedInsurance });
+    navigation.navigate('doctor/index', { 
+      doctor: JSON.stringify(doctor), 
+      selectedInsurance: selectedInsurance || '' // Ensure insurance data is passed
+    });
   };
 
   const resetFilters = () => {

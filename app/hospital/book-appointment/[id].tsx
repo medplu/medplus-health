@@ -71,11 +71,11 @@ const BookAppointment = () => {
       clinicInsurances: doctor.clinicInsurances || []
     };
   
-    console.table(formattedDoctor); // Log the formatted doctor in a table format
-    navigation.navigate('doctor/index', { 
-      doctor: JSON.stringify(formattedDoctor), 
-      selectedInsurance: doctor.clinicInsurances || [] // Ensure insurance data is passed
-    });
+    const params: any = { doctor: JSON.stringify(formattedDoctor) };
+    if (doctor.clinicInsurances && doctor.clinicInsurances.length > 0) {
+      params.selectedInsurance = doctor.clinicInsurances;
+    }
+    navigation.navigate('doctor/index', params);
   };
 
   if (loading) {
