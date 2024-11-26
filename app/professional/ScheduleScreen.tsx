@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal, Platform } from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal, Platform, TextInput } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import { useSelector } from 'react-redux';
 import moment from 'moment';
@@ -11,6 +11,7 @@ import axios from 'axios';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Patient {
   name: string;
@@ -48,7 +49,7 @@ const bookedSlotColors = ['#e6c39a', '#d4a76c', '#c39156'];
 
 const ScheduleScreen: React.FC = () => {
   const user: User = useSelector(selectUser);
-  const { schedule, fetchSchedule, createOrUpdateSchedule } = useSchedule();
+  const { schedule, fetchSchedule, createOrUpdateSchedule, updateSlot } = useSchedule();
   const { appointments, loading: appointmentsLoading, error: appointmentsError } = useAppointments();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState<boolean>(true);
@@ -67,6 +68,10 @@ const ScheduleScreen: React.FC = () => {
   const [selectedEndTime, setSelectedEndTime] = useState<Date | null>(null);
   const [recurrence, setRecurrence] = useState<'none' | 'weekly' | 'monthly'>('none');
   const [slotDuration, setSlotDuration] = useState<number>(60);
+  const [isEventModalVisible, setIsEventModalVisible] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+  const [eventTitle, setEventTitle] = useState('');
+  const [eventDescription, setEventDescription] = useState('');
 
   useEffect(() => {
     const fetchProfessionalId = async () => {
@@ -259,6 +264,39 @@ const ScheduleScreen: React.FC = () => {
     setSlotDuration(60);
   };
 
+  const handleSlotPress = (slot: Slot) => {
+    setSelectedSlot(slot);
+    setIsEventModalVisible(true);
+  };
+
+  const handleSaveEvent = async () => {
+    if (!selectedSlot) return;
+
+    const event = {
+      title: eventTitle,
+      description: eventDescription,
+      date: selectedSlot.date,
+      startTime: selectedSlot.startTime,
+      endTime: selectedSlot.endTime,
+    };
+
+    try {
+      const events = JSON.parse(await AsyncStorage.getItem('events') || '[]');
+      events.push(event);
+      await AsyncStorage.setItem('events', JSON.stringify(events));
+
+      // Update the slot to booked
+      await updateSlot(selectedSlot._id, { isBooked: true });
+
+      setIsEventModalVisible(false);
+      setEventTitle('');
+      setEventDescription('');
+      fetchSchedule(user?.professional?._id);
+    } catch (error) {
+      console.error('Error saving event:', error);
+    }
+  };
+
   const renderClassItem = ({ item }: { item: Slot }) => (
     <View style={styles.classItem}>
       <View style={styles.timelineContainer}>
@@ -290,6 +328,12 @@ const ScheduleScreen: React.FC = () => {
           )
         ) : (
           <Text style={styles.cardTitle}>Available Slot</Text>
+        )}
+
+        {!item.isBooked && (
+          <TouchableOpacity style={styles.updateButton} onPress={() => handleSlotPress(item)}>
+            <Text style={styles.updateButtonText}>Update</Text>
+          </TouchableOpacity>
         )}
       </View>
     </View>
@@ -498,6 +542,32 @@ const ScheduleScreen: React.FC = () => {
               <Text style={styles.createButtonText}>Create</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelButton} onPress={() => setIsModalVisible(false)}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={isEventModalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Create Event</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Event Title"
+              value={eventTitle}
+              onChangeText={setEventTitle}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Event Description"
+              value={eventDescription}
+              onChangeText={setEventDescription}
+            />
+            <TouchableOpacity style={styles.createButton} onPress={handleSaveEvent}>
+              <Text style={styles.createButtonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelButton} onPress={() => setIsEventModalVisible(false)}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -803,6 +873,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.primary,
     marginRight: 10,
+  },
+  updateButton: {
+    backgroundColor: Colors.primary,
+    padding: 5,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  updateButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   
 });

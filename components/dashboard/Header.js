@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import Colors from '../Shared/Colors';
 import { AntDesign } from '@expo/vector-icons';
-import { selectUser, logout } from '../../app/store/userSlice';
+import { selectUser, logout, fetchProfileImage } from '../../app/store/userSlice';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 
@@ -14,34 +14,15 @@ export default function Header() {
 
   
   const user = useSelector(selectUser);
-  const userId = user?.id; 
+  const userId = useSelector((state) => state.user.userId); 
 
-  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
+  const profileImage = useSelector((state) => state.user.profileImage);
 
   useEffect(() => {
-    const fetchProfileImage = async () => {
-      if (!userId) {
-        console.log('No user ID available, skipping fetch.');
-        return;
-      }
-      console.log('Fetching profile image for userId:', userId); // Log userId
-      try {
-        const response = await axios.get(
-          `https://medplus-health.onrender.com/clinic-images/user/${userId}`
-        );
-        if (response.data.length > 0) {
-          console.log('Fetched profile image URL:', response.data[0].url); // Log fetched image URL
-          setProfileImage(response.data[0].url);
-        } else {
-          console.log('No profile image found for userId:', userId); // Log if no image found
-        }
-      } catch (error) {
-        console.error('Error fetching profile image:', error);
-      }
-    };
-
-    fetchProfileImage();
-  }, [userId]); 
+    if (userId) {
+      dispatch(fetchProfileImage(userId));
+    }
+  }, [userId, dispatch]); 
 
   // Handle logout
   const handleLogout = () => {

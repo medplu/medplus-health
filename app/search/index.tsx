@@ -321,7 +321,10 @@ const ClinicSearch = () => {
                 {item.clinicName}, {item.clinicAddress}
               </Text>
             </View>
-            <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
+            <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult({
+              ...item,
+              clinicInsurances: item.clinicInsurances // Attach insurances to the doctor
+            })}>
               <Text style={styles.buttonText}>View</Text>
             </TouchableOpacity>
           </View>

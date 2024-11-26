@@ -17,6 +17,7 @@ interface UseScheduleHook {
   createOrUpdateSchedule: (professionalId: string, availability: Slot[]) => Promise<void>;
   createRecurringSlots: (professionalId: string, slot: Slot, recurrence: string) => Promise<void>;
   subscribeToScheduleUpdates: (professionalId: string) => void;
+  updateSlot: (slotId: string, updates: Partial<Slot>) => Promise<void>; // Added updateSlot method
 }
 
 const useSchedule = (): UseScheduleHook => {
@@ -99,12 +100,25 @@ const useSchedule = (): UseScheduleHook => {
     };
   };
 
+  const updateSlot = async (slotId: string, updates: Partial<Slot>) => {
+    try {
+      const updatedSchedule = schedule.map(slot =>
+        slot._id === slotId ? { ...slot, ...updates } : slot
+      );
+      setSchedule(updatedSchedule);
+      await AsyncStorage.setItem('schedule', JSON.stringify(updatedSchedule));
+    } catch (error) {
+      console.error('Error updating slot:', error);
+    }
+  };
+
   return {
     schedule,
     fetchSchedule,
     createOrUpdateSchedule,
     createRecurringSlots,
     subscribeToScheduleUpdates,
+    updateSlot,
   };
 };
 

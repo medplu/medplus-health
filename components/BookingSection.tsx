@@ -33,6 +33,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   const patientName = useSelector((state) => state.user.name);
   const dispatch = useDispatch();
   const schedule = useSelector((state) => state.schedule?.items || []);
+ 
 
   // Replace the existing dateOptions with state
   const [dateOptions, setDateOptions] = useState<Array<Date>>(
@@ -47,6 +48,11 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
     const availableDates = dateOptions.filter(date => moment(date).isSameOrAfter(today, 'day'));
     setDateOptions(availableDates);
   }, [doctorId]);
+
+  // Log the schedule data to verify it is being fetched correctly
+  useEffect(() => {
+    console.log('Fetched schedule:', schedule);
+  }, [schedule]);
 
   const handleBookPress = async () => {
     if (!selectedTimeSlot) {
@@ -180,7 +186,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
       );
       console.log('Confirm response:', confirmResponse.data);
 
-      fetchSchedule();
+      fetchSchedule(doctorId);
     } catch (error) {
       console.error('Error updating appointment status:', error);
       setAlertMessage('Failed to update appointment status.');
@@ -207,6 +213,9 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
     acc[date].push(slot);
     return acc;
   }, {});
+
+  // Log the groupedSlots to verify the data is grouped correctly
+  console.log('Grouped slots:', groupedSlots);
 
   const markedDates = Object.keys(groupedSlots).reduce((acc: Record<string, { marked: boolean }>, date) => {
     acc[date] = { marked: true };

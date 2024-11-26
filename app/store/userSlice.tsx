@@ -1,5 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '../store/configureStore';
+import axios from 'axios';
 
 interface Professional {
   _id: string;
@@ -39,6 +40,25 @@ const initialState: UserState = {
   profileImage: null,
 };
 
+export const fetchProfileImage = createAsyncThunk(
+  'user/fetchProfileImage',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `https://medplus-health.onrender.com/api/images/user/${userId}`
+      );
+      if (response.data.length > 0) {
+        const randomImage = response.data[Math.floor(Math.random() * response.data.length)];
+        return randomImage.urls[0];
+      } else {
+        return null;
+      }
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: 'user',
   initialState,
@@ -56,7 +76,7 @@ const userSlice = createSlice({
     ) => {
       state.name = action.payload.name;
       state.email = action.payload.email;
-      state.userId = action.payload.userId;
+      state.userId = action.payload.userId; // Ensure userId is set correctly
       state.userType = action.payload.userType;
       state.isLoggedIn = true;
       state.isAuthenticated = true;
@@ -81,6 +101,14 @@ const userSlice = createSlice({
         state.professional.attachedToClinic = action.payload;
       }
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(fetchProfileImage.fulfilled, (state, action) => {
+      state.profileImage = action.payload;
+    });
+    builder.addCase(fetchProfileImage.rejected, (state, action) => {
+      console.error('Error fetching profile image:', action.payload);
+    });
   },
 });
 

@@ -15,6 +15,7 @@ import { selectUser } from '../../app/store/userSlice';
 
 const BookingSection = ({ clinic, navigation }) => {
   const { schedule } = useSchedule();
+  console.log('Schedule:', schedule); // Log the schedule
   const user = useSelector(selectUser);
   const [next7Days, setNext7Days] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
