@@ -35,7 +35,7 @@ const riderSchema = new Schema({
     },
     gender: {
         type: String,
-        required: true
+        required: false
     }
 });
 
