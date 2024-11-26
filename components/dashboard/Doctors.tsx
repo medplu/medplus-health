@@ -16,6 +16,7 @@ interface Doctor {
   profileImage?: string;
   consultationFee: number;
   clinicId: string;
+  location?: string;
 }
 
 interface DoctorsProps {
@@ -45,7 +46,8 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
       clinic.professionals.map(professional => ({
         ...professional,
         clinicId: clinic._id,
-        profileImage: professional.user.profileImage
+        profileImage: professional.user.profileImage,
+        location: clinic.address // Assuming clinic has a location property
       }))
     );
 
@@ -69,6 +71,8 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
     if (selectedCategory) {
       doctors = doctors.filter((doctor) => doctor.category === selectedCategory);
     }
+
+    console.log('Filtered Doctors:', doctors); // Log the filtered doctors data
 
     setFilteredDoctors(doctors);
   };
@@ -106,6 +110,7 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
               <Text style={styles.doctorName}>{item.profession}</Text>
             </View>
             <Text>{item.category}</Text>
+            <Text>{item.location}</Text> {/* Display the doctor's location */}
             <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
               <Text style={styles.buttonText}>View</Text>
             </TouchableOpacity>
