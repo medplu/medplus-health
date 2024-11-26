@@ -15,6 +15,7 @@ import {
   filterClinics,
   selectClinics,
   clearClinics,
+  setSelectedClinic, // Import the setSelectedClinic action
 } from '../../app/store/clinicSlice';
 import SubHeading from '../dashboard/SubHeading';
 import Colors from '../Shared/Colors';
@@ -68,9 +69,15 @@ const Clinics = ({ searchQuery, onViewAll }) => {
   }, [loading, filteredClinicList]);
 
   const handlePress = item => {
+    const professionalImages = item.professionals.flatMap(professional => professional.clinic_images || []);
+    const allImages = [...new Set([...item.images, ...professionalImages.map(image => image.urls[0])])];
+    
+    console.log('Navigating to clinic with images:', allImages); // Add this line to log the images being passed
+
+    dispatch(setSelectedClinic({ ...item, images: allImages })); // Set the selected clinic in the Redux state
+
     router.push({
       pathname: `/hospital/book-appointment/${item._id}`,
-      params: { clinicId: item._id },
     });
   };
 
@@ -94,6 +101,9 @@ const Clinics = ({ searchQuery, onViewAll }) => {
           const allImages = new Set(item.images || []);
           professionalImages.flat().forEach(url => allImages.add(url));
           const imageArray = Array.from(allImages);
+          
+          console.log('Fetched clinic images:', imageArray); // Log the fetched images
+
           if (imageArray.length > 0) {
             setCurrentImage(imageArray[0]);
 

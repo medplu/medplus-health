@@ -102,17 +102,30 @@ export const fetchClinics = createAsyncThunk(
 
 export const fetchClinicById = createAsyncThunk(
   'clinics/fetchClinicById',
-  async (clinicId: string) => {
+  async (clinicId: string, { dispatch }) => {
     const cachedClinics = await AsyncStorage.getItem('clinicList');
     const clinics = cachedClinics ? JSON.parse(cachedClinics) : [];
 
-    const cachedClinic = clinics.find((clinic: Clinic) => clinic._id === clinicId);
-    if (cachedClinic) {
-      return cachedClinic;
+    let clinic = clinics.find((clinic: Clinic) => clinic._id === clinicId);
+    if (!clinic) {
+      const response = await axios.get(`https://medplus-health.onrender.com/api/clinics/${clinicId}`);
+      clinic = response.data;
     }
 
-    const response = await axios.get(`https://medplus-health.onrender.com/api/clinics/${clinicId}`);
-    return response.data;
+    // Fetch images for the clinic
+    const professionalImages = await Promise.all(
+      clinic.professionals.map(async (professional: Professional) => {
+        const response = await axios.get(`https://medplus-health.onrender.com/api/images/professional/${professional._id}`);
+        return response.data.map((image: { urls: string[] }) => image.urls[0]);
+      })
+    );
+    const allImages = new Set(clinic.images || []);
+    professionalImages.flat().forEach(url => allImages.add(url));
+    clinic.images = Array.from(allImages);
+
+    // Update the Redux state with the fetched clinic data
+    dispatch(setSelectedClinic(clinic));
+    return clinic;
   }
 );
 
@@ -149,6 +162,9 @@ const clinicsSlice = createSlice({
       state.filteredClinicList = [];
       state.selectedClinic = null;
       AsyncStorage.removeItem('clinicList');
+    },
+    setSelectedClinic: (state, action: PayloadAction<Clinic>) => {
+      state.selectedClinic = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -194,7 +210,7 @@ const clinicsSlice = createSlice({
   },
 });
 
-export const { filterClinics, clearSelectedClinic, resetClinics } = clinicsSlice.actions;
+export const { filterClinics, clearSelectedClinic, resetClinics, setSelectedClinic } = clinicsSlice.actions;
 
 export const selectClinics = (state: RootState) => state.clinics.filteredClinicList;
 export const selectAllClinics = (state: RootState) => state.clinics.clinicList;

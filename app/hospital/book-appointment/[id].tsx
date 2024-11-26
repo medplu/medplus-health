@@ -15,16 +15,22 @@ import EvilIcons from '@expo/vector-icons/EvilIcons';
 const BookAppointment = () => {
   const { id: clinicId, professional: professionalParam } = useLocalSearchParams();
   const selectedProfessional = professionalParam ? JSON.parse(professionalParam) : null;
+  
   const scrollViewRef = useRef<ScrollView>(null);
   const bookingSectionRef = useRef<View>(null);
   const navigation = useNavigation();
   
   const dispatch = useDispatch();
   const clinic = useSelector(selectClinicDetails);
+  const clinicImages = clinic ? clinic.images : [];
+
+  console.log('Received clinicImages:', clinicImages); // Add this line to log the received images
+
   const loading = useSelector(selectClinicLoading);
   const error = useSelector(selectClinicError);
 
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const [aboutFocused, setAboutFocused] = useState(false);
 
   useEffect(() => {
     if (clinicId) {
@@ -32,20 +38,7 @@ const BookAppointment = () => {
     }
   }, [clinicId, dispatch]);
 
-  const getAllClinicImages = (clinic) => {
-    if (!clinic) return [];
-    const allImages = new Set(clinic.images || []);
-    clinic.professionals?.forEach(professional => {
-      professional.clinic_images?.forEach(image => {
-        if (image.urls?.[0]) {
-          allImages.add(image.urls[0]);
-        }
-      });
-    });
-    return Array.from(allImages);
-  };
-
-  const clinicImages = getAllClinicImages(clinic);
+  console.log('Clinic Images:', clinicImages); // Log clinic images
 
   console.log('Clinic Data:', clinic);
   console.log('Loading:', loading);
@@ -135,6 +128,15 @@ const BookAppointment = () => {
         <Text style={styles.profileName}>{clinic.name}</Text>
       </TouchableOpacity>
 
+      {clinicImages.length > 0 && (
+        <Image 
+          source={{ uri: clinicImages[0] }} 
+          style={styles.clinicImage} 
+        />
+      )}
+
+      <ActionButton location={clinic.address} contact={clinic.contactInfo} />
+
       {selectedProfessional && selectedProfessional.user && (
         <View style={styles.selectedProfessionalContainer}>
           <Image 
@@ -158,13 +160,19 @@ const BookAppointment = () => {
         </View>
       )}
 
-      <ClinicSubHeading subHeadingTitle={'About'} />
-      <Text style={styles.description}>{truncatedDesc}</Text>
-      <TouchableOpacity onPress={() => setShowFullDesc(prev => !prev)}>
-        <Text style={styles.seeMoreText}>
-          {showFullDesc ? 'Hide' : 'See More'}
-        </Text>
+      <TouchableOpacity
+        style={[styles.aboutSection, aboutFocused && styles.aboutSectionFocused]}
+        onPress={() => setAboutFocused(!aboutFocused)}
+      >
+        <ClinicSubHeading subHeadingTitle={clinic.name} />
+        <Text style={styles.description}>{truncatedDesc}</Text>
+        <TouchableOpacity onPress={() => setShowFullDesc(prev => !prev)}>
+          <Text style={styles.seeMoreText}>
+            {showFullDesc ? 'Hide' : 'See More'}
+          </Text>
+        </TouchableOpacity>
       </TouchableOpacity>
+
       <ClinicSubHeading subHeadingTitle={'Specialties'} />
       <FlatList
         data={clinic.specialties.split(',')}
@@ -225,9 +233,6 @@ const BookAppointment = () => {
           contentContainerStyle={styles.flatListContent}
         />
       )}
-
-    
-      
     </ScrollView>
   );
 }
@@ -276,6 +281,34 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
   },
+  clinicImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 20,
+    alignSelf: 'center',
+  },
+  aboutSection: {
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 20,
+  },
+  aboutSectionFocused: {
+    borderColor: Colors.SECONDARY,
+    backgroundColor: Colors.LIGHT_GRAY,
+  },
+  description: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 8,
+  },
+  seeMoreText: {
+    color: Colors.primary,
+    fontSize: 14,
+    marginBottom: 20,
+  },
   selectedProfessionalContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -306,16 +339,6 @@ const styles = StyleSheet.create({
   selectedProfessionalFee: {
     fontSize: 16,
     color: Colors.PRIMARY,
-  },
-  description: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 8,
-  },
-  seeMoreText: {
-    color: Colors.primary,
-    fontSize: 14,
-    marginBottom: 20,
   },
   insuranceCard: {
     width: 100,

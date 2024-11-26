@@ -1,6 +1,6 @@
 const Client = require('../models/client.model');
 const Professional = require('../models/professional.model');
-const Student = require('../models/student.model');
+const Rider = require('../models/rider.model'); // Change this line to Rider model
 const User = require('../models/user.model'); 
 const Clinic = require('../models/clinic.model'); // Add this line
 const bcrypt = require('bcrypt');
@@ -44,7 +44,7 @@ exports.register = async (req, res) => {
             userType, profession, title, consultationFee = 5000, category,
             yearsOfExperience, certifications, bio, profileImage,
             emailNotifications, pushNotifications, location,
-            attachedToClinic, clinicReferenceCode, ...userData // Add clinicReferenceCode
+            attachedToClinic, clinicReferenceCode, dateOfBirth, vehicleType, vehicleRegistrationNumber, gender, ...userData // Add new fields for Rider
         } = req.body;
 
         // Generate a verification code
@@ -105,12 +105,16 @@ exports.register = async (req, res) => {
                     return res.status(400).json({ error: 'Invalid clinic reference code' });
                 }
             }
-        } else if (userType === 'student') {
-            await new Student({
+        } else if (userType === 'rider') { // Change 'student' to 'rider'
+            await new Rider({ // Change 'Student' to 'Rider'
                 firstName: newUser.firstName,
                 lastName: newUser.lastName,
                 email: newUser.email,
-                user: newUser._id
+                user: newUser._id,
+                dateOfBirth, // Add new fields
+                vehicleType, // Add new fields
+                vehicleRegistrationNumber, // Add new fields
+                gender // Add new fields
             }).save();
         } else {
             return res.status(400).json({ error: 'Invalid user type' });
