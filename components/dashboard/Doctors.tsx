@@ -7,6 +7,8 @@ import Colors from '../../components/Shared/Colors';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchClinics, selectClinics } from '../../app/store/clinicSlice';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 
 interface Doctor {
   _id: string;
@@ -32,14 +34,52 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const navigation = useNavigation();
   const router = useRouter();
+  const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+  const [distanceThreshold, setDistanceThreshold] = useState<number>(10); // Distance threshold in kilometers
 
   useEffect(() => {
     dispatch(fetchClinics());
   }, [dispatch]);
 
   useEffect(() => {
+    const getUserLocation = async () => {
+      try {
+        const location = await AsyncStorage.getItem('userLocation');
+        if (location) {
+          setUserLocation(JSON.parse(location));
+        } else {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status === 'granted') {
+            const currentLocation = await Location.getCurrentPositionAsync({});
+            const { latitude, longitude } = currentLocation.coords;
+            setUserLocation({ latitude, longitude });
+            await AsyncStorage.setItem('userLocation', JSON.stringify({ latitude, longitude }));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user location:', error);
+      }
+    };
+
+    getUserLocation();
+  }, []);
+
+  useEffect(() => {
     filterDoctors();
-  }, [searchQuery, selectedCategory, clinics]);
+  }, [searchQuery, selectedCategory, clinics, userLocation]);
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const toRad = (value) => (value * Math.PI) / 180;
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
 
   const filterDoctors = () => {
     let doctors = clinics.flatMap(clinic => 
@@ -47,7 +87,10 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
         ...professional,
         clinicId: clinic._id,
         profileImage: professional.user.profileImage,
-        location: clinic.address // Assuming clinic has a location property
+        location: clinic.address, // Assuming clinic has a location property
+        clinicInsurances: clinic.insuranceCompanies, // Attach insurances to professionals
+        clinicLatitude: clinic.latitude, // Assuming clinic has latitude property
+        clinicLongitude: clinic.longitude // Assuming clinic has longitude property
       }))
     );
 
@@ -70,6 +113,18 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
 
     if (selectedCategory) {
       doctors = doctors.filter((doctor) => doctor.category === selectedCategory);
+    }
+
+    if (userLocation) {
+      doctors = doctors.filter((doctor) => {
+        const distance = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          doctor.clinicLatitude,
+          doctor.clinicLongitude
+        );
+        return distance <= distanceThreshold;
+      });
     }
 
     console.log('Filtered Doctors:', doctors); // Log the filtered doctors data
@@ -111,7 +166,10 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery, selectedCategory, onView
             </View>
             <Text>{item.category}</Text>
             <Text>{item.location}</Text> {/* Display the doctor's location */}
-            <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
+            <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult({
+              ...item,
+              clinicInsurances: item.clinicInsurances // Attach insurances to the doctor
+            })}>
               <Text style={styles.buttonText}>View</Text>
             </TouchableOpacity>
           </View>

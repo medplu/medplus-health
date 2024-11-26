@@ -28,7 +28,7 @@ const userSchema = new Schema({
     },
     userType: {
         type: String,
-        enum: ['client', 'professional', 'student'],
+        enum: ['client', 'professional', 'rider'],
         required: true
     },
     profileImage: {

@@ -223,7 +223,10 @@ const BookAppointment = () => {
                 <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text> 
               </View>
               <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
-              <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item)}>
+              <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult({
+                ...item,
+                clinicInsurances: clinic.insuranceCompanies // Attach insurances to the doctor
+              })}>
                 <Text style={styles.buttonText}>View</Text>
               </TouchableOpacity>
             </View>
