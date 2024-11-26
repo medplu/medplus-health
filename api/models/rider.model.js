@@ -35,7 +35,7 @@ const riderSchema = new Schema({
     },
     gender: {
         type: String,
-        required: false // Change this line to make gender optional
+        required: false // Ensure this line makes gender optional
     }
 });
 
