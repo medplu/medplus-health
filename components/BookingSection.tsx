@@ -8,7 +8,7 @@ import axios from 'axios';
 import Colors from './Shared/Colors';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser, updateUserProfile } from '../app/store/userSlice';
-import { fetchSchedule, updateSchedule } from '../app/store/scheduleSlice';
+import useSchedule from '../hooks/useSchedule'; // Import the useSchedule hook
 
 const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insurances?: string[]; selectedInsurance?: string }> = ({
   doctorId,
@@ -32,7 +32,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   const userEmail = useSelector((state) => state.user.email);
   const patientName = useSelector((state) => state.user.name);
   const dispatch = useDispatch();
-  const schedule = useSelector((state) => state.schedule?.items || []);
+  const { schedule, fetchSchedule, clearCache, updateSlot } = useSchedule();
  
 
   // Replace the existing dateOptions with state
@@ -41,7 +41,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   );
 
   useEffect(() => {
-    dispatch(fetchSchedule(doctorId));
+    fetchSchedule(doctorId);
     
     // Prevent selecting past dates
     const today = new Date();
@@ -119,7 +119,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
       setAppointmentId(newAppointmentId);
 
       // Update the slot to booked in the local state
-      dispatch(updateSchedule({ date: moment(selectedDate).format('YYYY-MM-DD'), slots: { ...selectedTimeSlot, isBooked: true } }));
+      updateSlot(selectedTimeSlot.id, { isBooked: true });
 
       if (selectedInsurance) {
         setAlertMessage('Appointment booked successfully with insurance.');
@@ -319,6 +319,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
         <Text style={styles.bookButtonText}>Book Appointment</Text>
       </TouchableOpacity>
 
+
       <AwesomeAlert
         show={showAlert}
         title={alertType === 'success' ? 'Success' : 'Error'}
@@ -436,6 +437,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.gray,
     marginVertical: 10,
+  },
+  clearCacheButton: {
+    backgroundColor: Colors.SECONDARY,
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  clearCacheButtonText: {
+    color: Colors.primary,
+    fontSize: 16,
   },
 });
 

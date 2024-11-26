@@ -15,7 +15,6 @@ const persistConfig = {
   whitelist: ['user', 'prescription', 'doctors', 'schedules', 'clinics'],
 };
 
-
 const rootReducer = combineReducers({
   user: userReducer,
   appointments: appointmentsReducer,
@@ -26,7 +25,6 @@ const rootReducer = combineReducers({
   prescription: prescriptionReducer, 
 });
 
-
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
@@ -34,7 +32,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }),
+    }), // Remove .concat(thunk)
 });
 
 export const persistor = persistStore(store);

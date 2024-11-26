@@ -18,6 +18,7 @@ interface UseScheduleHook {
   createRecurringSlots: (professionalId: string, slot: Slot, recurrence: string) => Promise<void>;
   subscribeToScheduleUpdates: (professionalId: string) => void;
   updateSlot: (slotId: string, updates: Partial<Slot>) => Promise<void>; // Added updateSlot method
+  clearCache: () => Promise<void>; // Added clearCache method
 }
 
 const useSchedule = (): UseScheduleHook => {
@@ -48,11 +49,17 @@ const useSchedule = (): UseScheduleHook => {
 
   const fetchSchedule = async (professionalId: string) => {
     try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);
-      if (response.status === 200 && response.data.slots) {
-        setSchedule(response.data.slots);
+      const cachedSchedule = await AsyncStorage.getItem(`schedule_${professionalId}`);
+      if (cachedSchedule) {
+        setSchedule(JSON.parse(cachedSchedule));
       } else {
-        console.error('Failed to fetch schedule:', response.data.message);
+        const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);
+        if (response.status === 200 && response.data.slots) {
+          setSchedule(response.data.slots);
+          await AsyncStorage.setItem(`schedule_${professionalId}`, JSON.stringify(response.data.slots));
+        } else {
+          console.error('Failed to fetch schedule:', response.data.message);
+        }
       }
     } catch (error) {
       console.error('Error fetching schedule:', axios.isAxiosError(error) ? error.message : error);
@@ -106,9 +113,18 @@ const useSchedule = (): UseScheduleHook => {
         slot._id === slotId ? { ...slot, ...updates } : slot
       );
       setSchedule(updatedSchedule);
-      await AsyncStorage.setItem('schedule', JSON.stringify(updatedSchedule));
+      await AsyncStorage.setItem(`schedule_${professionalId}`, JSON.stringify(updatedSchedule));
     } catch (error) {
       console.error('Error updating slot:', error);
+    }
+  };
+
+  const clearCache = async () => {
+    try {
+      await AsyncStorage.removeItem(`schedule_${professionalId}`);
+      console.log('Schedule cache cleared.');
+    } catch (error) {
+      console.error('Error clearing cache:', error);
     }
   };
 
@@ -119,6 +135,7 @@ const useSchedule = (): UseScheduleHook => {
     createRecurringSlots,
     subscribeToScheduleUpdates,
     updateSlot,
+    clearCache, // Expose clearCache method
   };
 };
 

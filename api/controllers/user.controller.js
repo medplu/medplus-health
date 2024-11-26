@@ -358,9 +358,10 @@ exports.login = async (req, res) => {
         // Generate JWT token
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        // Initialize doctorId and professional to null
+        // Initialize doctorId, professional, and riderId to null
         let doctorId = null;
         let professional = null;
+        let riderId = null;
         
         // Check if the user is a professional and retrieve doctorId and professional object
         if (user.userType === 'professional') {
@@ -371,7 +372,15 @@ exports.login = async (req, res) => {
             }
         }
 
-        // Include userId, firstName, lastName, doctorId, professional, and profileImage in the response
+        // Check if the user is a rider and retrieve riderId
+        if (user.userType === 'rider') {
+            const riderRecord = await Rider.findOne({ user: user._id }); // Fetch the rider record
+            if (riderRecord) {
+                riderId = riderRecord._id; // Get the riderId from the rider model
+            }
+        }
+
+        // Include userId, firstName, lastName, doctorId, professional, riderId, and profileImage in the response
         res.status(200).json({ 
             token, 
             userId: user._id, 
@@ -381,6 +390,7 @@ exports.login = async (req, res) => {
             doctorId, 
             userType: user.userType,
             professional, // Attach the professional object if userType is professional
+            riderId, // Attach the riderId if userType is rider
             profileImage: user.profileImage // Include profileImage in the response
         });
     } catch (error) {

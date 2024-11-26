@@ -210,27 +210,30 @@ const BookAppointment = () => {
         <FlatList
           data={doctorsData}
           horizontal={true}
-          renderItem={({ item }) => (
-            <View style={styles.doctorItem}>
-              <Image 
-                source={{ 
-                  uri: item.profileImage ? item.profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' 
-                }} 
-                style={styles.doctorImage} 
-              />
-              <View style={styles.nameCategoryContainer}>
-                <Text style={styles.doctorName}>{item.name}</Text> 
-                <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text> 
+          renderItem={({ item }) => {
+            console.log('Doctor Item:', item); // Log the doctor item
+            return (
+              <View style={styles.doctorItem}>
+                <Image 
+                  source={{ 
+                    uri: item.profileImage ? item.profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' 
+                  }} 
+                  style={styles.doctorImage} 
+                />
+                <View style={styles.nameCategoryContainer}>
+                  <Text style={styles.doctorName}>{item.name}</Text> 
+                  <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text> 
+                </View>
+                <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
+                <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult({
+                  ...item,
+                  clinicInsurances: clinic.insuranceCompanies // Attach insurances to the doctor
+                })}>
+                  <Text style={styles.buttonText}>View</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
-              <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult({
-                ...item,
-                clinicInsurances: clinic.insuranceCompanies // Attach insurances to the doctor
-              })}>
-                <Text style={styles.buttonText}>View</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+            );
+          }}
           keyExtractor={(item) => item._id.toString()}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.flatListContent}
