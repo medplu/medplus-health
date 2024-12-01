@@ -1,12 +1,14 @@
 const Professional = require('../models/professional.model');
 const mongoose = require('mongoose'); // Import mongoose
 const cloudinary = require('cloudinary').v2; // Make sure cloudinary is properly configured
+// Fetch all professionals with only userId and clinicId populated as IDs
 exports.getProfessionals = async (req, res) => {
     try {
-        // Fetch only necessary fields (userId and clinicId)
+        // Fetch all professionals but populate only userId and clinicId (as ObjectId)
         const professionals = await Professional.find()
-            .select('user clinicId') // Select only the required fields
-            .populate('clinicId', '_id'); // Populate only the clinicId _id field
+            .select('-user -clinicId') // Exclude user and clinicId fields from the response
+            .populate('user', '_id')   // Populate user field with only its _id
+            .populate('clinicId', '_id'); // Populate clinicId field with only its _id
 
         console.log("Fetched professionals:", professionals);
         res.status(200).json(professionals);
@@ -16,13 +18,16 @@ exports.getProfessionals = async (req, res) => {
     }
 };
 
+// Fetch a single professional by doctorId (_id) with userId and clinicId as ObjectIds
 exports.getProfessionalById = async (req, res) => {
     try {
         const { doctorId } = req.params;
-        // Fetch only necessary fields for a single professional
+
+        // Fetch a single professional and return userId and clinicId as ObjectIds
         const professional = await Professional.findById(doctorId)
-            .select('user clinicId') // Select only the required fields
-            .populate('clinicId', '_id'); // Populate only the clinicId _id field
+            .select('-user -clinicId') // Exclude user and clinicId fields
+            .populate('user', '_id')   // Populate user field with only _id
+            .populate('clinicId', '_id'); // Populate clinicId field with only _id
 
         if (!professional) {
             return res.status(404).json({ error: 'Professional not found' });
@@ -35,15 +40,17 @@ exports.getProfessionalById = async (req, res) => {
     }
 };
 
+// Fetch a professional by userId, with userId and clinicId as ObjectIds
 exports.getProfessionalByUserId = async (req, res) => {
     try {
         const { userId } = req.params;
         console.log(`Fetching professional with userId: ${userId}`);
 
-        // Fetch professional by userId and populate only clinicId _id
+        // Fetch professional by userId and return userId and clinicId as ObjectIds
         const professional = await Professional.findOne({ user: userId })
-            .select('user clinicId') // Select only the necessary fields
-            .populate('clinicId', '_id'); // Populate only the clinicId _id field
+            .select('-user -clinicId') // Exclude user and clinicId fields
+            .populate('user', '_id')   // Populate user field with only _id
+            .populate('clinicId', '_id'); // Populate clinicId field with only _id
 
         if (!professional) {
             return res.status(404).json({ error: 'Professional not found' });
