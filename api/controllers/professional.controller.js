@@ -1,11 +1,14 @@
 const Professional = require('../models/professional.model');
 const mongoose = require('mongoose'); // Import mongoose
 const cloudinary = require('cloudinary').v2; // Make sure cloudinary is properly configured
-// Fetch all professionals
 exports.getProfessionals = async (req, res) => {
     try {
-        const professionals = await Professional.find().populate('clinicId'); // Populate clinicId
-        console.log("Fetched professionals:", professionals); // Add logging
+        // Fetch only necessary fields (userId and clinicId)
+        const professionals = await Professional.find()
+            .select('user clinicId') // Select only the required fields
+            .populate('clinicId', '_id'); // Populate only the clinicId _id field
+
+        console.log("Fetched professionals:", professionals);
         res.status(200).json(professionals);
     } catch (error) {
         console.log("Error fetching professionals", error);
@@ -13,7 +16,47 @@ exports.getProfessionals = async (req, res) => {
     }
 };
 
-// Fetch a single professional by doctorId (_id)
+exports.getProfessionalById = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+        // Fetch only necessary fields for a single professional
+        const professional = await Professional.findById(doctorId)
+            .select('user clinicId') // Select only the required fields
+            .populate('clinicId', '_id'); // Populate only the clinicId _id field
+
+        if (!professional) {
+            return res.status(404).json({ error: 'Professional not found' });
+        }
+
+        res.status(200).json(professional);
+    } catch (error) {
+        console.error("Error fetching professional:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+exports.getProfessionalByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        console.log(`Fetching professional with userId: ${userId}`);
+
+        // Fetch professional by userId and populate only clinicId _id
+        const professional = await Professional.findOne({ user: userId })
+            .select('user clinicId') // Select only the necessary fields
+            .populate('clinicId', '_id'); // Populate only the clinicId _id field
+
+        if (!professional) {
+            return res.status(404).json({ error: 'Professional not found' });
+        }
+
+        res.status(200).json(professional);
+    } catch (error) {
+        console.error("Error fetching professional:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
 exports.getProfessionalById = async (req, res) => {
     try {
         const { doctorId } = req.params;
@@ -30,24 +73,7 @@ exports.getProfessionalById = async (req, res) => {
     }
 };
 
-// Fetch a single professional by userId
-exports.getProfessionalByUserId = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        console.log(`Fetching professional with userId: ${userId}`); // Log the userId
 
-        const professional = await Professional.findOne({ user: userId }).populate('clinicId'); // Populate clinicId
-
-        if (!professional) {
-            return res.status(404).json({ error: 'Professional not found' });
-        }
-
-        res.status(200).json(professional);
-    } catch (error) {
-        console.error("Error fetching professional:", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
 
 
 exports.updateProfile = async (req, res) => {
