@@ -124,17 +124,13 @@ const fetchClinics = async (req, res) => {
   try {
     const clinics = await Clinic.find()
       .populate({
-        path: 'professionals',
+        path: 'professionals', // Populate the 'professionals' field
         populate: [
           { path: 'user' },  // Populate user details if necessary
-        ],
+        ]
       })
-      .exec();  // Execute the query to fetch the clinics
-
-    // Manually populate the virtual 'clinicImages' field after fetching the clinics
-    for (let clinic of clinics) {
-      await clinic.populate('clinicImages').execPopulate(); // Populate the virtual field
-    }
+      .populate('clinicImages')  // Directly populate the virtual 'clinicImages' field
+      .exec();  // Execute the query
 
     res.status(200).send(clinics);
   } catch (error) {
@@ -142,6 +138,7 @@ const fetchClinics = async (req, res) => {
     res.status(500).send({ message: 'Error fetching clinics', error });
   }
 };
+
 
 
 
