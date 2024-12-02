@@ -129,7 +129,12 @@ const fetchClinics = async (req, res) => {
           { path: 'user' },  // Populate user details if necessary
         ],
       })
-      .populate('clinicImages'); // Populate clinicImages directly if needed or just rely on the virtual field in the Clinic model
+      .exec();  // Execute the query to fetch the clinics
+
+    // Manually populate the virtual 'clinicImages' field after fetching the clinics
+    for (let clinic of clinics) {
+      await clinic.populate('clinicImages').execPopulate(); // Populate the virtual field
+    }
 
     res.status(200).send(clinics);
   } catch (error) {
@@ -137,6 +142,7 @@ const fetchClinics = async (req, res) => {
     res.status(500).send({ message: 'Error fetching clinics', error });
   }
 };
+
 
 
 const joinClinic = async (req, res) => {
