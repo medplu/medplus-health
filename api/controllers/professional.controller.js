@@ -4,18 +4,20 @@ const cloudinary = require('cloudinary').v2; // Make sure cloudinary is properly
 // Fetch all professionals with only userId and clinicId populated as IDs
 exports.getProfessionals = async (req, res) => {
     try {
-        // Fetch professionals and populate the clinicId field with the full clinic object
+        // Fetch professionals and populate both clinicId and user fields
         const professionals = await Professional.find()
-            .select('user clinicId')  // Select necessary fields: user and clinicId
-            .populate('clinicId');    // Populate the clinicId with the full clinic document
+            .select('user clinicId') // Select necessary fields
+            .populate('clinicId')    // Populate the clinicId with the full clinic document
+            .populate('user');       // Populate the user field to include professional details
 
-        console.log("Fetched professionals:", professionals);
+        console.log("Fetched professionals with details:", professionals);
         res.status(200).json(professionals);
     } catch (error) {
-        console.log("Error fetching professionals", error);
+        console.error("Error fetching professionals:", error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 
 
 // Fetch a single professional by doctorId (_id) with userId and clinicId as ObjectIds
