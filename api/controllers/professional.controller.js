@@ -1,89 +1,65 @@
 const Professional = require('../models/professional.model');
 const mongoose = require('mongoose'); // Import mongoose
 const cloudinary = require('cloudinary').v2; // Make sure cloudinary is properly configured
+
 // Fetch all professionals with only userId and clinicId populated as IDs
 exports.getProfessionals = async (req, res) => {
-    try {
-        // Fetch professionals and populate both clinicId and user fields
-        const professionals = await Professional.find()
-            .select('user clinicId') // Select necessary fields
-            .populate('clinicId')    // Populate the clinicId with the full clinic document
-            .populate('user');       // Populate the user field to include professional details
+  try {
+    // Fetch professionals and populate both clinicId and user fields
+    const professionals = await Professional.find()
+      .populate('clinicId')    // Populate the clinicId with the full clinic document
+      .populate('user');       // Populate the user field to include professional details
 
-        console.log("Fetched professionals with details:", professionals);
-        res.status(200).json(professionals);
-    } catch (error) {
-        console.error("Error fetching professionals:", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+    console.log("Fetched professionals with details:", professionals);
+    res.status(200).json(professionals);
+  } catch (error) {
+    console.error("Error fetching professionals:", error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
-
-
 
 // Fetch a single professional by doctorId (_id) with userId and clinicId as ObjectIds
 exports.getProfessionalById = async (req, res) => {
-    try {
-        const { doctorId } = req.params;
+  try {
+    const { doctorId } = req.params;
 
-        // Fetch a single professional and return userId and clinicId as ObjectIds
-        const professional = await Professional.findById(doctorId)
-            .select('-user -clinicId') // Exclude user and clinicId fields
-            .populate('user', '_id')   // Populate user field with only _id
-            .populate('clinicId', '_id'); // Populate clinicId field with only _id
+    // Fetch a single professional and return userId and clinicId as ObjectIds
+    const professional = await Professional.findById(doctorId)
+      .populate('user')   // Populate user field with full user details
+      .populate('clinicId'); // Populate clinicId field with full clinic details
 
-        if (!professional) {
-            return res.status(404).json({ error: 'Professional not found' });
-        }
-
-        res.status(200).json(professional);
-    } catch (error) {
-        console.error("Error fetching professional:", error);
-        res.status(500).json({ error: 'Internal server error' });
+    if (!professional) {
+      return res.status(404).json({ error: 'Professional not found' });
     }
+
+    res.status(200).json(professional);
+  } catch (error) {
+    console.error("Error fetching professional:", error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
 // Fetch a professional by userId, with userId and clinicId as ObjectIds
 exports.getProfessionalByUserId = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        console.log(`Fetching professional with userId: ${userId}`);
+  try {
+    const { userId } = req.params;
+    console.log(`Fetching professional with userId: ${userId}`);
 
-        // Fetch professional by userId and return userId and clinicId as ObjectIds
-        const professional = await Professional.findOne({ user: userId })
-            .select('-user -clinicId') // Exclude user and clinicId fields
-            .populate('user', '_id')   // Populate user field with only _id
-            .populate('clinicId', '_id'); // Populate clinicId field with only _id
+    // Fetch professional by userId and return userId and clinicId as ObjectIds
+    const professional = await Professional.findOne({ user: userId })
+      .populate('user')   // Populate user field with full user details
+      .populate('clinicId'); // Populate clinicId field with full clinic details
 
-        if (!professional) {
-            return res.status(404).json({ error: 'Professional not found' });
-        }
-
-        res.status(200).json(professional);
-    } catch (error) {
-        console.error("Error fetching professional:", error);
-        res.status(500).json({ error: 'Internal server error' });
+    if (!professional) {
+      return res.status(404).json({ error: 'Professional not found' });
     }
+
+    res.status(200).json(professional);
+  } catch (error) {
+    console.error("Error fetching professional:", error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
-
-
-exports.getProfessionalById = async (req, res) => {
-    try {
-        const { doctorId } = req.params;
-        const professional = await Professional.findById(doctorId).populate('clinicId'); // Populate clinicId
-
-        if (!professional) {
-            return res.status(404).json({ error: 'Professional not found' });
-        }
-
-        res.status(200).json(professional);
-    } catch (error) {
-        console.error("Error fetching professional:", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-
-
 
 exports.updateProfile = async (req, res) => {
     const { professionalId } = req.params; // Get the professional ID from the request parameters
