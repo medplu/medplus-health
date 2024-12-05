@@ -96,5 +96,9 @@ clinicSchema.virtual('clinicImages', {
   justOne: false, // This will return an array of images
 });
 
+// Ensure virtual fields are included in JSON output
+clinicSchema.set('toObject', { virtuals: true });
+clinicSchema.set('toJSON', { virtuals: true });
+
 // Create and export the 'Clinic' model
 module.exports = mongoose.model('Clinic', clinicSchema);
