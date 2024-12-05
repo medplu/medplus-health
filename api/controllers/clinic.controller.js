@@ -122,19 +122,22 @@ const registerClinic = async (req, res) => {
 
 const fetchClinics = async (req, res) => {
   try {
-    const clinics = await Clinic.find().populate({
-      path: 'professionals',
-      populate: [
-        { path: 'user' },
-        { path: 'clinic_images', model: 'ClinicImage' } // Ensure the model is specified
-      ]
-    });
+    const clinics = await Clinic.find()
+      .populate({
+        path: 'professionals',
+        populate: [
+          { path: 'user' },  // Populate user details if necessary
+        ],
+      })
+      .populate('clinicImages'); // Populate clinicImages directly if needed or just rely on the virtual field in the Clinic model
+
     res.status(200).send(clinics);
   } catch (error) {
     console.error('Error fetching clinics:', error);
     res.status(500).send({ message: 'Error fetching clinics', error });
   }
 };
+
 
 const joinClinic = async (req, res) => {
   const { professionalId } = req.params;

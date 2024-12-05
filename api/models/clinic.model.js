@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+// Define the Clinic Schema
 const clinicSchema = new Schema({
   name: {
     type: String,
@@ -14,10 +15,6 @@ const clinicSchema = new Schema({
     type: String,
     required: true,
   },
-  images: [{ // Update to handle multiple images
-    type: String,
-    required: false,
-  }],
   referenceCode: { // New field for the reference code
     type: String,
     required: true,
@@ -25,7 +22,7 @@ const clinicSchema = new Schema({
   },
   professionals: [{  // Reference to Professional model
     type: Schema.Types.ObjectId,
-    ref: 'Professional'
+    ref: 'Professional',
   }],
   insuranceCompanies: [{ // New field for insurance companies
     type: String,
@@ -89,6 +86,14 @@ const clinicSchema = new Schema({
   },
 }, {
   timestamps: true // Automatically creates `createdAt` and `updatedAt` fields
+});
+
+// Virtual field to fetch images related to professionals in the clinic
+clinicSchema.virtual('clinicImages', {
+  ref: 'ClinicImage', // Model to populate
+  localField: 'professionals', // Field in Clinic model
+  foreignField: 'professionalId', // Field in ClinicImage model that references the professional
+  justOne: false, // This will return an array of images
 });
 
 // Create and export the 'Clinic' model
