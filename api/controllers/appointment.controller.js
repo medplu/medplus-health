@@ -149,7 +149,6 @@ exports.bookAppointment = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 // Confirm an appointment
 exports.confirmAppointment = async (req, res) => {
   const { appointmentId } = req.params;
