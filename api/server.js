@@ -23,15 +23,15 @@ const port = 3000;
 // Create HTTP server
 const server = http.createServer(app);
 
-// Set up socket.io
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:8081", // Update this line to allow requests from the specified origin
-    methods: ["GET", "POST"], // Add allowed methods
-    allowedHeaders: ["Content-Type"], // Add allowed headers
-    credentials: true // Allow credentials
+    origin: ["http://localhost:8081", "https://medplus-health.onrender.com"],
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
   },
 });
+
 
 // Cloudinary configuration
 cloudinary.config({
