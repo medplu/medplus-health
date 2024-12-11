@@ -1,47 +1,24 @@
 const mongoose = require('mongoose');
 
-const slotSchema = new mongoose.Schema({
-  _id: {
-    type: mongoose.Schema.Types.ObjectId,
-    default: () => new mongoose.Types.ObjectId(), // Ensure each slot has a unique ObjectId
-  },
-  date: {
-    type: Date,
-    required: true,  // Specific date for the slot
-  },
-  startTime: {
-    type: String,
-    required: true,  // e.g., '09:00 AM'
-  },
-  endTime: {
-    type: String,    // Ensure this is a String
-    required: true,  // e.g., '10:00 AM'
-  },
-  isBooked: {
-    type: Boolean,
-    default: false,
-  },
-  appointmentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Appointment', 
-    default: null,
-  },
+const breakSchema = new mongoose.Schema({
+  start: { type: String, required: true },
+  end: { type: String, required: true },
+});
+
+const shiftSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  startTime: { type: String, required: true },
+  endTime: { type: String, required: true },
+  durationOfConsultation: { type: Number, required: true, default: 60 },
+  breaks: [breakSchema],
+  date: { type: String, required: true },
+  timeSlots: [{ start: String, end: String }],
 });
 
 const scheduleSchema = new mongoose.Schema({
-  doctorId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Professional',
-    required: true,
-  },
-  slots: [slotSchema],
-  timeZone: {
-    type: String,
-    required: true,
-  },
-}, {
-  timestamps: true,
+  professionalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Professional', required: true },
+  availability: { type: Map, of: [shiftSchema], required: true },
+  recurrence: { type: String, default: 'None' },
 });
 
-const Schedule = mongoose.model('Schedule', scheduleSchema);
-module.exports = Schedule;
+module.exports = mongoose.model('Schedule', scheduleSchema);
