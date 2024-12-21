@@ -37,14 +37,13 @@ const sendVerificationEmail = async (email, verificationCode) => {
     return transporter.sendMail(mailOptions);
 };
 
-// Register a new user
 exports.register = async (req, res) => {
     try {
         const {
-            userType, profession, title, consultationFee = 5000, category,
+            profession, title, consultationFee = 5000, category,
             yearsOfExperience, certifications, bio, profileImage,
             emailNotifications, pushNotifications, location,
-            attachedToClinic, clinicReferenceCode, dateOfBirth, vehicleType, vehicleRegistrationNumber, gender, ...userData
+            dateOfBirth, vehicleType, vehicleRegistrationNumber, gender, ...userData
         } = req.body;
 
         // Generate a verification code
@@ -55,70 +54,31 @@ exports.register = async (req, res) => {
         userData.isVerified = false;
 
         // Create a new user without hashing the password here
-        const newUser = await new User({ ...userData, userType }).save();
+        const newUser = await new User({ ...userData, userType: 'professional' }).save();
 
-        // Conditional model saving based on userType
-        if (userType === 'client') {
-            await new Client({
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                email: newUser.email,
-                user: newUser._id
-            }).save();
-        } else if (userType === 'professional') {
-            if (!profession) {
-                return res.status(400).json({ error: 'Profession is required for professionals.' });
-            }
-
-            if (profession === 'doctor' && !title) { // Validate title for doctors
-                return res.status(400).json({ error: 'Title is required for doctors.' });
-            }
-
-            const professional = await new Professional({
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                email: newUser.email,
-                user: newUser._id,
-                profession,
-                title, // Include title if profession is doctor
-                consultationFee,
-                category,
-                yearsOfExperience,
-                certifications,
-                bio,
-                profileImage,
-                location,
-                attachedToClinic,
-                clinicReferenceCode // Save the clinic reference code
-            }).save();
-
-            // If clinicReferenceCode is provided, attempt to join the clinic
-            if (clinicReferenceCode) {
-                const clinic = await Clinic.findOne({ referenceCode: clinicReferenceCode });
-                if (clinic) {
-                    clinic.professionals.push(professional._id);
-                    await clinic.save();
-                    professional.clinicId = clinic._id;
-                    professional.attachedToClinic = true;
-                    await professional.save();
-                } else {
-                    return res.status(400).json({ error: 'Invalid clinic reference code' });
-                }
-            }
-        } else if (userType === 'rider') {
-            await new Rider({
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                email: newUser.email,
-                user: newUser._id,
-                dateOfBirth,
-                vehicleType,
-                vehicleRegistrationNumber,
-                gender: gender || null // Ensure gender is handled properly
-            }).save();
-        } else {
-            return res.status(400).json({ error: 'Invalid user type' });
+        if (!profession) {
+            return res.status(400).json({ error: 'Profession is required for professionals.' });
         }
+
+        if (profession === 'doctor' && !title) { // Validate title for doctors
+            return res.status(400).json({ error: 'Title is required for doctors.' });
+        }
+
+        await new Professional({
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
+            email: newUser.email,
+            user: newUser._id,
+            profession,
+            title, // Include title if profession is doctor
+            consultationFee,
+            category,
+            yearsOfExperience,
+            certifications,
+            bio,
+            profileImage,
+            location
+        }).save();
 
         // Send verification email
         await sendVerificationEmail(newUser.email, verificationCode);
@@ -132,7 +92,6 @@ exports.register = async (req, res) => {
         }
     }
 };
-
 // Get user profile
 exports.getUserProfile = async (req, res) => {
     try {
