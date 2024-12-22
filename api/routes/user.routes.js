@@ -5,12 +5,12 @@ const isAuthenticated = require("../middleware/isAuth");
 const router = express.Router();
 
 //!Register
-router.post("/api/users/register", userCtrl.register);
-router.post("/api/users/login", userCtrl.login);
-router.post("/api/users/google-login", userCtrl.googleLogin);
-router.get("/api/users/profile", isAuthenticated, userCtrl.profile);
-router.post("/api/users/set-password", isAuthenticated, userCtrl.setPassword);
-router.post("/api/users/verify-email", userCtrl.verifyEmail);
-router.post("/api/users/updatePatientProfile", isAuthenticated, userCtrl.updatePatientProfile);
+router.post("/api/users/register", userController.register);
+router.post("/api/users/login", userController.login);
+router.post("/api/users/google-login", userController.googleLogin);
+router.get("/api/users/profile", isAuthenticated, userController.profile);
+router.post("/api/users/set-password", isAuthenticated, userController.setPassword);
+router.post("/api/users/verify-email", userController.verifyEmail);
+router.post("/api/users/updatePatientProfile", isAuthenticated, userController.updatePatientProfile);
 
 module.exports = router;
