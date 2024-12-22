@@ -1,6 +1,6 @@
 const express = require("express");
 const userController = require('../controllers/user.controller'); // Correct the path to the user controller
-const isAuthenticated = require("../middlewares/isAuth");
+const isAuthenticated = require("../middleware/isAuth");
 
 const router = express.Router();
 
