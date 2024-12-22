@@ -1,488 +1,260 @@
-const Client = require('../models/client.model');
-const Professional = require('../models/professional.model');
-const Rider = require('../models/rider.model');
-const User = require('../models/user.model');
-const Clinic = require('../models/clinic.model');
-const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
-const jwt = require('jsonwebtoken');
-const cloudinary = require('cloudinary').v2;
-const fs = require('fs');
-const path = require('path');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const asyncHandler = require("express-async-handler");
+const User = require("../model/User");
+const nodemailer = require("nodemailer"); // Import nodemailer
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
+// Nodemailer transporter configuration
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
+  service: 'gmail',
+  auth: {
+    user: 'medpluscollaborate@gmail.com',
+    pass: 'agdr yire cfhm ukvv'
+  },
 });
 
 // Helper function to send email
 const sendVerificationEmail = async (email, verificationCode) => {
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Email Verification',
-        text: `Your verification code is: ${verificationCode}`,
-    };
-    
-    return transporter.sendMail(mailOptions);
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Email Verification',
+    text: `Your verification code is: ${verificationCode}`,
+  };
+  
+  return transporter.sendMail(mailOptions);
 };
 
-exports.register = async (req, res) => {
-    try {
-        const {
-            profession, title, consultationFee = 5000, category,
-            yearsOfExperience, certifications, bio, profileImage,
-            emailNotifications, pushNotifications, location,
-            dateOfBirth, vehicleType, vehicleRegistrationNumber, gender, ...userData
-        } = req.body;
+const calculateProfileCompletion = (profile) => {
+  const fields = ["fullName", "dateOfBirth", "gender", "insuranceProvider"];
+  const filledFields = fields.filter(field => profile[field]);
+  return (filledFields.length / fields.length) * 100;
+};
 
-        // Check if the email already exists
-        const existingUser = await User.findOne({ email: userData.email });
-        if (existingUser) {
-            return res.status(400).json({ error: 'Email already registered' });
-        }
-
-        // Generate a verification code
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const expirationTime = Date.now() + 15 * 60 * 1000; // Set expiration time to 15 minutes
-        userData.verificationCode = verificationCode;
-        userData.verificationCodeExpires = expirationTime; // Store expiration time
-        userData.isVerified = false;
-
-        // Create a new user without hashing the password here
-        const newUser = await new User({ ...userData, userType: 'professional' }).save();
-
-        if (!profession) {
-            return res.status(400).json({ error: 'Profession is required for professionals.' });
-        }
-
-        if (profession === 'doctor' && !title) { // Validate title for doctors
-            return res.status(400).json({ error: 'Title is required for doctors.' });
-        }
-
-        await new Professional({
-            firstName: newUser.firstName,
-            lastName: newUser.lastName,
-            email: newUser.email,
-            user: newUser._id,
-            profession,
-            title, // Include title if profession is doctor
-            consultationFee,
-            category,
-            yearsOfExperience,
-            certifications,
-            bio,
-            profileImage,
-            location
-        }).save();
-
-        // Send verification email
-        await sendVerificationEmail(newUser.email, verificationCode);
-        res.status(200).json({ message: 'Signup successful! Please check your email for the verification code.' });
-    } catch (error) {
-        if (error.code === 11000) {
-            res.status(400).json({ error: 'Email already registered' });
-        } else {
-            console.error("Error creating user:", error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
+const userCtrl = {
+  register: asyncHandler(async (req, res) => {
+    let { email, password, firstName, lastName } = req.body;
+    console.log({ email, password, firstName, lastName });
+  
+    if (typeof email === 'object' && email.email) {
+      email = email.email;
+      password = email.password;
+      firstName = email.firstName;
+      lastName = email.lastName;
     }
-};
-// Get user profile
-exports.getUserProfile = async (req, res) => {
-    try {
-        const userId = req.userId; // Assuming user ID is stored in the token
-        const user = await User.findById(userId);
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        res.status(200).json({
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            gender: user.gender,
-            userType: user.userType,
-            profileImage: user.profileImage,
-            status: user.status
-        });
-    } catch (error) {
-        console.log("Error fetching user profile:", error);
-        res.status(500).json({ error: 'Internal server error' });
+    if (!email || !password || !firstName || !lastName) {
+      throw new Error("Please all fields are required");
     }
-};
-
-
-// Change user password
-exports.changePassword = async (req, res) => {
-    try {
-        const userId = req.userId; // Assuming user ID is stored in the token
-        const { oldPassword, newPassword } = req.body;
-
-        const user = await User.findById(userId);
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Check if the old password matches
-        const isMatch = await bcrypt.compare(oldPassword, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ error: 'Old password is incorrect' });
-        }
-
-        // Assign the new password; hashing is handled by the model's pre-save middleware
-        user.password = newPassword;
-
-        await user.save();
-
-        res.status(200).json({ message: 'Password updated successfully' });
-    } catch (error) {
-        console.log("Error changing password:", error);
-        res.status(500).json({ error: 'Internal server error' });
+    //! check if user already exists
+    const userExits = await User.findOne({ email: String(email) });
+    // console.log("userExits", userExits);
+    if (userExits) {
+      throw new Error("User already exists");
     }
-};
+    //! Hash the user password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    //! Generate a verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expirationTime = Date.now() + 15 * 60 * 1000; // Set expiration time to 15 minutes
+    //!Create the user
+    const userCreated = await User.create({
+      username: `${firstName} ${lastName}`, // Construct username
+      firstName,
+      lastName,
+      password: hashedPassword,
+      email: String(email),
+      verificationCode,
+      verificationCodeExpires: expirationTime,
+      isVerified: false,
+    });
+    //!Send verification email
+    await sendVerificationEmail(email, verificationCode);
+    //!Send the response
+    console.log("userCreated", userCreated);
+    res.json({
+      username: userCreated.username,
+      email: userCreated.email,
+      id: userCreated.id,
+      firstName: userCreated.firstName,
+      lastName: userCreated.lastName,
+      message: "Verification email sent",
+    });
+  }),
+  //!Login
+  login: asyncHandler(async (req, res) => {
+    let { email, password } = req.body;
+    //!Check if user email exists
+    if (typeof email === 'object' && email.email) {
+      email = email.email;
+      password = email.password;
+    }
+    const user = await User.findOne({ email: String(email) }); // Search for the user in the database
+    console.log("user backend", user);
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+    //! Check if the user registered with Google
+    if (user.loginMethod === "google") {
+      throw new Error("Please use Google login to access your account.");
+    }
+    //!Check if user password is valid
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error("Invalid credentials");
+    }
+    //! Generate the token
+    const token = jwt.sign({ id: user._id }, "anyKey", { expiresIn: "30d" }); // Ensure token expiration is set correctly
+    //!Send the response
+    res.json({
+      message: "Login success",
+      token,
+      id: user._id,
+      email: user.email,
+      username: user.username,
+    });
+  }),
+  //!Google Login
+  googleLogin: asyncHandler(async (req, res) => {
+    const { email, firstname, lastname } = req.body;
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        username: `${firstname} ${lastname}`,
+        firstName: firstname,
+        lastName: lastname,
+        email,
+        password: "", // No password for Google login
+        isVerified: true, // Set verified status to true
+        loginMethod: "google", // Set login method to Google
+      });
+    } else {
+      if (user.loginMethod !== "google") {
+        throw new Error("Please use your registered login method.");
+      }
+      user.isVerified = true; // Ensure existing users are verified
+      await user.save();
+    }
+    const token = jwt.sign({ id: user._id }, "anyKey", { expiresIn: "30d" }); // Ensure token expiration is set correctly
+    res.json({
+      message: "Login success",
+      token,
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userId: user._id, // Include userId in the response
+    });
+  }),
+  //!Profile
+  profile: asyncHandler(async (req, res) => {
+    if (!req.user || !req.user.id) {
+      res.status(400).json({ message: "User ID is missing" });
+      return;
+    }
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+    res.json({ user: user || null });
+  }),
+  //!Set Password
+  setPassword: asyncHandler(async (req, res) => {
+    const { userId, password } = req.body;
+    if (!password) {
+      throw new Error("Password is required");
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    await user.save();
+    res.json({ message: "Password set successfully" });
+  }),
+  //!Verify Email
+  verifyEmail: asyncHandler(async (req, res) => {
+    try {
+      const { email, verificationCode } = req.body;
+      const user = await User.findOne({ email });
 
-// Update user profile
-exports.updateUserProfile = async (req, res) => {
-  try {
-    const userId = req.userId; // Assuming user ID is stored in the token
-    const { name, email, contactInfo, profileImage } = req.body;
+      if (!user) {
+        return res.status(400).json({ error: 'Invalid email' });
+      }
 
-    // Find the user to update
+      // Check if the code is correct and not expired
+      if (user.verificationCode !== verificationCode) {
+        return res.status(400).json({ error: 'Invalid verification code' });
+      }
+
+      if (Date.now() > user.verificationCodeExpires) {
+        return res.status(400).json({ error: 'Verification code has expired' });
+      }
+
+      user.isVerified = true;
+      user.verificationCode = undefined;
+      user.verificationCodeExpires = undefined; // Clear the expiration time
+      await user.save();
+
+      res.status(200).json({ message: 'Email verified successfully!' });
+    } catch (error) {
+      console.log("Error verifying email", error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }),
+  updatePatientProfile: asyncHandler(async (req, res) => {
+    const { userId, fullName, dateOfBirth, gender, insuranceProvider, insuranceNumber, groupNumber, policyholderName, relationshipToPolicyholder, effectiveDate, expirationDate, insuranceCardImage, preferences, address, phoneNumber, emergencyContact } = req.body;
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      throw new Error("User not found");
     }
 
-    // Update user details
-    user.name = name || user.name;
-    user.email = email || user.email;
-    user.contactInfo = contactInfo || user.contactInfo;
-    user.profileImage = profileImage || user.profileImage;
+    // Split fullName into firstName and lastName
+    const [firstName, lastName] = fullName.split(" ");
+
+    user.firstName = firstName || user.firstName;
+    user.lastName = lastName || user.lastName;
+    user.dateOfBirth = dateOfBirth || user.dateOfBirth;
+    user.gender = gender || user.gender;
+    user.insuranceProvider = insuranceProvider || user.insuranceProvider;
+    user.insuranceNumber = insuranceNumber || user.insuranceNumber;
+    user.groupNumber = groupNumber || user.groupNumber;
+    user.policyholderName = policyholderName || user.policyholderName;
+    user.relationshipToPolicyholder = relationshipToPolicyholder || user.relationshipToPolicyholder;
+    user.effectiveDate = effectiveDate || user.effectiveDate;
+    user.expirationDate = expirationDate || user.expirationDate;
+    user.insuranceCardImage = insuranceCardImage || user.insuranceCardImage;
+    user.phoneNumber = phoneNumber || user.phoneNumber;
+    user.emergencyContact = emergencyContact || user.emergencyContact;
+
+    if (address) {
+      user.address = {
+        street: address.street || user.address.street,
+        city: address.city || user.address.city,
+        state: address.state || user.address.state,
+        zipCode: address.zipCode || user.address.zipCode,
+      };
+    }
+
+    if (preferences) {
+      user.preferences = {
+        emailNotifications: preferences.emailNotifications !== undefined ? preferences.emailNotifications : user.preferences.emailNotifications,
+        pushNotifications: preferences.pushNotifications !== undefined ? preferences.pushNotifications : user.preferences.pushNotifications,
+      };
+    }
 
     await user.save();
 
-    res.status(200).json({ 
-      message: 'Profile updated successfully',
-      user: user // Include the updated user object in the response
+    const profileCompletion = calculateProfileCompletion(user);
+
+    res.json({
+      message: "Profile updated successfully",
+      profileCompletion,
     });
-  } catch (error) {
-    console.log("Error updating user profile:", error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  }),
 };
-
-// Verify email
-exports.verifyEmail = async (req, res) => {
-    try {
-        const { email, verificationCode } = req.body;
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.status(400).json({ error: 'Invalid email' });
-        }
-
-        // Check if the code is correct and not expired
-        if (user.verificationCode !== verificationCode) {
-            return res.status(400).json({ error: 'Invalid verification code' });
-        }
-
-        if (Date.now() > user.verificationCodeExpires) {
-            return res.status(400).json({ error: 'Verification code has expired' });
-        }
-
-        user.isVerified = true;
-        user.verificationCode = undefined;
-        user.verificationCodeExpires = undefined; // Clear the expiration time
-        await user.save();
-
-        res.status(200).json({ message: 'Email verified successfully!' });
-    } catch (error) {
-        console.log("Error verifying email", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-// Deactivate user account
-exports.deactivateAccount = async (req, res) => {
-    try {
-        const userId = req.userId; // Assuming user ID is stored in the token
-
-        const user = await User.findById(userId);
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Deactivate the user's account
-        user.status = 'deactivated';
-        await user.save();
-
-        res.status(200).json({ message: 'Account deactivated successfully' });
-    } catch (error) {
-        console.log("Error deactivating account:", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-// Controller method to update profile image
-exports.updateProfileImage = async (req, res) => {
-  try {
-    const { file } = req.files;
-
-    if (!file) {
-      return res.status(400).json({ message: 'No image file uploaded' });
-    }
-
-    // Upload image to Cloudinary
-    const result = await cloudinary.uploader.upload(file.tempFilePath, {
-      folder: 'medplus/users',
-    });
-
-    // Update the user's profile image URL in the database
-    const userId = req.user._id; // Assuming the user's ID is stored in req.user (from the authenticate middleware)
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId, 
-      { profileImage: result.secure_url }, 
-      { new: true }
-    );
-
-    return res.status(200).json({
-      message: 'Profile image updated successfully',
-      imageUrl: updatedUser.profileImage, // Send back the updated image URL
-    });
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-// Controller method to handle image upload
-exports.uploadImage = async (req, res) => {
-  try {
-    const { file } = req.files;
-
-    if (!file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    // Upload image to Cloudinary
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: 'medplus/users',
-    });
-
-    res.status(200).json({ imageUrl: result.secure_url });
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-
-exports.checkUserExists = async (req, res) => {
-    const { email } = req.query; // Assuming you're passing email as a query parameter
-    const user = await User.findOne({ email });
-    if (user) {
-        return res.status(200).json({ exists: true });
-    }
-    return res.status(404).json({ exists: false });
-};
-
-// Login logic
-exports.login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.status(400).json({ error: 'Invalid email or password' });
-        }
-
-        if (!user.isVerified) {
-            return res.status(400).json({ error: 'Email not verified' });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ error: 'Invalid email or password' });
-        }
-
-        // Generate JWT token
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        // Initialize doctorId, professional, and riderId to null
-        let doctorId = null;
-        let professional = null;
-        let riderId = null;
-        
-        // Check if the user is a professional and retrieve doctorId and professional object
-        if (user.userType === 'professional') {
-            const professionalRecord = await Professional.findOne({ user: user._id }); // Fetch the professional record
-            if (professionalRecord) {
-                doctorId = professionalRecord._id; // Get the doctorId from the professional model
-                professional = professionalRecord; // Attach the professional object
-            }
-        }
-
-        // Check if the user is a rider and retrieve riderId
-        if (user.userType === 'rider') {
-            const riderRecord = await Rider.findOne({ user: user._id }); // Fetch the rider record
-            if (riderRecord) {
-                riderId = riderRecord._id; // Get the riderId from the rider model
-            }
-        }
-
-        // Include userId, firstName, lastName, doctorId, professional, riderId, and profileImage in the response
-        res.status(200).json({ 
-            token, 
-            userId: user._id, 
-            firstName: user.firstName, 
-            lastName: user.lastName, 
-            email: user.email, // Added email field
-            doctorId, 
-            userType: user.userType,
-            professional, // Attach the professional object if userType is professional
-            riderId, // Attach the riderId if userType is rider
-            profileImage: user.profileImage // Include profileImage in the response
-        });
-    } catch (error) {
-        console.log("Error logging in", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-// Handle Google OAuth login
-exports.googleAuth = async (req, res) => {
-    try {
-        const { accessToken } = req.body;
-
-        // Verify the access token with Google
-        const userInfoResponse = await fetch('https://www.googleapis.com/userinfo/v2/me', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        if (!userInfoResponse.ok) {
-            return res.status(400).json({ error: 'Invalid Google access token' });
-        }
-
-        const userInfo = await userInfoResponse.json();
-
-        // Check if user already exists
-        let user = await User.findOne({ email: userInfo.email });
-
-        if (!user) {
-            // Create a new user
-            user = new User({
-                firstName: userInfo.given_name,
-                lastName: userInfo.family_name,
-                email: userInfo.email,
-                profileImage: userInfo.picture,
-                isVerified: true,
-                // Add any additional fields as needed
-            });
-
-            await user.save();
-
-            // Optionally, create entries in Client, Professional, or Student based on userType
-            // ...existing conditional logic...
-        }
-
-        // Generate JWT token
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        res.status(200).json({ 
-            token, 
-            userId: user._id, 
-            firstName: user.firstName, 
-            lastName: user.lastName, 
-            email: user.email,
-            userType: user.userType,
-            // Add other necessary fields
-        });
-    } catch (error) {
-        console.error("Error during Google authentication:", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-// Add a doctor to favorites
-exports.addFavoriteDoctor = async (req, res) => {
-  try {
-    const { userId, professionalId } = req.body; // Get userId and professionalId from request body
-
-    // Check if the professional exists
-    const professional = await Professional.findById(professionalId);
-    if (!professional) {
-      return res.status(400).json({ error: 'Invalid professional ID' });
-    }
-
-    // Add to favoriteDoctors if not already added
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    if (user.favoriteDoctors.includes(professionalId)) {
-      return res.status(400).json({ error: 'Professional already in favorites' });
-    }
-
-    user.favoriteDoctors.push(professionalId);
-    await user.save();
-
-    res.status(200).json({ message: 'Professional added to favorites' });
-  } catch (error) {
-    console.error("Error adding favorite professional:", error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-// Remove a doctor from favorites
-exports.removeFavoriteDoctor = async (req, res) => {
-  try {
-    const { userId, professionalId } = req.body; // Get userId and professionalId from request body
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    if (!user.favoriteDoctors.includes(professionalId)) {
-      return res.status(400).json({ error: 'Professional not in favorites' });
-    }
-
-    user.favoriteDoctors = user.favoriteDoctors.filter(id => id.toString() !== professionalId);
-    await user.save();
-
-    res.status(200).json({ message: 'Professional removed from favorites' });
-  } catch (error) {
-    console.error("Error removing favorite professional:", error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-// Get list of favorite doctors
-exports.getFavoriteDoctors = async (req, res) => {
-  try {
-    const userId = req.userId; // Assuming userId is stored in the token
-    const user = await User.findById(userId).populate('favoriteDoctors', 'firstName lastName profession profileImage');
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.status(200).json({ favoriteDoctors: user.favoriteDoctors });
-  } catch (error) {
-    console.error("Error fetching favorite professionals:", error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
+module.exports = userCtrl;
