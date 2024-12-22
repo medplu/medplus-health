@@ -1,5 +1,5 @@
 const express = require("express");
-const userController = require('../controllers/user'); // Correct the path to the user controller
+const userController = require('../controllers/user.controller'); // Correct the path to the user controller
 const isAuthenticated = require("../middlewares/isAuth");
 
 const router = express.Router();
