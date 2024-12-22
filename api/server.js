@@ -153,7 +153,7 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
 });
 
 // Import routes
-const userRoutes = require('./routes/user.routes');
+const userRoutes = require('./routes/user.routes'); // Ensure this path is correct
 const professionalRoutes = require('./routes/professional.routes');
 const appointmentRoutes = require('./routes/appointment.routes');
 const clinicRoutes = require('./routes/clinic.route');
