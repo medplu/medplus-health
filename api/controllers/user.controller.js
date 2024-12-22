@@ -1,8 +1,8 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
-const User = require("../model/User");
-const nodemailer = require("nodemailer"); // Import nodemailer
+const User = require("../models/user.model"); // Correct the path to the user model
+const nodemailer = require("nodemailer");
 
 // Nodemailer transporter configuration
 const transporter = nodemailer.createTransport({
@@ -26,7 +26,7 @@ const sendVerificationEmail = async (email, verificationCode) => {
 };
 
 const calculateProfileCompletion = (profile) => {
-  const fields = ["fullName", "dateOfBirth", "gender", "insuranceProvider"];
+  const fields = ["firstName", "lastName", "dateOfBirth", "gender", "insuranceProvider"];
   const filledFields = fields.filter(field => profile[field]);
   return (filledFields.length / fields.length) * 100;
 };
@@ -47,7 +47,6 @@ const userCtrl = {
     }
     //! check if user already exists
     const userExits = await User.findOne({ email: String(email) });
-    // console.log("userExits", userExits);
     if (userExits) {
       throw new Error("User already exists");
     }
@@ -257,4 +256,5 @@ const userCtrl = {
     });
   }),
 };
+
 module.exports = userCtrl;
