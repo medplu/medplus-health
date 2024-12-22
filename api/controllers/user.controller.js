@@ -46,6 +46,12 @@ exports.register = async (req, res) => {
             dateOfBirth, vehicleType, vehicleRegistrationNumber, gender, ...userData
         } = req.body;
 
+        // Check if the email already exists
+        const existingUser = await User.findOne({ email: userData.email });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+
         // Generate a verification code
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         const expirationTime = Date.now() + 15 * 60 * 1000; // Set expiration time to 15 minutes
