@@ -52,23 +52,22 @@ exports.createOrUpdateSchedule = async (req, res) => {
     }
 };
 
-
 const generateTimeSlots = (shift) => {
   const slots = [];
-  const startTime = new Date(`1970-01-01T${shift.startTime}:00`).getTime();
-  const endTime = new Date(`1970-01-01T${shift.endTime}:00`).getTime();
+  const startTime = new Date(shift.startTime).getTime();
+  const endTime = new Date(shift.endTime).getTime();
   const duration = shift.durationOfConsultation * 60 * 1000; // convert to milliseconds
 
   let currentTime = startTime;
 
   while (currentTime + duration <= endTime) {
-    const slotStart = new Date(currentTime).toISOString().split('T')[1].substring(0, 5);
-    const slotEnd = new Date(currentTime + duration).toISOString().split('T')[1].substring(0, 5);
+    const slotStart = new Date(currentTime).toISOString();
+    const slotEnd = new Date(currentTime + duration).toISOString();
 
     // Check if the slot overlaps with any breaks
     const isDuringBreak = shift.breaks.some((b) => {
-      const breakStart = new Date(`1970-01-01T${b.start}:00`).getTime();
-      const breakEnd = new Date(`1970-01-01T${b.end}:00`).getTime();
+      const breakStart = new Date(b.start).getTime();
+      const breakEnd = new Date(b.end).getTime();
       return (currentTime >= breakStart && currentTime < breakEnd) || (currentTime + duration > breakStart && currentTime + duration <= breakEnd);
     });
 
@@ -135,7 +134,6 @@ exports.saveSchedule = async (req, res) => {
     res.status(500).json({ error: 'Failed to save the schedule.' });
   }
 };
-
 
 // Fetch the schedule for a professional by their ID
 exports.getScheduleByProfessionalId = async (req, res) => {
@@ -260,25 +258,48 @@ exports.createRecurringSlots = async (req, res) => {
 
 // Create a new schedule
 exports.createSchedule = async (req, res) => {
-  const { doctorId, date, slots } = req.body;
-
   try {
-    const newSlots = slots.map(slot => ({
-      ...slot,
-      _id: new mongoose.Types.ObjectId(), // Ensure each slot has a unique ObjectId
-    }));
+    const { professionalId, availability, recurrence } = req.body;
 
-    const newSchedule = new Schedule({
-      doctorId,
-      date,
-      slots: newSlots,
-    });
+    const newAvailability = {};
 
-    await newSchedule.save();
-    res.status(201).json(newSchedule);
+    // Generate time slots for each shift
+    for (const date in availability) {
+      const shifts = availability[date].map((shift) => ({
+        ...shift,
+        timeSlots: generateTimeSlots(shift),
+      }));
+
+      const recurringDates = generateRecurringDates(date, recurrence);
+
+      recurringDates.forEach((recurringDate) => {
+        if (!newAvailability[recurringDate]) {
+          newAvailability[recurringDate] = [];
+        }
+        newAvailability[recurringDate].push(...shifts);
+      });
+    }
+
+    const schedule = new Schedule({ professionalId, availability: newAvailability, recurrence });
+    await schedule.save();
+
+    res.status(201).json(schedule);
   } catch (error) {
-    console.error('Error creating schedule:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Failed to save the schedule.' });
+  }
+};
+
+// Retrieve a user's schedule
+exports.getUserSchedule = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const schedule = await Schedule.findOne({ professionalId: userId });
+    if (!schedule) {
+      return res.status(404).json({ error: 'Schedule not found' });
+    }
+    res.json(schedule);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };
 
