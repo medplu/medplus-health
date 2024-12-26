@@ -67,10 +67,10 @@ exports.getAppointmentsByUser = async (req, res) => {
 
 
 exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, patientName, status, timeSlotId, time, date, patientDetails = {} } = req.body;
+  const { doctorId, userId, patientName, status, timeSlotId, time, date, insurance, patientDetails = {} } = req.body;
 
   try {
-    if (!doctorId || !userId || !status || !timeSlotId || !time || !date) {
+    if (!doctorId || !userId || !status || !date || (!insurance && (!timeSlotId || !time))) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -107,14 +107,21 @@ exports.bookAppointment = async (req, res) => {
       await patient.save();
     }
 
-    const schedule = await Schedule.findOne({ 'slots._id': timeSlotId, doctorId });
-    if (!schedule) {
-      return res.status(404).json({ error: 'Time slot not found for this doctor' });
-    }
+    if (!insurance) {
+      const schedule = await Schedule.findOne({ 'slots._id': timeSlotId, doctorId });
+      if (!schedule) {
+        return res.status(404).json({ error: 'Time slot not found for this doctor' });
+      }
 
-    const slot = schedule.slots.id(timeSlotId);
-    if (slot.isBooked) {
-      return res.status(400).json({ error: 'Time slot is already booked' });
+      const slot = schedule.slots.id(timeSlotId);
+      if (slot.isBooked) {
+        return res.status(400).json({ error: 'Time slot is already booked' });
+      }
+
+      await Schedule.updateOne(
+        { 'slots._id': timeSlotId, doctorId },
+        { $set: { 'slots.$.isBooked': true } }
+      );
     }
 
     const newAppointment = new Appointment({
@@ -123,17 +130,12 @@ exports.bookAppointment = async (req, res) => {
       patientId: patient._id,
       patientName: finalPatientName,
       status,
-      timeSlotId,
-      time,
+      timeSlotId: insurance ? undefined : timeSlotId,
+      time: insurance ? undefined : time,
       date, // Ensure date is included
     });
 
     await newAppointment.save();
-
-    await Schedule.updateOne(
-      { 'slots._id': timeSlotId, doctorId },
-      { $set: { 'slots.$.isBooked': true } }
-    );
 
     // Emit event for new appointment to the specific user
     const io = req.app.get("socketio");
