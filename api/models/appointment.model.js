@@ -27,12 +27,12 @@ const appointmentSchema = new mongoose.Schema({
   },
   timeSlotId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
+    required: false,
     ref: 'Schedule',
   },
   time: {
     type: String,
-    required: true,
+    required: false,
   },
   date: {
     type: Date,
