@@ -70,8 +70,9 @@ exports.bookAppointment = async (req, res) => {
   const { doctorId, userId, patientName, status, timeSlotId, time, date, insurance, patientDetails = {} } = req.body;
 
   try {
-    if (!doctorId || !userId || !status || !date || (!insurance && (!timeSlotId || !time))) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    // Validate only required fields: doctorId, patientName, and status
+    if (!doctorId || !patientName || !status) {
+      return res.status(400).json({ error: 'Missing required fields: doctorId, patientName, and status are mandatory' });
     }
 
     const user = await User.findById(userId);
@@ -151,6 +152,7 @@ exports.bookAppointment = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 // Confirm an appointment
 exports.confirmAppointment = async (req, res) => {
   const { appointmentId } = req.params;
