@@ -9,12 +9,12 @@ const appointmentSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false,
   },
   patientId: { // Add patientId field to enable population
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient',
-    required: true,
+    required: false,
   },
   patientName: {
     type: String,
