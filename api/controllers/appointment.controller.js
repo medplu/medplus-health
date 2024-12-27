@@ -39,17 +39,11 @@ exports.getAppointmentsByDoctor = async (req, res) => {
   }
 };
 
-
 exports.getAppointmentsByUser = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const today = moment().startOf('day');
-    const appointments = await Appointment.find({
-      userId,
-      status: 'confirmed',
-      date: { $gte: today.toDate() }
-    })
+    const appointments = await Appointment.find({ userId }) // Fetches all appointments for the user
       .select('doctorId userId patientName status timeSlotId time createdAt updatedAt') // Selects specific fields
       .populate('patientId') 
       .populate('doctorId'); 
@@ -64,6 +58,7 @@ exports.getAppointmentsByUser = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 
 
 exports.bookAppointment = async (req, res) => {
