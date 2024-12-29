@@ -4,7 +4,6 @@ const Schedule = require('../models/schedule.model');
 const User = require('../models/user.model');
 const Appointment = require('../models/appointment.model');
 
-// Create or Update Schedule
 exports.createOrUpdateSchedule = async (req, res) => {
     const { professionalId, availability, recurrence } = req.body;
 
@@ -21,44 +20,26 @@ exports.createOrUpdateSchedule = async (req, res) => {
         }
 
         // Map availability data to schedule format
-        const mappedAvailability = Object.keys(availability).reduce((acc, date) => {
+        const mappedAvailability = new Map();
+        Object.keys(availability).forEach(date => {
             const shifts = availability[date];
-            
-            // Validate if the shifts array exists and is valid
-            if (!Array.isArray(shifts) || shifts.length === 0) {
-                throw new Error('Each availability must include shifts array for the given date.');
-            }
 
-            // Process each shift
-            const shiftData = shifts.map(shift => {
+            // Validate each shift
+            shifts.forEach(shift => {
                 if (!shift.shiftName || !shift.startTime || !shift.endTime || !Array.isArray(shift.slots)) {
                     throw new Error('Each shift must include shiftName, startTime, endTime, and slots.');
                 }
 
-                // Validate each time slot
-                const timeSlots = shift.slots.map(timeSlot => {
-                    if (!timeSlot.startTime || !timeSlot.endTime) {
+                // Validate time slots
+                shift.slots.forEach(slot => {
+                    if (!slot.startTime || !slot.endTime) {
                         throw new Error('Each time slot must include startTime and endTime.');
                     }
-                    return {
-                        startTime: timeSlot.startTime,
-                        endTime: timeSlot.endTime,
-                    };
                 });
-
-                // Add the date explicitly to each shift
-                return {
-                    shiftName: shift.shiftName,
-                    startTime: shift.startTime,
-                    endTime: shift.endTime,
-                    slots: timeSlots,
-                    date: date,  // Explicitly add the date
-                };
             });
 
-            acc[date] = shiftData; // Assign shifts for the given date
-            return acc;
-        }, {});
+            mappedAvailability.set(date, shifts); // Map the date to shifts
+        });
 
         // Check if schedule exists for this professional
         let schedule = await Schedule.findOne({ professionalId });
@@ -66,7 +47,7 @@ exports.createOrUpdateSchedule = async (req, res) => {
         if (schedule) {
             // Update existing schedule
             schedule.availability = mappedAvailability;
-            schedule.recurrence = recurrence || schedule.recurrence; // Keep the old recurrence if not provided
+            schedule.recurrence = recurrence || schedule.recurrence;
             await schedule.save();
             return res.status(200).json({ message: 'Schedule updated successfully.', schedule });
         } else {
@@ -74,7 +55,7 @@ exports.createOrUpdateSchedule = async (req, res) => {
             const newSchedule = new Schedule({
                 professionalId,
                 availability: mappedAvailability,
-                recurrence: recurrence || 'none', // Default to 'none' if not provided
+                recurrence: recurrence || 'none'
             });
             await newSchedule.save();
             return res.status(201).json({ message: 'Schedule created successfully.', schedule: newSchedule });
