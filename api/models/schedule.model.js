@@ -1,24 +1,26 @@
 const mongoose = require('mongoose');
 
-const breakSchema = new mongoose.Schema({
-  start: { type: String, required: true },
-  end: { type: String, required: true },
+const timeSlotSchema = new mongoose.Schema({
+  startTime: { type: String, required: true }, // Format: "HH:mm"
+  endTime: { type: String, required: true },   // Format: "HH:mm"
 });
 
-const shiftSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  startTime: { type: String, required: true },
-  endTime: { type: String, required: true },
-  durationOfConsultation: { type: Number, required: true, default: 60 },
-  breaks: [breakSchema],
-  date: { type: String, required: true },
-  timeSlots: [{ start: String, end: String }],
+const availabilitySchema = new mongoose.Schema({
+  date: { type: String, required: true }, // Format: "YYYY-MM-DD"
+  slots: [timeSlotSchema],
 });
 
-const scheduleSchema = new mongoose.Schema({
-  professionalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Professional', required: true },
-  availability: { type: Map, of: [shiftSchema], required: true },
-  recurrence: { type: String, default: 'None' },
-});
+const scheduleSchema = new mongoose.Schema(
+  {
+    professionalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Professional', required: false },
+    availability: { type: Map, of: [timeSlotSchema], required: true },
+    recurrence: { 
+      type: String, 
+      enum: ['none', 'daily', 'weekly'], 
+      default: 'none' 
+    }, // Recurrence pattern
+  },
+  { timestamps: true }
+);
 
 module.exports = mongoose.model('Schedule', scheduleSchema);
