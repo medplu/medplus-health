@@ -4,12 +4,13 @@ const Schedule = require('../models/schedule.model');
 const Professional = require('../models/professional.model');
 const Appointment = require('../models/appointment.model');
 
+
 // Create or Update Schedule
 exports.createOrUpdateSchedule = async (req, res) => {
-    const { professionalId, availability } = req.body;
+    const { professionalId, availability, recurrence } = req.body;
 
     // Validate the incoming data
-    if (!professionalId || !Array.isArray(availability)) {
+    if (!professionalId || !availability || !Array.isArray(availability)) {
         return res.status(400).json({ message: 'Professional ID and availability are required.' });
     }
 
@@ -20,35 +21,69 @@ exports.createOrUpdateSchedule = async (req, res) => {
             return res.status(404).json({ message: 'Professional not found.' });
         }
 
-        // Map availability data to schedule slots
-        const slots = availability.map(slot => {
-            if (!slot.date || !slot.startTime || !slot.endTime) {
-                throw new Error('Each slot must include date, startTime, and endTime.');
+        // Map availability data to schedule format
+        const mappedAvailability = availability.reduce((acc, slot) => {
+            // Validate each shift
+            if (!slot.date || !Array.isArray(slot.shifts) || slot.shifts.length === 0) {
+                throw new Error('Each availability must include a date and shifts array.');
             }
+            
+            // Validate the date format
             if (!moment(slot.date, moment.ISO_8601, true).isValid()) {
                 throw new Error('Invalid date format. Must be in ISO format.');
             }
-            return {
-                date: slot.date,
-                startTime: slot.startTime,
-                endTime: slot.endTime,
-                isBooked: slot.isBooked,
-                appointmentId: slot.appointmentId || null,
-                _id: new mongoose.Types.ObjectId(), // Ensure each slot has a unique ObjectId
-            };
-        });
 
-        // Update or create the schedule
-        const schedule = await Schedule.findOneAndUpdate(
-            { doctorId: professionalId },
-            { $push: { slots: { $each: slots } } }, // Append new slots to existing slots
-            { new: true, upsert: true }
-        );
+            // Process each shift and its slots
+            const shifts = slot.shifts.map(shift => {
+                if (!shift.shiftName || !shift.startTime || !shift.endTime || !Array.isArray(shift.slots)) {
+                    throw new Error('Each shift must include shiftName, startTime, endTime, and slots.');
+                }
 
-        return res.status(200).json({ message: 'Schedule saved successfully.', schedule });
+                // Validate each time slot
+                const timeSlots = shift.slots.map(timeSlot => {
+                    if (!timeSlot.startTime || !timeSlot.endTime) {
+                        throw new Error('Each time slot must include startTime and endTime.');
+                    }
+                    return {
+                        startTime: timeSlot.startTime,
+                        endTime: timeSlot.endTime,
+                    };
+                });
+
+                return {
+                    shiftName: shift.shiftName,
+                    startTime: shift.startTime,
+                    endTime: shift.endTime,
+                    slots: timeSlots,
+                };
+            });
+
+            acc[slot.date] = shifts; // Assign shifts for the given date
+            return acc;
+        }, {});
+
+        // Check if schedule exists for this professional
+        let schedule = await Schedule.findOne({ professionalId });
+
+        if (schedule) {
+            // Update existing schedule
+            schedule.availability = mappedAvailability;
+            schedule.recurrence = recurrence || schedule.recurrence; // Keep the old recurrence if not provided
+            await schedule.save();
+            return res.status(200).json({ message: 'Schedule updated successfully.', schedule });
+        } else {
+            // Create new schedule
+            const newSchedule = new Schedule({
+                professionalId,
+                availability: mappedAvailability,
+                recurrence: recurrence || 'none', // Default to 'none' if not provided
+            });
+            await newSchedule.save();
+            return res.status(201).json({ message: 'Schedule created successfully.', schedule: newSchedule });
+        }
     } catch (error) {
-        console.error('Error saving schedule:', error);
-        return res.status(500).json({ message: 'Internal server error.' });
+        console.error(error);
+        return res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
