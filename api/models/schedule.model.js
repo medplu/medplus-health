@@ -3,37 +3,31 @@ const mongoose = require('mongoose');
 // Time slot schema
 const timeSlotSchema = new mongoose.Schema({
   startTime: { type: String, required: true }, // Format: "HH:mm"
-  endTime: { type: String, required: true },   // Format: "HH:mm"
+  endTime: { type: String, required: true }   // Format: "HH:mm"
 });
 
-// Shift schema, which includes time slots for each shift
+// Shift schema
 const shiftSchema = new mongoose.Schema({
-  shiftName: { type: String, required: true },   // Example: "Morning", "Afternoon"
-  startTime: { type: String, required: true },   // Format: "HH:mm"
-  endTime: { type: String, required: true },     // Format: "HH:mm"
-  slots: [timeSlotSchema],                       // Array of time slots for the shift
+  shiftName: { type: String, required: true }, // Example: "Morning", "Afternoon"
+  startTime: { type: String, required: true }, // Format: "HH:mm"
+  endTime: { type: String, required: true },   // Format: "HH:mm"
+  slots: { type: [timeSlotSchema], required: true } // Array of time slots
 });
 
-// Availability schema, which groups shifts by date
-const availabilitySchema = new mongoose.Schema({
-  date: { type: String, required: true }, // Format: "YYYY-MM-DD"
-  shifts: [shiftSchema],                  // Array of shifts on that date
-});
-
-// Schedule schema, which contains a professional's availability
+// Schedule schema
 const scheduleSchema = new mongoose.Schema(
   {
-    professionalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Professional', required: false },
+    professionalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Professional', required: true },
     availability: { 
       type: Map, 
-      of: [availabilitySchema], // Map of availability by date, each with multiple shifts
+      of: [shiftSchema], // Map each date to an array of shifts
       required: true 
     },
     recurrence: { 
       type: String, 
       enum: ['none', 'daily', 'weekly'], 
-      default: 'none' // Recurrence pattern
-    },
+      default: 'none' 
+    }
   },
   { timestamps: true }
 );
