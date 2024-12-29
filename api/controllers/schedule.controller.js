@@ -10,7 +10,7 @@ exports.createOrUpdateSchedule = async (req, res) => {
     const { professionalId, availability, recurrence } = req.body;
 
     // Validate the incoming data
-    if (!professionalId || !availability || !Array.isArray(availability)) {
+    if (!professionalId || !availability || typeof availability !== 'object') {
         return res.status(400).json({ message: 'Professional ID and availability are required.' });
     }
 
@@ -22,19 +22,16 @@ exports.createOrUpdateSchedule = async (req, res) => {
         }
 
         // Map availability data to schedule format
-        const mappedAvailability = availability.reduce((acc, slot) => {
-            // Validate each shift
-            if (!slot.date || !Array.isArray(slot.shifts) || slot.shifts.length === 0) {
-                throw new Error('Each availability must include a date and shifts array.');
-            }
+        const mappedAvailability = Object.keys(availability).reduce((acc, date) => {
+            const shifts = availability[date];
             
-            // Validate the date format
-            if (!moment(slot.date, moment.ISO_8601, true).isValid()) {
-                throw new Error('Invalid date format. Must be in ISO format.');
+            // Validate if the shifts array exists and is valid
+            if (!Array.isArray(shifts) || shifts.length === 0) {
+                throw new Error('Each availability must include shifts array for the given date.');
             }
 
-            // Process each shift and its slots
-            const shifts = slot.shifts.map(shift => {
+            // Process each shift
+            const shiftData = shifts.map(shift => {
                 if (!shift.shiftName || !shift.startTime || !shift.endTime || !Array.isArray(shift.slots)) {
                     throw new Error('Each shift must include shiftName, startTime, endTime, and slots.');
                 }
@@ -58,7 +55,7 @@ exports.createOrUpdateSchedule = async (req, res) => {
                 };
             });
 
-            acc[slot.date] = shifts; // Assign shifts for the given date
+            acc[date] = shiftData; // Assign shifts for the given date
             return acc;
         }, {});
 
