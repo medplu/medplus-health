@@ -4,7 +4,6 @@ const Schedule = require('../models/schedule.model');
 const User = require('../models/user.model');
 const Appointment = require('../models/appointment.model');
 
-
 // Create or Update Schedule
 exports.createOrUpdateSchedule = async (req, res) => {
     const { professionalId, availability, recurrence } = req.body;
@@ -47,11 +46,13 @@ exports.createOrUpdateSchedule = async (req, res) => {
                     };
                 });
 
+                // Add the date explicitly to each shift
                 return {
                     shiftName: shift.shiftName,
                     startTime: shift.startTime,
                     endTime: shift.endTime,
                     slots: timeSlots,
+                    date: date,  // Explicitly add the date
                 };
             });
 
@@ -83,6 +84,7 @@ exports.createOrUpdateSchedule = async (req, res) => {
         return res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
 
 const generateTimeSlots = (shift) => {
   const slots = [];
