@@ -1,7 +1,7 @@
 const moment = require('moment');
 const mongoose = require('mongoose');
 const Schedule = require('../models/schedule.model');
-const Professional = require('../models/professional.model');
+const User = require('../models/user.model');
 const Appointment = require('../models/appointment.model');
 
 
@@ -16,7 +16,7 @@ exports.createOrUpdateSchedule = async (req, res) => {
 
     try {
         // Verify professional exists
-        const professional = await Professional.findById(professionalId);
+        const professional = await User.findById(professionalId);
         if (!professional) {
             return res.status(404).json({ message: 'Professional not found.' });
         }
