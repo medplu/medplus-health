@@ -155,7 +155,8 @@ exports.getScheduleByProfessionalId = async (req, res) => {
     const { professionalId } = req.params;
 
     try {
-        const schedule = await Schedule.findOne({ doctorId: professionalId }).populate('slots.appointmentId');
+        // Query using the correct field name: professionalId
+        const schedule = await Schedule.findOne({ professionalId }).populate('availability.slots._id');
 
         if (!schedule) {
             return res.status(404).json({ message: 'Schedule not found.' });
