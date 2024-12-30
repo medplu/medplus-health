@@ -22,15 +22,15 @@ const port = 3000;
 
 // Create HTTP server
 const server = http.createServer(app);
-
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:8081", "https://medplus-health.onrender.com"],
+    origin: "*", // Allow connections from any origin
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true,
   },
 });
+
 
 
 // Cloudinary configuration
