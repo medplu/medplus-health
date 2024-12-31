@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
 const User = require("../models/user.model"); // Correct the path to the user model
 const nodemailer = require("nodemailer");
+const Professional = require("../models/professional.model"); 
 
 // Nodemailer transporter configuration
 const transporter = nodemailer.createTransport({
@@ -33,30 +34,36 @@ const calculateProfileCompletion = (profile) => {
 
 const userCtrl = {
   register: asyncHandler(async (req, res) => {
-    let { email, password, firstName, lastName } = req.body;
-    console.log({ email, password, firstName, lastName });
-  
+    let { email, password, firstName, lastName, userType } = req.body;
+    console.log({ email, password, firstName, lastName, userType });
+
     if (typeof email === 'object' && email.email) {
       email = email.email;
       password = email.password;
       firstName = email.firstName;
       lastName = email.lastName;
+      userType = email.userType;
     }
+
     if (!email || !password || !firstName || !lastName) {
       throw new Error("Please all fields are required");
     }
-    //! check if user already exists
+
+    // Check if user already exists
     const userExits = await User.findOne({ email: String(email) });
     if (userExits) {
       throw new Error("User already exists");
     }
-    //! Hash the user password
+
+    // Hash the user password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    //! Generate a verification code
+
+    // Generate a verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expirationTime = Date.now() + 15 * 60 * 1000; // Set expiration time to 15 minutes
-    //!Create the user
+
+    // Create the user
     const userCreated = await User.create({
       username: `${firstName} ${lastName}`, // Construct username
       firstName,
@@ -66,10 +73,22 @@ const userCtrl = {
       verificationCode,
       verificationCodeExpires: expirationTime,
       isVerified: false,
+      userType,
     });
-    //!Send verification email
+
+    // If the userType is professional, create a Professional record
+    if (userType === "professional") {
+      await Professional.create({
+        firstName,
+        lastName,
+        user: userCreated._id, // Link to the user model
+      });
+    }
+
+    // Send verification email
     await sendVerificationEmail(email, verificationCode);
-    //!Send the response
+
+    // Send the response
     console.log("userCreated", userCreated);
     res.json({
       username: userCreated.username,
@@ -77,9 +96,12 @@ const userCtrl = {
       id: userCreated.id,
       firstName: userCreated.firstName,
       lastName: userCreated.lastName,
+      userType: userCreated.userType,
       message: "Verification email sent",
     });
   }),
+};
+
  //! Login
 login: asyncHandler(async (req, res) => {
   let { email, password } = req.body;
