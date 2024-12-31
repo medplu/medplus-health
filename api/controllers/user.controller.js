@@ -100,53 +100,50 @@ const userCtrl = {
       message: "Verification email sent",
     });
   }),
-};
 
- //! Login
-login: asyncHandler(async (req, res) => {
-  let { email, password } = req.body;
+  login: asyncHandler(async (req, res) => {
+    let { email, password } = req.body;
 
-  // Check if user email is nested in an object
-  if (typeof email === 'object' && email.email) {
-    email = email.email;
-    password = email.password;
-  }
+    // Check if user email is nested in an object
+    if (typeof email === 'object' && email.email) {
+      email = email.email;
+      password = email.password;
+    }
 
-  // Find the user in the database
-  const user = await User.findOne({ email: String(email) });
+    // Find the user in the database
+    const user = await User.findOne({ email: String(email) });
 
-  console.log("User backend:", user);
+    console.log("User backend:", user);
 
-  if (!user) {
-    throw new Error("Invalid credentials");
-  }
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
 
-  // Check if the user registered with Google
-  if (user.loginMethod === "google") {
-    throw new Error("Please use Google login to access your account.");
-  }
+    // Check if the user registered with Google
+    if (user.loginMethod === "google") {
+      throw new Error("Please use Google login to access your account.");
+    }
 
-  // Validate user password
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new Error("Invalid credentials");
-  }
+    // Validate user password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error("Invalid credentials");
+    }
 
-  // Generate JWT token
-  const token = jwt.sign({ id: user._id }, "anyKey", { expiresIn: "30d" });
+    // Generate JWT token
+    const token = jwt.sign({ id: user._id }, "anyKey", { expiresIn: "30d" });
 
-  // Exclude sensitive information (like password) before sending the user object
-  const { password: _, ...userWithoutPassword } = user.toObject();
+    // Exclude sensitive information (like password) before sending the user object
+    const { password: _, ...userWithoutPassword } = user.toObject();
 
-  // Send the response
-  res.json({
-    message: "Login success",
-    token,
-    user: userWithoutPassword,
-  });
-}),
+    // Send the response
+    res.json({
+      message: "Login success",
+      token,
+      user: userWithoutPassword,
+    });
+  }),
 
-  //!Google Login
   googleLogin: asyncHandler(async (req, res) => {
     const { email, firstname, lastname } = req.body;
     let user = await User.findOne({ email });
@@ -179,7 +176,7 @@ login: asyncHandler(async (req, res) => {
       userId: user._id, // Include userId in the response
     });
   }),
-  //!Profile
+
   profile: asyncHandler(async (req, res) => {
     if (!req.user || !req.user.id) {
       res.status(400).json({ message: "User ID is missing" });
@@ -192,7 +189,7 @@ login: asyncHandler(async (req, res) => {
     }
     res.json({ user: user || null });
   }),
-  //!Set Password
+
   setPassword: asyncHandler(async (req, res) => {
     const { userId, password } = req.body;
     if (!password) {
@@ -207,7 +204,7 @@ login: asyncHandler(async (req, res) => {
     await user.save();
     res.json({ message: "Password set successfully" });
   }),
-  //!Verify Email
+
   verifyEmail: asyncHandler(async (req, res) => {
     try {
       const { email, verificationCode } = req.body;
@@ -237,6 +234,7 @@ login: asyncHandler(async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
     }
   }),
+
   updatePatientProfile: asyncHandler(async (req, res) => {
     const { userId, fullName, dateOfBirth, gender, insuranceProvider, insuranceNumber, groupNumber, policyholderName, relationshipToPolicyholder, effectiveDate, expirationDate, insuranceCardImage, preferences, address, phoneNumber, emergencyContact } = req.body;
     const user = await User.findById(userId);
