@@ -46,6 +46,12 @@ const userSchema = new mongoose.Schema(
       emailNotifications: { type: Boolean, default: true },
       pushNotifications: { type: Boolean, default: false },
     },
+    // New userType field
+    userType: {
+      type: String,
+      enum: ["professional", "client"],
+      required: true,
+    },
   },
   {
     timestamps: true,
