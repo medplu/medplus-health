@@ -235,6 +235,42 @@ const userCtrl = {
     }
   }),
 
+  const updateProfile = asyncHandler(async (req, res) => {
+  const {
+    userId,
+    fullName,
+    email,
+    phoneNumber,
+    profileImage,
+  } = req.body;
+
+  // Ensure that the user exists in the database
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Update user profile with the provided data
+  user.fullName = fullName || user.fullName;
+  user.email = email || user.email;
+  user.phoneNumber = phoneNumber || user.phoneNumber;
+  user.profileImage = profileImage || user.profileImage;
+
+  // Save the updated user profile
+  await user.save();
+
+  // Send a success response with the updated data
+  res.json({
+    message: "Profile updated successfully",
+    profileImage: user.profileImage,
+    fullName: user.fullName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+  });
+});
+
+
   updatePatientProfile: asyncHandler(async (req, res) => {
     const { userId, fullName, dateOfBirth, gender, insuranceProvider, insuranceNumber, groupNumber, policyholderName, relationshipToPolicyholder, effectiveDate, expirationDate, insuranceCardImage, preferences, address, phoneNumber, emergencyContact } = req.body;
     const user = await User.findById(userId);
