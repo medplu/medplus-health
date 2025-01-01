@@ -4,7 +4,7 @@ const isAuthenticated = require("../middleware/isAuth");
 
 const router = express.Router();
 
-//!Register
+//! Register
 router.post("/users/register", userController.register);
 router.post("/users/login", userController.login);
 router.post("/users/google-login", userController.googleLogin);
@@ -12,5 +12,8 @@ router.get("/users/profile", isAuthenticated, userController.profile);
 router.post("/users/set-password", isAuthenticated, userController.setPassword);
 router.post("/users/verify-email", userController.verifyEmail);
 router.post("/users/updatePatientProfile", isAuthenticated, userController.updatePatientProfile);
+
+// New route to update doctor profile
+router.post("/users/updateDoctorProfile", isAuthenticated, userController.updateProfile);
 
 module.exports = router;
