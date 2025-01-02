@@ -79,16 +79,31 @@ exports.updateProfile = async (req, res) => {
             return res.status(404).json({ message: 'Professional not found' });
         }
 
-        // Handle professional details update
+        // Handle professional details update with safer JSON parsing
         if (medicalDegrees) {
-            professional.professionalDetails.medicalDegrees = JSON.parse(medicalDegrees); // Parse stringified array if sent as JSON
+            try {
+                professional.professionalDetails.medicalDegrees = Array.isArray(medicalDegrees)
+                    ? medicalDegrees
+                    : JSON.parse(medicalDegrees);
+            } catch (error) {
+                professional.professionalDetails.medicalDegrees = [medicalDegrees]; // Assume plain string and wrap in an array
+            }
         }
+
         if (specialization) {
             professional.professionalDetails.specialization = specialization;
         }
+
         if (certifications) {
-            professional.professionalDetails.certifications = JSON.parse(certifications); // Parse stringified array if sent as JSON
+            try {
+                professional.professionalDetails.certifications = Array.isArray(certifications)
+                    ? certifications
+                    : JSON.parse(certifications);
+            } catch (error) {
+                professional.professionalDetails.certifications = [certifications]; // Assume plain string and wrap in an array
+            }
         }
+
         if (licenseNumber) {
             professional.professionalDetails.licenseNumber = licenseNumber;
         }
@@ -116,7 +131,6 @@ exports.updateProfile = async (req, res) => {
         return res.status(500).json({ message: 'Error updating profile' });
     }
 };
-
 
 // Create or update availability
 exports.createOrUpdateAvailability = async (req, res) => {
