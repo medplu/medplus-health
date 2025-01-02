@@ -61,7 +61,7 @@ exports.getProfessionalByUserId = async (req, res) => {
   }
 };
 exports.updateProfile = async (req, res) => {
-    const { professionalId } = req.params; // This is actually the userId in the document
+    const { professionalId } = req.params; // This is actually the user ID in the document
     const {
         consultationFee,
         medicalDegrees,
@@ -73,8 +73,8 @@ exports.updateProfile = async (req, res) => {
     } = req.body; // Extract the updated details from the request body
 
     try {
-        // Check if the professional exists by matching the userId with the provided professionalId
-        const professional = await Professional.findOne({ userId: professionalId });
+        // Check if the professional exists by matching the user field with the provided professionalId
+        const professional = await Professional.findOne({ user: professionalId });
         if (!professional) {
             return res.status(404).json({ message: 'Professional not found' });
         }
