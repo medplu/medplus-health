@@ -14,6 +14,6 @@ router.post("/users/verify-email", userController.verifyEmail);
 router.post("/users/updatePatientProfile", isAuthenticated, userController.updatePatientProfile);
 
 // New route to update doctor profile
-router.post("/users/updateDoctorProfile", isAuthenticated, userController.updateProfile);
+router.post("/users/updateDoctorProfile", userController.updateProfile);
 
 module.exports = router;
