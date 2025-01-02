@@ -63,33 +63,46 @@ exports.getProfessionalByUserId = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
     const { professionalId } = req.params; // Get the professional ID from the request parameters
-    const { consultationFee, availability } = req.body; // Get the consultation fee and availability from the request body
-
-    // Log the professionalId for debugging
-    console.log('Updating profile for professionalId:', professionalId);
+    const {
+        consultationFee,
+        medicalDegrees,
+        specialization,
+        certifications,
+        licenseNumber,
+        issuingMedicalBoard,
+        yearsOfExperience,
+    } = req.body; // Extract the updated details from the request body
 
     try {
-        // Check if professional exists
+        // Check if the professional exists
         const professional = await Professional.findById(professionalId);
         if (!professional) {
             return res.status(404).json({ message: 'Professional not found' });
         }
 
-        // Handle profile image upload if provided
-        if (req.files && req.files.profileImage) { // Check for uploaded file correctly
-            // Upload to Cloudinary
-            const uploadResult = await cloudinary.uploader.upload(req.files.profileImage.tempFilePath); // Use tempFilePath for express-fileupload
-            professional.profileImage = uploadResult.secure_url; // Store the Cloudinary URL
+        // Handle professional details update
+        if (medicalDegrees) {
+            professional.professionalDetails.medicalDegrees = JSON.parse(medicalDegrees); // Parse stringified array if sent as JSON
+        }
+        if (specialization) {
+            professional.professionalDetails.specialization = specialization;
+        }
+        if (certifications) {
+            professional.professionalDetails.certifications = JSON.parse(certifications); // Parse stringified array if sent as JSON
+        }
+        if (licenseNumber) {
+            professional.professionalDetails.licenseNumber = licenseNumber;
+        }
+        if (issuingMedicalBoard) {
+            professional.professionalDetails.issuingMedicalBoard = issuingMedicalBoard;
+        }
+        if (yearsOfExperience) {
+            professional.professionalDetails.yearsOfExperience = parseInt(yearsOfExperience, 10); // Convert to integer
         }
 
         // Update consultation fee if provided
         if (consultationFee !== undefined) {
             professional.consultationFee = consultationFee;
-        }
-
-        // Update availability if provided
-        if (availability) {
-            professional.availability = availability;
         }
 
         // Save the updated professional data
