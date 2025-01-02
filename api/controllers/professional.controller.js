@@ -60,9 +60,8 @@ exports.getProfessionalByUserId = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 exports.updateProfile = async (req, res) => {
-    const { professionalId } = req.params; // Get the professional ID from the request parameters
+    const { professionalId } = req.params; // This is actually the userId in the document
     const {
         consultationFee,
         medicalDegrees,
@@ -74,8 +73,8 @@ exports.updateProfile = async (req, res) => {
     } = req.body; // Extract the updated details from the request body
 
     try {
-        // Check if the professional exists
-        const professional = await Professional.findById(professionalId);
+        // Check if the professional exists by matching the userId with the provided professionalId
+        const professional = await Professional.findOne({ userId: professionalId });
         if (!professional) {
             return res.status(404).json({ message: 'Professional not found' });
         }
@@ -117,6 +116,7 @@ exports.updateProfile = async (req, res) => {
         return res.status(500).json({ message: 'Error updating profile' });
     }
 };
+
 
 // Create or update availability
 exports.createOrUpdateAvailability = async (req, res) => {
