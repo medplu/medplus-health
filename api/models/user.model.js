@@ -52,6 +52,7 @@ const userSchema = new mongoose.Schema(
       enum: ["professional", "client"],
       required: true,
     },
+    profileImage: { type: String, default: null }, // Add profileImage field
   },
   {
     timestamps: true,
