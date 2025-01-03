@@ -324,42 +324,64 @@ exports.getProfileProgress = async (req, res) => {
       return res.status(404).json({ message: 'Professional not found' });
     }
 
-    // Calculate the completion for the Professional Details section
-    const professionalDetails = professional.professionalDetails;
-    const professionalDetailsFields = [
-      professionalDetails.medicalDegrees,
-      professionalDetails.specialization,
-      professionalDetails.certifications,
-      professionalDetails.licenseNumber,
-      professionalDetails.issuingMedicalBoard,
-      professionalDetails.yearsOfExperience,
-      professional.consultationFee
-    ];
+    // Calculate the completion and missing fields for the Professional Details section
+    const professionalDetails = professional.professionalDetails || {};
+    const professionalDetailsFields = {
+      medicalDegrees: professionalDetails.medicalDegrees,
+      specialization: professionalDetails.specialization,
+      certifications: professionalDetails.certifications,
+      licenseNumber: professionalDetails.licenseNumber,
+      issuingMedicalBoard: professionalDetails.issuingMedicalBoard,
+      yearsOfExperience: professionalDetails.yearsOfExperience,
+      consultationFee: professional.consultationFee
+    };
 
-    const professionalDetailsProgress = (professionalDetailsFields.filter(field => field && field.length > 0).length / professionalDetailsFields.length) * 100;
+    const completedProfessionalDetails = Object.keys(professionalDetailsFields).filter(
+      key => professionalDetailsFields[key] && professionalDetailsFields[key].length > 0
+    );
+    const missingProfessionalDetails = Object.keys(professionalDetailsFields).filter(
+      key => !professionalDetailsFields[key] || professionalDetailsFields[key].length === 0
+    );
 
-    // Calculate the completion for the Practice Information section
-    const practiceInfo = professional;
-    const practiceInfoFields = [
-      practiceInfo.practiceName,
-      practiceInfo.practiceLocation,
-      practiceInfo.profileImage,
-      practiceInfo.workingDays,
-      practiceInfo.workingHours,
-      practiceInfo.experience,
-      practiceInfo.insuranceProviders
-    ];
+    const professionalDetailsProgress =
+      (completedProfessionalDetails.length / Object.keys(professionalDetailsFields).length) * 100;
 
-    const practiceInfoProgress = (practiceInfoFields.filter(field => field && field.length > 0).length / practiceInfoFields.length) * 100;
+    // Calculate the completion and missing fields for the Practice Information section
+    const practiceInfoFields = {
+      practiceName: professional.practiceName,
+      practiceLocation: professional.practiceLocation,
+      profileImage: professional.profileImage,
+      workingDays: professional.workingDays,
+      workingHours: professional.workingHours,
+      experience: professional.experience,
+      insuranceProviders: professional.insuranceProviders
+    };
+
+    const completedPracticeInfo = Object.keys(practiceInfoFields).filter(
+      key => practiceInfoFields[key] && practiceInfoFields[key].length > 0
+    );
+    const missingPracticeInfo = Object.keys(practiceInfoFields).filter(
+      key => !practiceInfoFields[key] || practiceInfoFields[key].length === 0
+    );
+
+    const practiceInfoProgress =
+      (completedPracticeInfo.length / Object.keys(practiceInfoFields).length) * 100;
 
     // Calculate overall progress
     const overallProgress = (professionalDetailsProgress + practiceInfoProgress) / 2;
 
+    // Return response with missing fields
     return res.status(200).json({
       message: 'Profile progress fetched successfully',
       progress: {
-        professionalDetails: professionalDetailsProgress,
-        practiceInfo: practiceInfoProgress,
+        professionalDetails: {
+          progress: professionalDetailsProgress,
+          missingFields: missingProfessionalDetails
+        },
+        practiceInfo: {
+          progress: practiceInfoProgress,
+          missingFields: missingPracticeInfo
+        },
         overall: overallProgress
       }
     });
