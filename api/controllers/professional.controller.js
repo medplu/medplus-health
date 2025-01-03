@@ -313,3 +313,60 @@ exports.practice = async (req, res) => {
     return res.status(500).json({ message: 'Error updating practice information' });
   }
 };
+exports.getProfileProgress = async (req, res) => {
+  const { userId } = req.params; // The userId (professionalId)
+
+  try {
+    // Find the professional by userId
+    const professional = await Professional.findOne({ user: userId });
+
+    if (!professional) {
+      return res.status(404).json({ message: 'Professional not found' });
+    }
+
+    // Calculate the completion for the Professional Details section
+    const professionalDetails = professional.professionalDetails;
+    const professionalDetailsFields = [
+      professionalDetails.medicalDegrees,
+      professionalDetails.specialization,
+      professionalDetails.certifications,
+      professionalDetails.licenseNumber,
+      professionalDetails.issuingMedicalBoard,
+      professionalDetails.yearsOfExperience,
+      professional.consultationFee
+    ];
+
+    const professionalDetailsProgress = (professionalDetailsFields.filter(field => field && field.length > 0).length / professionalDetailsFields.length) * 100;
+
+    // Calculate the completion for the Practice Information section
+    const practiceInfo = professional;
+    const practiceInfoFields = [
+      practiceInfo.practiceName,
+      practiceInfo.practiceLocation,
+      practiceInfo.profileImage,
+      practiceInfo.workingDays,
+      practiceInfo.workingHours,
+      practiceInfo.experience,
+      practiceInfo.insuranceProviders
+    ];
+
+    const practiceInfoProgress = (practiceInfoFields.filter(field => field && field.length > 0).length / practiceInfoFields.length) * 100;
+
+    // Calculate overall progress
+    const overallProgress = (professionalDetailsProgress + practiceInfoProgress) / 2;
+
+    return res.status(200).json({
+      message: 'Profile progress fetched successfully',
+      progress: {
+        professionalDetails: professionalDetailsProgress,
+        practiceInfo: practiceInfoProgress,
+        overall: overallProgress
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching profile progress:', error);
+    return res.status(500).json({ message: 'Error fetching profile progress' });
+  }
+};
+
