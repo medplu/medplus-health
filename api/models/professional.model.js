@@ -12,8 +12,23 @@ const ProfessionalSchema = new Schema({
   consultationFee: { type: Number },
   attachedToClinic: { type: Boolean, default: false },
   clinic_images: [{ type: Schema.Types.ObjectId, ref: 'ClinicImage' }],
-
-  // Updated professionalDetails field
+  practiceName: { type: String },
+  practiceLocation: { type: String },
+  profileImage: { type: String },
+  workingDays: [{ type: String }],
+  workingHours: {
+    startTime: { type: String },
+    endTime: { type: String },
+  },
+  experience: [
+    {
+      institution: { type: String },
+      year: { type: String },
+      roles: { type: String },
+      notableAchievement: { type: String },
+    },
+  ],
+  insuranceProviders: [{ type: String }],
   professionalDetails: {
     medicalDegrees: [
       {
