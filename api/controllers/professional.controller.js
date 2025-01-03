@@ -70,6 +70,8 @@ exports.updateProfile = async (req, res) => {
         licenseNumber,
         issuingMedicalBoard,
         yearsOfExperience,
+        specializedTreatment,
+        customSpecializedTreatment,
     } = req.body; // Extract the updated details from the request body
 
     try {
@@ -112,6 +114,14 @@ exports.updateProfile = async (req, res) => {
         }
         if (yearsOfExperience) {
             professional.professionalDetails.yearsOfExperience = parseInt(yearsOfExperience, 10); // Convert to integer
+        }
+
+        // Update specialized treatment fields
+        if (specializedTreatment) {
+            professional.professionalDetails.specializedTreatment = specializedTreatment;
+        }
+        if (customSpecializedTreatment) {
+            professional.professionalDetails.customSpecializedTreatment = customSpecializedTreatment;
         }
 
         // Update consultation fee if provided
