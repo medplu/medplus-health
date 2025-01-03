@@ -42,6 +42,8 @@ const ProfessionalSchema = new Schema({
     licenseNumber: { type: String },
     issuingMedicalBoard: { type: String },
     yearsOfExperience: { type: Number },
+    specializedTreatment: { type: String },
+    customSpecializedTreatment: { type: String },
   },
 }, { timestamps: true });
 
