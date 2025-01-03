@@ -26,4 +26,7 @@ router.get('/professionals/category/:category', professionalController.getProfes
 // Route to update professional profile by userId
 router.put('/professionals/update-profile/:professionalId', professionalController.updateProfile);
 
+// Route to update professional practice information
+router.post('/professionals/practice', professionalController.practice);
+
 module.exports = router;
