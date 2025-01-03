@@ -281,17 +281,10 @@ exports.searchProfessionals = async (req, res) => {
     }
 };
 
+const Professional = require('../models/Professional'); // Ensure you have the correct model import
+
 exports.practice = async (req, res) => {
-  const { userId } = req.body;
-  const {
-    practiceName,
-    practiceLocation,
-    profileImage,
-    workingDays,
-    workingHours,
-    experience,
-    insuranceProviders,
-  } = req.body;
+  const { userId, practiceName, practiceLocation, profileImage, workingDays, workingHours, experience, insuranceProviders } = req.body;
 
   try {
     // Find the professional by userId
