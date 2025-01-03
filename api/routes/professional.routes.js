@@ -28,5 +28,7 @@ router.put('/professionals/update-profile/:professionalId', professionalControll
 
 // Route to update professional practice information
 router.post('/professionals/practice', professionalController.practice);
+router.get('/professionals/progress', professionalController.getProfileProgress);
+
 
 module.exports = router;
