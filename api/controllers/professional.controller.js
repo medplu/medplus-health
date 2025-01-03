@@ -280,3 +280,44 @@ exports.searchProfessionals = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+exports.practice = async (req, res) => {
+  const { userId } = req.body;
+  const {
+    practiceName,
+    practiceLocation,
+    profileImage,
+    workingDays,
+    workingHours,
+    experience,
+    insuranceProviders,
+  } = req.body;
+
+  try {
+    // Find the professional by userId
+    const professional = await Professional.findOne({ user: userId });
+    if (!professional) {
+      return res.status(404).json({ message: 'Professional not found' });
+    }
+
+    // Update the professional's practice information
+    professional.practiceName = practiceName;
+    professional.practiceLocation = practiceLocation;
+    professional.profileImage = profileImage;
+    professional.workingDays = workingDays;
+    professional.workingHours = workingHours;
+    professional.experience = experience;
+    professional.insuranceProviders = insuranceProviders;
+
+    // Save the updated professional data
+    await professional.save();
+
+    return res.status(200).json({
+      message: 'Practice information updated successfully',
+      professional,
+    });
+  } catch (error) {
+    console.error('Error updating practice information:', error);
+    return res.status(500).json({ message: 'Error updating practice information' });
+  }
+};
