@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     username: { type: String },
     email: { type: String, required: true },
     password: { type: String, required: false },
+    profile:{type: String},
     verificationCode: {
       type: String,
       required: false,
@@ -52,7 +53,7 @@ const userSchema = new mongoose.Schema(
       enum: ["professional", "client"],
       required: true,
     },
-    profileImage: { type: String, default: null }, // Add profileImage field
+    completedProfile: { type: Boolean, default: false },
   },
   {
     timestamps: true,
