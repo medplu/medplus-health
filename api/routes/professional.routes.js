@@ -32,5 +32,7 @@ router.post('/professionals/practice', professionalController.practice);
 // Add a route that passes userId in the URL
 router.get('/professionals/progress/:userId', professionalController.getProfileProgress);
 
+// Route to update profile completion status
+router.post('/professionals/update-profile-completion/:userId', professionalController.updateProfileCompletionStatus);
 
 module.exports = router;
