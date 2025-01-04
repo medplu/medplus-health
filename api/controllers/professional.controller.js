@@ -1,7 +1,8 @@
 const Professional = require('../models/professional.model');
 const mongoose = require('mongoose'); // Import mongoose
 const cloudinary = require('cloudinary').v2; // Make sure cloudinary is properly configured
-const User = require('../models/User'); // Import the User model
+
+const User = require('../models/user.model');
 
 // Fetch all professionals with only userId and clinicId populated as IDs
 exports.getProfessionals = async (req, res) => {
