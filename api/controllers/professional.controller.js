@@ -1,6 +1,7 @@
 const Professional = require('../models/professional.model');
 const mongoose = require('mongoose'); // Import mongoose
 const cloudinary = require('cloudinary').v2; // Make sure cloudinary is properly configured
+const User = require('../models/User'); // Import the User model
 
 // Fetch all professionals with only userId and clinicId populated as IDs
 exports.getProfessionals = async (req, res) => {
@@ -402,3 +403,24 @@ exports.getProfileProgress = async (req, res) => {
   }
 };
 
+// Update the completedProfile attribute for a user
+exports.updateProfileCompletionStatus = async (req, res) => {
+  const { userId } = req.params;
+  const { completedProfile } = req.body;
+
+  try {
+    const user = await User.findByIdAndUpdate(userId, { completedProfile }, { new: true });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    return res.status(200).json({
+      message: 'Profile completion status updated successfully',
+      user,
+    });
+  } catch (error) {
+    console.error('Error updating profile completion status:', error);
+    return res.status(500).json({ message: 'Error updating profile completion status' });
+  }
+};
