@@ -62,45 +62,53 @@ exports.getAppointmentsByUser = async (req, res) => {
 
 
 exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, patientName, status, timeSlotId, time, date, insurance, patientDetails = {} } = req.body;
+    const { doctorId, userId, patientName, status, timeSlotId, time, date, insurance, patientDetails = {} } = req.body;
+  
+    try {
+      // Validate and create appointment logic (as provided earlier)...
+      
+      // Retrieve or create the patient object
+      let patient = await Patient.findOne({ name: patientName, userId: userId });
+      if (!patient) {
+        patient = new Patient({ name: patientName, userId: userId, ...patientDetails });
+        await patient.save();
+      }
+  
+      const newAppointment = new Appointment({
+        doctorId,
+        userId,
+        patientId: patient._id,
+        patientName: patientName,
+        status,
+        timeSlotId: insurance ? undefined : timeSlotId,
+        time: insurance ? undefined : time,
+        date,
+      });
+  
+      await newAppointment.save();
+  
+      // Real-time notification logic
+      const io = req.app.get('socketio');
+  
+      // Emit to the doctor
+      io.to(doctorId).emit('newAppointment', {
+        appointment: newAppointment,
+        message: 'You have a new appointment.',
+      });
+  
+      // Emit to the user
+      io.to(userId).emit('appointmentConfirmation', {
+        appointment: newAppointment,
+        message: 'Your appointment request has been received.',
+      });
+  
+      res.status(201).json({ appointment: newAppointment, patient });
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
 
-  try {
-    // Validate and create appointment logic (as provided earlier)...
-
-    const newAppointment = new Appointment({
-      doctorId,
-      userId,
-      patientId: patient._id,
-      patientName: finalPatientName,
-      status,
-      timeSlotId: insurance ? undefined : timeSlotId,
-      time: insurance ? undefined : time,
-      date,
-    });
-
-    await newAppointment.save();
-
-    // Real-time notification logic
-    const io = req.app.get('socketio');
-
-    // Emit to the doctor
-    io.to(doctorId).emit('newAppointment', {
-      appointment: newAppointment,
-      message: 'You have a new appointment.',
-    });
-
-    // Emit to the user
-    io.to(userId).emit('appointmentConfirmation', {
-      appointment: newAppointment,
-      message: 'Your appointment request has been received.',
-    });
-
-    res.status(201).json({ appointment: newAppointment, client, patient });
-  } catch (error) {
-    console.error('Error booking appointment:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
 
 // Confirm an appointment
 exports.confirmAppointment = async (req, res) => {
