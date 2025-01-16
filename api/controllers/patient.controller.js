@@ -36,40 +36,30 @@ exports.getPatientById = async (req, res) => {
 
 // Update a patient by userId
 exports.updatePatient = async (req, res) => {
-    const updates = Object.keys(req.body);
-    const allowedUpdates = [
-        'fullName', 'email', 'phone', 'dateOfBirth', 'gender', 
-        'address.street', 'address.city', 'address.state', 'address.postalCode', 'address.country',
-        'profilePicture', 'emergencyContact.name', 'emergencyContact.relationship', 'emergencyContact.phone',
-        'medicalHistory', 'active'
-    ];
-    const isValidOperation = updates.every(update => allowedUpdates.includes(update));
-
-    if (!isValidOperation) {
-        return res.status(400).send({ error: 'Invalid updates!' });
-    }
-
     try {
         const patient = await Patient.findOne({ userId: req.params.id });
         if (!patient) {
-            return res.status(404).send();
+            return res.status(404).send({ error: 'Patient not found!' });
         }
 
-        updates.forEach(update => {
-            const keys = update.split('.');
+        // Update only the fields provided in the request
+        Object.keys(req.body).forEach(key => {
+            const keys = key.split('.');
             if (keys.length > 1) {
-                patient[keys[0]][keys[1]] = req.body[update];
+                if (!patient[keys[0]]) patient[keys[0]] = {}; // Ensure nested object exists
+                patient[keys[0]][keys[1]] = req.body[key];
             } else {
-                patient[update] = req.body[update];
+                patient[key] = req.body[key];
             }
         });
 
         await patient.save();
         res.status(200).send(patient);
     } catch (error) {
-        res.status(400).send(error);
+        res.status(400).send({ error: 'An error occurred while updating the patient.', details: error.message });
     }
 };
+
 
 // Delete a patient by ID
 exports.deletePatient = async (req, res) => {
