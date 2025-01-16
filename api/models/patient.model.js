@@ -10,8 +10,26 @@ const patientSchema = new mongoose.Schema({
         required: false
     },
     address: {
-        type: String,
-        required: false
+        street: {
+            type: String,
+            required: false
+        },
+        city: {
+            type: String,
+            required: false
+        },
+        state: {
+            type: String,
+            required: false
+        },
+        postalCode: {
+            type: String,
+            required: false
+        },
+        country: {
+            type: String,
+            required: false
+        }
     },
     phone: {
         type: String,
@@ -22,7 +40,7 @@ const patientSchema = new mongoose.Schema({
         required: false
     },
     medicalHistory: {
-        type: [String], // Change to array of strings
+        type: [String], // Array of strings for medical history
         required: false
     },
     userId: {
