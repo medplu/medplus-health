@@ -54,6 +54,10 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     completedProfile: { type: Boolean, default: false },
+    expoPushToken: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

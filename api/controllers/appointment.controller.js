@@ -5,6 +5,7 @@ const Client = require('../models/client.model');
 const Patient = require('../models/patient.model');
 const User = require('../models/user.model');
 const moment = require('moment');
+const { sendPushNotification } = require('../services/notificationService');
 
 exports.getAllAppointmentsByDoctor = async (req, res) => {
   const { doctorId } = req.params;
@@ -78,7 +79,6 @@ exports.getAppointmentsByUser = async (req, res) => {
   }
 };
 
-
 exports.bookAppointment = async (req, res) => {
   const { doctorId, userId, status, timeSlotId, time, date, insurance, patientDetails = {} } = req.body;
 
@@ -111,20 +111,13 @@ exports.bookAppointment = async (req, res) => {
 
     await newAppointment.save();
 
-    // Real-time notification logic
-    const io = req.app.get('socketio');
-
-    // Emit to the doctor
-    io.to(doctorId).emit('newAppointment', {
-      appointment: newAppointment,
-      message: 'You have a new appointment.',
-    });
-
-    // Emit to the user
-    io.to(userId).emit('appointmentConfirmation', {
-      appointment: newAppointment,
-      message: 'Your appointment request has been received.',
-    });
+    // Send push notification to the user
+    if (user.expoPushToken) {
+      await sendPushNotification([user.expoPushToken], {
+        body: 'Your appointment request has been received.',
+        data: { appointmentId: newAppointment._id },
+      });
+    }
 
     res.status(201).json({ appointment: newAppointment, patient });
   } catch (error) {
@@ -156,6 +149,15 @@ exports.confirmAppointment = async (req, res) => {
     await appointment.save();
 
     console.log('Appointment confirmed:', appointment);
+
+    // Send push notification to the user
+    const user = await User.findById(appointment.userId);
+    if (user && user.expoPushToken) {
+      await sendPushNotification([user.expoPushToken], {
+        body: 'Your appointment has been confirmed.',
+        data: { appointmentId: appointment._id },
+      });
+    }
 
     res.status(200).json(appointment);
   } catch (error) {

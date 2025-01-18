@@ -16,4 +16,7 @@ router.post("/users/updatePatientProfile", isAuthenticated, userController.updat
 // New route to update doctor profile
 router.post("/users/updateDoctorProfile", userController.updateProfile);
 
+// New route to save Expo Push Token
+router.post("/users/saveExpoPushToken", isAuthenticated, userController.saveExpoPushToken);
+
 module.exports = router;
