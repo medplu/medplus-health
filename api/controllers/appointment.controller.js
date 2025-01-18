@@ -5,7 +5,7 @@ const Client = require('../models/client.model');
 const Patient = require('../models/patient.model');
 const User = require('../models/user.model');
 const moment = require('moment');
-const { sendPushNotification } = require('../services/notificationService');
+const { sendPushNotification } = require('../service/notificationService');
 
 exports.getAllAppointmentsByDoctor = async (req, res) => {
   const { doctorId } = req.params;
