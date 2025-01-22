@@ -3,7 +3,7 @@ const router = express.Router();
 const scheduleController = require('../controllers/schedule.controller');
 
 // Create or update the schedule for a professional
-router.put('/schedule', scheduleController.createOrUpdateSchedule);
+router.put('/schedule', scheduleController.createSchedule);
 
 router.post('/schedule/resetElapsedSlots/:professionalId', scheduleController.resetElapsedSlots);
 
