@@ -4,69 +4,6 @@ const Schedule = require('../models/schedule.model');
 const User = require('../models/user.model');
 const Appointment = require('../models/appointment.model');
 
-exports.createOrUpdateSchedule = async (req, res) => {
-    const { professionalId, availability, recurrence } = req.body;
-
-    // Validate the incoming data
-    if (!professionalId || !availability || typeof availability !== 'object') {
-        return res.status(400).json({ message: 'Professional ID and availability are required.' });
-    }
-
-    try {
-        // Verify professional exists
-        const professional = await User.findById(professionalId);
-        if (!professional) {
-            return res.status(404).json({ message: 'Professional not found.' });
-        }
-
-        // Map availability data to schedule format
-        const mappedAvailability = new Map();
-        Object.keys(availability).forEach(date => {
-            const shifts = availability[date];
-
-            // Validate each shift
-            shifts.forEach(shift => {
-                if (!shift.shiftName || !shift.startTime || !shift.endTime || !Array.isArray(shift.slots)) {
-                    throw new Error('Each shift must include shiftName, startTime, endTime, and slots.');
-                }
-
-                // Validate time slots
-                shift.slots.forEach(slot => {
-                    if (!slot.startTime || !slot.endTime) {
-                        throw new Error('Each time slot must include startTime and endTime.');
-                    }
-                });
-            });
-
-            mappedAvailability.set(date, shifts); // Map the date to shifts
-        });
-
-        // Check if schedule exists for this professional
-        let schedule = await Schedule.findOne({ professionalId });
-
-        if (schedule) {
-            // Update existing schedule
-            schedule.availability = mappedAvailability;
-            schedule.recurrence = recurrence || schedule.recurrence;
-            await schedule.save();
-            return res.status(200).json({ message: 'Schedule updated successfully.', schedule });
-        } else {
-            // Create new schedule
-            const newSchedule = new Schedule({
-                professionalId,
-                availability: mappedAvailability,
-                recurrence: recurrence || 'none'
-            });
-            await newSchedule.save();
-            return res.status(201).json({ message: 'Schedule created successfully.', schedule: newSchedule });
-        }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
-
 const generateTimeSlots = (shift) => {
   const slots = [];
   const startTime = new Date(shift.startTime).getTime();
@@ -95,6 +32,58 @@ const generateTimeSlots = (shift) => {
 
   return slots;
 };
+
+exports.createOrUpdateSchedule = async (req, res) => {
+  const { professionalId, availability, recurrence } = req.body;
+
+  // Validate the incoming data
+  if (!professionalId || !availability || typeof availability !== 'object') {
+    return res.status(400).json({ message: 'Professional ID and availability are required.' });
+  }
+
+  try {
+    // Verify professional exists
+    const professional = await User.findById(professionalId);
+    if (!professional) {
+      return res.status(404).json({ message: 'Professional not found.' });
+    }
+
+    // Map availability data to schedule format
+    const mappedAvailability = new Map();
+    Object.keys(availability).forEach(date => {
+      const shifts = availability[date].map(shift => ({
+        ...shift,
+        slots: generateTimeSlots(shift) // Generate slots for each shift
+      }));
+
+      mappedAvailability.set(date, shifts); // Map the date to shifts
+    });
+
+    // Check if schedule exists for this professional
+    let schedule = await Schedule.findOne({ professionalId });
+
+    if (schedule) {
+      // Update existing schedule
+      schedule.availability = mappedAvailability;
+      schedule.recurrence = recurrence || schedule.recurrence;
+      await schedule.save();
+      return res.status(200).json({ message: 'Schedule updated successfully.', schedule });
+    } else {
+      // Create new schedule
+      const newSchedule = new Schedule({
+        professionalId,
+        availability: mappedAvailability,
+        recurrence: recurrence || 'none'
+      });
+      await newSchedule.save();
+      return res.status(201).json({ message: 'Schedule created successfully.', schedule: newSchedule });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 
 const generateRecurringDates = (startDate, recurrence) => {
   const dates = [];
@@ -283,7 +272,7 @@ exports.createSchedule = async (req, res) => {
     for (const date in availability) {
       const shifts = availability[date].map((shift) => ({
         ...shift,
-        timeSlots: generateTimeSlots(shift),
+        slots: generateTimeSlots(shift), // Generate slots for each shift
       }));
 
       const recurringDates = generateRecurringDates(date, recurrence);
