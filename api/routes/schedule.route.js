@@ -2,18 +2,13 @@ const express = require('express');
 const router = express.Router();
 const scheduleController = require('../controllers/schedule.controller');
 
-// Create or update the schedule for a professional
-router.put('/schedule', scheduleController.createSchedule);
 
-router.post('/schedule/resetElapsedSlots/:professionalId', scheduleController.resetElapsedSlots);
+router.post('/schedule', scheduleController.addSchedule);
 
-// Fetch the schedule for a professional by their ID
-router.get('/schedule/:professionalId', scheduleController.getScheduleByProfessionalId);
+// Update a slot
+router.put('/schedule/:id/slot', scheduleController.updateSlot);
 
-// Fetch available slots for a professional
-router.get('/schedule/available-slots/:professionalId', scheduleController.getAvailableSlots);
-
-// Add route for creating recurring slots
-router.post('/schedule/createRecurringSlots', scheduleController.createRecurringSlots);
+// Get schedules
+router.get('/schedules', scheduleController.getSchedules);
 
 module.exports = router;
