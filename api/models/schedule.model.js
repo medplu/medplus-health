@@ -1,35 +1,45 @@
 const mongoose = require('mongoose');
 
-// Time slot schema
-const timeSlotSchema = new mongoose.Schema({
-  startTime: { type: String, required: true }, // Format: "HH:mm"
-  endTime: { type: String, required: true }   // Format: "HH:mm"
-});
-
-// Shift schema
-const shiftSchema = new mongoose.Schema({
-  shiftName: { type: String, required: true }, // Example: "Morning", "Afternoon"
-  startTime: { type: String, required: true }, // Format: "HH:mm"
-  endTime: { type: String, required: true },   // Format: "HH:mm"
-  slots: { type: [timeSlotSchema], required: true } // Array of time slots
-});
-
-// Schedule schema
-const scheduleSchema = new mongoose.Schema(
-  {
-    professionalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Professional', required: true },
-    availability: { 
-      type: Map, 
-      of: [shiftSchema], // Map each date to an array of shifts
-      required: true 
-    },
-    recurrence: { 
-      type: String, 
-      enum: ['none', 'daily', 'weekly'], 
-      default: 'none' 
-    }
+const slotSchema = new mongoose.Schema({
+  startTime: {
+    type: String,
+    required: true,
   },
-  { timestamps: true }
-);
+  endTime: {
+    type: String,
+    required: true,
+  },
+  isAvailable: {
+    type: Boolean,
+    default: true,
+  },
+  isBookable: {
+    type: Boolean,
+    default: true,
+  },
+  recurrence: {
+    type: String,
+    enum: ['None', 'Daily', 'Weekly'],
+    default: 'None',
+  },
+});
+
+const scheduleSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  professionalId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Professional',
+    required: true,
+  },
+  schedules: {
+    type: Map,
+    of: [slotSchema],
+    required: true,
+  },
+}, { timestamps: true });
 
 module.exports = mongoose.model('Schedule', scheduleSchema);
