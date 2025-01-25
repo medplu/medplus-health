@@ -1,5 +1,7 @@
 const Schedule = require('../models/schedule.model');
 
+const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 exports.addSchedule = async (req, res) => {
   try {
     const { userId, schedules } = req.body;
@@ -42,7 +44,12 @@ exports.getSchedules = async (req, res) => {
       Object.keys(processed.schedules).forEach(day => {
         processed.schedules[day] = processed.schedules[day].map(slot => {
           if (slot.recurrence === 'Daily') {
-            return weekDays.map(recDay => ({ ...slot, day: recDay }));
+            const daysInMonth = 30; // Process for a month
+            const dayIndex = weekDays.indexOf(day);
+            return Array.from({ length: daysInMonth }, (_, i) => {
+              const recDay = weekDays[(dayIndex + i) % 7];
+              return { ...slot, day: recDay };
+            });
           } else if (slot.recurrence === 'Weekly') {
             // Handle weekly recurrence
             const dayIndex = weekDays.indexOf(day);
