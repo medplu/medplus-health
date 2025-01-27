@@ -93,11 +93,9 @@ const ClinicSchema = new mongoose.Schema({
     type: {
       type: String,
       enum: ['Point'],
-      required: true,
     },
     coordinates: {
       type: [Number], // [longitude, latitude]
-      required: false,
     },
   },
   socialMedia: {
