@@ -1,104 +1,132 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-// Define the Clinic Schema
-const clinicSchema = new Schema({
-  name: {
+const ClinicSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  practiceName: {
     type: String,
     required: true,
+  },
+  practiceLocation: {
+    type: String,
+    required: true,
+  },
+  profileImage: {
+    type: String,
+    required: true,
+  },
+  workingDays: {
+    type: [String],
+    required: true,
+  },
+  workingHours: {
+    startTime: {
+      type: String,
+      required: true,
+    },
+    endTime: {
+      type: String,
+      required: true,
+    },
   },
   contactInfo: {
-    type: String,
-    required: false,
+    phone: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    website: {
+      type: String,
+    },
   },
-  address: {
+  services: [
+    {
+      type: String,
+      required: true,
+    },
+  ],
+  amenities: [
+    {
+      type: String,
+    },
+  ],
+  reviews: [
+    {
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+      rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+      },
+      comment: {
+        type: String,
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
+  licenseNumber: {
     type: String,
     required: true,
   },
-  referenceCode: { // New field for the reference code
+  accreditation: {
     type: String,
-    required: true,
-    unique: true, // Ensure reference code is unique
   },
-  professionals: [{  // Reference to Professional model
-    type: Schema.Types.ObjectId,
-    ref: 'Professional',
-  }],
-  insuranceCompanies: [{ // New field for insurance companies
-    type: String,
-    required: true,
-  }],
-  specialties: {
-    type: String,
-    required: false,
-  },
-  education: { // Update to handle education as an object
-    course: {
+  appointments: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Appointment',
+    },
+  ],
+  geoLocation: {
+    type: {
       type: String,
+      enum: ['Point'],
       required: true,
     },
-    university: {
-      type: String,
+    coordinates: {
+      type: [Number], // [longitude, latitude]
       required: true,
     },
   },
-  experiences: [{ // Ensure experiences is an array of objects and required
-    position: {
-      type: String,
-      required: true,
-    },
-    organization: {
-      type: String,
-      required: true,
-    },
-    startDate: {
-      type: String,
-      required: true,
-    },
-    endDate: {
-      type: String,
-      required: false,
-    },
-    currentlyWorking: {
-      type: Boolean,
-      required: false,
-    },
-  }],
-  languages: {
-    type: String,
-    required: false,
+  socialMedia: {
+    facebook: String,
+    twitter: String,
+    instagram: String,
   },
-  assistantName: {
-    type: String,
-    required: false,
+  emergencyServices: {
+    type: Boolean,
+    default: false,
   },
-  assistantPhone: {
-    type: String,
-    required: false,
-  },
-  bio: {
-    type: String,
-    required: false,
-  },
-  certificateUrl: {
-    type: String,
-    required: false,
-  },
+  experience: [
+    {
+      institution: String,
+      year: String,
+      roles: String,
+      notableAchievement: String,
+    },
+  ],
+  insuranceProviders: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'InsuranceProvider',
+    },
+  ],
 }, {
-  timestamps: true // Automatically creates `createdAt` and `updatedAt` fields
+  timestamps: true,
 });
 
-// Virtual field to fetch images related to professionals in the clinic
-clinicSchema.virtual('clinicImages', {
-  ref: 'ClinicImage', // Model to populate
-  localField: 'professionals', // Field in Clinic model
-  foreignField: 'professionalId', // Field in ClinicImage model that references the professional
-  justOne: false, // This will return an array of images
-});
+const Clinic = mongoose.model('Clinic', ClinicSchema);
 
-// Ensure virtual fields are included in JSON output
-clinicSchema.set('toObject', { virtuals: true });
-clinicSchema.set('toJSON', { virtuals: true });
-
-// Create and export the 'Clinic' model
-module.exports = mongoose.model('Clinic', clinicSchema);
+module.exports = Clinic;
