@@ -1,5 +1,28 @@
 const mongoose = require('mongoose');
 
+const WorkingDaySlotSchema = new mongoose.Schema({
+  startTime: {
+    type: String,
+    required: true,
+  },
+  endTime: {
+    type: String,
+    required: true,
+  },
+  isAvailable: {
+    type: Boolean,
+    required: true,
+  },
+});
+
+const WorkingDaysSchema = new mongoose.Schema({
+  day: {
+    type: String,
+    required: true,
+  },
+  slots: [WorkingDaySlotSchema],
+});
+
 const ClinicSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -19,18 +42,8 @@ const ClinicSchema = new mongoose.Schema({
     required: true,
   },
   workingDays: {
-    type: [String],
+    type: [WorkingDaysSchema],
     required: true,
-  },
-  workingHours: {
-    startTime: {
-      type: String,
-      required: true,
-    },
-    endTime: {
-      type: String,
-      required: true,
-    },
   },
   contactInfo: {
     phone: {
