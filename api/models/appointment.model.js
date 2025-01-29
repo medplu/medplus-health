@@ -22,7 +22,7 @@ const appointmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'booked', 'confirmed', 'completed', 'cancelled'],
+    enum: ['pending', 'booked', 'confirmed', 'in progress', 'done', 'completed', 'cancelled'], // Include all expected statuses
     default: 'pending',
   },
   timeSlotId: {
