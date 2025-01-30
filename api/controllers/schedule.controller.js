@@ -45,8 +45,15 @@ exports.getSchedules = async (req, res) => {
 
     console.log('Retrieved schedule:', schedule); // Log the retrieved schedule
 
+    // Convert the Mongoose document to a plain object
+    const processedSchedule = schedule.toObject();
+
+    // Convert the schedules Map to a plain object
+    if (processedSchedule.schedules instanceof Map) {
+      processedSchedule.schedules = Object.fromEntries(processedSchedule.schedules);
+    }
+
     // Handle recurrence logic when retrieving schedules
-    const processedSchedule = { ...schedule._doc };
     Object.keys(processedSchedule.schedules).forEach(day => {
       processedSchedule.schedules[day] = processedSchedule.schedules[day].map(slot => {
         if (slot.recurrence === 'Daily') {
@@ -59,7 +66,9 @@ exports.getSchedules = async (req, res) => {
         } else if (slot.recurrence === 'Weekly') {
           // Handle weekly recurrence
           const dayIndex = weekDays.indexOf(day);
-          return weekDays.filter((_, index) => index % 7 === dayIndex % 7).map(recDay => ({ ...slot, day: recDay }));
+          return weekDays
+            .filter((_, index) => index % 7 === dayIndex % 7)
+            .map(recDay => ({ ...slot, day: recDay }));
         }
         return slot;
       }).flat();
