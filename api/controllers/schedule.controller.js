@@ -20,7 +20,7 @@ exports.updateSlot = async (req, res) => {
     const { userId, day, slotIndex, slotData } = req.body;
     const schedule = await Schedule.findOne({ userId });
     if (schedule) {
-      schedule.schedules.get(day)[slotIndex] = { ...schedule.schedules.get(day)[slotIndex], ...slotData };
+      schedule.schedules[day][slotIndex] = { ...schedule.schedules[day][slotIndex], ...slotData };
 
       // Store recurrence pattern without duplicating slots
       await schedule.save();
