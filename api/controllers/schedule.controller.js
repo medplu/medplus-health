@@ -33,6 +33,7 @@ exports.updateSlot = async (req, res) => {
   }
 };
 
+
 exports.getSchedules = async (req, res) => {
   try {
     const { doctorId } = req.params;
@@ -66,6 +67,7 @@ exports.getSchedules = async (req, res) => {
 
       // Remove unnecessary fields from each slot
       simplifiedResponse[day] = simplifiedResponse[day].map(slot => ({
+        _id: slot._id, // Ensure _id is included
         startTime: slot.startTime,
         endTime: slot.endTime,
         isAvailable: slot.isAvailable,
