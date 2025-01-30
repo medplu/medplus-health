@@ -4,11 +4,8 @@ const Schedule = require('../models/schedule.model');
 const Client = require('../models/client.model');
 const Patient = require('../models/patient.model');
 const User = require('../models/user.model');
-const Appointment = require('../models/appointment.model');
-const Schedule = require('../models/schedule.model');
-const Client = require('../models/client.model');
-const Patient = require('../models/patient.model');
-const User = require('../models/user.model');
+
+
 const moment = require('moment');
 const { sendPushNotification } = require('../service/notificationService');
 
