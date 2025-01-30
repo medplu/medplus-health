@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const slotSchema = new mongoose.Schema({
+  slotId: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: () => new mongoose.Types.ObjectId(),
+    unique: true,
+  },
   startTime: {
     type: String,
     required: true,
