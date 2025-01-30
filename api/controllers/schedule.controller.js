@@ -37,6 +37,8 @@ exports.getSchedules = async (req, res) => {
   try {
     const { doctorId } = req.params;
     console.log('Fetching schedule for doctorId:', doctorId); // Log the doctorId
+
+    // Fetch the schedule from the database
     const schedule = await Schedule.findOne({ userId: doctorId });
 
     if (!schedule) {
@@ -48,14 +50,22 @@ exports.getSchedules = async (req, res) => {
     // Convert the Mongoose document to a plain object
     const processedSchedule = schedule.toObject();
 
-    // Convert the schedules Map to a plain object
+    // Convert the schedules Map to a plain object (if necessary)
     if (processedSchedule.schedules instanceof Map) {
       processedSchedule.schedules = Object.fromEntries(processedSchedule.schedules);
     }
 
-    // Handle recurrence logic when retrieving schedules
+    // Simplify the response: Filter available slots and handle recurrence
+    const simplifiedResponse = {};
+
     Object.keys(processedSchedule.schedules).forEach(day => {
-      processedSchedule.schedules[day] = processedSchedule.schedules[day].map(slot => {
+      // Filter available and bookable slots
+      const availableSlots = processedSchedule.schedules[day].filter(
+        slot => slot.isAvailable && slot.isBookable
+      );
+
+      // Handle recurrence logic
+      const slotsWithRecurrence = availableSlots.map(slot => {
         if (slot.recurrence === 'Daily') {
           const daysInMonth = 30; // Process for a month
           const dayIndex = weekDays.indexOf(day);
@@ -70,11 +80,15 @@ exports.getSchedules = async (req, res) => {
             .filter((_, index) => index % 7 === dayIndex % 7)
             .map(recDay => ({ ...slot, day: recDay }));
         }
-        return slot;
+        return { ...slot, day };
       }).flat();
+
+      // Add the processed slots to the simplified response
+      simplifiedResponse[day] = slotsWithRecurrence;
     });
 
-    res.status(200).json(processedSchedule);
+    // Send the simplified response
+    res.status(200).json(simplifiedResponse);
   } catch (error) {
     console.error('Error retrieving schedules:', error); // Log the error
     res.status(500).json({ message: 'Error retrieving schedules', error });
