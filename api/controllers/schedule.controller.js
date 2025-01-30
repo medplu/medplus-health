@@ -35,34 +35,39 @@ exports.updateSlot = async (req, res) => {
 
 exports.getSchedules = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const schedules = await Schedule.find({ userId });
+    const { doctorId } = req.params;
+    console.log('Fetching schedule for doctorId:', doctorId); // Log the doctorId
+    const schedule = await Schedule.findOne({ userId: doctorId });
+
+    if (!schedule) {
+      return res.status(404).json({ message: 'Schedule not found' });
+    }
+
+    console.log('Retrieved schedule:', schedule); // Log the retrieved schedule
 
     // Handle recurrence logic when retrieving schedules
-    const processedSchedules = schedules.map(schedule => {
-      const processed = { ...schedule._doc };
-      Object.keys(processed.schedules).forEach(day => {
-        processed.schedules[day] = processed.schedules[day].map(slot => {
-          if (slot.recurrence === 'Daily') {
-            const daysInMonth = 30; // Process for a month
-            const dayIndex = weekDays.indexOf(day);
-            return Array.from({ length: daysInMonth }, (_, i) => {
-              const recDay = weekDays[(dayIndex + i) % 7];
-              return { ...slot, day: recDay };
-            });
-          } else if (slot.recurrence === 'Weekly') {
-            // Handle weekly recurrence
-            const dayIndex = weekDays.indexOf(day);
-            return weekDays.filter((_, index) => index % 7 === dayIndex % 7).map(recDay => ({ ...slot, day: recDay }));
-          }
-          return slot;
-        }).flat();
-      });
-      return processed;
+    const processedSchedule = { ...schedule._doc };
+    Object.keys(processedSchedule.schedules).forEach(day => {
+      processedSchedule.schedules[day] = processedSchedule.schedules[day].map(slot => {
+        if (slot.recurrence === 'Daily') {
+          const daysInMonth = 30; // Process for a month
+          const dayIndex = weekDays.indexOf(day);
+          return Array.from({ length: daysInMonth }, (_, i) => {
+            const recDay = weekDays[(dayIndex + i) % 7];
+            return { ...slot, day: recDay };
+          });
+        } else if (slot.recurrence === 'Weekly') {
+          // Handle weekly recurrence
+          const dayIndex = weekDays.indexOf(day);
+          return weekDays.filter((_, index) => index % 7 === dayIndex % 7).map(recDay => ({ ...slot, day: recDay }));
+        }
+        return slot;
+      }).flat();
     });
 
-    res.status(200).json(processedSchedules);
+    res.status(200).json(processedSchedule);
   } catch (error) {
+    console.error('Error retrieving schedules:', error); // Log the error
     res.status(500).json({ message: 'Error retrieving schedules', error });
   }
 };
