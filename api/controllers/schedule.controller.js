@@ -55,36 +55,23 @@ exports.getSchedules = async (req, res) => {
       processedSchedule.schedules = Object.fromEntries(processedSchedule.schedules);
     }
 
-    // Simplify the response: Filter available slots and handle recurrence
+    // Simplify the response: Filter available and bookable slots
     const simplifiedResponse = {};
 
     Object.keys(processedSchedule.schedules).forEach(day => {
       // Filter available and bookable slots
-      const availableSlots = processedSchedule.schedules[day].filter(
+      simplifiedResponse[day] = processedSchedule.schedules[day].filter(
         slot => slot.isAvailable && slot.isBookable
       );
 
-      // Handle recurrence logic
-      const slotsWithRecurrence = availableSlots.map(slot => {
-        if (slot.recurrence === 'Daily') {
-          const daysInMonth = 30; // Process for a month
-          const dayIndex = weekDays.indexOf(day);
-          return Array.from({ length: daysInMonth }, (_, i) => {
-            const recDay = weekDays[(dayIndex + i) % 7];
-            return { ...slot, day: recDay };
-          });
-        } else if (slot.recurrence === 'Weekly') {
-          // Handle weekly recurrence
-          const dayIndex = weekDays.indexOf(day);
-          return weekDays
-            .filter((_, index) => index % 7 === dayIndex % 7)
-            .map(recDay => ({ ...slot, day: recDay }));
-        }
-        return { ...slot, day };
-      }).flat();
-
-      // Add the processed slots to the simplified response
-      simplifiedResponse[day] = slotsWithRecurrence;
+      // Remove unnecessary fields from each slot
+      simplifiedResponse[day] = simplifiedResponse[day].map(slot => ({
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        isAvailable: slot.isAvailable,
+        isBookable: slot.isBookable,
+        recurrence: slot.recurrence,
+      }));
     });
 
     // Send the simplified response
