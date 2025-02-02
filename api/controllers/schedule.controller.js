@@ -4,10 +4,10 @@ const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 
 exports.addSchedule = async (req, res) => {
   try {
-    const { userId, schedules } = req.body;
+    const { userId, professionalId, schedules } = req.body; // Include professionalId in the request body
 
     // Store recurrence pattern without duplicating slots
-    const newSchedule = new Schedule({ userId, schedules });
+    const newSchedule = new Schedule({ userId, professionalId, schedules }); // Save professionalId in the document
     await newSchedule.save();
     res.status(201).json({ message: 'Schedule added successfully', schedule: newSchedule });
   } catch (error) {
