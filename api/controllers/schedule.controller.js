@@ -40,7 +40,7 @@ exports.getSchedules = async (req, res) => {
     console.log('Fetching schedule for doctorId:', doctorId); // Log the doctorId
 
     // Fetch the schedule from the database
-    const schedule = await Schedule.findOne({ userId: doctorId });
+    const schedule = await Schedule.findOne({ professionalId: doctorId });
 
     if (!schedule) {
       return res.status(404).json({ message: 'Schedule not found' });
