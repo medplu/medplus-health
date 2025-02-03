@@ -98,16 +98,15 @@ exports.bookAppointment = async (req, res) => {
     }
 
     const newAppointment = new Appointment({
-      doctorId,
-      userId,
-      patientId: patient._id,
-      patientName: patientName,
-      status,
-      timeSlotId: insurance ? undefined : timeSlotId,
-      time: insurance ? undefined : time,
-      date,
-    });
-
+  doctorId,
+  userId,
+  patientId: patient._id,
+  patientName: patientName,
+  status,
+  timeSlotId: timeSlotId, // Always assign timeSlotId
+  time: time, // Always assign time
+  date,
+});
     await newAppointment.save();
 
     // Send push notification to the user
