@@ -131,11 +131,13 @@ exports.confirmAppointment = async (req, res) => {
 
   console.log('Received appointmentId:', appointmentId);
 
+  // Validate the appointment ID
   if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
     return res.status(400).json({ error: 'Invalid appointment ID' });
   }
 
   try {
+    // Find the appointment by ID and populate related fields
     const appointment = await Appointment.findById(appointmentId).populate('timeSlotId patientId');
 
     if (!appointment) {
@@ -144,6 +146,17 @@ exports.confirmAppointment = async (req, res) => {
 
     console.log('Appointment found:', appointment);
 
+    // Check if the appointment has a valid time slot
+    if (!appointment.timeSlotId) {
+      return res.status(400).json({ error: 'Appointment does not have a valid time slot' });
+    }
+
+    // Check if the appointment is already confirmed
+    if (appointment.status === 'confirmed') {
+      return res.status(400).json({ error: 'Appointment is already confirmed' });
+    }
+
+    // Update the appointment status to 'confirmed'
     appointment.status = 'confirmed';
     await appointment.save();
 
@@ -152,12 +165,17 @@ exports.confirmAppointment = async (req, res) => {
     // Send push notification to the user
     const user = await User.findById(appointment.userId);
     if (user && user.expoPushToken) {
-      await sendPushNotification([user.expoPushToken], {
-        body: 'Your appointment has been confirmed.',
-        data: { appointmentId: appointment._id },
-      });
+      try {
+        await sendPushNotification([user.expoPushToken], {
+          body: 'Your appointment has been confirmed.',
+          data: { appointmentId: appointment._id },
+        });
+      } catch (notificationError) {
+        console.error('Error sending push notification:', notificationError);
+      }
     }
 
+    // Respond with the updated appointment regardless of notification success
     res.status(200).json(appointment);
   } catch (error) {
     console.error('Error confirming appointment:', error);
