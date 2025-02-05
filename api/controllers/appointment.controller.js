@@ -105,7 +105,7 @@ exports.bookAppointment = async (req, res) => {
       status,
       timeSlotId, // Always set timeSlotId from the request body
       time, // Always set time from the request body
-      date,
+      date, // Ensure the date is set correctly
       insurance // Include insurance in the appointment if provided
     });
 
@@ -162,6 +162,22 @@ exports.confirmAppointment = async (req, res) => {
     await appointment.save();
 
     console.log('Appointment confirmed:', appointment);
+
+    // Update the booked slot in the schedule
+    const schedule = await Schedule.findOne({ professionalId: appointment.doctorId });
+    if (schedule) {
+      const dayOfWeek = moment(appointment.date).format('dddd');
+      const slot = schedule.schedules[dayOfWeek].find(slot => slot._id.toString() === appointment.timeSlotId.toString());
+      if (slot) {
+        slot.isBooked = true;
+        await schedule.save();
+        console.log('Slot updated in schedule:', slot);
+      } else {
+        console.error('Slot not found in schedule');
+      }
+    } else {
+      console.error('Schedule not found for doctor');
+    }
 
     // Send push notification to the user
     const user = await User.findById(appointment.userId);
