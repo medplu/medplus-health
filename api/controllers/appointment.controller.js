@@ -214,10 +214,10 @@ exports.confirmAppointment = async (req, res) => {
     if (schedule) {
       const dayOfWeek = moment(appointment.date).format('dddd');
       console.log('Schedule for the day:', schedule.schedules[dayOfWeek]); // Log the schedule for the day
-      const slot = schedule.schedules[dayOfWeek].find(slot => slot._id.toString() === appointment.timeSlotId.toString()); // Updated line
+      const slot = schedule.schedules[dayOfWeek].find(slot => slot._slotId.toString() === appointment.timeSlotId.toString()); // Updated line
       console.log('Matching slot:', slot); // Log the matching slot
       if (slot) {
-        slot.isBooked = true;
+        slot.isBookable = true;
         await schedule.save();
         console.log('Slot updated in schedule:', slot);
       } else {
