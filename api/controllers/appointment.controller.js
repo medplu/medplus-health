@@ -126,9 +126,10 @@ exports.bookAppointment = async (req, res) => {
   }
 };
 
-// Confirm an appointment
+// Confirm an appointment and emit real-time updates
 exports.confirmAppointment = async (req, res) => {
   const { appointmentId } = req.params;
+  const io = req.app.get('socketio');
 
   console.log('Received appointmentId:', appointmentId);
 
@@ -167,7 +168,7 @@ exports.confirmAppointment = async (req, res) => {
     const schedule = await Schedule.findOne({ professionalId: appointment.doctorId });
     if (schedule) {
       const dayOfWeek = moment(appointment.date).format('dddd');
-      const slot = schedule.schedules[dayOfWeek].find(slot => slot._id.toString() === appointment.timeSlotId.toString());
+      const slot = schedule.schedules[dayOfWeek].find(slot => slot.slotId.toString() === appointment.timeSlotId.toString());
       if (slot) {
         slot.isBooked = true;
         await schedule.save();
@@ -178,6 +179,12 @@ exports.confirmAppointment = async (req, res) => {
     } else {
       console.error('Schedule not found for doctor');
     }
+
+    // Emit the slot update to all connected clients
+    io.emit('slotUpdated', {
+      slotId: appointment.timeSlotId,
+      isAvailable: false,
+    });
 
     // Send push notification to the user
     const user = await User.findById(appointment.userId);
