@@ -157,6 +157,8 @@ exports.confirmAppointment = async (req, res) => {
       return res.status(400).json({ error: 'Appointment does not have a valid time slot' });
     }
 
+    console.log('Appointment timeSlotId:', appointment.timeSlotId); // Log the timeSlotId
+
     // Check if the appointment is already confirmed
     if (appointment.status === 'confirmed') {
       return res.status(400).json({ error: 'Appointment is already confirmed' });
@@ -173,7 +175,7 @@ exports.confirmAppointment = async (req, res) => {
     if (schedule) {
       const dayOfWeek = moment(appointment.date).format('dddd');
       console.log('Schedule for the day:', schedule.schedules[dayOfWeek]); // Log the schedule for the day
-      const slot = schedule.schedules[dayOfWeek].find(slot => slot._id.toString() === appointment.timeSlotId.toString());
+      const slot = schedule.schedules[dayOfWeek].find(slot => slot._id.toString() === appointment.timeSlotId.toString()); // Updated line
       if (slot) {
         slot.isBooked = true;
         await schedule.save();
