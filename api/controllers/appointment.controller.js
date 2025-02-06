@@ -81,6 +81,8 @@ exports.getAppointmentsByUser = async (req, res) => {
 exports.bookAppointment = async (req, res) => {
   const { doctorId, userId, status, timeSlotId, time, date, insurance, patientDetails = {} } = req.body;
 
+  console.log('Received timeSlotId:', timeSlotId); // Log the received timeSlotId
+
   try {
     // Retrieve user information
     const user = await User.findById(userId);
@@ -108,6 +110,8 @@ exports.bookAppointment = async (req, res) => {
       date, // Ensure the date is set correctly
       insurance // Include insurance in the appointment if provided
     });
+
+    console.log('New appointment to be saved:', newAppointment); // Log the new appointment object
 
     await newAppointment.save();
 
