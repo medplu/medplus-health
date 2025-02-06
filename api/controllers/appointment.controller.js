@@ -80,6 +80,7 @@ exports.getAppointmentsByUser = async (req, res) => {
 
 exports.bookAppointment = async (req, res) => {
   const { doctorId, userId, status, timeSlotId, time, date, insurance, patientDetails = {} } = req.body;
+  const io = req.app.get('socketio'); // Get the socket.io instance
 
   console.log('Received timeSlotId:', timeSlotId); // Log the received timeSlotId
 
@@ -114,6 +115,37 @@ exports.bookAppointment = async (req, res) => {
     console.log('New appointment to be saved:', newAppointment); // Log the new appointment object
 
     await newAppointment.save();
+
+    // Update the booked slot in the schedule
+    const schedule = await Schedule.findOne({ professionalId: doctorId });
+    if (schedule) {
+      const dayOfWeek = moment(date).format('dddd');
+      console.log('Schedule for the day:', schedule.schedules[dayOfWeek]); // Log the schedule for the day
+      const slot = schedule.schedules[dayOfWeek].find(slot => slot._id.toString() === timeSlotId.toString());
+      console.log('Matching slot:', slot); // Log the matching slot
+      if (slot) {
+        slot.isBooked = true;
+        await schedule.save();
+        console.log('Slot updated in schedule:', slot);
+
+        // Emit the slot update to all connected clients
+        io.emit('slotUpdated', {
+          slotId: timeSlotId,
+          isAvailable: false,
+        });
+      } else {
+        console.error('Slot not found in schedule');
+        console.log('Available slots for the day:', schedule.schedules[dayOfWeek]); // Log available slots for the day
+        return res.status(400).json({ error: 'Slot not found in schedule' });
+      }
+    } else {
+      console.error('Schedule not found for doctor');
+      return res.status(400).json({ error: 'Schedule not found for doctor' });
+    }
+
+    // Verify the saved appointment
+    const savedAppointment = await Appointment.findById(newAppointment._id);
+    console.log('Saved appointment:', savedAppointment); // Log the saved appointment
 
     // Send push notification to the user
     if (user.expoPushToken) {
@@ -154,6 +186,7 @@ exports.confirmAppointment = async (req, res) => {
 
     // Check if the appointment has a valid time slot
     if (!appointment.timeSlotId) {
+      console.log('Appointment timeSlotId is null or undefined'); // Log the issue
       return res.status(400).json({ error: 'Appointment does not have a valid time slot' });
     }
 
@@ -175,7 +208,8 @@ exports.confirmAppointment = async (req, res) => {
     if (schedule) {
       const dayOfWeek = moment(appointment.date).format('dddd');
       console.log('Schedule for the day:', schedule.schedules[dayOfWeek]); // Log the schedule for the day
-      const slot = schedule.schedules[dayOfWeek].find(slot => slot.slotId.toString() === appointment.timeSlotId.toString()); // Updated line
+      const slot = schedule.schedules[dayOfWeek].find(slot => slot._id.toString() === appointment.timeSlotId.toString()); // Updated line
+      console.log('Matching slot:', slot); // Log the matching slot
       if (slot) {
         slot.isBooked = true;
         await schedule.save();
