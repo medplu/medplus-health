@@ -6,6 +6,11 @@ const slotSchema = new mongoose.Schema({
     default: () => new mongoose.Types.ObjectId(),
     unique: true,
   },
+  dayOfWeek: {
+    type: String,
+    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+    required: true,
+  },
   startTime: {
     type: String,
     required: true,
@@ -40,11 +45,7 @@ const scheduleSchema = new mongoose.Schema({
     ref: 'Professional',
     required: false,
   },
-  schedules: {
-    type: Map,
-    of: [slotSchema],
-    required: true,
-  },
+  slots: [slotSchema], // Use a single array of slots
 }, { timestamps: true });
 
 module.exports = mongoose.model('Schedule', scheduleSchema);
