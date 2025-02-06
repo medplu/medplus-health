@@ -121,13 +121,8 @@ exports.bookAppointment = async (req, res) => {
     if (schedule) {
       const dayOfWeek = moment(date).format('dddd');
       console.log('Day of week:', dayOfWeek); // Log the day of the week
-      const daySchedule = schedule.schedules.get(dayOfWeek);
-      console.log('Schedule for the day:', daySchedule); // Log the schedule for the day
-      if (!daySchedule) {
-        console.error(`No schedule found for ${dayOfWeek}`);
-        return res.status(400).json({ error: `No schedule found for ${dayOfWeek}` });
-      }
-      const slot = daySchedule.find(slot => slot._id.toString() === timeSlotId.toString());
+      console.log('Schedule slots:', schedule.slots); // Log the schedule slots
+      const slot = schedule.slots.find(slot => slot.slotId.toString() === timeSlotId.toString() && slot.dayOfWeek === dayOfWeek);
       console.log('Matching slot:', slot); // Log the matching slot
       if (slot) {
         slot.isBooked = true;
@@ -141,7 +136,7 @@ exports.bookAppointment = async (req, res) => {
         });
       } else {
         console.error('Slot not found in schedule');
-        console.log('Available slots for the day:', daySchedule); // Log available slots for the day
+        console.log('Available slots for the day:', schedule.slots.filter(slot => slot.dayOfWeek === dayOfWeek)); // Log available slots for the day
         return res.status(400).json({ error: 'Slot not found in schedule' });
       }
     } else {
@@ -213,21 +208,21 @@ exports.confirmAppointment = async (req, res) => {
     const schedule = await Schedule.findOne({ professionalId: appointment.doctorId });
     if (schedule) {
       const dayOfWeek = moment(appointment.date).format('dddd');
-      console.log('Schedule for the day:', schedule.schedules[dayOfWeek]); // Log the schedule for the day
-      const slot = schedule.schedules[dayOfWeek].find(slot => slot._slotId.toString() === appointment.timeSlotId.toString()); // Updated line
+      console.log('Schedule slots:', schedule.slots); // Log the schedule slots
+      const slot = schedule.slots.find(slot => slot.slotId.toString() === appointment.timeSlotId.toString() && slot.dayOfWeek === dayOfWeek);
       console.log('Matching slot:', slot); // Log the matching slot
       if (slot) {
-        slot.isBookable = true;
+        slot.isBooked = true;
         await schedule.save();
         console.log('Slot updated in schedule:', slot);
       } else {
         console.error('Slot not found in schedule');
-        console.log('Available slots for the day:', schedule.schedules[dayOfWeek]); // Log available slots for the day
+        console.log('Available slots for the day:', schedule.slots.filter(slot => slot.dayOfWeek === dayOfWeek)); // Log available slots for the day
         return res.status(400).json({ error: 'Slot not found in schedule' });
       }
     } else {
       console.error('Schedule not found for doctor');
-       return res.status(400).json({ error: 'Schedule not found for doctor' });
+      return res.status(400).json({ error: 'Schedule not found for doctor' });
     }
 
     // Emit the slot update to all connected clients
