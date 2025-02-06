@@ -1,50 +1,81 @@
 const mongoose = require('mongoose');
 
-const slotSchema = new mongoose.Schema({
-  slotId: {
+const appointmentSchema = new mongoose.Schema({
+  doctorId: {
     type: mongoose.Schema.Types.ObjectId,
-    default: () => new mongoose.Types.ObjectId(),
-    unique: true,
-  },
-  startTime: {
-    type: String,
+    ref: 'Professional',
     required: true,
   },
-  endTime: {
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false,
+  },
+  patientId: { // Add patientId field to enable population
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Patient',
+    required: false,
+  },
+  patientName: {
     type: String,
+    required: false,
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'booked', 'confirmed', 'in progress', 'done', 'completed', 'cancelled'], // Include all expected statuses
+    default: 'pending',
+  },
+  timeSlotId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    ref: 'Schedule',
+  },
+  time: {
+    type: String,
+    required: false,
+  },
+  date: {
+    type: Date,
     required: true,
   },
-  isAvailable: {
-    type: Boolean,
-    default: true,
-  },
-  isBookable: {
-    type: Boolean,
-    default: true,
-  },
-  recurrence: {
+  insurance: {
     type: String,
-    enum: ['None', 'Daily', 'Weekly'],
-    default: 'None',
+    required: false,
   },
+}, {
+  timestamps: true,
 });
 
+const Appointment = mongoose.model('Appointment', appointmentSchema);
+
 const scheduleSchema = new mongoose.Schema({
+  professionalId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Professional',
+    required: true,
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
   },
-  professionalId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Professional',
-    required: false,
-  },
   schedules: {
     type: Map,
-    of: [slotSchema],
+    of: [{
+      startTime: String,
+      endTime: String,
+      isAvailable: Boolean,
+      isBookable: Boolean,
+      recurrence: String,
+      _id: mongoose.Schema.Types.ObjectId,
+      slotId: mongoose.Schema.Types.ObjectId,
+    }],
     required: true,
   },
-}, { timestamps: true });
+}, {
+  timestamps: true,
+});
 
-module.exports = mongoose.model('Schedule', scheduleSchema);
+const Schedule = mongoose.model('Schedule', scheduleSchema);
+
+module.exports = { Appointment, Schedule };
