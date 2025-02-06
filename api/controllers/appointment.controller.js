@@ -79,7 +79,7 @@ exports.getAppointmentsByUser = async (req, res) => {
 };
 
 exports.bookAppointment = async (req, res) => {
-  const { doctorId, userId, status, timeSlotId, time, date, insurance, patientDetails = {} } = req.body;
+  const { doctorId, userId, status, timeSlotId, time, date, insurance, patientDetails = {}, skipPayment } = req.body;
 
   console.log('Received timeSlotId:', timeSlotId); // Log the received timeSlotId
 
@@ -114,6 +114,12 @@ exports.bookAppointment = async (req, res) => {
     console.log('New appointment to be saved:', newAppointment); // Log the new appointment object
 
     await newAppointment.save();
+
+    // If skipPayment is true, confirm the appointment immediately
+    if (skipPayment) {
+      await confirmAppointment({ params: { appointmentId: newAppointment._id }, app: req.app }, res);
+      return;
+    }
 
     // Send push notification to the user
     if (user.expoPushToken) {
