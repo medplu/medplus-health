@@ -172,16 +172,20 @@ exports.confirmAppointment = async (req, res) => {
     const schedule = await Schedule.findOne({ professionalId: appointment.doctorId });
     if (schedule) {
       const dayOfWeek = moment(appointment.date).format('dddd');
-      const slot = schedule.schedules[dayOfWeek].find(slot => slot.slotId.toString() === appointment.timeSlotId.toString());
+      console.log('Schedule for the day:', schedule.schedules[dayOfWeek]); // Log the schedule for the day
+      const slot = schedule.schedules[dayOfWeek].find(slot => slot._id.toString() === appointment.timeSlotId.toString());
       if (slot) {
         slot.isBooked = true;
         await schedule.save();
         console.log('Slot updated in schedule:', slot);
       } else {
         console.error('Slot not found in schedule');
+        console.log('Available slots for the day:', schedule.schedules[dayOfWeek]); // Log available slots for the day
+        return res.status(400).json({ error: 'Slot not found in schedule' });
       }
     } else {
       console.error('Schedule not found for doctor');
+       return res.status(400).json({ error: 'Schedule not found for doctor' });
     }
 
     // Emit the slot update to all connected clients
