@@ -105,7 +105,7 @@ exports.bookAppointment = async (req, res) => {
       userId,
       patientId: patient._id,
       patientName: patientName,
-      status,
+      status: 'confirmed', // Update status to confirmed
       timeSlotId, // Always set timeSlotId from the request body
       time, // Always set time from the request body
       date, // Ensure the date is set correctly
@@ -124,6 +124,7 @@ exports.bookAppointment = async (req, res) => {
       console.log('Matching slot:', slot); // Log the matching slot
       if (slot) {
         slot.isBooked = true;
+        slot.isBookable = false; // Update isBookable to false
         await schedule.save();
         console.log('Slot updated in schedule:', slot);
 
