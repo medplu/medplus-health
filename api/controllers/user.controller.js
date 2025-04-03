@@ -111,7 +111,7 @@ const userCtrl = {
     }
 
     // Find the user in the database
-    const user = await User.findOne({ email: String(email) }).select("-password"); // Exclude password from query result
+    const user = await User.findOne({ email: String(email) }).select("+password"); // Explicitly include password in query
 
     console.log("User backend:", user);
 
@@ -122,6 +122,11 @@ const userCtrl = {
     // Check if the user registered with Google
     if (user.loginMethod === "google") {
       throw new Error("Please use Google login to access your account.");
+    }
+
+    // Ensure the user has a password set
+    if (!user.password) {
+      throw new Error("Password is not set for this account.");
     }
 
     // Validate user password
