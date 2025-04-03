@@ -111,7 +111,7 @@ const userCtrl = {
     }
 
     // Find the user in the database
-    const user = await User.findOne({ email: String(email) });
+    const user = await User.findOne({ email: String(email) }).select("-password"); // Exclude password from query result
 
     console.log("User backend:", user);
 
@@ -133,14 +133,11 @@ const userCtrl = {
     // Generate JWT token
     const token = jwt.sign({ id: user._id }, "anyKey", { expiresIn: "30d" });
 
-    // Exclude sensitive information (like password) before sending the user object
-    const { password: _, ...userWithoutPassword } = user.toObject();
-
     // Send the response
     res.json({
       message: "Login success",
       token,
-      user: userWithoutPassword,
+      user, // Return the user object directly
     });
   }),
 
